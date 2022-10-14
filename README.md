@@ -1,6 +1,6 @@
 # 🏋️‍♂️ Close Powerlifting
 
-an intuitive api on top of open powerlifting database
+an intuitive api on top of open-powerlifting database
 
 
 # 👨‍💻 Getting started
