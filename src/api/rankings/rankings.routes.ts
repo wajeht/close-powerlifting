@@ -6,7 +6,8 @@ import * as rankingsControllers from './rankings.controllers';
 
 /**
  * GET /api/rankings
- * @summary rankings
+ * @tags rankings
+ * @summary all things relating rankings end point
  * @param {string} name.query.required - name param description - enum:type1,type2
  * @param {array<string>} license.query - name param description
  * @return {object} 200 - success response - application/json

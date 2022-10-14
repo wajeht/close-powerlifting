@@ -2,6 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ENV } from './config/constants';
 
+/**
+ * GET /health-check
+ * @tags app
+ * @summary get the health of close-powerlifting app
+ */
 export function healthCheckHandler(req: Request, res: Response, next: NextFunction) {
   return res.status(StatusCodes.OK).json({
     status: 'success',
