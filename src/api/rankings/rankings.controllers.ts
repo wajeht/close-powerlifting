@@ -39,7 +39,9 @@ export async function getRankings(req: Request, res: Response): Promise<any> {
   });
 
   return res.status(StatusCodes.OK).json({
-    status: 'ok',
+    status: 'success',
+    request_url: req.originalUrl,
+    message: 'The resource was returned successfully!',
     data: {
       total: total_length,
       rows: data,
