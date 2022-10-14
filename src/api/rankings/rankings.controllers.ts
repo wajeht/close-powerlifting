@@ -8,6 +8,7 @@ export async function getRankings(req: Request, res: Response): Promise<any> {
   const x = `?start=0&end=100&lang=en&units=lbs`;
   const { rows, total_length } = await (await axios.get(RANKINGS_URL + x)).data;
 
+  // TODO: there is probably a better way to do this!
   const data = rows.map((r: any) => {
     return {
       id: r[0],
