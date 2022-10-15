@@ -1,17 +1,21 @@
 import catchAsyncHandler from 'express-async-handler';
+import { validate } from '../api.middlewares';
+
+import * as RankingsControllers from './rankings.controllers';
+import * as RankingsValidation from './rankings.validations';
+
 import express from 'express';
 const rankings = express.Router();
-
-import * as rankingsControllers from './rankings.controllers';
 
 /**
  * GET /api/rankings
  * @tags rankings
  * @summary all things relating rankings end point
- * @param {string} name.query.required - name param description - enum:type1,type2
- * @param {array<string>} license.query - name param description
- * @return {object} 200 - success response - application/json
  */
-rankings.get('/', catchAsyncHandler(rankingsControllers.getRankings));
+rankings.get(
+  '/',
+  validate(RankingsValidation.getRankingsValidation),
+  catchAsyncHandler(RankingsControllers.getRankings),
+);
 
 export default rankings;
