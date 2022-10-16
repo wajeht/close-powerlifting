@@ -7,7 +7,7 @@ import { buildPagination } from '../../utils/helpers';
 export async function getRankings({
   current_page = 1,
   per_page = 100,
-  cache = false,
+  cache = true,
 }: getRankingsType) {
   try {
     const pagination = buildPagination({ current_page, per_page });
@@ -46,6 +46,7 @@ export async function getRankings({
 
     return {
       data,
+      cache,
       pagination: {
         items: rankings.total_length,
         pages: Math.floor(rankings.total_length / per_page),
