@@ -1,6 +1,6 @@
 import axios from '../../utils/axios';
 
-import { RANKINGS_URL } from '../../config/constants';
+import { BASE_URL } from '../../config/constants';
 import { getRankingsType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
 
@@ -10,8 +10,8 @@ export async function getRankings({
   cache = true,
 }: getRankingsType) {
   try {
-    const pagination = buildPagination({ current_page, per_page });
-    const rankings = await (await axios.get(RANKINGS_URL + '?' + pagination)).data;
+    const paginationQuery = buildPagination({ current_page, per_page });
+    const rankings = await (await axios.get('/api/rankings' + '?' + paginationQuery)).data;
 
     // TODO: there is probably a better way to do this!
     const data = rankings.rows.map((r: any) => {

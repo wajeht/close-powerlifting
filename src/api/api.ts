@@ -1,8 +1,10 @@
 import express from 'express';
 const api = express.Router();
 
-import rankingsRoutes from './rankings/rankings.routes';
+import RankingsRoutes from './rankings/rankings.routes';
+import MeetsRoutes from './meets/meets.routes';
 
-api.use('/rankings', rankingsRoutes);
+api.use('/rankings', RankingsRoutes);
+api.use('/meets', MeetsRoutes);
 
 export default api;
