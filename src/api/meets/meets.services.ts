@@ -17,12 +17,29 @@ const api = axios.create({
   },
 });
 
+function buildPagination({
+  current_page,
+  per_page,
+  cache,
+  array,
+}: {
+  current_page: number;
+  per_page: number;
+  cache: boolean;
+  array: {
+    fed: string;
+    date: string;
+    competition: string;
+    lifters: number;
+  };
+}) {}
+
 /**
  * It makes a request to the website, gets the HTML, parses the HTML, and returns the data in a JSON
  * format
  * @returns An array of objects.
  */
-export async function getMeets({ cache = true }) {
+export async function getMeets({ current_page = 1, per_page = 100, cache = true }) {
   try {
     const html = await (await api.get('/mlist')).data;
     const dom = new JSDOM(html);
@@ -30,6 +47,7 @@ export async function getMeets({ cache = true }) {
     return {
       data: tableToJson(table),
       cache: true,
+      pagination: {},
     };
   } catch (e) {
     throw new Error(`Something went wrong while processing meets data!`);

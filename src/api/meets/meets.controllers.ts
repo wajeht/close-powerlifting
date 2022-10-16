@@ -12,5 +12,6 @@ export async function getMeets(req: Request, res: Response) {
     message: 'The resource was returned successfully!',
     cache: meets?.cache,
     data: meets?.data,
+    pagination: meets?.pagination,
   });
 }
