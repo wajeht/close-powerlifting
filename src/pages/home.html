@@ -7,14 +7,54 @@
     <title>close-powerlifting</title>
   </head>
   <body>
+    <!-- nav -->
     <nav>
       <ul>
         <li>
           <a href="/">home</a>
         </li>
+        <li>
+          <a href="/docs/api">api-docs</a>
+        </li>
       </ul>
     </nav>
 
+    <!-- title -->
     <h1>hello world!</h1>
+
+    <!-- form -->
+    <form id="register-form">
+      <label for="email">email</label>
+      <input type="email" id="email" required />
+      <button type="submit">register</button>
+    </form>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('register-form').addEventListener('submit', async function (event) {
+          event.preventDefault();
+
+          const formData = { email: document.getElementById('email').value };
+
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            body: JSON.stringify(formData),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+          });
+
+          const data = await res.json();
+
+          if (data.errors) {
+            return alert(data.message);
+          }
+
+          if (res.ok) {
+            return alert(data.message);
+          }
+        });
+      });
+    </script>
   </body>
 </html>
