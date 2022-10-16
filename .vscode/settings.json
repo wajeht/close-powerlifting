@@ -5,6 +5,7 @@
     "mlist",
     "openpowerlifting",
     "powerlifting",
+    "tailwindcss",
     "wajeht"
   ],
   "dotenv.enableAutocloaking": false
