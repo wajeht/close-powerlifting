@@ -1,4 +1,11 @@
 {
-  "cSpell.words": ["deadlift", "middlewares", "openpowerlifting", "powerlifting", "wajeht"],
+  "cSpell.words": [
+    "deadlift",
+    "middlewares",
+    "mlist",
+    "openpowerlifting",
+    "powerlifting",
+    "wajeht"
+  ],
   "dotenv.enableAutocloaking": false
 }

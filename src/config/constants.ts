@@ -5,4 +5,5 @@ dotenv.config({ path: path.resolve(path.join(process.cwd(), '.env')) });
 
 export const PORT = process.env.PORT;
 export const API = process.env.API;
+export const BASE_URL = process.env.BASE_URL;
 export const ENV = process.env.ENV;
