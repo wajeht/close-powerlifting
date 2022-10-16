@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
+import expressLayouts from 'express-ejs-layouts';
 import ejs from 'ejs';
 
 import swaggerConfig from './config/swagger.config';
@@ -23,7 +24,9 @@ app.use(express.static(path.resolve(path.join(process.cwd(), 'src', 'public'))))
 app.engine('html', ejs.renderFile);
 app.set('view engine', 'html');
 app.set('views', path.resolve(path.join(process.cwd(), 'src', 'pages')));
+app.set('layout', 'layouts/main.html');
 
+app.use(expressLayouts);
 expressJSDocSwagger(app)(swaggerConfig);
 
 app.use('/api', apiRoutes);
