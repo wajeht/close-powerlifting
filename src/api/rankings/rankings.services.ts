@@ -1,10 +1,17 @@
-import { RANKINGS_URL } from '../../config/constants';
 import axios from '../../utils/axios';
 
-export async function getRankings() {
+import { RANKINGS_URL } from '../../config/constants';
+import { getRankingsType } from './rankings.validations';
+import { buildPagination } from '../../utils/helpers';
+
+export async function getRankings({
+  current_page = 1,
+  per_page = 100,
+  cache = false,
+}: getRankingsType) {
   try {
-    const x = `?start=0&end=100&lang=en&units=lbs`;
-    const rankings = await (await axios.get(RANKINGS_URL + x)).data;
+    const pagination = buildPagination({ current_page, per_page });
+    const rankings = await (await axios.get(RANKINGS_URL + '?' + pagination)).data;
 
     // TODO: there is probably a better way to do this!
     const data = rankings.rows.map((r: any) => {
@@ -13,6 +20,7 @@ export async function getRankings() {
         rank: r[1],
         full_name: r[2],
         username: r[3],
+        user_profile: `/users/${r[3]}`,
         instagram: r[4],
         username_color: r[5],
         country: r[6],
@@ -37,7 +45,8 @@ export async function getRankings() {
     });
 
     return {
-      total: rankings.total_length,
+      total_items: rankings.total_length,
+      total_pages: Math.floor(rankings.total_length / per_page),
       rows: data,
     };
   } catch (e: any) {
