@@ -9,6 +9,7 @@ an intuitive api on top of open-powerlifting database
 - **Vitest** for unit testing
 - **JsDom** for scraping
 - **Redis** to cache some of larger scraping data
+- **Tailwind** for rapid styling
 - and ofcourse **Typescript** for everything ❤️
 
 
