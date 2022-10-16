@@ -28,7 +28,6 @@ expressJSDocSwagger(app)(swaggerConfig);
 
 app.use('/api', apiRoutes);
 app.get('/health-check', appRoutes.healthCheckHandler);
-
 app.get('/', appRoutes.homePageHandler);
 
 app.use(appRoutes.notFoundHandler);
