@@ -1,4 +1,5 @@
-import axios from '../../utils/axios';
+import Axios from '../../utils/axios';
+const api = new Axios(true).instance();
 
 import { getRankingsType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
@@ -10,9 +11,9 @@ export async function getRankings({
 }: getRankingsType) {
   try {
     const paginationQuery = buildPagination({ current_page, per_page });
-    const rankings = await (await axios.get('/rankings' + '?' + paginationQuery)).data;
+    const rankings = await (await api.get('/rankings' + '?' + paginationQuery)).data;
 
-    // TODO: there is probably a better way to do this!
+    // TODO!: there is probably a better way to do this!
     const data = rankings.rows.map((r: any) => {
       return {
         id: r[0],
