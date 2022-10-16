@@ -1,4 +1,4 @@
-import { boolean, number, z } from 'zod';
+import { z } from 'zod';
 
 export const getRankingsValidation = z.object({
   per_page: z
