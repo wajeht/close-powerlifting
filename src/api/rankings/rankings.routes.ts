@@ -14,7 +14,7 @@ const rankings = express.Router();
  */
 rankings.get(
   '/',
-  validate(RankingsValidation.getRankingsValidation),
+  validate({ query: RankingsValidation.getRankingsValidation }),
   catchAsyncHandler(RankingsControllers.getRankings),
 );
 

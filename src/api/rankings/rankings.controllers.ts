@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import * as RankingsServices from './rankings.services';
 import { getRankingsType } from './rankings.validations';
 
-export async function getRankings(req: Request<{}, {}, getRankingsType['query']>, res: Response) {
+export async function getRankings(req: Request<{}, {}, getRankingsType>, res: Response) {
   const { per_page, current_page, cache } = req.query;
 
   const rankings = await RankingsServices.getRankings();

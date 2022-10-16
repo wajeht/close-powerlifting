@@ -1,23 +1,25 @@
-import { z } from 'zod';
+import { boolean, number, z } from 'zod';
 
 export const getRankingsValidation = z.object({
-  query: z.object({
-    per_page: z
-      .number({
-        required_error: 'per_page must be a number!',
-      })
-      .default(100),
-    current_page: z
-      .number({
-        required_error: 'current_page must be a number!',
-      })
-      .default(1),
-    cache: z
-      .boolean({
-        required_error: 'cache must be a boolean!',
-      })
-      .default(true),
-  }),
+  per_page: z
+    .string()
+    .transform((val) => Number(val))
+    .optional(),
+  current_page: z
+    .string()
+    .transform((val) => Number(val))
+    .optional(),
+  cache: z
+    .string()
+    .transform((val) => {
+      if (val === 'true') {
+        return true;
+      }
+      if (val === 'false') {
+        return false;
+      }
+    })
+    .optional(),
 });
 
 export type getRankingsType = z.infer<typeof getRankingsValidation>;
