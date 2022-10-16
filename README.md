@@ -3,6 +3,14 @@
 an intuitive api on top of open-powerlifting database
 
 
+# 📚 Technologies
+
+- **Node** with **Express** for API
+- **Vitest** for unit testing
+- **JsDom** for scraping
+- and ofcourse **Typescript** for everything ❤️
+
+
 # 👨‍💻 Getting started
 
 - [Development guide](https://github.com/wajeht/close-powerlifting/blob/main/docs/getting-started.md)
