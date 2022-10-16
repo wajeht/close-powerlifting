@@ -12,6 +12,15 @@ const meets = express.Router();
  * @tags meets
  * @summary all things relating meets end point
  */
+
+/**
+ * GET /api/meets?current_page={current_page}&per_page=${per_page}
+ * @tags meets
+ * @summary all things relating meets end point with pagination
+ * @param {number} per_page.query.required - the per_page - application/x-www-form-urlencoded
+ * @param {number} current_page.query.required - the current_page - application/x-www-form-urlencoded
+ * @param {boolean} cache.query.required - the cache - application/x-www-form-urlencoded
+ */
 meets.get(
   '/',
   validate({
