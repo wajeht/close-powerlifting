@@ -1,6 +1,6 @@
 # 🏋️‍♂️ Close Powerlifting
 
-an intuitive api on top of open-powerlifting database
+an intuitive api for open-powerlifting database
 
 
 # 📚 Technologies
@@ -10,7 +10,7 @@ an intuitive api on top of open-powerlifting database
 - **JsDom** for scraping
 - **Redis** to cache some of larger scraping data
 - **Tailwind** for rapid styling
-- and ofcourse **Typescript** for everything ❤️
+- and of course **Typescript** for everything ❤️
 
 
 # 👨‍💻 Getting started

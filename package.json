@@ -1,7 +1,7 @@
 {
   "name": "close-powerlifting",
   "version": "0.0.1",
-  "description": "tiny wrap for open powerlifting api",
+  "description": "an intuitive api for open-powerlifting database",
   "main": "server.ts",
   "scripts": {
     "dev": "concurrently --kill-others --names \"EXPRESS,TAILWIND:CSS\" -c \"bgGreen.black,bgCyan.black\" \"nodemon ./src/server.ts\" \"npm run tailwind\"",

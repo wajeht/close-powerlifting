@@ -5,7 +5,7 @@ import pkg from '../../package.json';
 export default {
   info: {
     title: 'close-powerlifting',
-    description: 'The best way to track your workouts',
+    description: 'an intuitive api for open-powerlifting database',
     termsOfService: `http://localhost:${PORT}/terms`,
     contact: {
       name: 'API Support',
