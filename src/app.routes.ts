@@ -4,6 +4,19 @@ import { ENV } from './config/constants';
 import { ZodError } from 'zod';
 
 /**
+ * GET /
+ * @tags app
+ * @summary get home page
+ */
+export function homePageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.render('home.html');
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
  * GET /health-check
  * @tags app
  * @summary get the health of close-powerlifting app
