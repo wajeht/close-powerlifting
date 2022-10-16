@@ -36,6 +36,9 @@ export function healthCheckHandler(req: Request, res: Response, next: NextFuncti
 }
 
 export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
+  const isApiPrefix = req.url.match(/\/api\//g);
+  if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render('not-found.html');
+
   return res.status(StatusCodes.NOT_FOUND).json({
     status: 'fail',
     request_url: req.originalUrl,
@@ -50,6 +53,9 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
 
   if (err instanceof ZodError) statusCode = StatusCodes.BAD_REQUEST;
   statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+
+  const isApiPrefix = req.url.match(/\/api\//g);
+  if (!isApiPrefix) return res.status(statusCode).render('error.html');
 
   return res.status(statusCode).json({
     status: 'fail',
