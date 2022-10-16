@@ -45,9 +45,17 @@ export async function getRankings({
     });
 
     return {
-      total_items: rankings.total_length,
-      total_pages: Math.floor(rankings.total_length / per_page),
-      rows: data,
+      data,
+      pagination: {
+        total_items: rankings.total_length,
+        total_pages: Math.floor(rankings.total_length / per_page),
+        per_page,
+        current_page,
+        last_page: Math.floor(rankings.total_length / per_page),
+        first_page: 1,
+        from: current_page * per_page,
+        to: current_page * per_page + per_page,
+      },
     };
   } catch (e: any) {
     console.log(e);

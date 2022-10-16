@@ -12,6 +12,7 @@ export async function getRankings(req: Request<{}, {}, getRankingsType>, res: Re
     request_url: req.originalUrl,
     message: 'The resource was returned successfully!',
     cache: req.query.cache,
-    data: rankings,
+    data: rankings?.data,
+    pagination: rankings?.pagination,
   });
 }
