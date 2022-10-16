@@ -8,6 +8,7 @@ an intuitive api on top of open-powerlifting database
 - **Node** with **Express** for API
 - **Vitest** for unit testing
 - **JsDom** for scraping
+- **Redis** to cache some of larger scraping data
 - and ofcourse **Typescript** for everything ❤️
 
 
