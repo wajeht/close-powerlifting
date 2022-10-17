@@ -1,13 +1,11 @@
-<p align="center">
-<img src="https://raw.githubusercontent.com/wajeht/close-powerlifting/main/src/public/img/arnold.jpg">
-</p>
+<p align="center"><img src="https://raw.githubusercontent.com/wajeht/close-powerlifting/main/src/public/img/arnold.jpg"></p>
 
-# <p align="center">🏋️‍♂️ Close Powerlifting</p>
+# <p align="center"> 🏋️‍♂️ Close Powerlifting </p>
 
 <div align="center">
 
- [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC) [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/allkindsofgains/gains)
- </div>
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC) [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/allkindsofgains/gains)
+</div>
 
 <p align="center"> an intuitive api for open-powerlifting database </p>
 
