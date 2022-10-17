@@ -10,7 +10,7 @@ an intuitive api for open-powerlifting database
 - **JsDom** for scraping
 - **Redis** to cache some of larger scraping data
 - **Tailwind** for rapid styling
--- **EJS** html template for server side rendering
+- **EJS** html template for server side rendering
 - and of course **Typescript** for everything ❤️
 
 
