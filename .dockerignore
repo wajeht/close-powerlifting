@@ -1,0 +1,12 @@
+.gains
+.github
+.vscode
+coverage
+docs
+node_modules
+.editorconfig
+.env.example
+*.csv
+dist
+deploy.sh
+README.md
