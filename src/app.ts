@@ -8,6 +8,7 @@ import expressJSDocSwagger from 'express-jsdoc-swagger';
 import expressLayouts from 'express-ejs-layouts';
 import ejs from 'ejs';
 
+import * as RateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
 import * as appRoutes from './app.routes';
@@ -29,7 +30,9 @@ app.set('layout', '../layouts/main.html');
 app.use(expressLayouts);
 expressJSDocSwagger(app)(swaggerConfig);
 
-app.use('/api', apiRoutes);
+app.use('/api', RateLimiters.api, apiRoutes);
+
+app.use(RateLimiters.app);
 app.get('/health-check', appRoutes.healthCheckHandler);
 app.get('/', appRoutes.homePageHandler);
 app.get('/contact', appRoutes.contactPageHandler);
