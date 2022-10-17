@@ -2,10 +2,6 @@
 
 an intuitive api for open-powerlifting database
 
-```
-https://close-powerlifting.jaw.dev/
-```
-
 
 # 📚 Technologies
 
@@ -14,6 +10,7 @@ https://close-powerlifting.jaw.dev/
 - **JsDom** for scraping
 - **Redis** to cache some of larger scraping data
 - **Tailwind** for rapid styling
+-- **EJS** html template for server side rendering
 - and of course **Typescript** for everything ❤️
 
 
