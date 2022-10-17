@@ -517,12 +517,24 @@ video {
   margin-right: auto;
 }
 
+.block {
+  display: block;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
 .flex {
   display: flex;
 }
 
 .h-screen {
   height: 100vh;
+}
+
+.w-screen {
+  width: 100vw;
 }
 
 .max-w-7xl {
@@ -535,6 +547,10 @@ video {
 
 .flex-col {
   flex-direction: column;
+}
+
+.justify-center {
+  justify-content: center;
 }
 
 .justify-between {
