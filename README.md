@@ -1,4 +1,6 @@
-<p align="center"><img src="https://raw.githubusercontent.com/wajeht/close-powerlifting/main/src/public/img/arnold.jpg"></p>
+<p align="center">
+<img src="https://raw.githubusercontent.com/wajeht/close-powerlifting/main/src/public/img/arnold.jpg">
+</p>
 
 # <p align="center">🏋️‍♂️ Close Powerlifting</p>
 
