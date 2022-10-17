@@ -32,6 +32,10 @@ expressJSDocSwagger(app)(swaggerConfig);
 app.use('/api', apiRoutes);
 app.get('/health-check', appRoutes.healthCheckHandler);
 app.get('/', appRoutes.homePageHandler);
+app.get('/contact', appRoutes.contactPageHandler);
+app.get('/terms', appRoutes.termsPageHandler);
+app.get('/about', appRoutes.aboutPageHandler);
+app.get('/privacy', appRoutes.privacyPageHandler);
 
 app.use(appRoutes.notFoundHandler);
 app.use(appRoutes.serverErrorHandler);

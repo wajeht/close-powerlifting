@@ -17,6 +17,58 @@ export function homePageHandler(req: Request, res: Response, next: NextFunction)
 }
 
 /**
+ * GET /contact
+ * @tags app
+ * @summary get contact page
+ */
+export function contactPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.render('contact.html');
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * GET /terms
+ * @tags app
+ * @summary get terms page
+ */
+export function termsPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.render('terms.html');
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * GET /privacy
+ * @tags app
+ * @summary get privacy page
+ */
+export function privacyPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.render('privacy.html');
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * GET /about
+ * @tags app
+ * @summary get about page
+ */
+export function aboutPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.render('about.html');
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
  * GET /health-check
  * @tags app
  * @summary get the health of close-powerlifting app
