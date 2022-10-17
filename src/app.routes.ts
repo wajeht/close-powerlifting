@@ -10,7 +10,9 @@ import { ZodError } from 'zod';
  */
 export function homePageHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    return res.render('home.html');
+    return res.status(StatusCodes.OK).render('home.html', {
+      path: '/home',
+    });
   } catch (e) {
     next(e);
   }
@@ -23,7 +25,9 @@ export function homePageHandler(req: Request, res: Response, next: NextFunction)
  */
 export function contactPageHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    return res.render('contact.html');
+    return res.status(StatusCodes.OK).render('contact.html', {
+      path: '/contact',
+    });
   } catch (e) {
     next(e);
   }
@@ -36,7 +40,9 @@ export function contactPageHandler(req: Request, res: Response, next: NextFuncti
  */
 export function termsPageHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    return res.render('terms.html');
+    return res.status(StatusCodes.OK).render('terms.html', {
+      path: '/terms',
+    });
   } catch (e) {
     next(e);
   }
@@ -49,7 +55,9 @@ export function termsPageHandler(req: Request, res: Response, next: NextFunction
  */
 export function privacyPageHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    return res.render('privacy.html');
+    return res.status(StatusCodes.OK).render('privacy.html', {
+      path: '/privacy',
+    });
   } catch (e) {
     next(e);
   }
@@ -62,7 +70,9 @@ export function privacyPageHandler(req: Request, res: Response, next: NextFuncti
  */
 export function aboutPageHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    return res.render('about.html');
+    return res.status(StatusCodes.OK).render('about.html', {
+      path: '/about',
+    });
   } catch (e) {
     next(e);
   }

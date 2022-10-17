@@ -9,12 +9,20 @@
       <ul class="flex gap-5">
         <!-- privacy -->
         <li>
-          <a class="hover:text-slate-50" href="/privacy">Privacy</a>
+          <a
+            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/privacy' ? 'text-slate-50' : '' %>"
+            href="/privacy"
+            >Privacy</a
+          >
         </li>
 
         <!-- terms -->
         <li>
-          <a class="hover:text-slate-50" href="/terms">Terms</a>
+          <a
+            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/terms' ? 'text-slate-50' : '' %>"
+            href="/terms"
+            >Terms</a
+          >
         </li>
 
         <!-- discord -->
