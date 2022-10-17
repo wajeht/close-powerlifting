@@ -1,35 +1,29 @@
-<header class="flex justify-between bg-gray-900 p-5">
+<header class="flex justify-between backdrop-blur-sm bg-black/30 sticky top-0 p-5">
   <div>
-    <h1>
+    <h1 class="text-slate-50">
       <a href="/"> close-powerlifting </a>
     </h1>
   </div>
 
-  <nav>
-    <ul class="flex gap-3">
+  <nav class="font-light">
+    <ul class="flex gap-5">
       <!-- home -->
       <li>
-        <a href="/">home</a>
+        <a class="hover:text-slate-50" href="/contact">Contact</a>
       </li>
 
       <!-- api -->
       <li>
-        <a href="/docs/api">api-docs</a>
+        <a class="hover:text-slate-50" href="/docs/api">Documentation</a>
       </li>
 
-      <!-- privacy -->
+      <!-- Signup -->
       <li>
-        <a href="/privacy">privacy</a>
-      </li>
-
-      <!-- terms -->
-      <li>
-        <a href="/terms">terms</a>
-      </li>
-
-      <!-- contact -->
-      <li>
-        <a href="/contact">contact</a>
+        <a
+          class="bg-slate-50 text-black hover:bg-black hover:outline hover:outline-slate-50 hover:text-slate-50 px-3 py-2 rounded-sm"
+          href="/contact"
+          >Signup</a
+        >
       </li>
     </ul>
   </nav>
