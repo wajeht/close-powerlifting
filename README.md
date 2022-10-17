@@ -2,6 +2,10 @@
 
 an intuitive api for open-powerlifting database
 
+```
+https://close-powerlifting.jaw.dev/
+```
+
 
 # 📚 Technologies
 
