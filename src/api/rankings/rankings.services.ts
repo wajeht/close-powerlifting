@@ -1,5 +1,5 @@
 import Axios from '../../utils/axios';
-const api = new Axios(true).instance();
+const api = new Axios(false).instance();
 
 import { getRankingsType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
