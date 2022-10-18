@@ -17,8 +17,17 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
     const elements = dom.window.document.getElementsByTagName('table')[0];
     const table = tableToJson(elements);
 
-    const from = current_page * per_page;
-    const to = current_page * per_page + per_page;
+    let from;
+    let to;
+
+    if (current_page === 1) {
+      from = 1;
+      to = per_page;
+    } else {
+      from = current_page * per_page;
+      to = current_page * per_page + per_page;
+    }
+
     const slicedTable = table.slice(from, to);
 
     return {
