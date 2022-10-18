@@ -42,3 +42,12 @@ export function tableToJson(table: any) {
 
   return data;
 }
+
+/**
+ * StripHTML takes a string and returns a string.
+ * @param {string} innerHTML - The HTML string to be stripped of HTML tags.
+ * @returns The innerHTML of the element is being returned.
+ */
+export function stripHTML(innerHTML: string): string {
+  return innerHTML.replace(/(<([^>]+)>)/gi, '');
+}
