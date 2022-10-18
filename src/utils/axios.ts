@@ -24,6 +24,7 @@ class Axios {
     const instance = axios.create({
       baseURL: this.getCorrectURL(),
       headers: {
+        Cookie: 'units=lbs;',
         Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         Host: API_URL?.slice(API_URL.indexOf('www'), API_URL.lastIndexOf('/')),
         'User-Agent':
