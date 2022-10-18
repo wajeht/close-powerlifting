@@ -27,4 +27,16 @@ rankings.get(
   catchAsyncHandler(RankingsControllers.getRankings),
 );
 
+/**
+ * GET /api/rankings/{rank}
+ * @tags rankings
+ * @summary all things relating rank end point
+ * @param {string} rank.params.required - the rank - application/x-www-form-urlencoded
+ */
+rankings.get(
+  '/:rank',
+  validate({ params: RankingsValidation.getRankValidation }),
+  catchAsyncHandler(RankingsControllers.getRank),
+);
+
 export default rankings;

@@ -1,7 +1,7 @@
 import Axios from '../../utils/axios';
 const api = new Axios(false).instance();
 
-import { getRankingsType } from './rankings.validations';
+import { getRankingsType, getRankType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
 
 export async function getRankings({
@@ -62,4 +62,27 @@ export async function getRankings({
   } catch (e: any) {
     throw new Error(`Something went wrong while processing rankings data!`);
   }
+}
+
+export async function getRank({ rank }: getRankType) {
+  let r = parseInt(rank) - 1;
+
+  // pagination
+  const cache = false;
+  let current_page = 1;
+  let per_page = 100;
+
+  // r = 300
+
+  if (r > per_page) {
+    current_page = Math.floor(r / per_page);
+  }
+
+  // console.log({ rank: r, current_page, per_page });
+
+  const { data } = await getRankings({ cache, current_page, per_page });
+
+  const index = r % per_page;
+
+  return data.at(index);
 }

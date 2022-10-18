@@ -22,4 +22,9 @@ export const getRankingsValidation = z.object({
     .optional(),
 });
 
+export const getRankValidation = z.object({
+  rank: z.string(),
+});
+
 export type getRankingsType = z.infer<typeof getRankingsValidation>;
+export type getRankType = z.infer<typeof getRankValidation>;
