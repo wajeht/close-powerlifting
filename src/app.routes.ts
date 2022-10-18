@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ENV } from './config/constants';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
 
 /**
  * GET /
@@ -14,6 +14,38 @@ export function homePageHandler(req: Request, res: Response, next: NextFunction)
       path: '/home',
     });
   } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * GET /register
+ * @tags app
+ * @summary get register page
+ */
+export function registerPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.status(StatusCodes.OK).render('register.html', {
+      path: '/register',
+      flashMessages: req.flash(),
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * POST /register
+ * @tags app
+ * @summary post register page
+ */
+export function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
+  try {
+    console.log(req.body);
+    req.flash('success', 'Thank you for registering. Please check your email for confirmation!');
+    return res.redirect('/register');
+  } catch (e) {
+    console.log(e);
     next(e);
   }
 }
