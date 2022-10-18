@@ -10,7 +10,8 @@
     "dev:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --minify --watch",
     "build": "npm run build:tailwind && npm run build:api",
     "build:api": "tsc",
-    "build:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --minify"
+    "build:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --minify",
+    "minify:html": "html-minifier --input-dir ./src/views --output-dir ./src/views --collapse-whitespace --file-ext html"
   },
   "keywords": [
     "powerlifting"
