@@ -29,22 +29,22 @@
 
 
 # 📃 API end points
-We have a few resources available for api call. Resources with larger amount of data are paginated. Pagination is included by default. 
+We have a few resources available for api call. Resources with larger amount of data are usually cached in memory and paginated for the first call. Pagination is included by default. You can pass in `?cache=false` at the end of a url to get the latest/recent data.
+
+
 - `/api/meets`
 - `/api/rankings`
 - `/api/records`
 - `/api/status`
 - `/api/users`
 
-## Example call/response 
-
+### Example call/response 
 
 
 ```bash
 $ curl https://close-powerlifting.jaw.dev/api/rankings
 $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1&cahe=false
 ```
-
 
 ```json
 {
@@ -77,6 +77,8 @@ $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page
   }
 }
 ```
+
+For more of api documentation, visit `https://close-powerlifting.jaw.dev` and request for `x-api-keys`.
 
 
 # © License
