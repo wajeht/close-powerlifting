@@ -28,6 +28,57 @@
 - [Code of Conduct](https://github.com/wajeht/close-powerlifting/blob/main/docs/code-of-conduct.md)
 
 
+# 📃 API end points
+We have a few resources available for api call. Resources with larger amount of data are paginated. Pagination is included by default. 
+- `/api/meets`
+- `/api/rankings`
+- `/api/records`
+- `/api/status`
+- `/api/users`
+
+## Example call/response 
+
+
+
+```bash
+$ curl https://close-powerlifting.jaw.dev/api/rankings
+$ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1&cahe=false
+```
+
+
+```json
+{
+"status": "success",
+"request_url": "/api/rankings",
+"message": "The resource was returned successfully!",
+"cache": true,
+"data": [
+    {
+      "id": 0,
+      "rank": 1,
+      "full_name": "waj het",
+      "username": "wajeht",
+      "user_profile": "/api/users/wajeht"
+      // ...
+    },
+    {
+      // ...
+    }
+  ],
+"pagination": {
+  "items": 415567,
+  "pages": 4155,
+  "per_page": 100,
+  "current_page": 1,
+  "last_page": 4155,
+  "first_page": 1,
+  "from": 100,
+  "to": 200
+  }
+}
+```
+
+
 # © License
 
 Distributed under the MIT license © wajeht. See LICENSE for more information.
