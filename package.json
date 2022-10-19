@@ -7,7 +7,7 @@
     "start": "node ./dist/src/server.js",
     "dev": "concurrently --kill-others --names \"EXPRESS,TAILWIND\" -c \"bgGreen.black,bgCyan.black\" \"npm run dev:api\" \"npm run dev:tailwind\"",
     "dev:api": "nodemon ./src/server.ts",
-    "dev:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --minify --watch",
+    "dev:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --watch",
     "build": "npm run build:tailwind && npm run build:api && npm run minify:html",
     "build:api": "tsc",
     "build:tailwind": "npx tailwindcss -i ./src/public/css/tailwind.css -o ./src/public/css/style.css --minify",
