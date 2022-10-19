@@ -45,6 +45,7 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
       },
     };
   } catch (e) {
+    console.log(e);
     throw new Error(`Something went wrong while processing meets data!`);
   }
 }
