@@ -10,7 +10,12 @@ type buildPaginationType = {
  * @returns A string
  */
 export function buildPagination({ current_page, per_page }: buildPaginationType): string {
-  return `start=${current_page & per_page}&end=${per_page}&lang=en&units=lbs`;
+  if (current_page === 1) {
+    return `start=${0}&end=${per_page}&lang=en&units=lbs`;
+  }
+  return `start=${current_page * per_page}&end=${
+    current_page * per_page + per_page
+  }&lang=en&units=lbs`;
 }
 
 /**
