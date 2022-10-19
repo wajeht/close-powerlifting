@@ -27,7 +27,7 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
   try {
     return res.status(StatusCodes.OK).render('register.html', {
       path: '/register',
-      flashMessages: req.flash(),
+      messages: req.flash(),
     });
   } catch (e) {
     next(e);
@@ -41,7 +41,13 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
  */
 export function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
   try {
-    console.log(req.body);
+    const { email } = req.query;
+
+    if (email !== 'd@d') {
+      req.flash('error', 'Wrong email!');
+      return res.redirect('/register');
+    }
+
     req.flash('success', 'Thank you for registering. Please check your email for confirmation!');
     return res.redirect('/register');
   } catch (e) {
@@ -59,7 +65,22 @@ export function contactPageHandler(req: Request, res: Response, next: NextFuncti
   try {
     return res.status(StatusCodes.OK).render('contact.html', {
       path: '/contact',
+      messages: req.flash(),
     });
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
+ * POST /contact
+ * @tags app
+ * @summary post contact page
+ */
+export function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
+  try {
+    req.flash('info', "Thanks for reaching out to use. We'll get back to you shortly!");
+    return res.redirect('/contact');
   } catch (e) {
     next(e);
   }

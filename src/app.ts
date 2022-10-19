@@ -18,18 +18,15 @@ import { ENV, SESSION_SECRET } from './config/constants';
 
 const app = express();
 
-app.use(cors());
+app.use(flash());
 app.use(
   session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
-    cookie: {
-      secure: true,
-    },
   }),
 );
-app.use(flash());
+app.use(cors());
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -58,6 +55,7 @@ if (ENV !== 'development') {
 app.get('/health-check', appRoutes.healthCheckHandler);
 app.get('/', appRoutes.homePageHandler);
 app.get('/contact', appRoutes.contactPageHandler);
+app.post('/contact', appRoutes.handleContactingRequest);
 app.get('/terms', appRoutes.termsPageHandler);
 app.get('/about', appRoutes.aboutPageHandler);
 app.get('/privacy', appRoutes.privacyPageHandler);
