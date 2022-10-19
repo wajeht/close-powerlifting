@@ -38,6 +38,7 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
  * POST /register
  * @tags app
  * @summary post register page
+ * @param {string} email.query.required - the email - application/x-www-form-urlencoded
  */
 export function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
   try {
@@ -76,6 +77,9 @@ export function contactPageHandler(req: Request, res: Response, next: NextFuncti
  * POST /contact
  * @tags app
  * @summary post contact page
+ * @param {string} name.query.required - the name - application/x-www-form-urlencoded
+ * @param {string} email.query.required - the email - application/x-www-form-urlencoded
+ * @param {string} message.query.required - the message - application/x-www-form-urlencoded
  */
 export function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
   try {
