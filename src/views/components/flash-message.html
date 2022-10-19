@@ -3,7 +3,7 @@
 <!-- prettier-ignore -->
 <% for (const m in messages) { %>
 <div
-  class="rounded-sm p-3 text-slate-200 <%= m === 'success' ? 'bg-green-900' : m === 'error' ? 'bg-red-900' : m === 'info' ? 'bg-blue-900' : '' %>"
+  class="rounded-sm p-3 text-slate-200 <%= m === 'success' ? 'bg-green-500/20' : m === 'error' ? 'bg-red-500/20' : m === 'info' ? 'bg-blue-500/20' : '' %>"
 >
   <%= messages[m] %>
 </div>
