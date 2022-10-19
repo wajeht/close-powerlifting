@@ -13,8 +13,9 @@
 # 📚 Technologies
 
 - **Node** with **Express** for API
-- **Vitest** for unit testing
+- **Vitest** for unit testing, barely
 - **JsDom** for scraping
+- **MongoDB** because we only need to keep in track of API keys
 - **Redis** to cache some of larger scraping data
 - **Tailwind** for rapid styling
 - **EJS** html template for server side rendering
