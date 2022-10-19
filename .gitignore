@@ -104,3 +104,4 @@ dist
 src/templates/tempCodeRunnerFile.js
 *.csv
 .DS_Store
+src/public/css/style.css
