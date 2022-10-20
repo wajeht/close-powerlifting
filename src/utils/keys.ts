@@ -8,7 +8,7 @@ import db from '../db.json';
 interface User {
   name: string;
   email: string;
-  key: string;
+  key: string | null;
   verification_token: string;
   verified: boolean;
   verified_at: string | null;
@@ -59,11 +59,11 @@ export default class Keys {
    * @param {string} email - string - The email address to search for
    * @returns A boolean value.
    */
-  public static async find(email: string): Promise<boolean> {
+  public static async find(email: string): Promise<User | null> {
     if (this.db[email]) {
-      return true;
+      return this.db[email];
     }
-    return false;
+    return null;
   }
 
   /**
@@ -72,13 +72,13 @@ export default class Keys {
    * @returns The un-hashed key
    */
   public static async create(email: string, name: string): Promise<User> {
-    const { key, hashedKey } = await this.hashKey();
+    const { key } = await this.hashKey();
     const { key: token } = await this.hashKey();
 
     const newUser = {
       name: name,
       email: email,
-      key: hashedKey,
+      key: '',
       deleted: false,
       verification_token: token,
       verified: false,
@@ -95,18 +95,40 @@ export default class Keys {
 
     return newUser;
   }
+
+  /**
+   * It takes an email address, hashes a key, stores the hashed key in the database, and returns the
+   * unhashed key
+   * @param {string} email - The email address of the user to verify.
+   * @returns The user object with the key property set to the unhashed key.
+   */
+  public static async verify(email: string): Promise<User> {
+    const { key, hashedKey } = await this.hashKey();
+    const temp = { ...this.db };
+
+    temp[email].verified = true;
+    temp[email].verified_at = new Date().toISOString().toString();
+    temp[email].key = hashedKey;
+
+    this.db = temp;
+    this.store();
+
+    const user = this.db[email];
+    user.key = key;
+
+    return user;
+  }
 }
 
 // (async () => {
 //   try {
-//     const user = await Keys.find('emaiwl@gxmail.com');
-
-//     if (user) {
-//       throw new Error('User already exist!');
-//     }
-//     const created = await Keys.create('email@gmail.com');
-
-//     console.log(created);
+//     const x = await Keys.verify('zombyard@gmail.com');
+// const user = await Keys.find('emaiwl@gxmail.com');
+// if (user) {
+//   throw new Error('User already exist!');
+// }
+// const created = await Keys.create('email@gmail.com');
+// console.log(created);
 //   } catch (e) {
 //     console.log(e);
 //   }

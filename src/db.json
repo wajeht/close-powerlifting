@@ -1,12 +1,1 @@
-{
-  "d@d": {
-    "name": "d",
-    "email": "d@d",
-    "key": "$2a$05$BpU1noUammBDw7ZsS.aXHeN5wW6ZV8FUlFiAdNxGmaklVpwUy1RRi",
-    "deleted": false,
-    "verification_token": "c783929c-dc8d-45c2-880e-6d00ad51d353",
-    "verified": false,
-    "verified_at": "",
-    "created_at": "2022-10-20T03:00:53.160Z"
-  }
-}
+{}

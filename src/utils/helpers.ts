@@ -1,3 +1,6 @@
+import { Request } from 'express';
+import { ENV, DOMAIN } from '../config/constants';
+
 type buildPaginationType = {
   current_page: number;
   per_page: number;
@@ -55,4 +58,23 @@ export function tableToJson(table: any) {
  */
 export function stripHTML(innerHTML: string): string {
   return innerHTML.replace(/(<([^>]+)>)/gi, '');
+}
+
+/**
+ * It returns the hostname of the request
+ * @param {Request} req - Request - The request object from the Express framework.
+ * @returns The hostname of the request.
+ */
+export function getHostName(req: Request): string {
+  let origin = '';
+
+  if (ENV === 'development') {
+    const protocol = req.protocol;
+    const hostname = req.get('host');
+    origin = `${protocol}://${hostname}`;
+  } else {
+    origin = DOMAIN!;
+  }
+
+  return origin;
 }

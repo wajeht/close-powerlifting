@@ -52,8 +52,8 @@ if (ENV !== 'development') {
   app.use('/api', apiRoutes);
 }
 
-app.get('/health-check', appRoutes.healthCheckHandler);
 app.get('/', appRoutes.homePageHandler);
+app.get('/health-check', appRoutes.healthCheckHandler);
 app.get('/contact', appRoutes.contactPageHandler);
 app.post('/contact', appRoutes.handleContactingRequest);
 app.get('/terms', appRoutes.termsPageHandler);
@@ -61,6 +61,7 @@ app.get('/about', appRoutes.aboutPageHandler);
 app.get('/privacy', appRoutes.privacyPageHandler);
 app.get('/register', appRoutes.registerPageHandler);
 app.post('/register', appRoutes.handleRegistrationRequest);
+app.get('/verify-email', appRoutes.handleVerificationRequest);
 
 app.use(appRoutes.notFoundHandler);
 app.use(appRoutes.serverErrorHandler);
