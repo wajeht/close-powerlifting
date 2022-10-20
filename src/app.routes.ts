@@ -174,9 +174,24 @@ export function contactPageHandler(req: Request, res: Response, next: NextFuncti
  * @param {string} email.query.required - the email - application/x-www-form-urlencoded
  * @param {string} message.query.required - the message - application/x-www-form-urlencoded
  */
-export function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
+export async function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
   try {
-    req.flash('info', "Thanks for reaching out to use. We'll get back to you shortly!");
+    const { name, email, message } = req.body;
+
+    const info = await mail.sendMail({
+      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+      to: EMAIL.AUTH_EMAIL,
+      subject: `Contact Request from ${email}`,
+      html: `
+      <div>
+      <p><span style="font-weight: bold;">Name:</span> ${name}</p>
+      <p><span style="font-weight: bold;">Email:</span> ${email}</p>
+      <p><span style="font-weight: bold;">Message:</span> ${message}</p>
+      </div>
+      `,
+    });
+
+    req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
     return res.redirect('/contact');
   } catch (e) {
     next(e);
