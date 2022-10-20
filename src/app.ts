@@ -13,7 +13,8 @@ import ejs from 'ejs';
 import * as RateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
-import * as appRoutes from './app.routes';
+import viewsRoutes from './views/views.routes';
+import * as appControllers from './app.controllers';
 import { ENV, SESSION_SECRET } from './config/constants';
 import * as Middlewares from './api/api.middlewares';
 
@@ -53,19 +54,9 @@ if (ENV !== 'development') {
   app.use('/api', Middlewares.auth, apiRoutes);
 }
 
-app.get('/', appRoutes.homePageHandler);
-app.get('/health-check', appRoutes.healthCheckHandler);
-app.get('/contact', appRoutes.contactPageHandler);
-app.post('/contact', appRoutes.handleContactingRequest);
-app.get('/terms', appRoutes.termsPageHandler);
-app.get('/about', appRoutes.aboutPageHandler);
-app.get('/status', appRoutes.statusPageHandler);
-app.get('/privacy', appRoutes.privacyPageHandler);
-app.get('/register', appRoutes.registerPageHandler);
-app.post('/register', appRoutes.handleRegistrationRequest);
-app.get('/verify-email', appRoutes.handleVerificationRequest);
+app.use(viewsRoutes);
 
-app.use(appRoutes.notFoundHandler);
-app.use(appRoutes.serverErrorHandler);
+app.use(appControllers.notFoundHandler);
+app.use(appControllers.serverErrorHandler);
 
 export default app;
