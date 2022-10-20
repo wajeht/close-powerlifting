@@ -43,7 +43,7 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
  */
 export async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
   try {
-    const email = req.body.email;
+    const { email, name } = req.body;
 
     const found = await Keys.find(email);
 
@@ -52,7 +52,7 @@ export async function handleRegistrationRequest(req: Request, res: Response, nex
       return res.redirect('/register');
     }
 
-    const created = await Keys.create(email);
+    const created = await Keys.create(email, name);
 
     req.flash('success', 'Thank you for registering. Please check your email for confirmation!');
     return res.redirect('/register');

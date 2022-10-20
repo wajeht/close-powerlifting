@@ -6,10 +6,14 @@ import bcrypt from 'bcryptjs';
 import db from '../db.json';
 
 interface User {
+  name: string;
   email: string;
   key: string;
+  verification_token: string;
+  verified: boolean;
+  verified_at: string | null;
   deleted: boolean;
-  created_at: string;
+  created_at: string | Date;
 }
 
 type Key = {
@@ -67,13 +71,18 @@ export default class Keys {
    * @param {string} email - string - the email address of the user
    * @returns The un-hashed key
    */
-  public static async create(email: string): Promise<User> {
+  public static async create(email: string, name: string): Promise<User> {
     const { key, hashedKey } = await this.hashKey();
+    const { key: token } = await this.hashKey();
 
     const newUser = {
+      name: name,
       email: email,
       key: hashedKey,
       deleted: false,
+      verification_token: token,
+      verified: false,
+      verified_at: '',
       created_at: new Date().toISOString().toString(),
     };
 

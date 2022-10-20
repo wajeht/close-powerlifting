@@ -1,14 +1,12 @@
 {
-  "email@gmail.com": {
-    "email": "email@gmail.com",
-    "key": "$2a$05$FHfi99Ojv.FQIyk6X/5UTO9nabqp4dUDn6lOl5NouZnTx5vlRouIa",
+  "d@d": {
+    "name": "d",
+    "email": "d@d",
+    "key": "$2a$05$BpU1noUammBDw7ZsS.aXHeN5wW6ZV8FUlFiAdNxGmaklVpwUy1RRi",
     "deleted": false,
-    "created_at": "2022-10-20T02:10:27.404Z"
-  },
-  "email@gmail.comd": {
-    "email": "email@gmail.comd",
-    "key": "$2a$05$eYyJwE/Tky3qAI6GQvMk6e5v3mi48WO7rmsWWeT4959fI/nlD.0aO",
-    "deleted": false,
-    "created_at": "2022-10-20T02:20:12.142Z"
+    "verification_token": "c783929c-dc8d-45c2-880e-6d00ad51d353",
+    "verified": false,
+    "verified_at": "",
+    "created_at": "2022-10-20T03:00:53.160Z"
   }
 }
