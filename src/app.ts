@@ -10,13 +10,13 @@ import expressJSDocSwagger from 'express-jsdoc-swagger';
 import expressLayouts from 'express-ejs-layouts';
 import ejs from 'ejs';
 
-import * as RateLimiters from './config/rate-limiters.config';
+import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
 import viewsRoutes from './views/views.routes';
 import * as appControllers from './app.controllers';
 import { ENV, SESSION_SECRET } from './config/constants';
-import * as Middlewares from './api/api.middlewares';
+import * as middlewares from './api/api.middlewares';
 
 const app = express();
 
@@ -48,10 +48,10 @@ app.use(expressLayouts);
 expressJSDocSwagger(app)(swaggerConfig);
 
 if (ENV !== 'development') {
-  app.use('/api', RateLimiters.api, Middlewares.auth, apiRoutes);
-  app.use(RateLimiters.app);
+  app.use('/api', rateLimiters.api, middlewares.auth, apiRoutes);
+  app.use(rateLimiters.app);
 } else {
-  app.use('/api', Middlewares.auth, apiRoutes);
+  app.use('/api', middlewares.auth, apiRoutes);
 }
 
 app.use(viewsRoutes);
