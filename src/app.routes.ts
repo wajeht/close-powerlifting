@@ -43,6 +43,7 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
  * @tags app
  * @summary post register page
  * @param {string} email.query.required - the email - application/x-www-form-urlencoded
+ * @param {string} name.query.required - the name - application/x-www-form-urlencoded
  */
 export async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
   try {
