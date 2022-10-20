@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject } from 'zod';
 import { UnauthorizedError } from './api.errors';
-import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from '../config/constants';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -36,9 +37,32 @@ export function validate(validators: RequestValidators) {
 
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    if (!req.headers['x-api-key']) {
-      throw new UnauthorizedError('You are not authorized!');
+    let token = '';
+
+    //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
+    if (req.headers.authorization) {
+      if (req.headers.authorization.split(' ').length != 2) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
+      if (!req.headers.authorization.startsWith('Bearer')) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
+      token = req.headers.authorization.split(' ')[1];
     }
+    //! -------------------------------- API TOKEN AUTHENTICATION --------------------------------
+    else if (req.headers['x-api-key']) {
+      token = req.headers['x-api-key'] as string;
+    } else {
+      throw new UnauthorizedError('Invalid authentication!');
+    }
+
+    // try {
+    //   const verified = jwt.verify(token, JWT_SECRET!);
+
+    //   req.user = {
+    //     email: verified.email,
+    //     role: verified.role,
+    //   };
+    // } catch (error) {
+    //   throw new UnauthorizedError('Invalid signature!');
+    // }
+
     next();
   } catch (e) {
     next(e);
