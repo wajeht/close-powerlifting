@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { ENV } from './config/constants';
 import { ZodError, z } from 'zod';
+import Keys from './utils/keys';
 
 /**
  * GET /
@@ -40,19 +41,30 @@ export function registerPageHandler(req: Request, res: Response, next: NextFunct
  * @summary post register page
  * @param {string} email.query.required - the email - application/x-www-form-urlencoded
  */
-export function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
+export async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
   try {
-    const { email } = req.query;
+    const email = req.body.email;
 
-    if (email !== 'd@d') {
-      req.flash('error', 'Wrong email!');
+    const found = await Keys.find(email);
+
+    if (found) {
+      req.flash('error', 'Email already exist!');
       return res.redirect('/register');
     }
+
+    const created = await Keys.create(email);
 
     req.flash('success', 'Thank you for registering. Please check your email for confirmation!');
     return res.redirect('/register');
   } catch (e) {
-    console.log(e);
+    next(e);
+  }
+}
+
+export async function handleVerificationRequest(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.query.token;
+  } catch (e) {
     next(e);
   }
 }
