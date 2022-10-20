@@ -229,6 +229,21 @@ export function privacyPageHandler(req: Request, res: Response, next: NextFuncti
 }
 
 /**
+ * GET /status
+ * @tags app
+ * @summary get status page
+ */
+export function statusPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.status(StatusCodes.OK).render('status.html', {
+      path: '/status',
+    });
+  } catch (e) {
+    next(e);
+  }
+}
+
+/**
  * GET /about
  * @tags app
  * @summary get about page

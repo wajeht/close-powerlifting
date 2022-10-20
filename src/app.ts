@@ -59,6 +59,7 @@ app.get('/contact', appRoutes.contactPageHandler);
 app.post('/contact', appRoutes.handleContactingRequest);
 app.get('/terms', appRoutes.termsPageHandler);
 app.get('/about', appRoutes.aboutPageHandler);
+app.get('/status', appRoutes.statusPageHandler);
 app.get('/privacy', appRoutes.privacyPageHandler);
 app.get('/register', appRoutes.registerPageHandler);
 app.post('/register', appRoutes.handleRegistrationRequest);
