@@ -5,6 +5,7 @@ import { ZodError, z } from 'zod';
 import mail from './utils/mail';
 import Keys from './utils/keys';
 import { getHostName } from './utils/helpers';
+import { UnauthorizedError } from './api/api.errors';
 
 /**
  * GET /
@@ -261,8 +262,10 @@ export function notFoundHandler(req: Request, res: Response, next: NextFunction)
 export function serverErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   let statusCode;
 
-  if (err instanceof ZodError) statusCode = StatusCodes.BAD_REQUEST;
   statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+
+  if (err instanceof ZodError) statusCode = StatusCodes.BAD_REQUEST;
+  if (err instanceof UnauthorizedError) statusCode = StatusCodes.UNAUTHORIZED;
 
   const isApiPrefix = req.url.match(/\/api\//g);
   if (!isApiPrefix) return res.status(statusCode).render('error.html');
