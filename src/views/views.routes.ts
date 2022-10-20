@@ -193,7 +193,7 @@ views.get('/contact', function contactPageHandler(req: Request, res: Response, n
  * @param {string} message.query.required - the message - application/x-www-form-urlencoded
  */
 views.post(
-  '/post',
+  '/contact',
   async function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
     try {
       const { name, email, message } = req.body;
