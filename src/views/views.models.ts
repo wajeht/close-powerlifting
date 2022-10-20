@@ -5,10 +5,10 @@ import { db } from '../utils/db';
 
 export const User = z.object({
   name: z.string(),
-  email: z.string().email(),
+  email: z.string(),
   key: z.string().nullish(),
   delete: z.boolean().default(false),
-  verification_token: string(),
+  verification_token: string().nullish(),
   verified: z.boolean().default(false),
   verified_at: z.string().nullish(),
   created_at: z.date().default(new Date()),

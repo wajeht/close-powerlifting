@@ -5,6 +5,9 @@ import mail from '../utils/mail';
 import Keys from '../utils/keys';
 import { getHostName } from '../utils/helpers';
 
+import { Users, User, UserWithId } from './views.models';
+import { z } from 'zod';
+
 const views = express.Router();
 
 /**
@@ -50,9 +53,15 @@ views.get(
  */
 views.post(
   '/register',
-  async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
+  async function handleRegistrationRequest(
+    req: Request<{}, UserWithId, User>,
+    res: Response<UserWithId>,
+    next: NextFunction,
+  ) {
     try {
       const { email, name } = req.body;
+
+      const user = Users.insertOne(req.body);
 
       const found = await Keys.find(email);
 
