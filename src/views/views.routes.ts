@@ -97,7 +97,7 @@ views.post(
 
       // console.log(info.messageId);
 
-      req.flash('success', 'Thank you for registering. Please check your email for confirmation!');
+      req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
       return res.redirect('/register');
     } catch (e) {
       next(e);
