@@ -25,7 +25,7 @@ export default {
   security: {
     BearerAuth: {
       type: 'http',
-      scheme: 'bearer',
+      scheme: 'Bearer',
     },
   },
 };
