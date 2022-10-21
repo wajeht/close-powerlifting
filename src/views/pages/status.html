@@ -1,5 +1,95 @@
-<div>
-  <h1>status</h1>
+<script type="importmap">
+  { "imports": { "vue": "/js/vue.esm-browser.prod.js" } }
+</script>
 
-  <p><%= JSON.stringify(data) %></p>
+<script type="module">
+  import { createApp } from 'vue';
+
+  createApp({
+    data() {
+      return {
+        data: [],
+        error: '',
+        loading: false,
+      };
+    },
+    async mounted() {
+      const temp = await this.getHealthCheck();
+      this.data = temp.data;
+    },
+    methods: {
+      async getHealthCheck() {
+        try {
+          this.loading = true;
+          const res = await window.fetch('/health-check');
+          const data = await res.json();
+          this.loading = false;
+          return data;
+        } catch (e) {
+          console.log(e);
+          this.loading = false;
+        }
+      },
+    },
+  }).mount('#status');
+</script>
+
+<div id="status" class="max-w-2xl mx-auto" v-cloak>
+  <div v-if="loading">
+    <div class="animate-pulse flex gap-4 flex-col">
+      <div class="bg-green-500/20 text-neutral-300 p-4">
+        <div class="grid grid-cols-12 py-2">
+          <div class="h-2 bg-neutral-500 rounded col-span-4"></div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col gap-2 p-4 rounded-sm bg-neutral-900"
+        v-for="i, idx in 7"
+        :key="`skeleton-key-${idx}`"
+      >
+        <!-- top -->
+        <div class="grid grid-cols-12 gap-4 py-2">
+          <div class="h-2 bg-neutral-500 rounded"></div>
+          <div class="h-2 bg-neutral-500 rounded col-span-6"></div>
+        </div>
+
+        <!-- bottom -->
+        <div class="grid grid-cols-12 gap-4 py-2">
+          <div class="h-2 bg-neutral-500 rounded"></div>
+          <div class="h-2 bg-neutral-500 rounded col-span-2"></div>
+          <div class="h-2 bg-neutral-500 rounded col-span-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- actual data -->
+  <div class="flex gap-4 flex-col" v-if="!loading">
+    <div class="bg-green-500/20 text-neutral-300 p-4">All Systems Operational</div>
+    <div
+      class="flex flex-col gap-2 p-4 rounded-sm bg-neutral-900"
+      v-for="d, idx in data"
+      :key="`data-key-${idx}`"
+    >
+      <!-- top -->
+      <div class="flex gap-4 text-neutral-400">
+        <div class="font-bold">{{ d.method }}</div>
+        <div class="overflow-scroll">{{ d.url }}</div>
+      </div>
+
+      <!-- bottom -->
+      <div class="flex gap-1">
+        <span v-if="d.status === true">Available</span>
+        <span v-if="d.status === false">Not available</span>
+        <div>as of</div>
+        <div>{{d.date}}</div>
+      </div>
+    </div>
+  </div>
+
+  <style id="status">
+    [v-cloak] {
+      display: none;
+    }
+  </style>
 </div>

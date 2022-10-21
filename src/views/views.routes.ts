@@ -115,9 +115,6 @@ views.get(
       const email = req.query.email as string;
       const token = req.query.token as string;
 
-      // const {key, hashedKey} =
-
-      // const user = await Keys.find(email);
       const [user] = await User.find({ email });
 
       if (!user) {
@@ -305,12 +302,8 @@ views.get(
   '/status',
   async function statusPageHandler(req: Request, res: Response, next: NextFunction) {
     try {
-      const url = getHostName(req);
-      const data = await (await axios.get(`${url}/health-check`)).data;
-
       return res.status(StatusCodes.OK).render('status.html', {
         path: '/status',
-        data,
       });
     } catch (e) {
       next(e);
@@ -334,6 +327,7 @@ views.get(
       },
     });
 
+    // TODO!:  **** REFACTOR THIS ****
     const rankings = await fetch.get('/api/rankings');
     const paginatedRankings = await fetch.get('/api/rankings?current_page=1&per_page=100&cache=false'); // prettier-ignore
     const rank = await fetch.get('/api/rankings/1');
@@ -349,39 +343,46 @@ views.get(
       cache: req.query?.cache,
       data: [
         {
+          method: rankings.config.method?.toUpperCase(),
           status: rankings.status === 200,
           url: rankings.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: paginatedRankings.config.method?.toUpperCase(),
           status: paginatedRankings.status === 200,
           url: paginatedRankings.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: rank.config.method?.toUpperCase(),
           status: rank.status === 200,
           url: rank.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: meets.config.method?.toUpperCase(),
           status: meets.status === 200,
           url: meets.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: paginatedMeets.config.method?.toUpperCase(),
           status: paginatedMeets.status === 200,
           url: paginatedMeets.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: records.config.method?.toUpperCase(),
           status: records.status === 200,
           url: records.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
         {
+          method: users.config.method?.toUpperCase(),
           status: users.status === 200,
           url: users.config.url,
-          date: new Date(),
+          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
         },
       ],
     });
