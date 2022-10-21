@@ -1,19 +1,47 @@
-import { WithId } from 'mongodb';
-import { string, z } from 'zod';
+import mongoose from 'mongoose';
 
-import { db } from '../utils/db';
-
-export const User = z.object({
-  name: z.string(),
-  email: z.string(),
-  key: z.string().nullish(),
-  delete: z.boolean().default(false),
-  verification_token: string().nullish(),
-  verified: z.boolean().default(false),
-  verified_at: z.string().nullish(),
-  created_at: z.date().default(new Date()),
+const UserSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    require: true,
+  },
+  email: {
+    type: String,
+    unique: true,
+    require: true,
+  },
+  key: {
+    type: String,
+    require: false,
+    unique: true,
+    default: '',
+  },
+  deleted: {
+    type: Boolean,
+    require: true,
+    default: false,
+  },
+  verification_token: {
+    type: String,
+    unique: true,
+    require: false,
+    default: '',
+  },
+  verified: {
+    type: Boolean,
+    require: true,
+    default: false,
+  },
+  verified_at: {
+    type: Date,
+    require: false,
+    default: '',
+  },
+  created_at: {
+    type: String,
+    require: false,
+    default: new Date().toISOString(),
+  },
 });
 
-export type User = z.infer<typeof User>;
-export type UserWithId = WithId<User>;
-export const Users = db.collection<User>('users');
+export const User = mongoose.model('users', UserSchema);

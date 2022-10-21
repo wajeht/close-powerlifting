@@ -1,12 +1,15 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { EMAIL } from '../config/constants';
+import { EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
 import mail from '../utils/mail';
 import Keys from '../utils/keys';
-import { getHostName } from '../utils/helpers';
+import { getHostName, hashKey } from '../utils/helpers';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 
-import { Users, User, UserWithId } from './views.models';
+// import { Users, User, UserWithId } from './views.models';
 import { z } from 'zod';
+import { User } from './views.models';
 
 const views = express.Router();
 
@@ -53,24 +56,19 @@ views.get(
  */
 views.post(
   '/register',
-  async function handleRegistrationRequest(
-    req: Request<{}, UserWithId, User>,
-    res: Response<UserWithId>,
-    next: NextFunction,
-  ) {
+  async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, name } = req.body;
 
-      const user = Users.insertOne(req.body);
-
-      const found = await Keys.find(email);
+      const found = await User.findOne({ email });
 
       if (found) {
         req.flash('error', 'Email already exist!');
         return res.redirect('/register');
       }
 
-      const created = await Keys.create(email, name);
+      const { key: token } = await hashKey();
+      const created = await User.create({ email, name, verification_token: token });
       const hostname = getHostName(req);
 
       const info = await mail.sendMail({
@@ -95,7 +93,7 @@ views.post(
       `,
       });
 
-      // console.log(info.messageId);
+      console.log(info.messageId);
 
       req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
       return res.redirect('/register');
@@ -113,25 +111,57 @@ views.post(
  * @param {string} email.token.required - the token - application/x-www-form-urlencoded
  */
 views.get(
-  '/verify',
+  '/verify-email',
   async function handleVerificationRequest(req: Request, res: Response, next: NextFunction) {
     try {
       const email = req.query.email as string;
       const token = req.query.token as string;
 
-      const user = await Keys.find(email);
+      // const {key, hashedKey} =
+
+      // const user = await Keys.find(email);
+      const [user] = await User.find({ email });
 
       if (!user) {
         req.flash('error', 'Something wrong while verifying your account!');
         return res.redirect('/register');
       }
 
+      // @ts-ignore
       if (user.verification_token !== token) {
         req.flash('error', 'Something wrong while verifying your account!');
         return res.redirect('/register');
       }
 
-      const verified = await Keys.verify(email);
+      const key = jwt.sign(
+        {
+          name: user.name,
+          email,
+        },
+        JWT_SECRET!,
+        {
+          issuer: 'Close Powerlifting',
+        },
+      );
+
+      const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+
+      // const verified = await Keys.verify(email);
+      let verified = await User.findOneAndUpdate(
+        {
+          email,
+        },
+        {
+          $set: {
+            key: hashKey,
+            verified: true,
+            verified_at: new Date().toISOString(),
+          },
+        },
+        {
+          returnOriginal: false,
+        },
+      );
 
       const info = await mail.sendMail({
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
@@ -139,13 +169,13 @@ views.get(
         subject: 'API Key for Close Powerlifting',
         html: `
       <div>
-        <p>Hi ${verified.name},</p>
+        <p>Hi ${verified!.name},</p>
         <br>
 
         <p>Thank your verifying your email address. Here below is your API key to access Close Powerlifting!</p>
 
         <br>
-        <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${verified.key}</div>
+        <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${key}</div>
         <br>
 
         <br>

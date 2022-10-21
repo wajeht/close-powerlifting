@@ -11,6 +11,7 @@ export const COOKIE_EXPIRATION = process.env.COOKIE_EXPIRATION as unknown as num
 export const ENV = process.env.ENV as unknown as string;
 export const DOMAIN = process.env.DOMAIN;
 export const JWT_SECRET = process.env.JWT_SECRET;
+export const PASSWORD_SALT = process.env.PASSWORD_SALT;
 export const MONGODB_URI = process.env.MONGODB_URI;
 export const EMAIL = {
   HOST: process.env.EMAIL_HOST,

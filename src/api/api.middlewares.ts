@@ -52,16 +52,19 @@ export function auth(req: Request, res: Response, next: NextFunction) {
       throw new UnauthorizedError('Invalid authentication!');
     }
 
-    // try {
-    //   const verified = jwt.verify(token, JWT_SECRET!);
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET!);
 
-    //   req.user = {
-    //     email: verified.email,
-    //     role: verified.role,
-    //   };
-    // } catch (error) {
-    //   throw new UnauthorizedError('Invalid signature!');
-    // }
+      // @ts-ignore
+      req.user = {
+        // @ts-ignore
+        name: decoded.name,
+        // @ts-ignore
+        email: decoded.email,
+      };
+    } catch (error) {
+      throw new UnauthorizedError('Invalid signature!');
+    }
 
     next();
   } catch (e) {

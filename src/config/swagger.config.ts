@@ -22,4 +22,10 @@ export default {
   swaggerUIPath: '/docs/api',
   exposeSwaggerUI: true,
   notRequiredAsNullable: false,
+  security: {
+    BearerAuth: {
+      type: 'http',
+      scheme: 'bearer',
+    },
+  },
 };

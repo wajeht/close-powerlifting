@@ -1,5 +1,7 @@
 import { Request } from 'express';
 import { ENV, DOMAIN } from '../config/constants';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 type buildPaginationType = {
   current_page: number;
@@ -77,4 +79,17 @@ export function getHostName(req: Request): string {
   }
 
   return origin;
+}
+
+/**
+ * It generates a random UUID, hashes it, and returns the unhashed and hashed versions
+ * @returns An object with two properties: key and hashedKey.
+ */
+export async function hashKey() {
+  const key = crypto.randomUUID();
+  const hashedKey = await bcrypt.hash(key, 5);
+  return {
+    key,
+    hashedKey,
+  };
 }
