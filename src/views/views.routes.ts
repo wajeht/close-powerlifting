@@ -130,6 +130,11 @@ views.get(
         return res.redirect('/register');
       }
 
+      if (user.verified === true) {
+        req.flash('error', 'This e-mail has already been used for verification!');
+        return res.redirect('/register');
+      }
+
       const key = jwt.sign(
         {
           name: user.name,
@@ -189,7 +194,6 @@ views.get(
 
       return res.redirect('/register');
     } catch (e) {
-      console.log(e);
       next(e);
     }
   },
