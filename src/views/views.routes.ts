@@ -2,13 +2,10 @@ import express, { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
 import mail from '../utils/mail';
-import Keys from '../utils/keys';
 import { getHostName, hashKey } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-// import { Users, User, UserWithId } from './views.models';
-import { z } from 'zod';
 import { User } from './views.models';
 
 const views = express.Router();

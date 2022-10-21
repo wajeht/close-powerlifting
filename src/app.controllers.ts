@@ -37,11 +37,23 @@ export function notFoundHandler(req: Request, res: Response, next: NextFunction)
  */
 export function serverErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   let statusCode;
+  let message;
 
   statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  message =
+    ENV === 'development'
+      ? err.stack
+      : 'The server encountered an internal error or misconfiguration and was unable to complete your request.';
 
-  if (err instanceof ZodError) statusCode = StatusCodes.BAD_REQUEST;
-  if (err instanceof UnauthorizedError) statusCode = StatusCodes.UNAUTHORIZED;
+  if (err instanceof ZodError) {
+    message = err.message;
+    statusCode = StatusCodes.BAD_REQUEST;
+  }
+
+  if (err instanceof UnauthorizedError) {
+    statusCode = StatusCodes.UNAUTHORIZED;
+    message = err.message;
+  }
 
   const isApiPrefix = req.url.match(/\/api\//g);
   if (!isApiPrefix) return res.status(statusCode).render('error.html');
@@ -50,10 +62,7 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
     status: 'fail',
     request_url: req.originalUrl,
     cache: req.query?.cache,
-    message:
-      ENV === 'development'
-        ? err.stack
-        : 'The server encountered an internal error or misconfiguration and was unable to complete your request.',
+    message,
     errors: err?.errors,
     data: [],
   });
