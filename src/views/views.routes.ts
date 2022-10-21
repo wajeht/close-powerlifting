@@ -301,15 +301,22 @@ views.get('/about', function aboutPageHandler(req: Request, res: Response, next:
  * @tags views
  * @summary get status page
  */
-views.get('/status', function statusPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
-    return res.status(StatusCodes.OK).render('status.html', {
-      path: '/status',
-    });
-  } catch (e) {
-    next(e);
-  }
-});
+views.get(
+  '/status',
+  async function statusPageHandler(req: Request, res: Response, next: NextFunction) {
+    try {
+      const url = getHostName(req);
+      const data = await (await axios.get(`${url}/health-check`)).data;
+
+      return res.status(StatusCodes.OK).render('status.html', {
+        path: '/status',
+        data,
+      });
+    } catch (e) {
+      next(e);
+    }
+  },
+);
 
 /**
  * GET /health-check
