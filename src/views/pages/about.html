@@ -1,10 +1,124 @@
 <div>
-  <div class="max-w-2xl mx-auto flex flex-col gap-4">
-    <!-- warning -->
-    <div class="bg-red-500/20 rounded text-neutral-300 p-4 text-center">
-      The primary reason this project is for education purposes only!
-    </div>
+  <div id="about">
+    <div class="max-w-2xl mx-auto flex flex-col gap-4">
+      <!-- warn -->
+      <p class="bg-red-500/20 rounded text-neutral-300 p-4 text-center">
+        The primary reason this project is for education purposes only!
+      </p>
 
-    <div>Why?</div>
+      <!-- why -->
+      <h1>Why?</h1>
+
+      <!-- 1 -->
+      <p>
+        Within powerlifting world, there is
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://openpowerlifting.org/"
+          target="_blank"
+          >Open Powerlifting ↗️</a
+        >
+        project exists to create a permanent, accurate, convenient, accessible, open archive of the
+        world's powerlifting data.
+      </p>
+
+      <p>
+        They even mentioned not to scrape the website yet still provided bulk data for free of
+        download
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html"
+          target="_blank"
+          >here ↗️</a
+        >.
+      </p>
+
+      <p>
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://close-powerlifting.jaw.dev/"
+          target="_blank"
+          >Close Powerlifting ↗️</a
+        >
+        only exists to create reverse API on top of
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://openpowerlifting.org/"
+          target="_blank"
+          >Open Powerlifting ↗️</a
+        >
+        project for us developers. The primary reason this project is for education purposes only!
+      </p>
+
+      <!-- how  -->
+      <h1>How?</h1>
+
+      <!-- 1 -->
+      <h2>Step 1</h2>
+      <p>
+        Register for api key
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://close-powerlifting.jaw.dev/register"
+          target="_blank"
+          >here ↗️</a
+        >. You will have confirm your email address after registration and API key will sent to your
+        email!
+      </p>
+
+      <!-- 2 -->
+      <h2>Step 2</h2>
+      <p>
+        Visit our
+        <a
+          class="hover:text-slate-200 font-bold"
+          href="https://close-powerlifting.jaw.dev/docs/api/"
+          target="_blank"
+          >API Documentation ↗️</a
+        >
+        page to reference all the available routes.
+      </p>
+
+      <!-- 3 -->
+      <h2>Step 3</h2>
+      <p>
+        Attach your api key via
+        <span class="bg-neutral-900 py-1 px-2 rounded-sm">x-api-key</span> for
+        <span class="bg-neutral-900 rounded-sm py-1 px-2">bearer token</span>.
+      </p>
+      <pre class="bg-neutral-900 overflow-scroll p-4 text-sm">
+// auth through x-api-key 
+const res = await window.fetch('/api/rankings', {
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': yourApiKey,
+  },
+});
+const data = await res.json();
+        
+// auth bearer token x-api-key 
+const res = await window.fetch('/api/rankings', {
+  headers: {
+    'Authorization': `Bearer ${yourApiKey}`,
+    'x-api-key': 'your api key here',
+  },
+});
+const data = await res.json();
+</pre
+      >
+      Enjoy!
+    </div>
   </div>
 </div>
+
+<style>
+  #about h1 {
+    font-size: large;
+    color: #f8fafc;
+  }
+
+  #about h2 {
+    font-size: medium;
+    color: #bcbebf;
+  }
+</style>
