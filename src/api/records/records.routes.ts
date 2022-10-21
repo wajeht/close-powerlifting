@@ -11,6 +11,7 @@ const records = express.Router();
  * GET /api/records
  * @tags records
  * @summary all things relating records end point
+ * @security BearerAuth
  */
 
 records.get(

@@ -17,15 +17,15 @@ export default {
     },
     version: pkg.version,
   },
+  security: {
+    BearerAuth: {
+      type: 'http',
+      scheme: 'bearer',
+    },
+  },
   baseDir: path.resolve(path.join(process.cwd(), 'src')),
   filesPattern: ['**/*.router.ts', '**/*.routes.ts'],
   swaggerUIPath: '/docs/api',
   exposeSwaggerUI: true,
   notRequiredAsNullable: false,
-  security: {
-    BearerAuth: {
-      type: 'http',
-      scheme: 'Bearer',
-    },
-  },
 };

@@ -11,6 +11,7 @@ const rankings = express.Router();
  * GET /api/rankings
  * @tags rankings
  * @summary all things relating rankings end point
+ * @security BearerAuth
  */
 
 /**
@@ -20,6 +21,7 @@ const rankings = express.Router();
  * @param {number} per_page.query.required - the per_page - application/x-www-form-urlencoded
  * @param {number} current_page.query.required - the current_page - application/x-www-form-urlencoded
  * @param {boolean} cache.query.required - the cache - application/x-www-form-urlencoded
+ * @security BearerAuth
  */
 rankings.get(
   '/',
@@ -32,6 +34,7 @@ rankings.get(
  * @tags rankings
  * @summary all things relating rank end point
  * @param {string} rank.params.required - the rank - application/x-www-form-urlencoded
+ * @security BearerAuth
  */
 rankings.get(
   '/:rank',

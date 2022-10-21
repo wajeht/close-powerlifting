@@ -11,6 +11,7 @@ const meets = express.Router();
  * GET /api/meets
  * @tags meets
  * @summary all things relating meets end point
+ * @security BearerAuth
  */
 
 /**
@@ -20,6 +21,7 @@ const meets = express.Router();
  * @param {number} per_page.query.required - the per_page - application/x-www-form-urlencoded
  * @param {number} current_page.query.required - the current_page - application/x-www-form-urlencoded
  * @param {boolean} cache.query.required - the cache - application/x-www-form-urlencoded
+ * @security BearerAuth
  */
 meets.get(
   '/',

@@ -12,6 +12,7 @@ const users = express.Router();
  * @tags users
  * @summary all things relating users end point
  * @param {string} username.params.required - the username - application/x-www-form-urlencoded
+ * @security BearerAuth
  */
 
 users.get(
