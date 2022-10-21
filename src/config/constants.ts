@@ -13,6 +13,7 @@ export const DOMAIN = process.env.DOMAIN;
 export const JWT_SECRET = process.env.JWT_SECRET;
 export const PASSWORD_SALT = process.env.PASSWORD_SALT;
 export const MONGODB_URI = process.env.MONGODB_URI;
+export const X_API_KEY = process.env.X_API_KEY;
 export const EMAIL = {
   HOST: process.env.EMAIL_HOST,
   PORT: process.env.EMAIL_PORT,

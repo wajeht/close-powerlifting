@@ -1,10 +1,11 @@
 import express, { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
+import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
 import mail from '../utils/mail';
 import { getHostName, hashKey } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import axios from 'axios';
 
 import { User } from './views.models';
 
@@ -281,21 +282,6 @@ views.get('/privacy', function privacyPageHandler(req: Request, res: Response, n
 });
 
 /**
- * GET /status
- * @tags views
- * @summary get status page
- */
-views.get('/status', function statusPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
-    return res.status(StatusCodes.OK).render('status.html', {
-      path: '/status',
-    });
-  } catch (e) {
-    next(e);
-  }
-});
-
-/**
  * GET /about
  * @tags views
  * @summary get about page
@@ -311,13 +297,44 @@ views.get('/about', function aboutPageHandler(req: Request, res: Response, next:
 });
 
 /**
+ * GET /status
+ * @tags views
+ * @summary get status page
+ */
+views.get('/status', function statusPageHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    return res.status(StatusCodes.OK).render('status.html', {
+      path: '/status',
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+/**
  * GET /health-check
  * @tags views
  * @summary get the health of close-powerlifting app
  */
 views.get(
   '/health-check',
-  function healthCheckHandler(req: Request, res: Response, next: NextFunction) {
+  async function healthCheckHandler(req: Request, res: Response, next: NextFunction) {
+    const url = getHostName(req);
+    const fetch = axios.create({
+      baseURL: url,
+      headers: {
+        authorization: `Bearer ${X_API_KEY}`,
+      },
+    });
+
+    const rankings = await fetch.get('/api/rankings');
+    const paginatedRankings = await fetch.get('/api/rankings?current_page=1&per_page=100&cache=false'); // prettier-ignore
+    const rank = await fetch.get('/api/rankings/1');
+    const meets = await fetch.get('/api/meets');
+    const paginatedMeets   = await fetch.get('/api/meets?current_page=1&per_page=100&cache=false'); // prettier-ignore
+    const records = await fetch.get('/api/records');
+    const users = await fetch.get('/api/users/johnhaack');
+
     return res.status(StatusCodes.OK).json({
       status: 'success',
       request_url: req.originalUrl,
@@ -325,6 +342,38 @@ views.get(
       cache: req.query?.cache,
       data: [
         {
+          status: rankings.status === 200,
+          url: rankings.config.url,
+          date: new Date(),
+        },
+        {
+          status: paginatedRankings.status === 200,
+          url: paginatedRankings.config.url,
+          date: new Date(),
+        },
+        {
+          status: rank.status === 200,
+          url: rank.config.url,
+          date: new Date(),
+        },
+        {
+          status: meets.status === 200,
+          url: meets.config.url,
+          date: new Date(),
+        },
+        {
+          status: paginatedMeets.status === 200,
+          url: paginatedMeets.config.url,
+          date: new Date(),
+        },
+        {
+          status: records.status === 200,
+          url: records.config.url,
+          date: new Date(),
+        },
+        {
+          status: users.status === 200,
+          url: users.config.url,
           date: new Date(),
         },
       ],
