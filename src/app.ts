@@ -16,7 +16,7 @@ import apiRoutes from './api/api';
 import viewsRoutes from './views/views.routes';
 import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
-import * as middlewares from './api/api.middlewares';
+import * as apiMiddlewares from './api/api.middlewares';
 
 const app = express();
 
@@ -47,11 +47,11 @@ app.set('layout', '../layouts/main.html');
 app.use(expressLayouts);
 expressJSDocSwagger(app)(swaggerConfig);
 
-if (ENV !== 'development') {
-  app.use('/api', rateLimiters.api, middlewares.auth, apiRoutes);
+if (ENV === 'production') {
+  app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiRoutes);
   app.use(rateLimiters.app);
 } else {
-  app.use('/api', middlewares.auth, apiRoutes);
+  app.use('/api', apiMiddlewares.auth, apiRoutes);
 }
 
 app.use(viewsRoutes);
