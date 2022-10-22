@@ -14,7 +14,7 @@ import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
 import viewsRoutes from './views/views.routes';
-import * as appControllers from './app.controllers';
+import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
 import * as middlewares from './api/api.middlewares';
 
@@ -56,7 +56,7 @@ if (ENV !== 'development') {
 
 app.use(viewsRoutes);
 
-app.use(appControllers.notFoundHandler);
-app.use(appControllers.serverErrorHandler);
+app.use(appMiddlewares.notFoundHandler);
+app.use(appMiddlewares.serverErrorHandler);
 
 export default app;

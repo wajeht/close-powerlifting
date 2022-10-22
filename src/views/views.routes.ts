@@ -1,4 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express';
+import catchAsyncHandler from 'express-async-handler';
 import { StatusCodes } from 'http-status-codes';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
 import mail from '../utils/mail';
@@ -16,15 +17,14 @@ const views = express.Router();
  * @tags views
  * @summary get home page
  */
-views.get('/', function (req: Request, res: Response, next: NextFunction) {
-  try {
+views.get(
+  '/',
+  catchAsyncHandler((req: Request, res: Response) => {
     return res.status(StatusCodes.OK).render('home.html', {
       path: '/home',
     });
-  } catch (e) {
-    next(e);
-  }
-});
+  }),
+);
 
 /**
  * GET /register
@@ -33,16 +33,12 @@ views.get('/', function (req: Request, res: Response, next: NextFunction) {
  */
 views.get(
   '/register',
-  function registerPageHandler(req: Request, res: Response, next: NextFunction) {
-    try {
-      return res.status(StatusCodes.OK).render('register.html', {
-        path: '/register',
-        messages: req.flash(),
-      });
-    } catch (e) {
-      next(e);
-    }
-  },
+  catchAsyncHandler((req: Request, res: Response) => {
+    return res.status(StatusCodes.OK).render('register.html', {
+      path: '/register',
+      messages: req.flash(),
+    });
+  }),
 );
 
 /**
@@ -54,26 +50,25 @@ views.get(
  */
 views.post(
   '/register',
-  async function handleRegistrationRequest(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { email, name } = req.body;
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    const { email, name } = req.body;
 
-      const found = await User.findOne({ email });
+    const found = await User.findOne({ email });
 
-      if (found) {
-        req.flash('error', 'Email already exist!');
-        return res.redirect('/register');
-      }
+    if (found) {
+      req.flash('error', 'Email already exist!');
+      return res.redirect('/register');
+    }
 
-      const { key: token } = await hashKey();
-      const created = await User.create({ email, name, verification_token: token });
-      const hostname = getHostName(req);
+    const { key: token } = await hashKey();
+    const created = await User.create({ email, name, verification_token: token });
+    const hostname = getHostName(req);
 
-      const info = await mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: email,
-        subject: 'Account verification',
-        html: `
+    const info = await mail.sendMail({
+      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+      to: email,
+      subject: 'Account verification',
+      html: `
       <div>
         <p>Hi ${name},</p>
         <br>
@@ -89,16 +84,13 @@ views.post(
         <p>Let's make all kinds of gains. All kindszzzz.!</p>
       </div>
       `,
-      });
+    });
 
-      console.log(info.messageId);
+    console.log(info.messageId);
 
-      req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
-      return res.redirect('/register');
-    } catch (e) {
-      next(e);
-    }
-  },
+    req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
+    return res.redirect('/register');
+  }),
 );
 
 /**
@@ -110,64 +102,63 @@ views.post(
  */
 views.get(
   '/verify-email',
-  async function handleVerificationRequest(req: Request, res: Response, next: NextFunction) {
-    try {
-      const email = req.query.email as string;
-      const token = req.query.token as string;
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    const email = req.query.email as string;
+    const token = req.query.token as string;
 
-      const [user] = await User.find({ email });
+    const [user] = await User.find({ email });
 
-      if (!user) {
-        req.flash('error', 'Something wrong while verifying your account!');
-        return res.redirect('/register');
-      }
+    if (!user) {
+      req.flash('error', 'Something wrong while verifying your account!');
+      return res.redirect('/register');
+    }
 
-      // @ts-ignore
-      if (user.verification_token !== token) {
-        req.flash('error', 'Something wrong while verifying your account!');
-        return res.redirect('/register');
-      }
+    // @ts-ignore
+    if (user.verification_token !== token) {
+      req.flash('error', 'Something wrong while verifying your account!');
+      return res.redirect('/register');
+    }
 
-      if (user.verified === true) {
-        req.flash('error', 'This e-mail has already been used for verification!');
-        return res.redirect('/register');
-      }
+    if (user.verified === true) {
+      req.flash('error', 'This e-mail has already been used for verification!');
+      return res.redirect('/register');
+    }
 
-      const key = jwt.sign(
-        {
-          name: user.name,
-          email,
+    const key = jwt.sign(
+      {
+        name: user.name,
+        email,
+      },
+      JWT_SECRET!,
+      {
+        issuer: 'Close Powerlifting',
+      },
+    );
+
+    const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+
+    // const verified = await Keys.verify(email);
+    let verified = await User.findOneAndUpdate(
+      {
+        email,
+      },
+      {
+        $set: {
+          key: hashKey,
+          verified: true,
+          verified_at: new Date().toISOString(),
         },
-        JWT_SECRET!,
-        {
-          issuer: 'Close Powerlifting',
-        },
-      );
+      },
+      {
+        returnOriginal: false,
+      },
+    );
 
-      const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
-
-      // const verified = await Keys.verify(email);
-      let verified = await User.findOneAndUpdate(
-        {
-          email,
-        },
-        {
-          $set: {
-            key: hashKey,
-            verified: true,
-            verified_at: new Date().toISOString(),
-          },
-        },
-        {
-          returnOriginal: false,
-        },
-      );
-
-      const info = await mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: email,
-        subject: 'API Key for Close Powerlifting',
-        html: `
+    const info = await mail.sendMail({
+      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+      to: email,
+      subject: 'API Key for Close Powerlifting',
+      html: `
       <div>
         <p>Hi ${verified!.name},</p>
         <br>
@@ -183,18 +174,15 @@ views.get(
         <p>Let's make all kinds of gains. All kindszzzz.!</p>
       </div>
       `,
-      });
+    });
 
-      req.flash(
-        'success',
-        'Thank you for verifying your email address. We just send you an API key to your email!',
-      );
+    req.flash(
+      'success',
+      'Thank you for verifying your email address. We just send you an API key to your email!',
+    );
 
-      return res.redirect('/register');
-    } catch (e) {
-      next(e);
-    }
-  },
+    return res.redirect('/register');
+  }),
 );
 
 /**
@@ -202,16 +190,15 @@ views.get(
  * @tags views
  * @summary get contact page
  */
-views.get('/contact', function contactPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
+views.get(
+  '/contact',
+  catchAsyncHandler((req: Request, res: Response) => {
     return res.status(StatusCodes.OK).render('contact.html', {
       path: '/contact',
       messages: req.flash(),
     });
-  } catch (e) {
-    next(e);
-  }
-});
+  }),
+);
 
 /**
  * POST /contact
@@ -223,29 +210,25 @@ views.get('/contact', function contactPageHandler(req: Request, res: Response, n
  */
 views.post(
   '/contact',
-  async function handleContactingRequest(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { name, email, message } = req.body;
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    const { name, email, message } = req.body;
 
-      const info = await mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: EMAIL.AUTH_EMAIL,
-        subject: `Contact Request from ${email}`,
-        html: `
+    const info = await mail.sendMail({
+      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+      to: EMAIL.AUTH_EMAIL,
+      subject: `Contact Request from ${email}`,
+      html: `
       <div>
       <p><span style="font-weight: bold;">Name:</span> ${name}</p>
       <p><span style="font-weight: bold;">Email:</span> ${email}</p>
       <p><span style="font-weight: bold;">Message:</span> ${message}</p>
       </div>
       `,
-      });
+    });
 
-      req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
-      return res.redirect('/contact');
-    } catch (e) {
-      next(e);
-    }
-  },
+    req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
+    return res.redirect('/contact');
+  }),
 );
 
 /**
@@ -253,45 +236,42 @@ views.post(
  * @tags views
  * @summary get terms page
  */
-views.get('/terms', function termsPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
+views.get(
+  '/terms',
+  catchAsyncHandler((req: Request, res: Response) => {
     return res.status(StatusCodes.OK).render('terms.html', {
       path: '/terms',
     });
-  } catch (e) {
-    next(e);
-  }
-});
+  }),
+);
 
 /**
  * GET /privacy
  * @tags views
  * @summary get privacy page
  */
-views.get('/privacy', function privacyPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
+views.get(
+  '/privacy',
+  catchAsyncHandler((req: Request, res: Response) => {
     return res.status(StatusCodes.OK).render('privacy.html', {
       path: '/privacy',
     });
-  } catch (e) {
-    next(e);
-  }
-});
+  }),
+);
 
 /**
  * GET /about
  * @tags views
  * @summary get about page
  */
-views.get('/about', function aboutPageHandler(req: Request, res: Response, next: NextFunction) {
-  try {
+views.get(
+  '/about',
+  catchAsyncHandler((req: Request, res: Response) => {
     return res.status(StatusCodes.OK).render('about.html', {
       path: '/about',
     });
-  } catch (e) {
-    next(e);
-  }
-});
+  }),
+);
 
 /**
  * GET /status
@@ -300,15 +280,11 @@ views.get('/about', function aboutPageHandler(req: Request, res: Response, next:
  */
 views.get(
   '/status',
-  async function statusPageHandler(req: Request, res: Response, next: NextFunction) {
-    try {
-      return res.status(StatusCodes.OK).render('status.html', {
-        path: '/status',
-      });
-    } catch (e) {
-      next(e);
-    }
-  },
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    return res.status(StatusCodes.OK).render('status.html', {
+      path: '/status',
+    });
+  }),
 );
 
 /**
@@ -318,7 +294,7 @@ views.get(
  */
 views.get(
   '/health-check',
-  async function healthCheckHandler(req: Request, res: Response, next: NextFunction) {
+  catchAsyncHandler(async (req: Request, res: Response) => {
     const url = getHostName(req);
     const fetch = axios.create({
       baseURL: url,
@@ -336,7 +312,7 @@ views.get(
     const records = await fetch.get('/api/records');
     const users = await fetch.get('/api/users/johnhaack');
 
-    return res.status(StatusCodes.OK).json({
+    res.status(StatusCodes.OK).json({
       status: 'success',
       request_url: req.originalUrl,
       message: 'ok',
@@ -386,7 +362,7 @@ views.get(
         },
       ],
     });
-  },
+  }),
 );
 
 export default views;

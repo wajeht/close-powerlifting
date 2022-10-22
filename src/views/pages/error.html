@@ -1,9 +1,21 @@
 <div>
-  <div class="max-w-2xl mx-auto gap-4 text-center">
+  <div class="max-w-2xl mx-auto flex flex-col gap-4 text-center">
     <h1>500</h1>
     <span
       >The server encountered an internal error or misconfiguration and was unable to complete your
       request.</span
     >
+
+    <!-- prettier-ignore- -->
+    <% if (error) { %>
+    <!-- prettier-ignore- -->
+    <pre class="bg-neutral-900 overflow-scroll p-4 text-sm text-left">
+      <!-- prettier-ignore- -->
+          <%=  error %>
+      <!-- prettier-ignore- -->
+        </pre>
+    <!-- prettier-ignore- -->
+    <% } %>
+    <!-- prettier-ignore- -->
   </div>
 </div>

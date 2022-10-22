@@ -43,20 +43,22 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
   message =
     ENV === 'development'
       ? err.stack
-      : 'The server encountered an internal error or misconfiguration and was unable to complete your request.';
+      : 'The server encountered an internal error or misconfiguration and was unable to complete your request!';
 
   if (err instanceof ZodError) {
-    message = err.message;
     statusCode = StatusCodes.BAD_REQUEST;
   }
 
   if (err instanceof UnauthorizedError) {
     statusCode = StatusCodes.UNAUTHORIZED;
-    message = err.message;
   }
 
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix) return res.status(statusCode).render('error.html');
+  const isHealthcheck = req.originalUrl === '/health-check';
+  if (!isApiPrefix && !isHealthcheck)
+    return res.status(statusCode).render('error.html', {
+      error: err.stack,
+    });
 
   return res.status(statusCode).json({
     status: 'fail',
