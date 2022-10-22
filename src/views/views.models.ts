@@ -23,7 +23,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     unique: true,
     require: false,
-    default: '',
   },
   verified: {
     type: Boolean,
