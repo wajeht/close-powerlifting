@@ -47,10 +47,12 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
 
   if (err instanceof ZodError) {
     statusCode = StatusCodes.BAD_REQUEST;
+    message = err.message;
   }
 
   if (err instanceof UnauthorizedError) {
     statusCode = StatusCodes.UNAUTHORIZED;
+    message = err.message;
   }
 
   const isApiPrefix = req.url.match(/\/api\//g);
