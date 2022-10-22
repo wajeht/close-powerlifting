@@ -73,8 +73,8 @@ $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page
   "current_page": 1,
   "last_page": 4155,
   "first_page": 1,
-  "from": 100,
-  "to": 200
+  "from": 0,
+  "to": 100
   }
 }
 ```
