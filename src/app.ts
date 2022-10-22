@@ -13,7 +13,7 @@ import ejs from 'ejs';
 import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
-import viewsRoutes from './views/views.routes';
+import viewsRoutesControllers from './views/views.routes-controllers';
 import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
 import * as apiMiddlewares from './api/api.middlewares';
@@ -54,7 +54,7 @@ if (ENV === 'production') {
   app.use('/api', apiMiddlewares.auth, apiRoutes);
 }
 
-app.use(viewsRoutes);
+app.use(viewsRoutesControllers);
 
 app.use(appMiddlewares.notFoundHandler);
 app.use(appMiddlewares.serverErrorHandler);
