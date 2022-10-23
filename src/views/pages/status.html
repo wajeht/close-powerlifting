@@ -82,11 +82,7 @@
     </div>
 
     <div
-      class="flex flex-col gap-2 p-4 rounded"
-      :class="{
-        'bg-neutral-900': d.status === true,
-        'bg-red-900': d.status === false,
-    }"
+      class="flex flex-col gap-2 p-4 bg-neutral-900 rounded"
       v-for="d, idx in data"
       :key="`data-key-${idx}`"
     >
@@ -98,8 +94,8 @@
 
       <!-- bottom -->
       <div class="flex gap-1">
-        <span v-if="d.status === true">Available</span>
-        <span v-if="d.status === false">Not available</span>
+        <span v-if="d.status === true">✅ Available</span>
+        <span v-if="d.status === false">❌ Not available</span>
         <div>as of</div>
         <div>{{d.date}}</div>
       </div>
