@@ -24,7 +24,7 @@ export default {
     },
   },
   baseDir: path.resolve(path.join(process.cwd(), 'src')),
-  filesPattern: ['**/*.router.ts', '**/*.routes.ts'],
+  filesPattern: ['**/*.router.ts', '**/*.routes.ts', '**/*.routes-controllers.ts'],
   swaggerUIPath: '/docs/api',
   exposeSwaggerUI: true,
   notRequiredAsNullable: false,
