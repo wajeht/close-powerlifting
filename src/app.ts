@@ -45,6 +45,7 @@ app.set('views', path.resolve(path.join(process.cwd(), 'src', 'views', 'pages'))
 app.set('layout', '../layouts/main.html');
 
 app.use(expressLayouts);
+
 expressJSDocSwagger(app)(swaggerConfig);
 
 if (ENV === 'production') {
