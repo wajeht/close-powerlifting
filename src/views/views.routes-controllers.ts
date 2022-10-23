@@ -304,63 +304,47 @@ views.get(
     });
 
     // TODO!:  **** REFACTOR THIS ****
-    const rankings = await fetch.get('/api/rankings');
-    const paginatedRankings = await fetch.get('/api/rankings?current_page=1&per_page=100&cache=false'); // prettier-ignore
-    const rank = await fetch.get('/api/rankings/1');
-    const meets = await fetch.get('/api/meets');
-    const paginatedMeets   = await fetch.get('/api/meets?current_page=1&per_page=100&cache=false'); // prettier-ignore
-    const records = await fetch.get('/api/records');
-    const users = await fetch.get('/api/users/johnhaack');
+    const promises = await Promise.allSettled([
+      fetch.get('/api/rankings'),
+      fetch.get('/api/rankings?current_page=1&per_page=100&cache=false'),
+      fetch.get('/api/rankings/1'),
+      fetch.get('/api/meets'),
+      fetch.get('/api/meets?current_page=1&per_page=100&cache=false'),
+      fetch.get('/api/records'),
+      fetch.get('/api/users/johnhaack'),
+    ]);
+
+    const data = promises.map((p) => {
+      if (p.status === 'rejected') {
+        return {
+          // @ts-ignore
+          status: p.status === 'fulfilled',
+          // @ts-ignore
+          method: p?.reason?.config.method?.toUpperCase(),
+          // @ts-ignore
+          url: p?.reason?.config?.url,
+          // @ts-ignore
+          date: p?.reason?.response?.headers?.date,
+        };
+      }
+
+      return {
+        status: p.status === 'fulfilled',
+        // @ts-ignore
+        method: p?.value?.config.method?.toUpperCase(),
+        // @ts-ignore
+        url: p?.value?.config?.url,
+        // @ts-ignore
+        date: p?.value?.headers?.date,
+      };
+    });
 
     res.status(StatusCodes.OK).json({
       status: 'success',
       request_url: req.originalUrl,
       message: 'ok',
       cache: req.query?.cache,
-      data: [
-        {
-          method: rankings.config.method?.toUpperCase(),
-          status: rankings.status === 200,
-          url: rankings.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: paginatedRankings.config.method?.toUpperCase(),
-          status: paginatedRankings.status === 200,
-          url: paginatedRankings.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: rank.config.method?.toUpperCase(),
-          status: rank.status === 200,
-          url: rank.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: meets.config.method?.toUpperCase(),
-          status: meets.status === 200,
-          url: meets.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: paginatedMeets.config.method?.toUpperCase(),
-          status: paginatedMeets.status === 200,
-          url: paginatedMeets.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: records.config.method?.toUpperCase(),
-          status: records.status === 200,
-          url: records.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-        {
-          method: users.config.method?.toUpperCase(),
-          status: users.status === 200,
-          url: users.config.url,
-          date: `${new Date().toLocaleDateString()} - ${new Date().toLocaleTimeString()}`,
-        },
-      ],
+      data,
     });
   }),
 );
