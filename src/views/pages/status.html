@@ -17,6 +17,11 @@
       const temp = await this.getHealthCheck();
       this.data = temp.data;
     },
+    computed: {
+      allGood() {
+        return this.data.every((d) => d?.status === true);
+      },
+    },
     methods: {
       async getHealthCheck() {
         try {
@@ -66,9 +71,22 @@
 
   <!-- actual data -->
   <div class="flex gap-4 flex-col" v-if="!loading">
-    <div class="bg-green-500/20 rounded text-neutral-300 p-4">All Systems Operational</div>
+    <!-- all good -->
+    <div v-if="allGood" class="bg-green-500/20 rounded text-neutral-300 p-4">
+      All systems operational!
+    </div>
+
+    <!-- not good -->
+    <div v-if="!allGood" class="bg-yellow-500/20 rounded text-neutral-300 p-4">
+      Some systems are not functional!
+    </div>
+
     <div
-      class="flex flex-col gap-2 p-4 rounded bg-neutral-900"
+      class="flex flex-col gap-2 p-4 rounded"
+      :class="{
+        'bg-neutral-900': d.status === true,
+        'bg-red-900': d.status === false,
+    }"
       v-for="d, idx in data"
       :key="`data-key-${idx}`"
     >
