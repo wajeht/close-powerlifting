@@ -9,7 +9,6 @@
     data() {
       return {
         data: [],
-        error: '',
         loading: false,
       };
     },
@@ -31,7 +30,6 @@
           this.loading = false;
           return data;
         } catch (e) {
-          console.log(e);
           this.loading = false;
         }
       },
