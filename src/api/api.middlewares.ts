@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject } from 'zod';
 import { UnauthorizedError } from './api.errors';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config/constants';
+import { JWT_SECRET, ENV } from '../config/constants';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -46,6 +46,11 @@ export function validate(validators: RequestValidators) {
  */
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
+    // if (ENV === 'development') {
+    //   next();
+    //   return;
+    // }
+
     let token = '';
 
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
