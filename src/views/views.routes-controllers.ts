@@ -303,9 +303,9 @@ views.get(
       },
     });
 
-    // TODO!:  **** REFACTOR THIS ****
     const routes = [
       '/api/rankings',
+      '/api/rankings/1',
       '/api/rankings?current_page=1&per_page=100&cache=false',
       '/api/meets',
       '/api/meets?current_page=1&per_page=100&cache=false',
