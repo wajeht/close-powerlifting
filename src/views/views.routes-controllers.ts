@@ -304,38 +304,26 @@ views.get(
     });
 
     // TODO!:  **** REFACTOR THIS ****
-    const promises = await Promise.allSettled([
-      fetch.get('/api/rankings'),
-      fetch.get('/api/rankings?current_page=1&per_page=100&cache=false'),
-      fetch.get('/api/rankings/1'),
-      fetch.get('/api/meets'),
-      fetch.get('/api/meets?current_page=1&per_page=100&cache=false'),
-      fetch.get('/api/records'),
-      fetch.get('/api/users/johnhaack'),
-    ]);
+    const routes = [
+      '/api/rankings',
+      '/api/rankings?current_page=1&per_page=100&cache=false',
+      '/api/meets',
+      '/api/meets?current_page=1&per_page=100&cache=false',
+      '/api/records',
+      '/api/users/johnhaack',
+    ];
+
+    const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
 
     const data = promises.map((p) => {
-      if (p.status === 'rejected') {
-        return {
-          // @ts-ignore
-          status: p.status === 'fulfilled',
-          // @ts-ignore
-          method: p?.reason?.config.method?.toUpperCase(),
-          // @ts-ignore
-          url: p?.reason?.config?.url,
-          // @ts-ignore
-          date: p?.reason?.response?.headers?.date,
-        };
-      }
-
       return {
         status: p.status === 'fulfilled',
         // @ts-ignore
-        method: p?.value?.config.method?.toUpperCase(),
+        method: p?.value?.config.method?.toUpperCase() ?? p?.reason?.config.method?.toUpperCase(),
         // @ts-ignore
-        url: p?.value?.config?.url,
+        url: p?.value?.config?.url ?? p?.reason?.config?.url,
         // @ts-ignore
-        date: p?.value?.headers?.date,
+        date: p?.value?.headers?.date ?? p?.reason?.response?.headers?.date,
       };
     });
 
