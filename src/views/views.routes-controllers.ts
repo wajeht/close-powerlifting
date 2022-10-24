@@ -311,6 +311,7 @@ views.get(
       '/api/meets?current_page=1&per_page=100&cache=false',
       '/api/records',
       '/api/users/johnhaack',
+      '/api/status',
     ];
 
     const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
