@@ -1,4 +1,5 @@
 import Axios from '../../utils/axios';
+import redis from '../../utils/redis';
 const api = new Axios(false).instance();
 
 import { getRankingsType, getRankType } from './rankings.validations';

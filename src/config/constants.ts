@@ -21,3 +21,10 @@ export const EMAIL = {
   AUTH_EMAIL: process.env.EMAIL_AUTH_EMAIL,
   AUTH_PASS: process.env.EMAIL_AUTH_PASS,
 };
+export const REDIS = {
+  HOST: process.env.REDIS_HOST as unknown as string,
+  PORT: process.env.REDIS_PORT as unknown as number,
+  USERNAME: process.env.REDIS_USERNAME as unknown as string,
+  PASSWORD: process.env.REDIS_PASSWORD as unknown as string,
+  DATABASE: process.env.REDIS_DATABASE as unknown as string,
+};
