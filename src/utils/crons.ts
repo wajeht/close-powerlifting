@@ -10,7 +10,8 @@ function removeCaches() {
       if (key.match(/close-powerlifting.+/g)) {
         // @ts-ignore
         console.log(`deleted redis cache ${key}!`);
-        // redis.del(key);
+        // @ts-ignore
+        redis.del(key);
       }
     });
   });
