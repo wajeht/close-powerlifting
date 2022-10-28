@@ -1,17 +1,14 @@
 import Axios from '../../utils/axios';
+
+// @ts-ignore
 import redis from '../../utils/redis';
 const api = new Axios(false).instance();
 
 import { getRankingsType, getRankType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
 
-export async function getRankings({
-  current_page = 1,
-  per_page = 100,
-  cache = true,
-}: getRankingsType) {
+async function fetchRankings(paginationQuery: string) {
   try {
-    const paginationQuery = buildPagination({ current_page, per_page });
     const rankings = await (await api.get('/rankings' + '?' + paginationQuery)).data;
 
     // TODO!: there is probably a better way to do this!
@@ -48,13 +45,57 @@ export async function getRankings({
 
     return {
       data,
+      total_length: rankings?.total_length,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+export async function getRankings({
+  current_page = 1,
+  per_page = 100,
+  cache = true,
+}: getRankingsType) {
+  try {
+    const paginationQuery = buildPagination({ current_page, per_page });
+
+    if (cache === false) {
+      const rankings = await fetchRankings(paginationQuery);
+      return {
+        data: rankings?.data,
+        cache,
+        pagination: {
+          items: rankings?.total_length,
+          pages: Math.floor(rankings?.total_length / per_page),
+          per_page,
+          current_page,
+          last_page: Math.floor(rankings?.total_length / per_page),
+          first_page: 1,
+          from: current_page * per_page,
+          to: current_page * per_page + per_page,
+        },
+      };
+    }
+
+    // @ts-ignore
+    let rankings = JSON.parse(await redis.get(`close-powerlifting-rankings`));
+
+    if (rankings === null) {
+      rankings = await fetchRankings(paginationQuery);
+      // @ts-ignore
+      const r = await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
+    }
+
+    return {
+      data: rankings.data,
       cache,
       pagination: {
-        items: rankings.total_length,
-        pages: Math.floor(rankings.total_length / per_page),
+        items: rankings?.total_length,
+        pages: Math.floor(rankings?.total_length / per_page),
         per_page,
         current_page,
-        last_page: Math.floor(rankings.total_length / per_page),
+        last_page: Math.floor(rankings?.total_length / per_page),
         first_page: 1,
         from: current_page * per_page,
         to: current_page * per_page + per_page,
@@ -85,5 +126,6 @@ export async function getRank({ rank }: getRankType) {
 
   const index = r % per_page;
 
+  // @ts-ignore
   return data.at(index);
 }
