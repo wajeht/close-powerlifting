@@ -35,7 +35,7 @@ export async function getUsers(req: Request<getUsersType, {}, {}>, res: Response
       status: 'success',
       request_url: req.originalUrl,
       message: 'The resource was returned successfully!',
-      data: searched?.data,
+      data: searched?.data || [],
     });
 
     return;
