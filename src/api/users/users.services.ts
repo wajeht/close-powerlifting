@@ -1,10 +1,21 @@
 import { JSDOM } from 'jsdom';
 import { tableToJson, stripHTML } from '../../utils/helpers';
-import { getUserType } from './users.validations';
+import { getUserType, getUsersType } from './users.validations';
+import { fetchRankings } from '../rankings/rankings.services';
 
 import Axios from '../../utils/axios';
 const api = new Axios(true).instance();
 
+/**
+ * It takes a username as a parameter, makes a request to the website, parses the HTML, and returns an
+ * array of objects
+ * @param {getUserType}  - getUserType
+ * @returns An array of objects with the following properties:
+ *   name: string
+ *   username: string
+ *   personal_best: array of objects
+ *   competition_results: array of objects
+ */
 export async function getUser({ username }: getUserType) {
   try {
     const html = await (await api.get(`/u/${username}`)).data;
@@ -20,7 +31,19 @@ export async function getUser({ username }: getUserType) {
       },
     ];
   } catch (e) {
-    console.log(e);
+    throw new Error(`Something went wrong while processing meets data!`);
+  }
+}
+
+export async function searchUser({ search }: getUsersType) {
+  try {
+    const api = new Axios(false).instance();
+    const { next_index } = await (await api.get(`/search/rankings?q=${search}&start=0`)).data;
+    const rankings = await fetchRankings(
+      `start=${next_index}&end=${next_index + 99}&lang=en&units=lbs`,
+    );
+    return rankings;
+  } catch (e) {
     throw new Error(`Something went wrong while processing meets data!`);
   }
 }

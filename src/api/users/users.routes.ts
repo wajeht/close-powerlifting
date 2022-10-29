@@ -14,11 +14,23 @@ const users = express.Router();
  * @param {string} username.params.required - the username - application/x-www-form-urlencoded
  * @security BearerAuth
  */
-
 users.get(
   '/:username',
   validate({ params: UsersValidation.getUserValidation }),
   catchAsyncHandler(UsersControllers.getUser),
+);
+
+/**
+ * GET /api/users?search={search}
+ * @tags users
+ * @summary search a user
+ * @param {string} search.params.required - the search - application/x-www-form-urlencoded
+ * @security BearerAuth
+ */
+users.get(
+  '/',
+  validate({ params: UsersValidation.getUsersValidation }),
+  catchAsyncHandler(UsersControllers.getUsers),
 );
 
 export default users;

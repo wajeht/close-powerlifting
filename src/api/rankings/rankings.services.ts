@@ -7,7 +7,7 @@ const api = new Axios(false).instance();
 import { getRankingsType, getRankType } from './rankings.validations';
 import { buildPagination } from '../../utils/helpers';
 
-async function fetchRankings(paginationQuery: string) {
+export async function fetchRankings(paginationQuery: string) {
   try {
     const rankings = await (await api.get('/rankings' + '?' + paginationQuery)).data;
 
