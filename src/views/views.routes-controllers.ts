@@ -312,6 +312,7 @@ views.get(
       '/api/records',
       '/api/users/johnhaack',
       '/api/status',
+      '/api/users?search=haack',
     ];
 
     const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
