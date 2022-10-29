@@ -99,7 +99,7 @@ const data = await res.json();
 // auth bearer token x-api-key 
 const res = await window.fetch('/api/rankings', {
   headers: {
-    'Authorization': `Bearer ${yourApiKey}`,
+    'Content-Type': 'application/json',
     'x-api-key': 'your api key here',
   },
 });
