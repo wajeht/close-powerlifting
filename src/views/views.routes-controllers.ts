@@ -94,6 +94,43 @@ views.post(
 );
 
 /**
+ * GET /reset-api-key
+ * @tags views
+ * @summary reset/forgot your api key
+ */
+views.get(
+  '/reset-api-key',
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    return res.status(StatusCodes.OK).render('reset-api-key.html', {
+      path: '/reset-api-key',
+      messages: req.flash(),
+    });
+  }),
+);
+
+/**
+ * POST /reset-api-key
+ * @tags views
+ * @summary reset/forgot your api key
+ * @param {string} email.body.required - the email - application/x-www-form-urlencoded
+ */
+views.post(
+  '/reset-api-key',
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    const email = req.body.email;
+
+    const user = await User.find({ email });
+
+    if (user) {
+      // reset api key
+    }
+
+    req.flash('info', 'If you have an account with us, we will send you a new api key!');
+    res.redirect('/reset-api-key');
+  }),
+);
+
+/**
  * GET /verify-email?token={token}&email={email}
  * @tags views
  * @summary verify email address
