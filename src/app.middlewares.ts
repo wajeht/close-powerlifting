@@ -3,6 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { ENV } from './config/constants';
 import { ZodError, z } from 'zod';
 import { UnauthorizedError } from './api/api.errors';
+import { AnyZodObject } from 'zod';
+interface RequestValidators {
+  params?: AnyZodObject;
+  body?: AnyZodObject;
+  query?: AnyZodObject;
+}
 
 /**
  * If the request URL does not contain the `/api/` prefix, then render the `not-found.html` template,
@@ -71,4 +77,37 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
     errors: err?.errors,
     data: [],
   });
+}
+
+/**
+ * It takes a `RequestValidators` object, which is a type that contains three optional properties:
+ * `params`, `body`, and `query`. Each of these properties is a Zod schema. If any of these properties
+ * are present, the function will attempt to validate the corresponding property on the `Request`
+ * object. If validation fails, the function will redirect the user to the original URL with a flash
+ * message containing the validation errors. If validation succeeds, the function will call `next()` to
+ * continue the middleware chain
+ * @param {RequestValidators} validators - RequestValidators
+ * @returns A function that takes in a request, response, and next function.
+ */
+export function validate(validators: RequestValidators) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      if (validators.params) {
+        req.params = await validators.params.parseAsync(req.params);
+      }
+      if (validators.body) {
+        req.body = await validators.body.parseAsync(req.body);
+      }
+      if (validators.query) {
+        req.query = await validators.query.parseAsync(req.query);
+      }
+      next();
+    } catch (error) {
+      if (error instanceof ZodError) {
+        req.flash('error', error.issues.map((e) => e.message).join(' '));
+        return res.status(StatusCodes.BAD_REQUEST).redirect(req.originalUrl);
+      }
+      next();
+    }
+  };
 }

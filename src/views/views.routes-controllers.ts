@@ -7,6 +7,8 @@ import { getHostName, hashKey } from '../utils/helpers';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
+import { validate } from '../app.middlewares';
+import { z } from 'zod';
 
 import { User } from './views.models';
 
@@ -50,6 +52,9 @@ views.get(
  */
 views.post(
   '/register',
+  validate({
+    body: z.object({ email: z.string().email(), name: z.string() }),
+  }),
   catchAsyncHandler(async (req: Request, res: Response) => {
     const { email, name } = req.body;
 
@@ -116,6 +121,7 @@ views.get(
  */
 views.post(
   '/reset-api-key',
+  validate({ body: z.object({ email: z.string().email() }) }),
   catchAsyncHandler(async (req: Request, res: Response) => {
     const email = req.body.email;
 
@@ -301,6 +307,9 @@ views.get(
  */
 views.post(
   '/contact',
+  validate({
+    body: z.object({ email: z.string().email(), name: z.string(), message: z.string() }),
+  }),
   catchAsyncHandler(async (req: Request, res: Response) => {
     const { name, email, message } = req.body;
 
