@@ -112,17 +112,71 @@ views.get(
  * POST /reset-api-key
  * @tags views
  * @summary reset/forgot your api key
- * @param {string} email.body.required - the email - application/x-www-form-urlencoded
+ * @param {string} request.body.required - the email - application/x-www-form-urlencoded
  */
 views.post(
   '/reset-api-key',
   catchAsyncHandler(async (req: Request, res: Response) => {
     const email = req.body.email;
 
-    const user = await User.find({ email });
+    const [user] = await User.find({ email });
 
-    if (user) {
-      // reset api key
+    // @ts-ignore
+    if (user && user.verified === false) {
+      // email needs to verify
+    }
+
+    // @ts-ignore
+    if (user && user.verified === true) {
+      const key = jwt.sign(
+        {
+          // @ts-ignore
+          name: user.name,
+          email,
+        },
+        JWT_SECRET!,
+        {
+          issuer: 'Close Powerlifting',
+        },
+      );
+
+      const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+
+      let verified = await User.findOneAndUpdate(
+        {
+          email,
+        },
+        {
+          $set: {
+            key: hashKey,
+          },
+        },
+        {
+          returnOriginal: false,
+        },
+      );
+
+      const info = await mail.sendMail({
+        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        to: email,
+        subject: 'New api key for Close Powerlifting',
+        html: `
+      <div>
+        <p>Hi ${verified!.name},</p>
+        <br>
+
+        <p>We've received a request to reset a new api key. Here below is your API key to access Close Powerlifting!</p>
+
+        <br>
+        <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${key}</div>
+        <br>
+
+        <br>
+        <p>Welcome to the Close Powerlifting,</p>
+        <p>Let's make all kinds of gains. All kindszzzz.!</p>
+      </div>
+      `,
+      });
     }
 
     req.flash('info', 'If you have an account with us, we will send you a new api key!');
