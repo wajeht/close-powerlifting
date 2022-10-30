@@ -4,6 +4,8 @@ import { ENV } from './config/constants';
 import { ZodError, z } from 'zod';
 import { UnauthorizedError } from './api/api.errors';
 import { AnyZodObject } from 'zod';
+import logger from './utils/logger';
+
 interface RequestValidators {
   params?: AnyZodObject;
   body?: AnyZodObject;
@@ -42,7 +44,6 @@ export function notFoundHandler(req: Request, res: Response, next: NextFunction)
  * @returns A function that takes in 4 parameters.
  */
 export function serverErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
-  console.error(err);
   let statusCode;
   let message;
 
@@ -68,6 +69,8 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
     return res.status(statusCode).render('error.html', {
       error: ENV === 'development' ? err.stack : null,
     });
+
+  logger.error(err);
 
   return res.status(statusCode).json({
     status: 'fail',

@@ -1,6 +1,7 @@
 {
   "cSpell.words": [
     "deadlift",
+    "emerg",
     "haack",
     "Healthcheck",
     "importmap",
@@ -9,7 +10,9 @@
     "maxage",
     "middlewares",
     "mlist",
+    "multistream",
     "openpowerlifting",
+    "pino",
     "powerlifting",
     "resave",
     "tailwindcss",
