@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import logger from './logger';
 import { REDIS } from '../config/constants';
 
 let redis;
@@ -13,9 +14,9 @@ try {
     db: REDIS.DATABASE,
   });
 
-  console.log(`redis client started!`);
+  logger.info(`redis client started!`);
 } catch (e) {
-  console.log(`redis client failed!`);
+  logger.info(`redis client failed!`);
 }
 
 export default redis;

@@ -1,4 +1,5 @@
 import { MONGODB_URI } from '../config/constants';
+import logger from '../utils/logger';
 
 import mongoose from 'mongoose';
 
@@ -8,9 +9,9 @@ import mongoose from 'mongoose';
 export async function init() {
   try {
     await mongoose.connect(MONGODB_URI!);
-    console.log('db connection started!');
+    logger.info('db connection started!');
   } catch (e) {
-    console.log('db connection failed!');
+    logger.error('db connection failed!');
     process.exit(1);
   }
 }
@@ -20,6 +21,6 @@ export async function init() {
  * @returns The connection to the database is being closed.
  */
 export function stop() {
-  console.log('db stopped!');
+  logger.info('db connection stopped!');
   return mongoose.connection.close();
 }
