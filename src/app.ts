@@ -34,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
-  express.static(path.resolve(path.join(process.cwd(), 'src', 'public')), {
+  express.static(path.resolve(path.join(process.cwd(), 'public')), {
     maxAge: '24h',
   }),
 );
