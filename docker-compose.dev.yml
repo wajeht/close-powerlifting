@@ -1,0 +1,51 @@
+version: '3.9'
+services:
+  app:
+    container_name: app
+    restart: always
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - close-powerlifting-network
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - close-powerlifting-network
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: username
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: close-powerlifting
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - close-powerlifting-network
+
+volumes:
+  mongo-data:
+    driver: local
+
+networks:
+  close-powerlifting-network:
+    driver: bridge

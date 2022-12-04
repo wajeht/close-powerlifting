@@ -1,0 +1,16 @@
+FROM node:alpine
+
+ENV ENV production
+
+WORKDIR /usr/src/app
+
+COPY ./package.json ./
+COPY ./package-lock.json ./
+
+COPY ./ ./
+
+RUN npm install
+
+EXPOSE 8080
+
+CMD ["npm", "run", "dev"]

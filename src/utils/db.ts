@@ -12,6 +12,7 @@ export async function init() {
     logger.info('db connection started!');
   } catch (e) {
     logger.error('db connection failed!');
+    console.log(e);
     process.exit(1);
   }
 }

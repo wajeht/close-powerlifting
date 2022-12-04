@@ -105,3 +105,6 @@ src/templates/tempCodeRunnerFile.js
 *.csv
 .DS_Store
 src/public/css/style.css
+mongo-volume
+mongo-init.js
+mongo-data
