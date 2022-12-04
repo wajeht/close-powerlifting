@@ -39,7 +39,9 @@ We have a few resources available for api call. Resources with larger amount of 
 - `/api/status`
 - `/api/users`
 
-### Example call/response 
+All end-points are available via `https://close-powerlifting.jaw.dev/docs/api/`.
+
+### Example call/response
 
 
 ```bash
