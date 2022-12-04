@@ -11,7 +11,8 @@
     "build": "npm run build:tailwind && npm run build:api && npm run minify:html",
     "build:api": "tsc",
     "build:tailwind": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
-    "minify:html": "html-minifier --input-dir ./src/views --output-dir ./src/views --collapse-whitespace --file-ext html"
+    "minify:html": "html-minifier --input-dir ./src/views --output-dir ./src/views --collapse-whitespace --file-ext html",
+    "test": "vitest"
   },
   "keywords": [
     "powerlifting"
@@ -32,9 +33,12 @@
     "@types/jsonwebtoken": "^8.5.9",
     "@types/node-cron": "^3.0.4",
     "@types/nodemailer": "^6.4.6",
+    "@types/supertest": "^2.0.12",
     "nodemon": "^2.0.20",
+    "supertest": "^6.3.1",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.4"
+    "typescript": "^4.8.4",
+    "vitest": "^0.25.3"
   },
   "dependencies": {
     "autoprefixer": "^10.4.12",
