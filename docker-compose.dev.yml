@@ -15,6 +15,7 @@ services:
       - mongodb
       - redis
       - mailhog
+      - mongo-express
     networks:
       - close-powerlifting-network
 
@@ -43,13 +44,31 @@ services:
     networks:
       - close-powerlifting-network
 
+  mongo-express:
+    container_name: mongo-express
+    image: mongo-express
+    restart: always
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
+      - ME_CONFIG_MONGODB_AUTH_DATABASE=close-powerlifting
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=username
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
+    depends_on:
+      - mongodb
+    ports:
+      - "8081:8081"
+    networks:
+      - close-powerlifting-network
+
   mailhog:
     container_name: mailhot
     restart: always
     image: mailhog/mailhog
     ports:
       - 1025:1025 # smtp server
-      - 8025:8025 # web ui
+      - 8082:8082 # web ui
     networks:
       - close-powerlifting-network
 
