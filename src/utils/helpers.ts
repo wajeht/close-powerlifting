@@ -70,7 +70,7 @@ export function stripHTML(innerHTML: string): string {
 export function getHostName(req: Request): string {
   let origin = '';
 
-  if (ENV === 'development') {
+  if (ENV === 'development' || ENV == 'development') {
     const protocol = req.protocol;
     const hostname = req.get('host');
     origin = `${protocol}://${hostname}`;
