@@ -3,7 +3,7 @@ import request from 'supertest';
 import app from '../../app';
 import { StatusCodes } from 'http-status-codes';
 
-describe('/api/meets',  () => {
+describe('/api/meets', () => {
   it('should returns unauthorize errors when requesting without logging in first', async () => {
     const res = await request(app).get('/api/meets');
     expect(res.statusCode).toEqual(StatusCodes.UNAUTHORIZED);

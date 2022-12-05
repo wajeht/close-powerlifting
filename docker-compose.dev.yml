@@ -7,7 +7,7 @@ services:
       context: ./
       dockerfile: ./Dockerfile.dev
     ports:
-      - "8080:8080"
+      - '8080:8080'
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
@@ -24,7 +24,7 @@ services:
     container_name: redis
     image: redis:alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     restart: unless-stopped
     networks:
       - close-powerlifting-network
@@ -41,7 +41,7 @@ services:
       - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo-data:/data/db
     ports:
-      - "27017:27017"
+      - '27017:27017'
     networks:
       - close-powerlifting-network
 
@@ -54,7 +54,7 @@ services:
     environment:
       - REDIS_HOSTS=redis
     ports:
-      - "8081:8081"
+      - '8081:8081'
     networks:
       - close-powerlifting-network
 
@@ -74,7 +74,7 @@ services:
     depends_on:
       - mongodb
     ports:
-      - "8083:8083"
+      - '8083:8083'
     networks:
       - close-powerlifting-network
 
