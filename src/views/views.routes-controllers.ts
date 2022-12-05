@@ -4,7 +4,7 @@ import { StatusCodes } from 'http-status-codes';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
 import mail from '../utils/mail';
 import { getHostName, hashKey } from '../utils/helpers';
-import jwt, { verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import { validate } from '../app.middlewares';
