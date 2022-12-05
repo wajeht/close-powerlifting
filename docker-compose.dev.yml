@@ -2,7 +2,7 @@ version: '3.9'
 services:
   app:
     container_name: app
-    restart: always
+    restart: unless-stopped
     build:
       context: ./
       dockerfile: ./Dockerfile.dev
@@ -16,6 +16,7 @@ services:
       - redis
       - mailhog
       - mongo-express
+      - redis-commander
     networks:
       - close-powerlifting-network
 
@@ -24,14 +25,14 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
-    restart: always
+    restart: unless-stopped
     networks:
       - close-powerlifting-network
 
   mongodb:
     container_name: mongodb
     image: mongo:latest
-    restart: always
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: username
       MONGO_INITDB_ROOT_PASSWORD: password
@@ -44,10 +45,23 @@ services:
     networks:
       - close-powerlifting-network
 
+  redis-commander:
+    container_name: redis-commander
+    image: rediscommander/redis-commander:latest
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTS=redis
+    ports:
+      - "8081:8081"
+    networks:
+      - close-powerlifting-network
+
   mongo-express:
     container_name: mongo-express
     image: mongo-express
-    restart: always
+    restart: unless-stopped
     environment:
       - ME_CONFIG_MONGODB_SERVER=mongodb
       - ME_CONFIG_MONGODB_PORT=27017
@@ -60,13 +74,13 @@ services:
     depends_on:
       - mongodb
     ports:
-      - "8081:8081"
+      - "8083:8083"
     networks:
       - close-powerlifting-network
 
   mailhog:
     container_name: mailhot
-    restart: always
+    restart: unless-stopped
     image: mailhog/mailhog
     ports:
       - 1025:1025 # smtp server
