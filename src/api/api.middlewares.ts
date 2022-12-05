@@ -72,7 +72,9 @@ export function auth(req: Request, res: Response, next: NextFunction) {
       // @ts-ignore
       req.user = {
         // @ts-ignore
-        name: decoded.name,
+        id: decoded.id,
+        // @ts-ignore
+        email: decoded.name,
         // @ts-ignore
         email: decoded.email,
       };

@@ -137,6 +137,7 @@ views.post(
       const key = jwt.sign(
         {
           // @ts-ignore
+          id: user.id,
           name: user.name,
           email,
         },
@@ -223,6 +224,7 @@ views.get(
 
     const key = jwt.sign(
       {
+        id: user.id,
         name: user.name,
         email,
       },
