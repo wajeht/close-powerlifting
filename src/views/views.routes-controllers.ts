@@ -4,11 +4,13 @@ import { StatusCodes } from 'http-status-codes';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
 import mail from '../utils/mail';
 import { getHostName, hashKey } from '../utils/helpers';
-import jwt from 'jsonwebtoken';
+import jwt, { verify } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import { validate } from '../app.middlewares';
 import { z } from 'zod';
+
+import logger from '../utils/logger';
 
 import { User } from './views.models';
 
@@ -69,6 +71,8 @@ views.post(
     const created = await User.create({ email, name, verification_token: token });
     const hostname = getHostName(req);
 
+    logger.info(`user_id: ${created.id} has registered an account!`);
+
     const info = await mail.sendMail({
       from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
       to: email,
@@ -91,7 +95,8 @@ views.post(
       `,
     });
 
-    console.log(info.messageId);
+    // console.log(info.messageId);
+    logger.info(`Verification email was sent to user_id: ${created.id}!`);
 
     req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
     return res.redirect('/register');
@@ -186,6 +191,8 @@ views.post(
       });
     }
 
+    logger.info(`Reset api email was sent to email: ${email}!`);
+
     req.flash('info', 'If you have an account with us, we will send you a new api key!');
     res.redirect('/reset-api-key');
   }),
@@ -274,6 +281,8 @@ views.get(
       </div>
       `,
     });
+
+    logger.info(`user_id: ${verified!.id} has verified email!`);
 
     req.flash(
       'success',
