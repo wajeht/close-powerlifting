@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
+import logger from '../../utils/logger';
+
 import * as UsersServices from './users.services';
 import { getUserType, getUsersType } from './users.validations';
 
@@ -11,6 +13,9 @@ import { getUserType, getUsersType } from './users.validations';
  */
 export async function getUser(req: Request<getUserType, {}, {}>, res: Response) {
   const user = await UsersServices.getUser(req.params);
+
+  // @ts-ignore
+  logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 
   res.status(StatusCodes.OK).json({
     status: 'success',
@@ -30,6 +35,9 @@ export async function getUser(req: Request<getUserType, {}, {}>, res: Response) 
 export async function getUsers(req: Request<getUsersType, {}, {}>, res: Response) {
   if (req.query.search) {
     const searched = await UsersServices.searchUser(req.query);
+
+    // @ts-ignore
+    logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 
     res.status(StatusCodes.OK).json({
       status: 'success',
