@@ -5,7 +5,7 @@
   },
   "extends": "eslint:recommended",
   "overrides": [],
-  "ignorePatterns": ["iconify.min.js", "vue.global.prod.min.js", "index.js"],
+  "ignorePatterns": [],
   "parserOptions": {
     "ecmaVersion": "latest",
     "sourceType": "module"
