@@ -1,6 +1,6 @@
 FROM node:alpine
 
-ENV ENV production
+ENV ENV development
 
 WORKDIR /usr/src/app
 
