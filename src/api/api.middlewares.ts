@@ -46,11 +46,6 @@ export function validate(validators: RequestValidators) {
  */
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    if (ENV === 'development' || ENV !== 'testing') {
-      next();
-      return;
-    }
-
     let token = '';
 
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
