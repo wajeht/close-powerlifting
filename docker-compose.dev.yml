@@ -68,7 +68,7 @@ services:
     image: mailhog/mailhog
     ports:
       - 1025:1025 # smtp server
-      - 8082:8082 # web ui
+      - 8025:8025 # web ui
     networks:
       - close-powerlifting-network
 
