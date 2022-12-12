@@ -24,7 +24,7 @@ users.get(
  * GET /api/users?search={search}
  * @tags users
  * @summary search a user
- * @param {string} search.params.required - the search - application/x-www-form-urlencoded
+ * @param {string} search.query.required - the search - application/x-www-form-urlencoded
  * @security BearerAuth
  */
 users.get(
