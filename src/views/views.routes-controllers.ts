@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import catchAsyncHandler from 'express-async-handler';
 import { StatusCodes } from 'http-status-codes';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
@@ -55,29 +55,35 @@ views.get(
 views.post(
   '/register',
   validate({
-    body: z.object({ email: z.string().email(), name: z.string() }),
+    body: z.object({
+      email: z
+        .string({ required_error: 'email is required!' })
+        .email({ message: 'must be a valid email address!' }),
+      name: z.string({ required_error: 'name is required!' }),
+    }),
   }),
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const { email, name } = req.body;
+  catchAsyncHandler(
+    async (req: Request<{}, {}, { email: string; name: string }>, res: Response) => {
+      const { email, name } = req.body;
 
-    const found = await User.findOne({ email });
+      const found = await User.findOne({ email });
 
-    if (found) {
-      req.flash('error', 'Email already exist!');
-      return res.redirect('/register');
-    }
+      if (found) {
+        req.flash('error', 'Email already exist!');
+        return res.redirect('/register');
+      }
 
-    const { key: token } = await hashKey();
-    const created = await User.create({ email, name, verification_token: token });
-    const hostname = getHostName(req);
+      const { key: token } = await hashKey();
+      const created = await User.create({ email, name, verification_token: token });
+      const hostname = getHostName(req);
 
-    logger.info(`user_id: ${created.id} has registered an account!`);
+      logger.info(`user_id: ${created.id} has registered an account!`);
 
-    const info = await mail.sendMail({
-      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-      to: email,
-      subject: 'Account verification',
-      html: `
+      const info = await mail.sendMail({
+        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        to: email,
+        subject: 'Account verification',
+        html: `
       <div>
         <p>Hi ${name},</p>
         <br>
@@ -93,14 +99,15 @@ views.post(
         <p>Let's make all kinds of gains. All kindszzzz.!</p>
       </div>
       `,
-    });
+      });
 
-    // console.log(info.messageId);
-    logger.info(`Verification email was sent to user_id: ${created.id}!`);
+      // console.log(info.messageId);
+      logger.info(`Verification email was sent to user_id: ${created.id}!`);
 
-    req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
-    return res.redirect('/register');
-  }),
+      req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
+      return res.redirect('/register');
+    },
+  ),
 );
 
 /**
@@ -126,15 +133,50 @@ views.get(
  */
 views.post(
   '/reset-api-key',
-  validate({ body: z.object({ email: z.string().email() }) }),
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const email = req.body.email;
+  validate({
+    body: z.object({
+      email: z
+        .string({
+          required_error: 'email address required!',
+        })
+        .email({
+          message: 'must be a valid email address!',
+        }),
+    }),
+  }),
+  catchAsyncHandler(async (req: Request<{}, {}, { email: string }, {}>, res: Response) => {
+    const { email } = req.body;
 
     const [user] = await User.find({ email });
 
     // @ts-ignore
     if (user && user.verified === false) {
+      const hostname = getHostName(req);
+
       // email needs to verify
+      const info = await mail.sendMail({
+        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        to: email,
+        subject: 'Account verification',
+        html: `
+        <div>
+          <p>Hi ${user.name},</p>
+          <br>
+
+          <p>We're happy you signed up for Close Powerlifting earlier. To start exploring, please confirm your email address.</p>
+
+          <br>
+          <a href="${hostname}/verify-email?token=${user.verification_token}&email=${email}" style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">Verify Now</a>
+          <br>
+
+          <br>
+          <p>Welcome to the Close Powerlifting,</p>
+          <p>Let's make all kinds of gains. All kindszzzz.!</p>
+        </div>
+        `,
+      });
+
+      logger.info(`Verification email was sent to user_id: ${user.id}!`);
     }
 
     // @ts-ignore
@@ -207,10 +249,14 @@ views.post(
  */
 views.get(
   '/verify-email',
+  // validate({
+  //   query: z.object({
+  //     token: z.string().optional(),
+  //     email: z.string().email().optional(),
+  //   }),
+  // }),
   catchAsyncHandler(async (req: Request, res: Response) => {
-    const email = req.query.email as string;
-    const token = req.query.token as string;
-
+    const { token, email } = req.query as { token: string; email: string };
     const [user] = await User.find({ email });
 
     if (!user) {
@@ -319,7 +365,13 @@ views.get(
 views.post(
   '/contact',
   validate({
-    body: z.object({ email: z.string().email(), name: z.string(), message: z.string() }),
+    body: z.object({
+      email: z
+        .string({ required_error: 'email is required!' })
+        .email({ message: 'must be valid email address!' }),
+      name: z.string({ required_error: 'name is required!' }),
+      message: z.string({ required_error: 'message is required!' }),
+    }),
   }),
   catchAsyncHandler(async (req: Request, res: Response) => {
     const { name, email, message } = req.body;
