@@ -1,6 +1,18 @@
 up:
 	docker compose --file ./docker-compose.dev.yml up
 
+up-d:
+	docker compose --file ./docker-compose.dev.yml up -d
+
+log:
+	docker compose --file ./docker-compose.dev.yml logs -f
+
+down:
+	docker compose --file ./docker-compose.dev.yml down
+
+clean:
+	docker compose --file ./docker-compose.dev.yml rm -fsv
+
 test:
 	docker compose --file ./docker-compose.dev.yml exec app npm run test
 
