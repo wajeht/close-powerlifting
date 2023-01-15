@@ -11,7 +11,7 @@ down:
 	docker compose --file ./docker-compose.dev.yml down
 
 clean:
-	docker compose --file ./docker-compose.dev.yml rm -fsv
+	docker compose --file ./docker-compose.dev.yml down --rmi all
 
 test:
 	docker compose --file ./docker-compose.dev.yml exec app npm run test
