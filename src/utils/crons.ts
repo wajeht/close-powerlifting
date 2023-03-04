@@ -23,7 +23,7 @@ function removeCaches() {
 }
 
 export async function init() {
-  logger.info(`cron services were started!`);
+  logger.info(`**** cron services were started! ****`);
 
   // everyday at mid night
   cron.schedule('0 0 * * *', removeCaches).start();

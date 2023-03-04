@@ -20,8 +20,6 @@ import * as apiMiddlewares from './api/api.middlewares';
 
 const app = express();
 
-console.log('x');
-
 app.use(flash());
 app.use(
   session({
