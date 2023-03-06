@@ -1,0 +1,84 @@
+<div class="sm:hidden visible relative">
+  <!-- open -->
+  <button id="open-mobile-nav-button" onclick="toggle()">Open</button>
+
+  <!-- nav -->
+  <div id="mobile-nav" class="hidden bg-black w-screen h-screen !absolute -top-5 -right-5">
+    <!-- close -->
+    <div class="absolute w-full flex justify-between right-0 p-5">
+      <div>
+        <h1 class="text-slate-50 hover:text-neutral-300 font-extrabold text-2xl">
+          <a href="/">Close Powerlifting</a>
+        </h1>
+      </div>
+
+      <button id="close-mobile-nav-button"  onclick="toggle()">Close</button>
+    </div>
+
+    <nav class="py-10 px-3 bg-neutral-900 rounded mt-16 mx-5">
+      <ul class="flex flex-col gap-5 text-center">
+        <!-- docs -->
+        <li>
+          <a class="hover:text-slate-50" href="/docs/api" target="_blank">Docs ↗️</a>
+        </li>
+
+        <!-- status -->
+        <li>
+          <a
+            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %>"
+            href="/status"
+            >Status</a
+          >
+        </li>
+
+        <!-- about -->
+        <li>
+          <a
+            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %>"
+            href="/about"
+            >About</a
+          >
+        </li>
+
+        <!-- contact -->
+        <li>
+          <a
+            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %>"
+            href="/contact"
+            >Contact</a
+          >
+        </li>
+
+        <!-- register -->
+        <li>
+          <a
+            class="font-normal bg-slate-50 text-black hover:bg-black hover:outline hover:outline-slate-50 hover:text-slate-50 px-3 py-2 rounded-sm"
+            href="/register"
+            >Register</a
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+  let open = false;
+
+  function openMenu() {
+    if (open) {
+      document.getElementById('mobile-nav').classList.remove('hidden');
+      document.getElementById('main').hidden = true;
+      document.getElementById('footer').hidden = true;
+    } else {
+      document.getElementById('mobile-nav').classList.add('hidden');
+      document.getElementById('main').hidden = false;
+      document.getElementById('footer').hidden = false;
+    }
+  }
+
+  function toggle() {
+    open = !open;
+    openMenu();
+  }
+</script>
