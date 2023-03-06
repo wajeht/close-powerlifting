@@ -1171,6 +1171,10 @@ html {
     display: none !important;
   }
 
+  .sm\:min-h-\[172px\] {
+    min-height: 172px !important;
+  }
+
   .sm\:flex-row {
     flex-direction: row !important;
   }
