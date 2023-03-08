@@ -9,31 +9,67 @@ import session from 'express-session';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
 import expressLayouts from 'express-ejs-layouts';
 import ejs from 'ejs';
-
-import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import apiRoutes from './api/api';
 import viewsRoutes from './views/views.routes';
+import AdminJS from 'adminjs';
+import AdminJSExpress from '@adminjs/express';
+import MongooseAdapter from '@adminjs/mongoose';
+
+import * as rateLimiters from './config/rate-limiters.config';
 import * as appMiddlewares from './app.middlewares';
-import { ENV, SESSION_SECRET } from './config/constants';
 import * as apiMiddlewares from './api/api.middlewares';
 
-import { User } from './views/views.models'
-
-import AdminJS from 'adminjs'
-import AdminJSExpress from '@adminjs/express'
-import MongooseAdapter from '@adminjs/mongoose';
+import { SESSION_NAME, ENV, SESSION_SECRET, COOKIE_NAME, COOKIE_PASSWORD } from './config/constants';
+import { ENV_ENUMS } from './utils/enums';
+import { User } from './views/views.models';
 
 const app = express();
 
+// ---------------------------------- ADMINJS STARTS ----------------------------------
 AdminJS.registerAdapter(MongooseAdapter);
 
-const admin = new AdminJS({
+const adminJs = new AdminJS({
   resources: [User],
 });
 
-const adminRouter = AdminJSExpress.buildRouter(admin);
-app.use(admin.options.rootPath, adminRouter);
+// const adminRouter = AdminJSExpress.buildRouter(admin);
+
+const DEFAULT_ADMIN = {
+  email: 'admin@example.com',
+  password: 'password',
+}
+
+const authenticate = async (email: string, password: string) => {
+  if (email === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
+    return Promise.resolve(DEFAULT_ADMIN)
+  }
+  return null
+}
+
+const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
+  adminJs,
+  {
+    authenticate,
+    cookieName: COOKIE_NAME,
+    cookiePassword: COOKIE_PASSWORD,
+  },
+  null,
+  {
+    secret: SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      httpOnly: ENV === ENV_ENUMS.PRODUCTION,
+      secure: ENV === ENV_ENUMS.PRODUCTION,
+    },
+    name: SESSION_NAME,
+  }
+);
+
+app.use(adminJs.options.rootPath, adminRouter);
+
+// ---------------------------------- ADMINJS ENDS ----------------------------------
 
 app.use(flash());
 app.use(
@@ -63,7 +99,7 @@ app.use(expressLayouts);
 
 expressJSDocSwagger(app)(swaggerConfig);
 
-if (ENV === 'production') {
+if (ENV === ENV_ENUMS.PRODUCTION) {
   app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiRoutes);
   app.use(rateLimiters.app);
 } else {
