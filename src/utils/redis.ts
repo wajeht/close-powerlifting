@@ -14,9 +14,9 @@ try {
     db: REDIS.DATABASE,
   });
 
-  logger.info(`redis client started!`);
+  logger.info(`**** redis client started! ****`);
 } catch (e) {
-  logger.info(`redis client failed!`);
+  logger.info(`**** redis client failed! ****`);
 }
 
 export default redis;
