@@ -59,14 +59,12 @@ export async function init() {
       const info = await mail.sendMail({
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
         to: created.email,
-        subject: 'API Key for Close Powerlifting',
+        subject: 'API Key and Admin Password for Close Powerlifting',
         html: `
           <div>
             <p>Hi ${verified!.name},</p>
             <br>
-
             <p>Here below is your API key and admin password to access Close Powerlifting!</p>
-
             <br>
             <br>
             <p>Admin password</p>
@@ -76,7 +74,6 @@ export async function init() {
             <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${apiKey}</div>
             <br>
             <br>
-
             <br>
             <p>Welcome to the Close Powerlifting,</p>
             <p>Let's make all kinds of gains. All kindszzzz.!</p>
