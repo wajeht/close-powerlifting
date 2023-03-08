@@ -2,6 +2,7 @@ import path from 'path';
 
 import express from 'express';
 import cors from 'cors';
+import bcrypt from 'bcryptjs';
 import flash from 'connect-flash';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -20,7 +21,13 @@ import * as rateLimiters from './config/rate-limiters.config';
 import * as appMiddlewares from './app.middlewares';
 import * as apiMiddlewares from './api/api.middlewares';
 
-import { SESSION_NAME, ENV, SESSION_SECRET, COOKIE_NAME, COOKIE_PASSWORD } from './config/constants';
+import {
+  SESSION_NAME,
+  ENV,
+  SESSION_SECRET,
+  COOKIE_NAME,
+  COOKIE_PASSWORD,
+} from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { User } from './views/views.models';
 
@@ -35,22 +42,19 @@ const adminJs = new AdminJS({
 
 // const adminRouter = AdminJSExpress.buildRouter(admin);
 
-const DEFAULT_ADMIN = {
-  email: 'admin@example.com',
-  password: 'password',
-}
-
-const authenticate = async (email: string, password: string) => {
-  if (email === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
-    return Promise.resolve(DEFAULT_ADMIN)
-  }
-  return null
-}
-
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   adminJs,
   {
-    authenticate,
+    authenticate: async (email, password) => {
+      const user = await User.findOne({ email });
+      if (user) {
+        const matched = await bcrypt.compare(password, user.password!);
+        if (matched && user.admin) {
+          return user;
+        }
+      }
+      return false;
+    },
     cookieName: COOKIE_NAME,
     cookiePassword: COOKIE_PASSWORD,
   },
@@ -64,7 +68,7 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
       secure: ENV === ENV_ENUMS.PRODUCTION,
     },
     name: SESSION_NAME,
-  }
+  },
 );
 
 app.use(adminJs.options.rootPath, adminRouter);
