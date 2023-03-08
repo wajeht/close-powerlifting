@@ -19,6 +19,6 @@
     "tailwindcss",
     "unhashed",
     "wajeht"
-],
+  ],
   "dotenv.enableAutocloaking": false
 }
