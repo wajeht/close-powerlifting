@@ -1,5 +1,6 @@
 {
   "cSpell.words": [
+    "adminjs",
     "deadlift",
     "emerg",
     "haack",
@@ -18,6 +19,6 @@
     "tailwindcss",
     "unhashed",
     "wajeht"
-  ],
+],
   "dotenv.enableAutocloaking": false
 }

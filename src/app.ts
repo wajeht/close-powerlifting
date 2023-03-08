@@ -18,7 +18,22 @@ import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
 import * as apiMiddlewares from './api/api.middlewares';
 
+import { User } from './views/views.models'
+
+import AdminJS from 'adminjs'
+import AdminJSExpress from '@adminjs/express'
+import MongooseAdapter from '@adminjs/mongoose';
+
 const app = express();
+
+AdminJS.registerAdapter(MongooseAdapter);
+
+const admin = new AdminJS({
+  resources: [User],
+});
+
+const adminRouter = AdminJSExpress.buildRouter(admin);
+app.use(admin.options.rootPath, adminRouter);
 
 app.use(flash());
 app.use(
