@@ -5,10 +5,18 @@ const UserSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
+  password: {
+    type: String,
+    require: false,
+  },
   email: {
     type: String,
     unique: true,
     require: true,
+  },
+  api_call_count: {
+    type: Number,
+    require: false,
   },
   key: {
     type: String,
