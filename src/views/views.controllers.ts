@@ -11,7 +11,7 @@ import logger from '../utils/logger';
 import { getRankings } from '../api/rankings/rankings.services';
 
 export async function getHomePage(req: Request, res: Response) {
-  const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true});
+  const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
   return res.status(StatusCodes.OK).render('home.html', {
     path: '/home',
     rankings,

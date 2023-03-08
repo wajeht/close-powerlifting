@@ -5,6 +5,7 @@ import { ZodError, z } from 'zod';
 import { UnauthorizedError } from './api/api.errors';
 import { AnyZodObject } from 'zod';
 import logger from './utils/logger';
+import { ENV_ENUMS } from './utils/enums';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -49,7 +50,7 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
 
   statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   message =
-    ENV === 'development'
+    ENV === ENV_ENUMS.DEVELOPMENT
       ? err.stack
       : 'The server encountered an internal error or misconfiguration and was unable to complete your request!';
 
@@ -67,7 +68,7 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
   const isHealthcheck = req.originalUrl === '/health-check';
   if (!isApiPrefix && !isHealthcheck)
     return res.status(statusCode).render('error.html', {
-      error: ENV === 'development' ? err.stack : null,
+      error: ENV ===  ENV_ENUMS.DEVELOPMENT ? err.stack : null,
     });
 
   logger.error(err);
