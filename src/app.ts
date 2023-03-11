@@ -42,6 +42,11 @@ const adminJs = new AdminJS({
 
 // const adminRouter = AdminJSExpress.buildRouter(admin);
 
+(async ()=> {
+  if (ENV === ENV_ENUMS.PRODUCTION) await adminJs.initialize();
+  else adminJs.watch();
+})();
+
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   adminJs,
   {
