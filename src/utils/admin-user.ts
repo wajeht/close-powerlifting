@@ -28,6 +28,14 @@ export async function init() {
         verified_at: new Date().toISOString(),
       });
 
+      logger.info(``);
+      logger.info(``);
+      logger.info(`**** admin user has been created with the following credentials! ****`);
+      logger.info(`**** email: ${ADMIN.EMAIL} ****`);
+      logger.info(`**** password: ${password} ****`);
+      logger.info(``);
+      logger.info(``);
+
       const apiKey = jwt.sign(
         {
           id: created.id,
