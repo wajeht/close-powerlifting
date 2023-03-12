@@ -30,6 +30,7 @@ import {
 } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { User } from './views/views.models';
+import logger from 'utils/logger';
 
 const app = express();
 
@@ -42,21 +43,23 @@ const adminJs = new AdminJS({
 
 // const adminRouter = AdminJSExpress.buildRouter(admin);
 
-(async ()=> {
-  if (ENV === ENV_ENUMS.PRODUCTION) await adminJs.initialize();
-  else adminJs.watch();
-})();
-
 const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   adminJs,
   {
     authenticate: async (email, password) => {
-      const user = await User.findOne({ email });
-      if (user) {
-        const matched = await bcrypt.compare(password, user.password!);
-        if (matched && user.admin) {
-          return user;
+      try {
+        logger.info(
+          `**** account with ${email}:${password} is trying to login to admin panel ****`,
+        );
+        const user = await User.findOne({ email });
+        if (user) {
+          const matched = await bcrypt.compare(password, user.password!);
+          if (matched && user.admin) {
+            return user;
+          }
         }
+      } catch (error) {
+        logger.info(`**** adminjs login failed: ${error} **** `);
       }
       return false;
     },
