@@ -30,7 +30,7 @@ import {
 } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { User } from './views/views.models';
-import logger from 'utils/logger';
+import logger from './utils/logger';
 
 const app = express();
 
