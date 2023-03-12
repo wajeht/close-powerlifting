@@ -16,6 +16,7 @@ import viewsRoutes from './views/views.routes';
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import MongooseAdapter from '@adminjs/mongoose';
+import cookieParser from 'cookie-parser';
 
 import * as rateLimiters from './config/rate-limiters.config';
 import * as appMiddlewares from './app.middlewares';
@@ -83,6 +84,7 @@ app.use(adminJs.options.rootPath, adminRouter);
 
 // ---------------------------------- ADMINJS ENDS ----------------------------------
 
+app.use(cookieParser());
 app.use(flash());
 app.use(
   session({
