@@ -10,10 +10,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
+    "incremental": true,
     "paths": {
       "*": ["node_modules/*", "src/types/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["dist/**/*"]
+  "include": ["src/**/*.ts", "src/**/*.json", ".env"],
+  "exclude": ["dist/**/*", "node_modules", "logs", ".adminjs", ".vscode", "mongo-data", "public"]
 }
