@@ -13,6 +13,9 @@ down:
 clean:
 	docker compose --file ./docker-compose.dev.yml down --rmi all
 
+wipe:
+	docker system prune -a --volumes
+
 test:
 	docker compose --file ./docker-compose.dev.yml exec app npm run test
 
