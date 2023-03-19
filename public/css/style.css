@@ -553,10 +553,6 @@ video {
   z-index: 10 !important;
 }
 
-.z-30 {
-  z-index: 30 !important;
-}
-
 .z-50 {
   z-index: 50 !important;
 }
@@ -682,6 +678,10 @@ video {
 
 .table-fixed {
   table-layout: fixed !important;
+}
+
+.transform {
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)) !important;
 }
 
 @keyframes pulse {
