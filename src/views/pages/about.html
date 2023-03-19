@@ -92,16 +92,18 @@
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
-    'x-api-key': yourApiKey,
+    'x-api-key': &#x3C;your api key here&#x3E;,
   },
 });
 const data = await res.json();
+      </pre>
 
+      <pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded">
 // auth through bearer token
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer <your api key here>',
+    'Authorization': 'Bearer &#x3C;your api key here&#x3E;',
   },
 });
 const data = await res.json();
