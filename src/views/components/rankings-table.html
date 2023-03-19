@@ -9,7 +9,10 @@
     <thead class="bg-neutral-900">
       <tr>
         <% for (let key of Object.keys(rankings.data[0]) ) { %>
-          <th class="py-2 px-4 text-left"><%= key %></th>
+          <!-- skip id -->
+          <% if (key !== 'id') { %>
+            <th class="py-2 px-4 text-left"><%= key %></th>
+           <% } %>
         <% } %>
       </tr>
     </thead>
@@ -18,7 +21,10 @@
       <% for (let i of rankings.data) { %>
         <tr>
           <% for (let j in i) { %>
-            <td class="text-left whitespace-nowrap py-2 px-4"><%= i[j] %></td>
+            <!-- skip id -->
+            <% if ( j !== 'id') { %>
+              <td class="text-left whitespace-nowrap py-2 px-4"><%= i[j] %></td>
+            <% } %>
           <% } %>
         </tr>
       <% } %>
