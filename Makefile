@@ -1,3 +1,6 @@
+deploy:
+	./deploy.sh
+
 up:
 	docker compose --file ./docker-compose.dev.yml up
 

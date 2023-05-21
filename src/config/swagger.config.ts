@@ -8,7 +8,7 @@ let LINK = '';
 if (ENV === ENV_ENUMS.PRODUCTION) {
   LINK = DOMAIN!;
 } else {
-  LINK = `http://localhost:${PORT}`
+  LINK = `http://localhost:${PORT}`;
 }
 
 export default {

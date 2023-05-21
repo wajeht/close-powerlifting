@@ -68,7 +68,7 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
   const isHealthcheck = req.originalUrl === '/health-check';
   if (!isApiPrefix && !isHealthcheck)
     return res.status(statusCode).render('error.html', {
-      error: ENV ===  ENV_ENUMS.DEVELOPMENT ? err.stack : null,
+      error: ENV === ENV_ENUMS.DEVELOPMENT ? err.stack : null,
     });
 
   logger.error(err);
