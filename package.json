@@ -15,9 +15,9 @@
     "test": "vitest",
     "update:deps": " npx npm-check -u",
     "format:check": "prettier --check .",
-    "format:write": "prettier --write .",
+    "format": "prettier --write .",
     "lint:check": "eslint .",
-    "lint:fix": "eslint --fix ."
+    "lint": "eslint --fix ."
   },
   "keywords": [
     "powerlifting"

@@ -1,34 +1,27 @@
 <div class="mt-10 mx-auto max-w-5xl overflow-x-scroll fade-in-heading animation-delay-4">
   <table
     class="table-fixed border border-neutral-900"
-    style="
-      min-width: 80% !important;
-      padding: 5px;
-    "
+    style="min-width: 80% !important; padding: 5px"
   >
     <thead class="bg-neutral-900">
       <tr>
         <% for (let key of Object.keys(rankings.data[0]) ) { %>
-          <!-- skip id -->
-          <% if (key !== 'id') { %>
-            <th class="py-2 px-4 text-left"><%= key %></th>
-           <% } %>
-        <% } %>
+        <!-- skip id -->
+        <% if (key !== 'id') { %>
+        <th class="py-2 px-4 text-left"><%= key %></th>
+        <% } %> <% } %>
       </tr>
     </thead>
     <tbody>
-
       <% for (let i of rankings.data) { %>
-        <tr>
-          <% for (let j in i) { %>
-            <!-- skip id -->
-            <% if ( j !== 'id') { %>
-              <td class="text-left whitespace-nowrap py-2 px-4"><%= i[j] %></td>
-            <% } %>
-          <% } %>
-        </tr>
+      <tr>
+        <% for (let j in i) { %>
+        <!-- skip id -->
+        <% if ( j !== 'id') { %>
+        <td class="text-left whitespace-nowrap py-2 px-4"><%= i[j] %></td>
+        <% } %> <% } %>
+      </tr>
       <% } %>
-
     </tbody>
   </table>
 </div>
