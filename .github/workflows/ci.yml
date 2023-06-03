@@ -60,6 +60,16 @@ jobs:
       matrix:
         node-version: [19.x]
 
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
