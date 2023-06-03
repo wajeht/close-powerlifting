@@ -23,7 +23,10 @@ test:
 	docker compose --file ./docker-compose.dev.yml exec app npm run test
 
 lint:
-	docker compose --file ./docker-compose.dev.yml exec app npm run lint:fix
+	docker compose --file ./docker-compose.dev.yml exec app npm run lint
 
 format:
-	docker compose --file ./docker-compose.dev.yml exec app npm run format:write
+	docker compose --file ./docker-compose.dev.yml exec app npm run format
+
+shell:
+	docker compose --file ./docker-compose.dev.yml exec app sh
