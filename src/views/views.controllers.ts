@@ -5,6 +5,7 @@ import { User } from './views.models';
 import { StatusCodes } from 'http-status-codes';
 import mail from '../utils/mail';
 import jwt from 'jsonwebtoken';
+import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 import axios from 'axios';
 import logger from '../utils/logger';
@@ -118,8 +119,69 @@ export async function postResetAPIKeyPage(
     logger.info(`Verification email was sent to user_id: ${user.id}!`);
   }
 
+  if (user && user.verified === true && user.admin === true) {
+      const password = faker.internet.password(50);
+      const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
+
+      const apiKey = jwt.sign(
+        {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+        JWT_SECRET!,
+        {
+          issuer: 'Close Powerlifting',
+        },
+      );
+
+      const hashedApiKey = await bcrypt.hash(apiKey, parseInt(PASSWORD_SALT!));
+
+      await User.findOneAndUpdate(
+        {
+          email: user.email,
+        },
+        {
+          $set: {
+            key: hashedApiKey,
+            password: hashedPassword
+          },
+        },
+        {
+          returnOriginal: false,
+        },
+      );
+
+     await mail.sendMail({
+        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        to: user.email,
+        subject: 'New API Key and Admin Password for Close Powerlifting',
+        html: `
+          <div>
+            <p>Hi ${user!.name},</p>
+            <br>
+            <p>Here below is your API key and admin password to access Close Powerlifting!</p>
+            <br>
+            <br>
+            <p>Admin password</p>
+            <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${password}</div>
+            <br>
+            <p>API Key:</p>
+            <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${apiKey}</div>
+            <br>
+            <br>
+            <br>
+            <p>Welcome to the Close Powerlifting,</p>
+            <p>Let's make all kinds of gains. All kindszzzz.!</p>
+          </div>
+          `,
+      });
+
+      logger.info(`**** admin user: ${user.email} has been updated! ****`);
+  }
+
   // @ts-ignore
-  if (user && user.verified === true) {
+  else if (user && user.verified === true) {
     const key = jwt.sign(
       {
         // @ts-ignore
