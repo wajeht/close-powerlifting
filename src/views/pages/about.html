@@ -1,3 +1,13 @@
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((el) => {
+    hljs.highlightElement(el);
+  });
+});
+</script>
+
 <div>
   <div id="about" class="fade-in">
     <div class="max-w-5xl mx-auto flex flex-col gap-4">
@@ -87,28 +97,23 @@
         <span class="bg-neutral-900 py-1 px-2 rounded-sm">x-api-key</span> or
         <span class="bg-neutral-900 rounded-sm py-1 px-2">bearer token</span>.
       </p>
-      <pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded">
-// auth through x-api-key
+<pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded"><code class="language-js">// auth through x-api-key
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
     'x-api-key': &#x3C;your api key here&#x3E;,
   },
 });
-const data = await res.json();
-      </pre>
+const data = await res.json();</code></pre>
 
-      <pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded">
-// auth through bearer token
+<pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded"><code class="language-js">// auth through bearer token
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
     'Authorization': 'Bearer &#x3C;your api key here&#x3E;',
   },
 });
-const data = await res.json();
-</pre
-      >
+const data = await res.json();</code></pre>
       Enjoy!
     </div>
   </div>
@@ -124,4 +129,91 @@ const data = await res.json();
     font-size: medium;
     color: #bcbebf;
   }
+
+ /* Base16 Atelier Cave Dark - Theme */
+/* by Bram de Haan (http://atelierbram.github.io/syntax-highlighting/atelier-schemes/cave) */
+/* Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16) */
+
+/* Atelier-Cave Comment */
+.hljs-comment,
+.hljs-quote {
+  color: #7e7887;
+}
+
+/* Atelier-Cave Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-attribute,
+.hljs-regexp,
+.hljs-link,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #be4678;
+}
+
+/* Atelier-Cave Orange */
+.hljs-number,
+.hljs-meta,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params {
+  color: #aa573c;
+}
+
+/* Atelier-Cave Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet {
+  color: #2a9292;
+}
+
+/* Atelier-Cave Blue */
+.hljs-title,
+.hljs-section {
+  color: #576ddb;
+}
+
+/* Atelier-Cave Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #955ae7;
+}
+
+.hljs-deletion,
+.hljs-addition {
+  color: #19171c;
+  display: inline-block;
+  width: 100%;
+}
+
+.hljs-deletion {
+  background-color: #be4678;
+}
+
+.hljs-addition {
+  background-color: #2a9292;
+}
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  background: transparent;
+  color: #8b8792;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+code.hljs {
+  padding: 0 !important;
+}
 </style>

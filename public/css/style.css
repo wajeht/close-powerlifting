@@ -613,6 +613,10 @@ video {
   margin-top: 1.75rem !important;
 }
 
+.block {
+  display: block !important;
+}
+
 .flex {
   display: flex !important;
 }
@@ -938,6 +942,10 @@ video {
 
 .font-normal {
   font-weight: 400 !important;
+}
+
+.italic {
+  font-style: italic !important;
 }
 
 .tracking-tight {
