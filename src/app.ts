@@ -1,5 +1,3 @@
-import path from 'path';
-
 import AdminJSExpress from '@adminjs/express';
 import MongooseAdapter from '@adminjs/mongoose';
 import AdminJS from 'adminjs';
@@ -14,14 +12,11 @@ import expressLayouts from 'express-ejs-layouts';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
 import session from 'express-session';
 import helmet from 'helmet';
-import apiRoutes from './api/api';
-import swaggerConfig from './config/swagger.config';
-import viewsRoutes from './views/views.routes';
+import path from 'path';
 
+import apiRoutes from './api/api';
 import * as apiMiddlewares from './api/api.middlewares';
 import * as appMiddlewares from './app.middlewares';
-import * as rateLimiters from './config/rate-limiters.config';
-
 import {
   COOKIE_NAME,
   COOKIE_PASSWORD,
@@ -29,9 +24,12 @@ import {
   SESSION_NAME,
   SESSION_SECRET,
 } from './config/constants';
+import * as rateLimiters from './config/rate-limiters.config';
+import swaggerConfig from './config/swagger.config';
 import { ENV_ENUMS } from './utils/enums';
 import logger from './utils/logger';
 import { User } from './views/views.models';
+import viewsRoutes from './views/views.routes';
 
 const app = express();
 
