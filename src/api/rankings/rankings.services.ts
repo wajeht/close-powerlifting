@@ -1,3 +1,6 @@
+import { AxiosError } from 'axios';
+import { StatusCodes } from 'http-status-codes';
+
 import Axios from '../../utils/axios';
 import { buildPagination } from '../../utils/helpers';
 // @ts-ignore
@@ -46,8 +49,14 @@ export async function fetchRankings(paginationQuery: string) {
       data,
       total_length: rankings?.total_length,
     };
-  } catch (e) {
-    return null;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -61,6 +70,7 @@ export async function getRankings({
 
     if (cache === false) {
       const rankings = await fetchRankings(paginationQuery);
+      if (rankings === null) return null;
       return {
         data: rankings?.data,
         cache,
@@ -82,6 +92,7 @@ export async function getRankings({
 
     if (rankings === null) {
       rankings = await fetchRankings(paginationQuery);
+      if (rankings === null) return null;
       // @ts-ignore
       const r = await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
     }
@@ -100,31 +111,35 @@ export async function getRankings({
         to: current_page * per_page + per_page,
       },
     };
-  } catch (e: any) {
-    throw new Error(`Something went wrong while processing rankings data!`);
+  } catch (error) {
+    throw error;
   }
 }
 
 export async function getRank({ rank }: getRankType) {
-  let r = parseInt(rank) - 1;
+  try {
+    let r = parseInt(rank) - 1;
 
-  // pagination
-  const cache = false;
-  let current_page = 1;
-  let per_page = 100;
+    // pagination
+    const cache = false;
+    let current_page = 1;
+    let per_page = 100;
 
-  // r = 300
+    // r = 300
 
-  if (r > per_page) {
-    current_page = Math.floor(r / per_page);
+    if (r > per_page) {
+      current_page = Math.floor(r / per_page);
+    }
+
+    // console.log({ rank: r, current_page, per_page });
+
+    const rankings = await getRankings({ cache, current_page, per_page });
+
+    const index = r % per_page;
+
+    // @ts-ignore
+    return rankings?.data.at(index);
+  } catch (error) {
+    throw error;
   }
-
-  // console.log({ rank: r, current_page, per_page });
-
-  const { data } = await getRankings({ cache, current_page, per_page });
-
-  const index = r % per_page;
-
-  // @ts-ignore
-  return data.at(index);
 }
