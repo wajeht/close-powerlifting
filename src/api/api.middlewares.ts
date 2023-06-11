@@ -10,12 +10,6 @@ interface RequestValidators {
   query?: AnyZodObject;
 }
 
-/**
- * It takes a RequestValidators object, and returns a middleware function that validates the request
- * body, query, and params using the validators in the RequestValidators object
- * @param {RequestValidators} validators - RequestValidators
- * @returns A function that takes in a Request, Response, and NextFunction.
- */
 export function validate(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -35,15 +29,6 @@ export function validate(validators: RequestValidators) {
   };
 }
 
-/**
- * It checks if the request has a valid bearer token or api key, and if it does, it adds the user's
- * name and email to the request object
- * @param {Request} req - Request - The request object.
- * @param {Response} res - Response - This is the response object that we will use to send a response
- * to the client.
- * @param {NextFunction} next - NextFunction - This is a function that will be called when the
- * middleware is done.
- */
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
     let token = '';

@@ -1,11 +1,8 @@
 import { MONGODB_URI } from '../config/constants';
-import logger from '../utils/logger';
 
+import logger from '../utils/logger';
 import mongoose from 'mongoose';
 
-/**
- * It connects to the database and logs a message if it succeeds
- */
 export async function init() {
   try {
     await mongoose.connect(MONGODB_URI!);
@@ -17,10 +14,6 @@ export async function init() {
   }
 }
 
-/**
- * It returns a promise that resolves when the mongoose connection is closed
- * @returns The connection to the database is being closed.
- */
 export function stop() {
   logger.info('**** db connection stopped! ****');
   return mongoose.connection.close();

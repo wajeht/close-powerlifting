@@ -5,6 +5,7 @@ import redis from '../../utils/redis';
 import { getStatusType } from './status.validations';
 
 import Axios from '../../utils/axios';
+
 const api = new Axios(true).instance();
 
 export async function fetchStatus() {

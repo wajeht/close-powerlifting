@@ -4,8 +4,8 @@ import { getMeetsType } from './meets.validations';
 
 // @ts-ignore
 import redis from '../../utils/redis';
-
 import Axios from '../../utils/axios';
+
 const api = new Axios(true).instance();
 
 async function fetchMeets({ current_page, per_page }: any) {
@@ -38,11 +38,6 @@ async function fetchMeets({ current_page, per_page }: any) {
   }
 }
 
-/**
- * It makes a request to the website, gets the HTML, parses the HTML, and returns the data in a JSON
- * format
- * @returns An array of objects.
- */
 export async function getMeets({ current_page = 1, per_page = 100, cache = true }: getMeetsType) {
   try {
     if (cache === false) {

@@ -13,7 +13,6 @@ const records = express.Router();
  * @summary all things relating records end point
  * @security BearerAuth
  */
-
 records.get(
   '/',
   validate({ query: RecordsValidation.getRecordsValidation }),

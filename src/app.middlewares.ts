@@ -13,15 +13,6 @@ interface RequestValidators {
   query?: AnyZodObject;
 }
 
-/**
- * If the request URL does not contain the `/api/` prefix, then render the `not-found.html` template,
- * otherwise return a JSON response
- * @param {Request} req - Request - The request object
- * @param {Response} res - Response - The response object
- * @param {NextFunction} next - NextFunction - This is a function that will be called when the
- * middleware is done.
- * @returns A function that takes in a request, response, and next function.
- */
 export function notFoundHandler(req: Request, res: Response, next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
   if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render('not-found.html');
@@ -35,15 +26,6 @@ export function notFoundHandler(req: Request, res: Response, next: NextFunction)
   });
 }
 
-/**
- * If the request is not an API request, render the error page, otherwise return a JSON response with
- * the error message
- * @param {any} err - any - The error object that was thrown.
- * @param {Request} req - The request object.
- * @param {Response} res - Response - The response object
- * @param {NextFunction} next - The next middleware function in the stack.
- * @returns A function that takes in 4 parameters.
- */
 export function serverErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
   let statusCode;
   let message;
@@ -83,16 +65,6 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
   });
 }
 
-/**
- * It takes a `RequestValidators` object, which is a type that contains three optional properties:
- * `params`, `body`, and `query`. Each of these properties is a Zod schema. If any of these properties
- * are present, the function will attempt to validate the corresponding property on the `Request`
- * object. If validation fails, the function will redirect the user to the original URL with a flash
- * message containing the validation errors. If validation succeeds, the function will call `next()` to
- * continue the middleware chain
- * @param {RequestValidators} validators - RequestValidators
- * @returns A function that takes in a request, response, and next function.
- */
 export function validate(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {

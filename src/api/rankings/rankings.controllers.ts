@@ -6,11 +6,6 @@ import logger from '../../utils/logger';
 import * as RankingsServices from './rankings.services';
 import { getRankType, getRankingsType } from './rankings.validations';
 
-/**
- * It gets the rankings from the RankingsServices class and returns the response to the client
- * @param req - Request<{}, {}, getRankingsType>
- * @param {Response} res - Response - This is the response object that will be returned to the client.
- */
 export async function getRankings(req: Request<{}, {}, getRankingsType>, res: Response) {
   const rankings = await RankingsServices.getRankings(req.query);
 

@@ -1,16 +1,10 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-
-import logger from '../../utils/logger';
-
-import * as UsersServices from './users.services';
 import { getUserType, getUsersType } from './users.validations';
 
-/**
- * It gets a user from the database and returns it to the client
- * @param req - Request<getUserType, {}, {}>
- * @param {Response} res - Response - This is the response object that will be returned to the client.
- */
+import logger from '../../utils/logger';
+import * as UsersServices from './users.services';
+
 export async function getUser(req: Request<getUserType, {}, {}>, res: Response) {
   const user = await UsersServices.getUser(req.params);
 
@@ -25,13 +19,6 @@ export async function getUser(req: Request<getUserType, {}, {}>, res: Response) 
   });
 }
 
-/**
- * It gets a list of users from the database
- * @param req - Request<getUsersType, {}, {}>
- * @param {Response} res - Response - This is the response object that we will use to send back the
- * response to the client.
- * @returns a redirect to the /api/rankings endpoint.
- */
 export async function getUsers(req: Request<getUsersType, {}, {}>, res: Response) {
   if (req.query.search) {
     const searched = await UsersServices.searchUser(req.query);

@@ -8,12 +8,6 @@ type buildPaginationType = {
   per_page: number;
 };
 
-/**
- * This function takes an object with two properties, current_page and per_page, and returns a string
- * with the start and end values for pagination.
- * @param {buildPaginationType}  - current_page - The current page of the search results
- * @returns A string
- */
 export function buildPagination({ current_page, per_page }: buildPaginationType): string {
   if (current_page === 1) {
     return `start=${0}&end=${per_page}&lang=en&units=lbs`;
@@ -23,11 +17,6 @@ export function buildPagination({ current_page, per_page }: buildPaginationType)
   }&lang=en&units=lbs`;
 }
 
-/**
- * It takes a table and returns an array of objects
- * @param {any} table - The table you want to convert to JSON.
- * @returns An array of objects.
- */
 export function tableToJson(table: any) {
   const data = [];
 
@@ -53,20 +42,10 @@ export function tableToJson(table: any) {
   return data;
 }
 
-/**
- * StripHTML takes a string and returns a string.
- * @param {string} innerHTML - The HTML string to be stripped of HTML tags.
- * @returns The innerHTML of the element is being returned.
- */
 export function stripHTML(innerHTML: string): string {
   return innerHTML.replace(/(<([^>]+)>)/gi, '');
 }
 
-/**
- * It returns the hostname of the request
- * @param {Request} req - Request - The request object from the Express framework.
- * @returns The hostname of the request.
- */
 export function getHostName(req: Request): string {
   let origin = '';
 
@@ -81,10 +60,6 @@ export function getHostName(req: Request): string {
   return origin;
 }
 
-/**
- * It generates a random UUID, hashes it, and returns the unhashed and hashed versions
- * @returns An object with two properties: key and hashedKey.
- */
 export async function hashKey() {
   const key = crypto.randomUUID();
   const hashedKey = await bcrypt.hash(key, 5);
