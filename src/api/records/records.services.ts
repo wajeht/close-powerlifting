@@ -1,3 +1,5 @@
+import { AxiosError } from 'axios';
+import { StatusCodes } from 'http-status-codes';
 import { JSDOM } from 'jsdom';
 
 import Axios from '../../utils/axios';
@@ -25,7 +27,13 @@ export async function getRecords({ cache = true }: getRecordsType) {
       data,
       cache,
     };
-  } catch (e: any) {
-    throw new Error(`Something went wrong while processing rankings data!`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }

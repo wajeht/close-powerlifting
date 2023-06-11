@@ -2,11 +2,14 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import logger from '../../utils/logger';
+import { NotFoundError } from '../api.errors';
 import * as RecordsServices from './records.services';
 import { getRecordsType } from './records.validations';
 
 export async function getRecords(req: Request<{}, {}, getRecordsType>, res: Response) {
   const records = await RecordsServices.getRecords(req.query);
+
+  if (!records) throw new NotFoundError('The resource cannot be found!');
 
   // @ts-ignore
   logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);

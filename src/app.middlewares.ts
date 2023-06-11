@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import { ZodError, z } from 'zod';
 import { AnyZodObject } from 'zod';
 
-import { UnauthorizedError } from './api/api.errors';
+import { NotFoundError, UnauthorizedError } from './api/api.errors';
 import { ENV } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import logger from './utils/logger';
@@ -44,6 +44,11 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
 
   if (err instanceof UnauthorizedError) {
     statusCode = StatusCodes.UNAUTHORIZED;
+    message = err.message;
+  }
+
+  if (err instanceof NotFoundError) {
+    statusCode = StatusCodes.NOT_FOUND;
     message = err.message;
   }
 

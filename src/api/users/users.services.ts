@@ -1,3 +1,5 @@
+import { AxiosError } from 'axios';
+import { StatusCodes } from 'http-status-codes';
 import { JSDOM } from 'jsdom';
 
 import Axios from '../../utils/axios';
@@ -21,8 +23,14 @@ export async function getUser({ username }: getUserType) {
         competition_results: tableToJson(div[0].children[4]),
       },
     ];
-  } catch (e) {
-    throw new Error(`Something went wrong while processing meets data!`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -34,7 +42,13 @@ export async function searchUser({ search }: getUsersType) {
       `start=${next_index}&end=${next_index + 99}&lang=en&units=lbs`,
     );
     return rankings;
-  } catch (e) {
-    throw new Error(`Something went wrong while processing meets data!`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }
