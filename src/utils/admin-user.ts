@@ -1,10 +1,11 @@
-import bcrypt from 'bcryptjs';
-import { User } from '../views/views.models';
-import { ADMIN, PASSWORD_SALT, JWT_SECRET, EMAIL } from '../config/constants';
-import logger from './logger';
-import jwt from 'jsonwebtoken';
 import { faker } from '@faker-js/faker';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+import { ADMIN, EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
 import { hashKey } from '../utils/helpers';
+import { User } from '../views/views.models';
+import logger from './logger';
 import mail from './mail';
 
 export async function init() {

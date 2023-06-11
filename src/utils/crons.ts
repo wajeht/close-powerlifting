@@ -1,7 +1,8 @@
 import cron from 'node-cron';
+
+import logger from '../utils/logger';
 // @ts-ignore
 import redis from './redis';
-import logger from '../utils/logger';
 
 function removeCaches() {
   logger.info(` **** removeCaches() cron starts! ****`);

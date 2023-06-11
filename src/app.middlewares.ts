@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { ENV } from './config/constants';
 import { ZodError, z } from 'zod';
-import { UnauthorizedError } from './api/api.errors';
 import { AnyZodObject } from 'zod';
-import logger from './utils/logger';
+
+import { UnauthorizedError } from './api/api.errors';
+import { ENV } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
+import logger from './utils/logger';
 
 interface RequestValidators {
   params?: AnyZodObject;

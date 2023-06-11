@@ -1,6 +1,6 @@
+import path from 'path';
 import pino from 'pino';
 import pretty from 'pino-pretty';
-import path from 'path';
 
 const today = new Date().toISOString().split('T')[0];
 const root = path.resolve(process.cwd());

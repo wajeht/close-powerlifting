@@ -1,9 +1,9 @@
 import { JSDOM } from 'jsdom';
+
+import Axios from '../../utils/axios';
 import { stripHTML, tableToJson } from '../../utils/helpers';
 import { fetchRankings } from '../rankings/rankings.services';
 import { getUserType, getUsersType } from './users.validations';
-
-import Axios from '../../utils/axios';
 
 const api = new Axios(true).instance();
 

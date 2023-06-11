@@ -1,7 +1,7 @@
-import { MONGODB_URI } from '../config/constants';
-
-import logger from '../utils/logger';
 import mongoose from 'mongoose';
+
+import { MONGODB_URI } from '../config/constants';
+import logger from '../utils/logger';
 
 export async function init() {
   try {

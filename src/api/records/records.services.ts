@@ -1,10 +1,11 @@
-import Axios from '../../utils/axios';
-const api = new Axios(true).instance();
-
-import { tableToJson } from '../../utils/helpers';
 import { JSDOM } from 'jsdom';
 
+import Axios from '../../utils/axios';
+import { tableToJson } from '../../utils/helpers';
 import { getRecordsType } from './records.validations';
+
+const api = new Axios(true).instance();
+
 export async function getRecords({ cache = true }: getRecordsType) {
   try {
     const html = await (await api.get('/records')).data;

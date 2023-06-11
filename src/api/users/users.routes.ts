@@ -1,10 +1,10 @@
+import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
-import { validate } from '../api.middlewares';
 
+import { validate } from '../api.middlewares';
 import * as UsersControllers from './users.controllers';
 import * as UsersValidation from './users.validations';
 
-import express from 'express';
 const users = express.Router();
 
 /**

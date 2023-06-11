@@ -1,7 +1,8 @@
 import path from 'path';
-import { PORT, ENV, DOMAIN } from '../config/constants';
-import { ENV_ENUMS } from '../utils/enums';
+
 import pkg from '../../package.json';
+import { DOMAIN, ENV, PORT } from '../config/constants';
+import { ENV_ENUMS } from '../utils/enums';
 
 let LINK = '';
 

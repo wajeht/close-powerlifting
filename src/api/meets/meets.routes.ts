@@ -1,9 +1,9 @@
 import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
-import * as MeetsControllers from './meets.controllers';
-import * as MeetsValidations from './meets.validations';
 
 import { validate } from '../api.middlewares';
+import * as MeetsControllers from './meets.controllers';
+import * as MeetsValidations from './meets.validations';
 
 const meets = express.Router();
 

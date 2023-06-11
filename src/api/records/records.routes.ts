@@ -1,10 +1,10 @@
+import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
-import { validate } from '../api.middlewares';
 
+import { validate } from '../api.middlewares';
 import * as RecordsControllers from './records.controllers';
 import * as RecordsValidation from './records.validations';
 
-import express from 'express';
 const records = express.Router();
 
 /**

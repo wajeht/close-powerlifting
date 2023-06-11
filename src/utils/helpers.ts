@@ -1,7 +1,8 @@
-import { Request } from 'express';
-import { ENV, DOMAIN } from '../config/constants';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import { Request } from 'express';
+
+import { DOMAIN, ENV } from '../config/constants';
 
 type buildPaginationType = {
   current_page: number;

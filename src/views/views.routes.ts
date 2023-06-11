@@ -1,7 +1,8 @@
-import { z } from 'zod';
-import { validate } from '../app.middlewares';
 import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
+import { z } from 'zod';
+
+import { validate } from '../app.middlewares';
 import * as ViewsControllers from './views.controllers';
 
 const views = express.Router();

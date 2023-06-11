@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
-import logger from './logger';
+
 import { REDIS } from '../config/constants';
+import logger from './logger';
 
 let redis;
 

@@ -1,15 +1,16 @@
+import { faker } from '@faker-js/faker';
+import axios from 'axios';
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+import jwt from 'jsonwebtoken';
+
+import { getRankings } from '../api/rankings/rankings.services';
 import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
 import { getHostName, hashKey } from '../utils/helpers';
-import { User } from './views.models';
-import { StatusCodes } from 'http-status-codes';
-import mail from '../utils/mail';
-import jwt from 'jsonwebtoken';
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
-import axios from 'axios';
 import logger from '../utils/logger';
-import { getRankings } from '../api/rankings/rankings.services';
+import mail from '../utils/mail';
+import { User } from './views.models';
 
 export async function getHomePage(req: Request, res: Response) {
   const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
@@ -120,43 +121,43 @@ export async function postResetAPIKeyPage(
   }
 
   if (user && user.verified === true && user.admin === true) {
-      const password = faker.internet.password(50);
-      const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
+    const password = faker.internet.password(50);
+    const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
 
-      const apiKey = jwt.sign(
-        {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-        JWT_SECRET!,
-        {
-          issuer: 'Close Powerlifting',
-        },
-      );
+    const apiKey = jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+      JWT_SECRET!,
+      {
+        issuer: 'Close Powerlifting',
+      },
+    );
 
-      const hashedApiKey = await bcrypt.hash(apiKey, parseInt(PASSWORD_SALT!));
+    const hashedApiKey = await bcrypt.hash(apiKey, parseInt(PASSWORD_SALT!));
 
-      await User.findOneAndUpdate(
-        {
-          email: user.email,
+    await User.findOneAndUpdate(
+      {
+        email: user.email,
+      },
+      {
+        $set: {
+          key: hashedApiKey,
+          password: hashedPassword,
         },
-        {
-          $set: {
-            key: hashedApiKey,
-            password: hashedPassword
-          },
-        },
-        {
-          returnOriginal: false,
-        },
-      );
+      },
+      {
+        returnOriginal: false,
+      },
+    );
 
-     await mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: user.email,
-        subject: 'New API Key and Admin Password for Close Powerlifting',
-        html: `
+    await mail.sendMail({
+      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+      to: user.email,
+      subject: 'New API Key and Admin Password for Close Powerlifting',
+      html: `
           <div>
             <p>Hi ${user!.name},</p>
             <br>
@@ -175,9 +176,9 @@ export async function postResetAPIKeyPage(
             <p>Let's make all kinds of gains. All kindszzzz.!</p>
           </div>
           `,
-      });
+    });
 
-      logger.info(`**** admin user: ${user.email} has been updated! ****`);
+    logger.info(`**** admin user: ${user.email} has been updated! ****`);
   }
 
   // @ts-ignore

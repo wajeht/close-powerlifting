@@ -1,8 +1,9 @@
-import { Request, Response, NextFunction } from 'express';
-import { AnyZodObject } from 'zod';
-import { UnauthorizedError } from './api.errors';
+import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET, ENV } from '../config/constants';
+import { AnyZodObject } from 'zod';
+
+import { ENV, JWT_SECRET } from '../config/constants';
+import { UnauthorizedError } from './api.errors';
 
 interface RequestValidators {
   params?: AnyZodObject;

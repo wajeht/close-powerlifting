@@ -1,10 +1,10 @@
 import { JSDOM } from 'jsdom';
-import { tableToJson } from '../../utils/helpers';
-import { getMeetsType } from './meets.validations';
 
 import Axios from '../../utils/axios';
+import { tableToJson } from '../../utils/helpers';
 // @ts-ignore
 import redis from '../../utils/redis';
+import { getMeetsType } from './meets.validations';
 
 const api = new Axios(true).instance();
 

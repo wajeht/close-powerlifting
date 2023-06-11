@@ -1,4 +1,4 @@
-<div class="mt-10 mx-auto max-w-5xl overflow-x-scroll fade-in-heading animation-delay-4">
+<div class="fade-in-heading animation-delay-4 mx-auto mt-10 max-w-5xl overflow-x-scroll">
   <table
     class="table-fixed border border-neutral-900"
     style="min-width: 80% !important; padding: 5px"
@@ -8,7 +8,7 @@
         <% for (let key of Object.keys(rankings.data[0]) ) { %>
         <!-- skip id -->
         <% if (key !== 'id') { %>
-        <th class="py-2 px-4 text-left"><%= key %></th>
+        <th class="px-4 py-2 text-left"><%= key %></th>
         <% } %> <% } %>
       </tr>
     </thead>
@@ -18,7 +18,7 @@
         <% for (let j in i) { %>
         <!-- skip id -->
         <% if ( j !== 'id') { %>
-        <td class="text-left whitespace-nowrap py-2 px-4"><%= i[j] %></td>
+        <td class="whitespace-nowrap px-4 py-2 text-left"><%= i[j] %></td>
         <% } %> <% } %>
       </tr>
       <% } %>

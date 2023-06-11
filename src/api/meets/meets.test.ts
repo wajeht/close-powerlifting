@@ -1,6 +1,7 @@
 import { StatusCodes } from 'http-status-codes';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+
 import app from '../../app';
 
 describe('/api/meets', () => {

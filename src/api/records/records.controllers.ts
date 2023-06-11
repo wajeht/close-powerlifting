@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
 import logger from '../../utils/logger';
-
 import * as RecordsServices from './records.services';
 import { getRecordsType } from './records.validations';
 

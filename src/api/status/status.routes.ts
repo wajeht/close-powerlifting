@@ -1,10 +1,10 @@
+import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
-import { validate } from '../api.middlewares';
 
+import { validate } from '../api.middlewares';
 import * as StatusControllers from './status.controllers';
 import * as StatusValidations from './status.validations';
 
-import express from 'express';
 const status = express.Router();
 
 /**

@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4 max-w-sm mx-auto fade-in">
+<div class="fade-in mx-auto flex max-w-sm flex-col gap-4">
   <!-- flash -->
   <%- include('../components/flash-message.html') %>
 
@@ -6,13 +6,13 @@
   <form
     action="/reset-api-key"
     method="post"
-    class="flex flex-col gap-4 bg-neutral-900 p-7 rounded-md"
+    class="flex flex-col gap-4 rounded-md bg-neutral-900 p-7"
   >
     <!-- email -->
     <div class="flex flex-col gap-1">
       <label for="email">Email</label>
       <input
-        class="rounded-sm p-1 bg-neutral-700 text-neutral-100"
+        class="rounded-sm bg-neutral-700 p-1 text-neutral-100"
         type="email"
         name="email"
         id="email"
@@ -24,7 +24,7 @@
     <div class="flex flex-col gap-1">
       <button
         type="submit"
-        class="bg-slate-50 text-black hover:bg-black hover:outline hover:outline-slate-50 hover:text-slate-50 px-2 py-1 rounded-sm"
+        class="rounded-sm bg-slate-50 px-2 py-1 text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
       >
         Reset
       </button>

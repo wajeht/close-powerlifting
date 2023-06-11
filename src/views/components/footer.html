@@ -1,18 +1,18 @@
-<footer id="footer" class="bg-neutral-900 p-5 font-light text-sm">
+<footer id="footer" class="bg-neutral-900 p-5 text-sm font-light">
   <div
-    class="max-w-7xl flex max-xs:flex-col-reverse max-xs:items-center max-xs:gap-3 xs:flex-col-reverse xs:items-center xs:gap-3 sm:flex-row sm:justify-between mx-auto"
+    class="mx-auto flex max-w-7xl max-xs:flex-col-reverse max-xs:items-center max-xs:gap-3 xs:flex-col-reverse xs:items-center xs:gap-3 sm:flex-row sm:justify-between"
   >
     <span>
       Copyright © 2022. Made with ❤️ by
       <a class="hover:text-slate-50" href="https://github.com/wajeht" target="_blank">@wajeht ↗️</a>
     </span>
 
-    <nav class="font-light text-xs sm:text-sm">
+    <nav class="text-xs font-light sm:text-sm">
       <ul class="flex gap-5">
         <!-- privacy -->
         <li>
           <a
-            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/privacy' ? 'text-slate-50' : '' %>"
+            class="<%= typeof path !== 'undefined' && path === '/privacy' ? 'text-slate-50' : '' %> hover:text-slate-50"
             href="/privacy"
             >Privacy</a
           >
@@ -21,7 +21,7 @@
         <!-- terms -->
         <li>
           <a
-            class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/terms' ? 'text-slate-50' : '' %>"
+            class="<%= typeof path !== 'undefined' && path === '/terms' ? 'text-slate-50' : '' %> hover:text-slate-50"
             href="/terms"
             >Terms</a
           >

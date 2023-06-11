@@ -1,18 +1,18 @@
 <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', (event) => {
-  document.querySelectorAll('pre code').forEach((el) => {
-    hljs.highlightElement(el);
+  document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('pre code').forEach((el) => {
+      hljs.highlightElement(el);
+    });
   });
-});
 </script>
 
 <div>
   <div id="about" class="fade-in">
-    <div class="max-w-5xl mx-auto flex flex-col gap-4">
+    <div class="mx-auto flex max-w-5xl flex-col gap-4">
       <!-- warn -->
-      <p class="bg-red-500/20 rounded text-neutral-300 p-4">
+      <p class="rounded bg-red-500/20 p-4 text-neutral-300">
         The primary reason for this project is for education purposes only!
       </p>
 
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <p>
         Within powerlifting world, there is
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.org/"
           target="_blank"
           >Open Powerlifting ↗️</a
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         They even mentioned not to scrape the website yet still provided bulk data for free of
         download
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html"
           target="_blank"
           >here ↗️</a
@@ -45,14 +45,14 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
       <p>
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://close-powerlifting.jaw.dev/"
           target="_blank"
           >Close Powerlifting ↗️</a
         >
         only exists to create reverse API on top of
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.org/"
           target="_blank"
           >Open Powerlifting ↗️</a
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <p>
         Register for api key
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://close-powerlifting.jaw.dev/register"
           target="_blank"
           >here ↗️</a
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <p>
         Visit our
         <a
-          class="hover:text-slate-200 font-bold"
+          class="font-bold hover:text-slate-200"
           href="https://close-powerlifting.jaw.dev/docs/api/"
           target="_blank"
           >API Documentation ↗️</a
@@ -94,10 +94,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
       <h2>Step 3</h2>
       <p>
         Attach your api key via
-        <span class="bg-neutral-900 py-1 px-2 rounded-sm">x-api-key</span> or
-        <span class="bg-neutral-900 rounded-sm py-1 px-2">bearer token</span>.
+        <span class="rounded-sm bg-neutral-900 px-2 py-1">x-api-key</span> or
+        <span class="rounded-sm bg-neutral-900 px-2 py-1">bearer token</span>.
       </p>
-<pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded"><code class="language-js">// auth through x-api-key
+      <pre
+        class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
+      ><code class="language-js">// auth through x-api-key
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
@@ -106,7 +108,9 @@ const res = await window.fetch('/api/rankings', {
 });
 const data = await res.json();</code></pre>
 
-<pre class="bg-neutral-900 overflow-scroll p-4 text-sm rounded"><code class="language-js">// auth through bearer token
+      <pre
+        class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
+      ><code class="language-js">// auth through bearer token
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
@@ -130,90 +134,90 @@ const data = await res.json();</code></pre>
     color: #bcbebf;
   }
 
- /* Base16 Atelier Cave Dark - Theme */
-/* by Bram de Haan (http://atelierbram.github.io/syntax-highlighting/atelier-schemes/cave) */
-/* Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16) */
+  /* Base16 Atelier Cave Dark - Theme */
+  /* by Bram de Haan (http://atelierbram.github.io/syntax-highlighting/atelier-schemes/cave) */
+  /* Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16) */
 
-/* Atelier-Cave Comment */
-.hljs-comment,
-.hljs-quote {
-  color: #7e7887;
-}
+  /* Atelier-Cave Comment */
+  .hljs-comment,
+  .hljs-quote {
+    color: #7e7887;
+  }
 
-/* Atelier-Cave Red */
-.hljs-variable,
-.hljs-template-variable,
-.hljs-attribute,
-.hljs-regexp,
-.hljs-link,
-.hljs-tag,
-.hljs-name,
-.hljs-selector-id,
-.hljs-selector-class {
-  color: #be4678;
-}
+  /* Atelier-Cave Red */
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-attribute,
+  .hljs-regexp,
+  .hljs-link,
+  .hljs-tag,
+  .hljs-name,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: #be4678;
+  }
 
-/* Atelier-Cave Orange */
-.hljs-number,
-.hljs-meta,
-.hljs-built_in,
-.hljs-builtin-name,
-.hljs-literal,
-.hljs-type,
-.hljs-params {
-  color: #aa573c;
-}
+  /* Atelier-Cave Orange */
+  .hljs-number,
+  .hljs-meta,
+  .hljs-built_in,
+  .hljs-builtin-name,
+  .hljs-literal,
+  .hljs-type,
+  .hljs-params {
+    color: #aa573c;
+  }
 
-/* Atelier-Cave Green */
-.hljs-string,
-.hljs-symbol,
-.hljs-bullet {
-  color: #2a9292;
-}
+  /* Atelier-Cave Green */
+  .hljs-string,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: #2a9292;
+  }
 
-/* Atelier-Cave Blue */
-.hljs-title,
-.hljs-section {
-  color: #576ddb;
-}
+  /* Atelier-Cave Blue */
+  .hljs-title,
+  .hljs-section {
+    color: #576ddb;
+  }
 
-/* Atelier-Cave Purple */
-.hljs-keyword,
-.hljs-selector-tag {
-  color: #955ae7;
-}
+  /* Atelier-Cave Purple */
+  .hljs-keyword,
+  .hljs-selector-tag {
+    color: #955ae7;
+  }
 
-.hljs-deletion,
-.hljs-addition {
-  color: #19171c;
-  display: inline-block;
-  width: 100%;
-}
+  .hljs-deletion,
+  .hljs-addition {
+    color: #19171c;
+    display: inline-block;
+    width: 100%;
+  }
 
-.hljs-deletion {
-  background-color: #be4678;
-}
+  .hljs-deletion {
+    background-color: #be4678;
+  }
 
-.hljs-addition {
-  background-color: #2a9292;
-}
+  .hljs-addition {
+    background-color: #2a9292;
+  }
 
-.hljs {
-  display: block;
-  overflow-x: auto;
-  background: transparent;
-  color: #8b8792;
-}
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    background: transparent;
+    color: #8b8792;
+  }
 
-.hljs-emphasis {
-  font-style: italic;
-}
+  .hljs-emphasis {
+    font-style: italic;
+  }
 
-.hljs-strong {
-  font-weight: bold;
-}
+  .hljs-strong {
+    font-weight: bold;
+  }
 
-code.hljs {
-  padding: 0 !important;
-}
+  code.hljs {
+    padding: 0 !important;
+  }
 </style>

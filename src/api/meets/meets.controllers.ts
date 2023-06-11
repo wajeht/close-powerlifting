@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { getMeetsType } from './meets.validations';
 
 import logger from '../../utils/logger';
 import * as MeetsServices from './meets.services';
+import { getMeetsType } from './meets.validations';
 
 export async function getMeets(req: Request<{}, {}, getMeetsType>, res: Response) {
   const meets = await MeetsServices.getMeets(req.query);

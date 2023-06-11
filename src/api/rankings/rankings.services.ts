@@ -1,11 +1,10 @@
 import Axios from '../../utils/axios';
-
+import { buildPagination } from '../../utils/helpers';
 // @ts-ignore
 import redis from '../../utils/redis';
-const api = new Axios(false).instance();
+import { getRankType, getRankingsType } from './rankings.validations';
 
-import { getRankingsType, getRankType } from './rankings.validations';
-import { buildPagination } from '../../utils/helpers';
+const api = new Axios(false).instance();
 
 export async function fetchRankings(paginationQuery: string) {
   try {

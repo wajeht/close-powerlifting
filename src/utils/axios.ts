@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+
 import { API_URL, BASE_URL } from '../config/constants';
 
 class Axios {

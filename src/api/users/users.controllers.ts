@@ -1,8 +1,9 @@
+import { Request, Response } from 'express';
+import { StatusCodes } from 'http-status-codes';
+
 import logger from '../../utils/logger';
 import * as UsersServices from './users.services';
 import { getUserType, getUsersType } from './users.validations';
-import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
 
 export async function getUser(req: Request<getUserType, {}, {}>, res: Response) {
   const user = await UsersServices.getUser(req.params);

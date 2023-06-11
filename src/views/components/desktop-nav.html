@@ -8,7 +8,7 @@
     <!-- status -->
     <li>
       <a
-        class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %>"
+        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
         href="/status"
         >Status</a
       >
@@ -17,7 +17,7 @@
     <!-- about -->
     <li>
       <a
-        class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %>"
+        class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %> hover:text-slate-50"
         href="/about"
         >About</a
       >
@@ -26,7 +26,7 @@
     <!-- contact -->
     <li>
       <a
-        class="hover:text-slate-50 <%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %>"
+        class="<%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %> hover:text-slate-50"
         href="/contact"
         >Contact</a
       >
@@ -35,7 +35,7 @@
     <!-- register -->
     <li>
       <a
-        class="font-normal bg-slate-50 text-black hover:bg-black hover:outline hover:outline-slate-50 hover:text-slate-50 px-3 py-2 rounded-sm"
+        class="rounded-sm bg-slate-50 px-3 py-2 font-normal text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
         href="/register"
         >Register</a
       >

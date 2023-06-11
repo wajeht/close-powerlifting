@@ -1,10 +1,10 @@
+import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
-import { validate } from '../api.middlewares';
 
+import { validate } from '../api.middlewares';
 import * as RankingsControllers from './rankings.controllers';
 import * as RankingsValidation from './rankings.validations';
 
-import express from 'express';
 const rankings = express.Router();
 
 /**
