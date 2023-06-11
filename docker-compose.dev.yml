@@ -15,8 +15,8 @@ services:
       - mongodb
       - redis
       - mailhog
-      - mongo-express
       - redis-commander
+      - mongo-express
     networks:
       - close-powerlifting-network
 
@@ -38,7 +38,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: password
       MONGO_INITDB_DATABASE: close-powerlifting
     volumes:
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./src/utils/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
       - ./mongo-data:/data/db
     ports:
       - '27017:27017'
@@ -69,13 +69,13 @@ services:
       - ME_CONFIG_MONGODB_AUTH_DATABASE=close-powerlifting
       - ME_CONFIG_MONGODB_ADMINUSERNAME=username
       - ME_CONFIG_MONGODB_ADMINPASSWORD=password
-      - VCAP_APP_PORT=8083
+      - VCAP_APP_PORT=8082
       # - ME_CONFIG_BASICAUTH_USERNAME=username # enable basic auth for ui
       # - ME_CONFIG_BASICAUTH_PASSWORD=password
     depends_on:
       - mongodb
     ports:
-      - '8083:8083'
+      - '8082:8082'
     networks:
       - close-powerlifting-network
 
