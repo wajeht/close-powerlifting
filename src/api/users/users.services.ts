@@ -1,7 +1,7 @@
 import { JSDOM } from 'jsdom';
-import { tableToJson, stripHTML } from '../../utils/helpers';
-import { getUserType, getUsersType } from './users.validations';
+import { stripHTML, tableToJson } from '../../utils/helpers';
 import { fetchRankings } from '../rankings/rankings.services';
+import { getUserType, getUsersType } from './users.validations';
 
 import Axios from '../../utils/axios';
 

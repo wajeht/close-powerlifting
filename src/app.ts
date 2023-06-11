@@ -1,37 +1,37 @@
 import path from 'path';
 
-import express from 'express';
-import cors from 'cors';
-import bcrypt from 'bcryptjs';
-import flash from 'connect-flash';
-import helmet from 'helmet';
-import compression from 'compression';
-import session from 'express-session';
-import expressJSDocSwagger from 'express-jsdoc-swagger';
-import expressLayouts from 'express-ejs-layouts';
-import ejs from 'ejs';
-import swaggerConfig from './config/swagger.config';
-import apiRoutes from './api/api';
-import viewsRoutes from './views/views.routes';
-import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import MongooseAdapter from '@adminjs/mongoose';
+import AdminJS from 'adminjs';
+import bcrypt from 'bcryptjs';
+import compression from 'compression';
+import flash from 'connect-flash';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
+import ejs from 'ejs';
+import express from 'express';
+import expressLayouts from 'express-ejs-layouts';
+import expressJSDocSwagger from 'express-jsdoc-swagger';
+import session from 'express-session';
+import helmet from 'helmet';
+import apiRoutes from './api/api';
+import swaggerConfig from './config/swagger.config';
+import viewsRoutes from './views/views.routes';
 
-import * as rateLimiters from './config/rate-limiters.config';
-import * as appMiddlewares from './app.middlewares';
 import * as apiMiddlewares from './api/api.middlewares';
+import * as appMiddlewares from './app.middlewares';
+import * as rateLimiters from './config/rate-limiters.config';
 
 import {
-  SESSION_NAME,
-  ENV,
-  SESSION_SECRET,
   COOKIE_NAME,
   COOKIE_PASSWORD,
+  ENV,
+  SESSION_NAME,
+  SESSION_SECRET,
 } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
-import { User } from './views/views.models';
 import logger from './utils/logger';
+import { User } from './views/views.models';
 
 const app = express();
 
@@ -40,7 +40,7 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   app.use(rateLimiters.app);
 } else {
   app.use('/api', apiMiddlewares.auth, apiRoutes);
-  logger.info('**** skipping rate limiter for both api and app in dev environment ****')
+  logger.info('**** skipping rate limiter for both api and app in dev environment ****');
 }
 
 // ---------------------------------- ADMINJS STARTS ----------------------------------
@@ -120,8 +120,6 @@ app.set('layout', '../layouts/main.html');
 app.use(expressLayouts);
 
 expressJSDocSwagger(app)(swaggerConfig);
-
-
 
 app.use(viewsRoutes);
 

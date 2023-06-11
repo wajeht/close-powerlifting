@@ -2,9 +2,9 @@ import { JSDOM } from 'jsdom';
 import { tableToJson } from '../../utils/helpers';
 import { getMeetsType } from './meets.validations';
 
+import Axios from '../../utils/axios';
 // @ts-ignore
 import redis from '../../utils/redis';
-import Axios from '../../utils/axios';
 
 const api = new Axios(true).instance();
 
