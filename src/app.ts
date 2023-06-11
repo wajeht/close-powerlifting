@@ -35,6 +35,14 @@ import logger from './utils/logger';
 
 const app = express();
 
+if (ENV === ENV_ENUMS.PRODUCTION) {
+  app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiRoutes);
+  app.use(rateLimiters.app);
+} else {
+  app.use('/api', apiMiddlewares.auth, apiRoutes);
+  logger.info('**** skipping rate limiter for both api and app in dev environment ****')
+}
+
 // ---------------------------------- ADMINJS STARTS ----------------------------------
 AdminJS.registerAdapter(MongooseAdapter);
 
@@ -83,14 +91,6 @@ const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
 app.use(adminJs.options.rootPath, adminRouter);
 
 // ---------------------------------- ADMINJS ENDS ----------------------------------
-
-if (ENV === ENV_ENUMS.PRODUCTION) {
-  app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiRoutes);
-  app.use(rateLimiters.app);
-} else {
-  app.use('/api', apiMiddlewares.auth, apiRoutes);
-  logger.info('**** skipping rate limiter for both api and app in dev environment ****')
-}
 
 app.use(cookieParser());
 app.use(flash());
