@@ -11,7 +11,7 @@
     "build": "npm run build:tailwind && npm run build:api && npm run minify:html",
     "build:api": "tsc",
     "build:tailwind": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
-    "minify:html": "html-minifier --input-dir ./src/views --output-dir ./src/views --collapse-whitespace --file-ext html",
+    "minify:html": "html-minifier --input-dir ./src/views --output-dir ./dist/views --collapse-whitespace --minify-js --minify-css --remove-comments --file-ext html",
     "test": "vitest",
     "update:deps": " npx npm-check -u",
     "format:check": "prettier --check .",
