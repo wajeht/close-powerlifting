@@ -10,10 +10,16 @@ import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
+import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
+import contactHTML from '../utils/templates/contact';
+import newAPIKeyHTML from '../utils/templates/new-api-key';
+import verifyEmailHTML from '../utils/templates/verify-email';
+import welcomeHTML from '../utils/templates/welcome';
 import { User } from './views.models';
 
 export async function getHomePage(req: Request, res: Response) {
   const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
+
   return res.status(StatusCodes.OK).render('home.html', {
     path: '/home',
     rankings,
@@ -41,37 +47,29 @@ export async function postRegisterPage(
   }
 
   const { key: token } = await hashKey();
-  const created = await User.create({ email, name, verification_token: token });
+
+  const createdUser = await User.create({ email, name, verification_token: token });
+
   const hostname = getHostName(req);
 
-  logger.info(`user_id: ${created.id} has registered an account!`);
+  logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-  const info = await mail.sendMail({
+  await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'Account verification',
-    html: `
-      <div>
-        <p>Hi ${name},</p>
-        <br>
-
-        <p>We're happy you signed up for Close Powerlifting. To start exploring, please confirm your email address.</p>
-
-        <br>
-        <a href="${hostname}/verify-email?token=${created.verification_token}&email=${email}" style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">Verify Now</a>
-        <br>
-
-        <br>
-        <p>Welcome to the Close Powerlifting,</p>
-        <p>Let's make all kinds of gains. All kindszzzz.!</p>
-      </div>
-      `,
+    html: verifyEmailHTML({
+      name,
+      hostname,
+      email,
+      verification_token: createdUser.verification_token!,
+    }),
   });
 
-  // console.log(info.messageId);
-  logger.info(`Verification email was sent to user_id: ${created.id}!`);
+  logger.info(`Verification email was sent to user_id: ${createdUser.id}!`);
 
   req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
+
   return res.redirect('/register');
 }
 
@@ -88,46 +86,35 @@ export async function postResetAPIKeyPage(
 ) {
   const { email } = req.body;
 
-  const [user] = await User.find({ email });
+  const [foundUser] = await User.find({ email });
 
-  if (user && user.verified === false) {
+  if (foundUser && foundUser.verified === false) {
     const hostname = getHostName(req);
 
-    // email needs to verify
-    const info = await mail.sendMail({
+    await mail.sendMail({
       from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
       to: email,
       subject: 'Account verification',
-      html: `
-        <div>
-          <p>Hi ${user.name},</p>
-          <br>
-
-          <p>We're happy you signed up for Close Powerlifting earlier. To start exploring, please confirm your email address.</p>
-
-          <br>
-          <a href="${hostname}/verify-email?token=${user.verification_token}&email=${email}" style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">Verify Now</a>
-          <br>
-
-          <br>
-          <p>Welcome to the Close Powerlifting,</p>
-          <p>Let's make all kinds of gains. All kindszzzz.!</p>
-        </div>
-        `,
+      html: verifyEmailHTML({
+        name: foundUser.name!,
+        hostname,
+        email,
+        verification_token: foundUser.verification_token!,
+      }),
     });
 
-    logger.info(`Verification email was sent to user_id: ${user.id}!`);
+    logger.info(`Verification email was sent to user_id: ${foundUser.id}!`);
   }
 
-  if (user && user.verified === true && user.admin === true) {
+  if (foundUser && foundUser.verified === true && foundUser.admin === true) {
     const password = faker.internet.password(50);
     const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
 
     const apiKey = jwt.sign(
       {
-        id: user.id,
-        name: user.name,
-        email: user.email,
+        id: foundUser.id,
+        name: foundUser.name,
+        email: foundUser.email,
       },
       JWT_SECRET!,
       {
@@ -139,7 +126,7 @@ export async function postResetAPIKeyPage(
 
     await User.findOneAndUpdate(
       {
-        email: user.email,
+        email: foundUser.email,
       },
       {
         $set: {
@@ -154,35 +141,17 @@ export async function postResetAPIKeyPage(
 
     await mail.sendMail({
       from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-      to: user.email,
+      to: foundUser.email,
       subject: 'New API Key and Admin Password for Close Powerlifting',
-      html: `
-          <div>
-            <p>Hi ${user!.name},</p>
-            <br>
-            <p>Here below is your API key and admin password to access Close Powerlifting!</p>
-            <br>
-            <br>
-            <p>Admin password</p>
-            <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${password}</div>
-            <br>
-            <p>API Key:</p>
-            <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${apiKey}</div>
-            <br>
-            <br>
-            <br>
-            <p>Welcome to the Close Powerlifting,</p>
-            <p>Let's make all kinds of gains. All kindszzzz.!</p>
-          </div>
-          `,
+      html: adminNewAPIKeyHTML({ name: foundUser.name!, password, apiKey }),
     });
 
-    logger.info(`**** admin user: ${user.email} has been updated! ****`);
-  } else if (user && user.verified === true) {
+    logger.info(`**** admin user: ${foundUser.email} has been updated! ****`);
+  } else if (foundUser && foundUser.verified === true) {
     const key = jwt.sign(
       {
-        id: user.id,
-        name: user.name,
+        id: foundUser.id,
+        name: foundUser.name,
         email,
       },
       JWT_SECRET!,
@@ -207,32 +176,18 @@ export async function postResetAPIKeyPage(
       },
     );
 
-    const info = await mail.sendMail({
+    await mail.sendMail({
       from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
       to: email,
       subject: 'New api key for Close Powerlifting',
-      html: `
-      <div>
-        <p>Hi ${verified!.name},</p>
-        <br>
-
-        <p>We've received a request to reset a new api key. Here below is your API key to access Close Powerlifting!</p>
-
-        <br>
-        <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${key}</div>
-        <br>
-
-        <br>
-        <p>Welcome to the Close Powerlifting,</p>
-        <p>Let's make all kinds of gains. All kindszzzz.!</p>
-      </div>
-      `,
+      html: newAPIKeyHTML({ name: verified!.name!, key }),
     });
   }
 
   logger.info(`Reset api email was sent to email: ${email}!`);
 
   req.flash('info', 'If you have an account with us, we will send you a new api key!');
+
   res.redirect('/reset-api-key');
 }
 
@@ -269,7 +224,6 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
 
   const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
 
-  // const verified = await Keys.verify(email);
   let verified = await User.findOneAndUpdate(
     {
       email,
@@ -290,22 +244,7 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'API Key for Close Powerlifting',
-    html: `
-      <div>
-        <p>Hi ${verified!.name},</p>
-        <br>
-
-        <p>Thank your verifying your email address. Here below is your API key to access Close Powerlifting!</p>
-
-        <br>
-        <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${key}</div>
-        <br>
-
-        <br>
-        <p>Welcome to the Close Powerlifting,</p>
-        <p>Let's make all kinds of gains. All kindszzzz.!</p>
-      </div>
-      `,
+    html: welcomeHTML({ name: verified!.name!, key }),
   });
 
   logger.info(`user_id: ${verified!.id} has verified email!`);
@@ -328,17 +267,11 @@ export function getContactPage(req: Request, res: Response) {
 export async function postContactPage(req: Request, res: Response) {
   const { name, email, message } = req.body;
 
-  const info = await mail.sendMail({
+  await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: EMAIL.AUTH_EMAIL,
     subject: `Contact Request from ${email}`,
-    html: `
-    <div>
-    <p><span style="font-weight: bold;">Name:</span> ${name}</p>
-    <p><span style="font-weight: bold;">Email:</span> ${email}</p>
-    <p><span style="font-weight: bold;">Message:</span> ${message}</p>
-    </div>
-    `,
+    html: contactHTML({ name, email, message }),
   });
 
   req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
