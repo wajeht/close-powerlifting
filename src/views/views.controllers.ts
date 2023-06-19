@@ -68,7 +68,6 @@ export async function postRegisterPage(
       `,
   });
 
-  // console.log(info.messageId);
   logger.info(`Verification email was sent to user_id: ${created.id}!`);
 
   req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
@@ -269,7 +268,6 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
 
   const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
 
-  // const verified = await Keys.verify(email);
   let verified = await User.findOneAndUpdate(
     {
       email,
