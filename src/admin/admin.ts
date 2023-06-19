@@ -16,6 +16,14 @@ import logger from '../utils/logger';
 import { User } from '../views/views.models';
 import { CreateUserResource } from './user.resource';
 
+export type CreateResourceResult<T> = {
+  resource: T;
+  options: ResourceOptions;
+  features?: Array<FeatureType>;
+};
+
+export type ResourceFunction<T = unknown> = () => CreateResourceResult<T>;
+
 AdminJS.registerAdapter(MongooseAdapter);
 
 export const adminJs = new AdminJS({
@@ -62,11 +70,3 @@ export const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     name: SESSION_NAME,
   },
 );
-
-export type CreateResourceResult<T> = {
-  resource: T;
-  options: ResourceOptions;
-  features?: Array<FeatureType>;
-};
-
-export type ResourceFunction<T = unknown> = () => CreateResourceResult<T>;

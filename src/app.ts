@@ -31,6 +31,14 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   logger.info('**** skipping rate limiter for both api and app in dev environment ****');
 }
 
+(async () => {
+  if (ENV == ENV_ENUMS.PRODUCTION) {
+    await adminJs.initialize();
+  } else {
+    adminJs.watch();
+  }
+})();
+
 app.use(adminJs.options.rootPath, adminRouter);
 app.use(cookieParser());
 app.use(flash());
@@ -41,7 +49,7 @@ app.use(
     saveUninitialized: true,
   }),
 );
-app.use(cors());
+app.use(cors({ credentials: true, origin: true }));
 app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
