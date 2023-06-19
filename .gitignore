@@ -106,5 +106,4 @@ src/templates/tempCodeRunnerFile.js
 .DS_Store
 src/public/css/style.css
 mongo-volume
-mongo-init.js
 mongo-data
