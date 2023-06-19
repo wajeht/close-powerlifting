@@ -39,14 +39,19 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   }
 })();
 
+app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);
 app.use(cookieParser());
 app.use(flash());
 app.use(
   session({
     secret: SESSION_SECRET,
-    resave: true,
+    resave: false,
     saveUninitialized: true,
+    cookie: {
+      httpOnly: ENV === ENV_ENUMS.PRODUCTION,
+      secure: ENV === ENV_ENUMS.PRODUCTION,
+    },
   }),
 );
 app.use(cors({ credentials: true, origin: true }));
