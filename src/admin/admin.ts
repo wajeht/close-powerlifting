@@ -1,6 +1,7 @@
 import AdminJSExpress from '@adminjs/express';
 import MongooseAdapter from '@adminjs/mongoose';
 import AdminJS from 'adminjs';
+import type { FeatureType, ResourceOptions } from 'adminjs';
 import bcrypt from 'bcryptjs';
 
 import {
@@ -13,11 +14,17 @@ import {
 import { ENV_ENUMS } from '../utils/enums';
 import logger from '../utils/logger';
 import { User } from '../views/views.models';
+import { CreateUserResource } from './user.resource';
 
 AdminJS.registerAdapter(MongooseAdapter);
 
 export const adminJs = new AdminJS({
-  resources: [User],
+  version: { admin: true, app: '0.0.1' },
+  rootPath: '/admin',
+  branding: {
+    companyName: 'Close Powerlifting',
+  },
+  resources: [CreateUserResource()],
 });
 
 export const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
@@ -46,7 +53,7 @@ export const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
   null,
   {
     secret: SESSION_SECRET,
-    resave: false,
+    resave: true,
     saveUninitialized: true,
     cookie: {
       httpOnly: ENV === ENV_ENUMS.PRODUCTION,
@@ -55,3 +62,11 @@ export const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     name: SESSION_NAME,
   },
 );
+
+export type CreateResourceResult<T> = {
+  resource: T;
+  options: ResourceOptions;
+  features?: Array<FeatureType>;
+};
+
+export type ResourceFunction<T = unknown> = () => CreateResourceResult<T>;
