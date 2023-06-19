@@ -94,7 +94,7 @@ export async function getRankings({
       rankings = await fetchRankings(paginationQuery);
       if (rankings === null) return null;
       // @ts-ignore
-      const r = await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
+      await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
     }
 
     return {

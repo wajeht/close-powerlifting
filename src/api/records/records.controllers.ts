@@ -11,8 +11,7 @@ export async function getRecords(req: Request<{}, {}, getRecordsType>, res: Resp
 
   if (!records) throw new NotFoundError('The resource cannot be found!');
 
-  // @ts-ignore
-  logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+  logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
   res.status(StatusCodes.OK).json({
     status: 'success',

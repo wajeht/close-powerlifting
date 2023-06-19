@@ -12,9 +12,29 @@
     "skipLibCheck": true,
     "incremental": true,
     "paths": {
-      "*": ["node_modules/*", "src/types/*"]
-    }
+      "*": [
+        "node_modules/*",
+        "src/types/*"
+      ]
+    },
+    "typeRoots": [
+      "src/@types",
+      "node_modules/@types"
+    ],
   },
-  "include": ["src/**/*.ts", "src/**/*.json", ".env"],
-  "exclude": ["dist/**/*", "node_modules", "logs", ".adminjs", ".vscode", "mongo-data", "public"]
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.json",
+    "./src/**/*.d.ts",
+    ".env"
+  ],
+  "exclude": [
+    "dist/**/*",
+    "node_modules",
+    "logs",
+    ".adminjs",
+    ".vscode",
+    "mongo-data",
+    "public"
+  ]
 }

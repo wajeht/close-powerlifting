@@ -9,8 +9,7 @@ import { getRankType, getRankingsType } from './rankings.validations';
 export async function getRankings(req: Request<{}, {}, getRankingsType>, res: Response) {
   const rankings = await RankingsServices.getRankings(req.query);
 
-  // @ts-ignore
-  logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+  logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
   res.status(StatusCodes.OK).json({
     status: 'success',
@@ -27,8 +26,7 @@ export async function getRank(req: Request<getRankType, {}, {}>, res: Response) 
 
   if (!rank) throw new NotFoundError('The resource cannot be found!');
 
-  // @ts-ignore
-  logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+  logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
   res.status(StatusCodes.OK).json({
     status: 'success',

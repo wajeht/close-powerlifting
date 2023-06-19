@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
-import { ENV, JWT_SECRET } from '../config/constants';
+import { JWT_SECRET } from '../config/constants';
 import { UnauthorizedError } from './api.errors';
 
 interface RequestValidators {
@@ -48,15 +48,11 @@ export function auth(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET!);
+      const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
 
-      // @ts-ignore
       req.user = {
-        // @ts-ignore
         id: decoded.id,
-        // @ts-ignore
-        email: decoded.name,
-        // @ts-ignore
+        name: decoded.name,
         email: decoded.email,
       };
     } catch (error) {

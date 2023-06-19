@@ -65,7 +65,7 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
     if (meets === null) {
       meets = await fetchMeets({ current_page, per_page });
       // @ts-ignore
-      const m = await redis.set(`close-powerlifting-meets`, JSON.stringify(meets));
+      await redis.set(`close-powerlifting-meets`, JSON.stringify(meets));
     }
 
     return {

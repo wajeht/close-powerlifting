@@ -8,8 +8,7 @@ import { getMeetsType } from './meets.validations';
 export async function getMeets(req: Request<{}, {}, getMeetsType>, res: Response) {
   const meets = await MeetsServices.getMeets(req.query);
 
-  // @ts-ignore
-  logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+  logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
   res.status(StatusCodes.OK).json({
     status: 'success',

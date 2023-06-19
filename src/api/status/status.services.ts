@@ -38,7 +38,7 @@ export async function getStatus({ cache = true }: getStatusType) {
     if (data === null) {
       data = await fetchStatus();
       // @ts-ignore
-      const status = await redis.set(`close-powerlifting-status`, JSON.stringify(data));
+      await redis.set(`close-powerlifting-status`, JSON.stringify(data));
     }
 
     return {

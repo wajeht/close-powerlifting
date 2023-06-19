@@ -90,7 +90,6 @@ export async function postResetAPIKeyPage(
 
   const [user] = await User.find({ email });
 
-  // @ts-ignore
   if (user && user.verified === false) {
     const hostname = getHostName(req);
 
@@ -179,13 +178,9 @@ export async function postResetAPIKeyPage(
     });
 
     logger.info(`**** admin user: ${user.email} has been updated! ****`);
-  }
-
-  // @ts-ignore
-  else if (user && user.verified === true) {
+  } else if (user && user.verified === true) {
     const key = jwt.sign(
       {
-        // @ts-ignore
         id: user.id,
         name: user.name,
         email,
@@ -250,7 +245,6 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
     return res.redirect('/register');
   }
 
-  // @ts-ignore
   if (user.verification_token !== token) {
     req.flash('error', 'Something wrong while verifying your account!');
     return res.redirect('/register');
