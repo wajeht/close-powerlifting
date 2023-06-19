@@ -13,26 +13,26 @@ const server = app.listen(PORT, async () => {
 
     logger.info(`**** app was started on http://localhost:${PORT} ****`);
   } catch (error) {
-    logger.error('An error occurred during server start', error);
+    logger.error('**** An error occurred during server start ', error, ' ****');
     process.exit(1);
   }
 });
 
 function gracefulShutdown() {
-  logger.info('Received kill signal, shutting down gracefully.');
+  logger.info('**** Received kill signal, shutting down gracefully. ****');
   server.close(async () => {
     try {
       await db.stop();
-      logger.info('Closed out remaining connections.');
+      logger.info('**** Closed out remaining connections. ****');
       process.exit();
     } catch (err) {
-      logger.error('Error during shutdown', err);
+      logger.error('**** Error during shutdown ', err, ' ****');
       process.exit(1);
     }
   });
 
   setTimeout(() => {
-    logger.error('Could not close connections in time, forcefully shutting down');
+    logger.error('**** Could not close connections in time, forcefully shutting down ****');
     process.exit(1);
   }, 30 * 1000); // force shutdown after 30s
 }
@@ -40,5 +40,5 @@ function gracefulShutdown() {
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  logger.error('**** Unhandled Rejection at: ', promise, ' reason: ', reason, ' ****');
 });
