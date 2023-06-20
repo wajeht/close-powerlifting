@@ -3,7 +3,8 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
 import { JWT_SECRET } from '../config/constants';
-import { UnauthorizedError } from './api.errors';
+import { User } from '../views/views.models';
+import { APICallsExceeded, UnauthorizedError } from './api.errors';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -59,6 +60,25 @@ export function auth(req: Request, res: Response, next: NextFunction) {
       throw new UnauthorizedError('Invalid signature!');
     }
 
+    next();
+  } catch (e) {
+    next(e);
+  }
+}
+
+export async function trackAPICalls(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = req.user?.id;
+    if (id) {
+      const user = await User.findOneAndUpdate(
+        { id },
+        { $inc: { api_call_count: 1 } },
+        { new: true },
+      );
+      if (user?.api_call_count && user.api_call_count >= 100) {
+        throw new APICallsExceeded('API Calls exceeded!');
+      }
+    }
     next();
   } catch (e) {
     next(e);
