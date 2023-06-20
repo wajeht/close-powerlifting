@@ -18,10 +18,7 @@ import { ENV, SESSION_SECRET } from './config/constants';
 import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import { ENV_ENUMS } from './utils/enums';
-import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
-// @ts-ignore
-import redis from './utils/redis';
 import viewsRoutes from './views/views.routes';
 
 const app = express();
@@ -42,21 +39,7 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   }
 })();
 
-app.use(async (req, res, next) => {
-  if (!app.locals.hostname) {
-    // @ts-ignore
-    const hostname = await redis.get('hostname');
-    if (hostname === null) {
-      // @ts-ignore
-      await redis.set('hostname', getHostName(req));
-      // @ts-ignore
-      app.locals.hostname = await redis.get('hostname');
-    } else {
-      app.locals.hostname = hostname;
-    }
-  }
-  next();
-});
+app.use(appMiddlewares.handleHostname);
 
 app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);

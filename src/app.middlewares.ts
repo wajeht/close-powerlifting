@@ -6,7 +6,10 @@ import { AnyZodObject } from 'zod';
 import { NotFoundError, UnauthorizedError } from './api/api.errors';
 import { ENV } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
+import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
+// @ts-ignore
+import redis from './utils/redis';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -92,4 +95,21 @@ export function validate(validators: RequestValidators) {
       next();
     }
   };
+}
+
+export async function handleHostname(req: Request, res: Response, next: NextFunction) {
+  if (!req.app.locals.hostname) {
+    // @ts-ignore
+    const hostname = await redis.get('hostname');
+
+    if (hostname === null) {
+      // @ts-ignore
+      await redis.set('hostname', getHostName(req));
+      // @ts-ignore
+      req.app.locals.hostname = await redis.get('hostname');
+    } else {
+      req.app.locals.hostname = hostname;
+    }
+  }
+  next();
 }
