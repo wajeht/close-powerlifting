@@ -1,19 +1,20 @@
 import axios from 'axios';
-import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import jwt from 'jsonwebtoken';
 
 import { getRankings } from '../api/rankings/rankings.services';
-import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants';
+import { EMAIL, X_API_KEY } from '../config/constants';
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
 import contactHTML from '../utils/templates/contact';
-import verifyEmailHTML from '../utils/templates/verify-email';
-import welcomeHTML from '../utils/templates/welcome';
 import { User } from './views.models';
-import { resetAPIKey, resetAdminAPIKey, sendVerificationEmail } from './views.services';
+import {
+  resetAPIKey,
+  resetAdminAPIKey,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from './views.services';
 
 export async function getHomePage(req: Request, res: Response) {
   const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
@@ -52,19 +53,13 @@ export async function postRegisterPage(
 
   logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-  await mail.sendMail({
-    from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-    to: email,
-    subject: 'Account verification',
-    html: verifyEmailHTML({
-      name,
-      hostname,
-      email,
-      verification_token: createdUser.verification_token!,
-    }),
+  await sendVerificationEmail({
+    name,
+    email,
+    verification_token: token,
+    hostname,
+    userId: createdUser.id,
   });
-
-  logger.info(`Verification email was sent to user_id: ${createdUser.id}!`);
 
   req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
 
@@ -113,65 +108,28 @@ export async function postResetAPIKeyPage(
 
 export async function getVerifyEmailPage(req: Request, res: Response) {
   const { token, email } = req.query as { token: string; email: string };
-  const [user] = await User.find({ email });
+  const [foundUser] = await User.find({ email });
 
-  if (!user) {
+  if (!foundUser) {
     req.flash('error', 'Something wrong while verifying your account!');
     return res.redirect('/register');
   }
 
-  if (user.verification_token !== token) {
+  if (foundUser.verification_token !== token) {
     req.flash('error', 'Something wrong while verifying your account!');
     return res.redirect('/register');
   }
 
-  if (user.verified === true) {
+  if (foundUser.verified === true) {
     req.flash('error', 'This e-mail has already been used for verification!');
     return res.redirect('/register');
   }
 
-  const key = jwt.sign(
-    {
-      id: user.id,
-      name: user.name,
-      email,
-    },
-    JWT_SECRET!,
-    {
-      issuer: 'Close Powerlifting',
-    },
-  );
-
-  const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
-
-  let verified = await User.findOneAndUpdate(
-    {
-      email,
-    },
-    {
-      $set: {
-        key: hashKey,
-        verified: true,
-        verified_at: new Date().toISOString(),
-      },
-    },
-    {
-      returnOriginal: false,
-    },
-  );
-
-  const info = await mail.sendMail({
-    from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-    to: email,
-    subject: 'API Key for Close Powerlifting',
-    html: welcomeHTML({ name: verified!.name!, key }),
-  });
-
-  logger.info(`user_id: ${verified!.id} has verified email!`);
+  await sendWelcomeEmail({ name: foundUser.name!, email: foundUser.email!, userId: foundUser.id! });
 
   req.flash(
     'success',
-    'Thank you for verifying your email address. We just send you an API key to your email!',
+    'Thank you for verifying your email address. We will send you an API key to your email very shortly!',
   );
 
   return res.redirect('/register');
@@ -195,6 +153,7 @@ export async function postContactPage(req: Request, res: Response) {
   });
 
   req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
+
   return res.redirect('/contact');
 }
 

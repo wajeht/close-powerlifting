@@ -1,21 +1,28 @@
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
-import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
-import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
 import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
 import newAPIKeyHTML from '../utils/templates/new-api-key';
 import verifyEmailHTML from '../utils/templates/verify-email';
+import welcomeHTML from '../utils/templates/welcome';
 import { User } from './views.models';
 
 type UserParams = {
   userId: string;
   name: string;
   email: string;
+};
+
+type VerificationEmailPrams = {
+  hostname: string;
+  userId: string;
+  name: string;
+  email: string;
+  verification_token: string;
 };
 
 export async function resetAPIKey({ userId, name, email }: UserParams): Promise<void> {
@@ -100,14 +107,6 @@ export async function resetAdminAPIKey({ userId, name, email }: UserParams): Pro
   logger.info(`**** admin user: ${email} has been updated! ****`);
 }
 
-type VerificationEmailPrams = {
-  hostname: string;
-  userId: string;
-  name: string;
-  email: string;
-  verification_token: string;
-};
-
 export async function sendVerificationEmail({
   hostname,
   email,
@@ -128,4 +127,45 @@ export async function sendVerificationEmail({
   });
 
   logger.info(`Verification email was sent to user_id: ${userId}!`);
+}
+
+export async function sendWelcomeEmail({ name, email, userId }: UserParams) {
+  const key = jwt.sign(
+    {
+      id: userId,
+      name,
+      email,
+    },
+    JWT_SECRET!,
+    {
+      issuer: 'Close Powerlifting',
+    },
+  );
+
+  const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+
+  let verified = await User.findOneAndUpdate(
+    {
+      email,
+    },
+    {
+      $set: {
+        key: hashKey,
+        verified: true,
+        verified_at: new Date().toISOString(),
+      },
+    },
+    {
+      returnOriginal: false,
+    },
+  );
+
+  await mail.sendMail({
+    from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+    to: email,
+    subject: 'API Key for Close Powerlifting',
+    html: welcomeHTML({ name: verified!.name!, key }),
+  });
+
+  logger.info(`user_id: ${verified!.id} has verified email!`);
 }
