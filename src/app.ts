@@ -46,18 +46,15 @@ app.use(async (req, res, next) => {
   if (!app.locals.hostname) {
     // @ts-ignore
     const hostname = await redis.get('hostname');
-
     if (hostname === null) {
       // @ts-ignore
       await redis.set('hostname', getHostName(req));
+      // @ts-ignore
+      app.locals.hostname = await redis.get('hostname');
+    } else {
+      app.locals.hostname = hostname;
     }
-    // @ts-ignore
-    app.locals.hostname = await redis.get('hostname');
-  } else {
-    // @ts-ignore
-    app.locals.hostname = await redis.get('hostname');
   }
-
   next();
 });
 
