@@ -27,7 +27,6 @@ export type ResourceFunction<T = unknown> = () => CreateResourceResult<T>;
 AdminJS.registerAdapter(MongooseAdapter);
 
 export const adminJs = new AdminJS({
-  version: { admin: true, app: '0.0.1' },
   rootPath: '/admin',
   branding: {
     companyName: 'Close Powerlifting',
