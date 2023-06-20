@@ -31,6 +31,7 @@ export const adminJs = new AdminJS({
   rootPath: '/admin',
   branding: {
     companyName: 'Close Powerlifting',
+    logo: false,
   },
   resources: [CreateUserResource()],
 });

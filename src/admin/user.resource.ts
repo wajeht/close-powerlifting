@@ -1,14 +1,45 @@
 import { User } from '../views/views.models';
+import { sendVerificationEmail } from '../views/views.services';
 import { ResourceFunction } from './admin';
 
 export const CreateUserResource: ResourceFunction<typeof User> = () => ({
   resource: User,
   features: [],
   options: {
-    navigation: 'User',
-    properties: {
-      _id: {
-        isTitle: true,
+    navigation: {
+      name: 'Users',
+      icon: 'User',
+    },
+    sort: {
+      sortBy: 'createdAt',
+      direction: 'desc',
+    },
+    // listProperties: ['id', 'name', 'createdAt'],
+    // editProperties: ['id', 'name', 'bio', 'createdAt'],
+    // showProperties: ['id', 'name', 'email', 'api_call_count'],
+    filterProperties: ['name', 'email'],
+    listProperties: ['name', 'email', 'api_call_count', 'verified'],
+    actions: {
+      sendVerificationEmail: {
+        actionType: 'record',
+        component: false,
+        handler: async (request, response, context) => {
+          const { record, currentAdmin } = context;
+
+          await sendVerificationEmail({
+            // @ts-ignore
+            req: request,
+            email: record?.params.email,
+            name: record?.params.name,
+            userId: record?.params.id,
+            verification_token: record?.params.verification_token,
+          });
+
+          return {
+            record: record!.toJSON(currentAdmin),
+          };
+        },
+        isAccessible: ({ record }) => !record?.params.verified,
       },
     },
   },

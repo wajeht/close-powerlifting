@@ -1,4 +1,3 @@
-import { faker } from '@faker-js/faker';
 import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
@@ -10,12 +9,11 @@ import { EMAIL, JWT_SECRET, PASSWORD_SALT, X_API_KEY } from '../config/constants
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
-import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
 import contactHTML from '../utils/templates/contact';
-import newAPIKeyHTML from '../utils/templates/new-api-key';
 import verifyEmailHTML from '../utils/templates/verify-email';
 import welcomeHTML from '../utils/templates/welcome';
 import { User } from './views.models';
+import { resetAPIKey, resetAdminAPIKey, sendVerificationEmail } from './views.services';
 
 export async function getHomePage(req: Request, res: Response) {
   const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
@@ -89,102 +87,24 @@ export async function postResetAPIKeyPage(
   const [foundUser] = await User.find({ email });
 
   if (foundUser && foundUser.verified === false) {
-    const hostname = getHostName(req);
-
-    await mail.sendMail({
-      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-      to: email,
-      subject: 'Account verification',
-      html: verifyEmailHTML({
-        name: foundUser.name!,
-        hostname,
-        email,
-        verification_token: foundUser.verification_token!,
-      }),
+    await sendVerificationEmail({
+      hostname: getHostName(req),
+      userId: foundUser.id!,
+      name: foundUser.name!,
+      email: foundUser.email!,
+      verification_token: foundUser.verification_token!,
     });
-
-    logger.info(`Verification email was sent to user_id: ${foundUser.id}!`);
   }
 
   if (foundUser && foundUser.verified === true && foundUser.admin === true) {
-    const password = faker.internet.password(50);
-    const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
-
-    const apiKey = jwt.sign(
-      {
-        id: foundUser.id,
-        name: foundUser.name,
-        email: foundUser.email,
-      },
-      JWT_SECRET!,
-      {
-        issuer: 'Close Powerlifting',
-      },
-    );
-
-    const hashedApiKey = await bcrypt.hash(apiKey, parseInt(PASSWORD_SALT!));
-
-    await User.findOneAndUpdate(
-      {
-        email: foundUser.email,
-      },
-      {
-        $set: {
-          key: hashedApiKey,
-          password: hashedPassword,
-        },
-      },
-      {
-        returnOriginal: false,
-      },
-    );
-
-    await mail.sendMail({
-      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-      to: foundUser.email,
-      subject: 'New API Key and Admin Password for Close Powerlifting',
-      html: adminNewAPIKeyHTML({ name: foundUser.name!, password, apiKey }),
+    await resetAdminAPIKey({
+      userId: foundUser.id!,
+      name: foundUser.name!,
+      email: foundUser.email!,
     });
-
-    logger.info(`**** admin user: ${foundUser.email} has been updated! ****`);
   } else if (foundUser && foundUser.verified === true) {
-    const key = jwt.sign(
-      {
-        id: foundUser.id,
-        name: foundUser.name,
-        email,
-      },
-      JWT_SECRET!,
-      {
-        issuer: 'Close Powerlifting',
-      },
-    );
-
-    const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
-
-    let verified = await User.findOneAndUpdate(
-      {
-        email,
-      },
-      {
-        $set: {
-          key: hashKey,
-        },
-      },
-      {
-        returnOriginal: false,
-      },
-    );
-
-    await mail.sendMail({
-      from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-      to: email,
-      subject: 'New api key for Close Powerlifting',
-      html: newAPIKeyHTML({ name: verified!.name!, key }),
-    });
+    await resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
   }
-
-  logger.info(`Reset api email was sent to email: ${email}!`);
 
   req.flash('info', 'If you have an account with us, we will send you a new api key!');
 
