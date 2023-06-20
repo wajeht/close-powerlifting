@@ -75,7 +75,7 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
         { $inc: { api_call_count: 1 } },
         { new: true },
       );
-      if (user?.api_call_count && user.api_call_count >= 100) {
+      if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
         throw new APICallsExceeded('API Calls exceeded!');
       }
     }

@@ -20,7 +20,7 @@ export const CreateUserResource: ResourceFunction<typeof User> = () => ({
     // editProperties: ['id', 'name', 'bio', 'createdAt'],
     // showProperties: ['id', 'name', 'email', 'api_call_count'],
     filterProperties: ['name', 'email'],
-    listProperties: ['name', 'email', 'api_call_count', 'verified'],
+    listProperties: ['name', 'email', 'api_call_count', 'api_call_limit', 'verified'],
     actions: {
       sendVerificationEmail: {
         actionType: 'record',
