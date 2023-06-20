@@ -1,3 +1,5 @@
+// @ts-ignore
+import redis from '../utils/redis';
 import { User } from '../views/views.models';
 import { sendVerificationEmail } from '../views/views.services';
 import { ResourceFunction } from './admin';
@@ -26,9 +28,11 @@ export const CreateUserResource: ResourceFunction<typeof User> = () => ({
         handler: async (request, response, context) => {
           const { record, currentAdmin } = context;
 
+          // @ts-ignore
+          const hostname = await redis.get('hostname');
+
           await sendVerificationEmail({
-            // @ts-ignore
-            req: request,
+            hostname,
             email: record?.params.email,
             name: record?.params.name,
             userId: record?.params.id,
