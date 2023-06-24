@@ -12,12 +12,9 @@ type buildPaginationType = {
 };
 
 export function buildPagination({ current_page, per_page }: buildPaginationType): string {
-  if (current_page === 1) {
-    return `start=${0}&end=${per_page}&lang=en&units=lbs`;
-  }
-  return `start=${current_page * per_page}&end=${
-    current_page * per_page + per_page
-  }&lang=en&units=lbs`;
+  const start = current_page === 1 ? 0 : current_page * per_page;
+  const end = start + per_page;
+  return `start=${start}&end=${end}&lang=en&units=lbs`;
 }
 
 export function tableToJson(table: any) {
@@ -52,7 +49,7 @@ export function stripHTML(innerHTML: string): string {
 export function getHostName(req: Request): string {
   let origin = '';
 
-  if (ENV === 'development' || ENV == 'development') {
+  if (ENV === 'development') {
     const protocol = req.protocol;
     const hostname = req.get('host');
     origin = `${protocol}://${hostname}`;
