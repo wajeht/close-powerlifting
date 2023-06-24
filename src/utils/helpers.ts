@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { Request } from 'express';
+import jwt from 'jsonwebtoken';
 
-import { DOMAIN, ENV } from '../config/constants';
+import { DOMAIN, ENV, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
+import { UserParams } from '../views/views.services';
 
 type buildPaginationType = {
   current_page: number;
@@ -68,4 +70,20 @@ export async function hashKey() {
     key,
     hashedKey,
   };
+}
+
+export async function generateAPIKey(userParams: UserParams): Promise<string> {
+  const { userId, name, email } = userParams;
+  const key = jwt.sign(
+    {
+      id: userId,
+      name,
+      email,
+    },
+    JWT_SECRET!,
+    {
+      issuer: 'Close Powerlifting',
+    },
+  );
+  return await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
 }

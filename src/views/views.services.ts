@@ -1,9 +1,9 @@
 import { faker } from '@faker-js/faker';
 import axios from 'axios';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-import { EMAIL, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
+import { EMAIL, PASSWORD_SALT } from '../config/constants';
+import { generateAPIKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
 import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
@@ -12,7 +12,7 @@ import verifyEmailHTML from '../utils/templates/verify-email';
 import welcomeHTML from '../utils/templates/welcome';
 import { User } from './views.models';
 
-type UserParams = {
+export type UserParams = {
   userId: string;
   name: string;
   email: string;
@@ -26,83 +26,43 @@ type VerificationEmailPrams = {
   verification_token: string;
 };
 
-export async function resetAPIKey({ userId, name, email }: UserParams): Promise<void> {
-  const key = jwt.sign(
-    {
-      id: userId,
-      name,
-      email,
-    },
-    JWT_SECRET!,
-    {
-      issuer: 'Close Powerlifting',
-    },
-  );
+async function updateUser(email: string, updates: any): Promise<any> {
+  return await User.findOneAndUpdate({ email }, { $set: updates }, { returnOriginal: false });
+}
 
-  const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+export async function resetAPIKey(userParams: UserParams): Promise<void> {
+  const { email } = userParams;
+  const hashKey = await generateAPIKey(userParams);
 
-  const verified = await User.findOneAndUpdate(
-    {
-      email,
-    },
-    {
-      $set: {
-        key: hashKey,
-      },
-    },
-    {
-      returnOriginal: false,
-    },
-  );
+  const verified = await updateUser(email, { key: hashKey });
 
   await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API key for Close Powerlifting',
-    html: newAPIKeyHTML({ name: verified!.name!, key }),
+    html: newAPIKeyHTML({ name: verified!.name!, key: hashKey }),
   });
 
   logger.info(`Reset API email was sent to email: ${email}!`);
 }
 
-export async function resetAdminAPIKey({ userId, name, email }: UserParams): Promise<void> {
+export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
+  const { name, email } = userParams;
   const password = faker.internet.password(50);
   const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
 
-  const apiKey = jwt.sign(
-    {
-      id: userId,
-      name,
-      email,
-    },
-    JWT_SECRET!,
-    {
-      issuer: 'Close Powerlifting',
-    },
-  );
+  const hashedApiKey = await generateAPIKey(userParams);
 
-  const hashedApiKey = await bcrypt.hash(apiKey, parseInt(PASSWORD_SALT!));
-
-  await User.findOneAndUpdate(
-    {
-      email,
-    },
-    {
-      $set: {
-        key: hashedApiKey,
-        password: hashedPassword,
-      },
-    },
-    {
-      returnOriginal: false,
-    },
-  );
+  await updateUser(email, {
+    key: hashedApiKey,
+    password: hashedPassword,
+  });
 
   await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API Key and Admin Password for Close Powerlifting',
-    html: adminNewAPIKeyHTML({ name, password, apiKey }),
+    html: adminNewAPIKeyHTML({ name, password, apiKey: hashedApiKey }),
   });
 
   logger.info(`**** admin user: ${email} has been updated! ****`);
@@ -130,42 +90,21 @@ export async function sendVerificationEmail({
   logger.info(`Verification email was sent to user_id: ${userId}!`);
 }
 
-export async function sendWelcomeEmail({ name, email, userId }: UserParams) {
-  const key = jwt.sign(
-    {
-      id: userId,
-      name,
-      email,
-    },
-    JWT_SECRET!,
-    {
-      issuer: 'Close Powerlifting',
-    },
-  );
+export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
+  const { email } = userParams;
+  const hashKey = await generateAPIKey(userParams);
 
-  const hashKey = await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
-
-  let verified = await User.findOneAndUpdate(
-    {
-      email,
-    },
-    {
-      $set: {
-        key: hashKey,
-        verified: true,
-        verified_at: new Date().toISOString(),
-      },
-    },
-    {
-      returnOriginal: false,
-    },
-  );
+  let verified = await updateUser(email, {
+    key: hashKey,
+    verified: true,
+    verified_at: new Date().toISOString(),
+  });
 
   await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'API Key for Close Powerlifting',
-    html: welcomeHTML({ name: verified!.name!, key }),
+    html: welcomeHTML({ name: verified!.name!, key: hashKey }),
   });
 
   logger.info(`user_id: ${verified!.id} has verified email!`);
