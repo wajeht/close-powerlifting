@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
@@ -10,6 +9,7 @@ import mail from '../utils/mail';
 import contactHTML from '../utils/templates/contact';
 import { User } from './views.models';
 import {
+  getAPIStatus,
   resetAPIKey,
   resetAdminAPIKey,
   sendVerificationEmail,
@@ -183,38 +183,8 @@ export function getStatusPage(req: Request, res: Response) {
 
 export async function getHealthCheckPage(req: Request, res: Response) {
   const url = getHostName(req);
-  const fetch = axios.create({
-    baseURL: url,
-    headers: {
-      authorization: `Bearer ${X_API_KEY}`,
-    },
-  });
 
-  const routes = [
-    '/api/rankings',
-    '/api/rankings/1',
-    '/api/rankings?current_page=1&per_page=100&cache=false',
-    '/api/meets',
-    '/api/meets?current_page=1&per_page=100&cache=false',
-    '/api/records',
-    '/api/users/johnhaack',
-    '/api/status',
-    '/api/users?search=haack',
-  ];
-
-  const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
-
-  const data = promises.map((p) => {
-    return {
-      status: p.status === 'fulfilled',
-      // @ts-ignore
-      method: p?.value?.config.method?.toUpperCase() ?? p?.reason?.config.method?.toUpperCase(),
-      // @ts-ignore
-      url: p?.value?.config?.url ?? p?.reason?.config?.url,
-      // @ts-ignore
-      date: p?.value?.headers?.date ?? p?.reason?.response?.headers?.date,
-    };
-  });
+  const data = await getAPIStatus({ X_API_KEY: X_API_KEY!, url });
 
   res.status(StatusCodes.OK).json({
     status: 'success',

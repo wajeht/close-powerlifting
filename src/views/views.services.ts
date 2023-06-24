@@ -1,4 +1,5 @@
 import { faker } from '@faker-js/faker';
+import axios from 'axios';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
@@ -168,4 +169,42 @@ export async function sendWelcomeEmail({ name, email, userId }: UserParams) {
   });
 
   logger.info(`user_id: ${verified!.id} has verified email!`);
+}
+
+export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
+  const fetch = axios.create({
+    baseURL: url,
+    headers: {
+      authorization: `Bearer ${X_API_KEY}`,
+    },
+  });
+
+  const routes = [
+    '/api/rankings',
+    '/api/rankings/1',
+    '/api/rankings?current_page=1&per_page=100&cache=false',
+    '/api/meets',
+    '/api/meets?current_page=1&per_page=100&cache=false',
+    '/api/records',
+    '/api/users/johnhaack',
+    '/api/status',
+    '/api/users?search=haack',
+  ];
+
+  const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
+
+  const data = promises.map((p) => {
+    const fulfilled = p.status === 'fulfilled';
+    const config = fulfilled ? p.value?.config : p.reason?.config;
+    const headers = fulfilled ? p.value?.headers : p.reason?.response?.headers;
+
+    return {
+      status: fulfilled,
+      method: config?.method?.toUpperCase(),
+      url: config?.url,
+      date: headers?.date,
+    };
+  });
+
+  return data;
 }
