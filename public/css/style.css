@@ -747,6 +747,14 @@ video {
   gap: 1.25rem !important;
 }
 
+.gap-10 {
+  gap: 2.5rem !important;
+}
+
+.gap-7 {
+  gap: 1.75rem !important;
+}
+
 .overflow-scroll {
   overflow: scroll !important;
 }
