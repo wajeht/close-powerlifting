@@ -53,7 +53,7 @@ export async function postRegisterPage(
 
   logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-  await sendVerificationEmail({
+  sendVerificationEmail({
     name,
     email,
     verification_token: token,
@@ -82,7 +82,7 @@ export async function postResetAPIKeyPage(
   const [foundUser] = await User.find({ email });
 
   if (foundUser && foundUser.verified === false) {
-    await sendVerificationEmail({
+    sendVerificationEmail({
       hostname: getHostName(req),
       userId: foundUser.id!,
       name: foundUser.name!,
@@ -92,13 +92,13 @@ export async function postResetAPIKeyPage(
   }
 
   if (foundUser && foundUser.verified === true && foundUser.admin === true) {
-    await resetAdminAPIKey({
+    resetAdminAPIKey({
       userId: foundUser.id!,
       name: foundUser.name!,
       email: foundUser.email!,
     });
   } else if (foundUser && foundUser.verified === true) {
-    await resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
+    resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
   }
 
   req.flash('info', 'If you have an account with us, we will send you a new api key!');
@@ -125,7 +125,7 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
     return res.redirect('/register');
   }
 
-  await sendWelcomeEmail({ name: foundUser.name!, email: foundUser.email!, userId: foundUser.id! });
+  sendWelcomeEmail({ name: foundUser.name!, email: foundUser.email!, userId: foundUser.id! });
 
   req.flash(
     'success',
@@ -145,7 +145,7 @@ export function getContactPage(req: Request, res: Response) {
 export async function postContactPage(req: Request, res: Response) {
   const { name, email, message } = req.body;
 
-  await mail.sendMail({
+  mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: EMAIL.AUTH_EMAIL,
     subject: `Contact Request from ${email}`,

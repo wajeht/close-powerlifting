@@ -38,7 +38,7 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
 
   const verified = await updateUser(email, { key: hashedKey });
 
-  await mail.sendMail({
+  mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API key for Close Powerlifting',
@@ -60,7 +60,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
     password: hashedPassword,
   });
 
-  await mail.sendMail({
+  mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API Key and Admin Password for Close Powerlifting',
@@ -70,14 +70,14 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   logger.info(`**** admin user: ${email} has been updated! ****`);
 }
 
-export async function sendVerificationEmail({
+export function sendVerificationEmail({
   hostname,
   email,
   name,
   verification_token,
   userId,
-}: VerificationEmailPrams): Promise<void> {
-  await mail.sendMail({
+}: VerificationEmailPrams) {
+  mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'Account verification',
@@ -102,7 +102,7 @@ export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
     verified_at: new Date().toISOString(),
   });
 
-  await mail.sendMail({
+  mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'API Key for Close Powerlifting',
