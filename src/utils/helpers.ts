@@ -69,7 +69,7 @@ export async function hashKey() {
   };
 }
 
-export async function generateAPIKey(userParams: UserParams): Promise<string> {
+export async function generateAPIKey(userParams: UserParams) {
   const { userId, name, email } = userParams;
   const key = jwt.sign(
     {
@@ -82,5 +82,9 @@ export async function generateAPIKey(userParams: UserParams): Promise<string> {
       issuer: 'Close Powerlifting',
     },
   );
-  return await bcrypt.hash(key, parseInt(PASSWORD_SALT!));
+
+  return {
+    unhashedKey: key,
+    hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+  };
 }

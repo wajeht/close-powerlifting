@@ -34,15 +34,15 @@ async function updateUser(email: string, updates: any): Promise<any> {
 
 export async function resetAPIKey(userParams: UserParams): Promise<void> {
   const { email } = userParams;
-  const hashKey = await generateAPIKey(userParams);
+  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
-  const verified = await updateUser(email, { key: hashKey });
+  const verified = await updateUser(email, { key: hashedKey });
 
   await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API key for Close Powerlifting',
-    html: newAPIKeyHTML({ name: verified!.name!, key: hashKey }),
+    html: newAPIKeyHTML({ name: verified!.name!, key: unhashedKey }),
   });
 
   logger.info(`Reset API email was sent to email: ${email}!`);
@@ -53,10 +53,10 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   const password = faker.internet.password(50);
   const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
 
-  const hashedApiKey = await generateAPIKey(userParams);
+  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
   await updateUser(email, {
-    key: hashedApiKey,
+    key: hashedKey,
     password: hashedPassword,
   });
 
@@ -64,7 +64,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'New API Key and Admin Password for Close Powerlifting',
-    html: adminNewAPIKeyHTML({ name, password, apiKey: hashedApiKey }),
+    html: adminNewAPIKeyHTML({ name, password, apiKey: unhashedKey }),
   });
 
   logger.info(`**** admin user: ${email} has been updated! ****`);
@@ -94,10 +94,10 @@ export async function sendVerificationEmail({
 
 export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
   const { email } = userParams;
-  const hashKey = await generateAPIKey(userParams);
+  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
   let verified = await updateUser(email, {
-    key: hashKey,
+    key: hashedKey,
     verified: true,
     verified_at: new Date().toISOString(),
   });
@@ -106,7 +106,7 @@ export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'API Key for Close Powerlifting',
-    html: welcomeHTML({ name: verified!.name!, key: hashKey }),
+    html: welcomeHTML({ name: verified!.name!, key: unhashedKey }),
   });
 
   logger.info(`user_id: ${verified!.id} has verified email!`);
