@@ -18,7 +18,11 @@
         <% for (let j in i) { %>
         <!-- skip id -->
         <% if ( j !== 'id') { %>
-        <td class="whitespace-nowrap px-4 py-2 text-left"><%= i[j] %></td>
+        <td class="whitespace-nowrap px-4 py-2 text-left">
+          <% if ( j === 'instagram_url') { %>
+          <a class="hover:text-slate-50" href="<%= i[j] %>" target="_blank"><%= i[j] %> ↗️</a>
+          <% } else { %> <%= i[j] %> <% } %>
+        </td>
         <% } %> <% } %>
       </tr>
       <% } %>
