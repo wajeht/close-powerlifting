@@ -32,7 +32,7 @@ rankings.get(
 /**
  * GET /api/rankings/{rank}
  * @tags rankings
- * @summary all things relating rank end point
+ * @summary get specific details about a rank
  * @param {string} rank.path.required - the rank - application/x-www-form-urlencoded
  * @security BearerAuth
  */
