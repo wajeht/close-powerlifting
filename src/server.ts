@@ -4,6 +4,8 @@ import * as admin from './utils/admin-user';
 import * as crons from './utils/crons';
 import * as db from './utils/db';
 import logger from './utils/logger';
+// @ts-ignore
+import redis from './utils/redis';
 
 const server = app.listen(PORT, async () => {
   try {
@@ -22,6 +24,8 @@ function gracefulShutdown() {
   logger.info('**** Received kill signal, shutting down gracefully. ****');
   server.close(async () => {
     try {
+      // @ts-ignore
+      redis.disconnect();
       await db.stop();
       logger.info('**** Closed out remaining connections. ****');
       process.exit();
