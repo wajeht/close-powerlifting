@@ -119,15 +119,17 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
   });
 
   const routes = [
-    '/api/rankings',
-    '/api/rankings/1',
+    '/api/rankings?cache=false',
+    '/api/rankings/1?cache=false',
     '/api/rankings?current_page=1&per_page=100&cache=false',
-    '/api/meets',
+    '/api/meets?cache=false',
     '/api/meets?current_page=1&per_page=100&cache=false',
-    '/api/records',
-    '/api/users/johnhaack',
-    '/api/status',
-    '/api/users?search=haack',
+    'api/meets/ipf?cache=false',
+    'api/meets/ipf?year=2020&cache=false',
+    '/api/records?cache=false',
+    '/api/users/johnhaack?cache=false',
+    '/api/status?cache=false',
+    '/api/users?search=haack&cache=false',
   ];
 
   const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
