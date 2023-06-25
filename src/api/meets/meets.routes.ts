@@ -25,11 +25,19 @@ const meets = express.Router();
  */
 meets.get(
   '/',
-  validate({
-    query: MeetsValidations.getMeetsValidation,
-  }),
+  validate({ query: MeetsValidations.getMeetsValidation }),
   catchAsyncHandler(MeetsControllers.getMeets),
 );
+
+/**
+ * GET /api/meets/{federation}?year={year}&cache={cache}
+ * @tags meets
+ * @summary get list of meets of a federation by year
+ * @param {string} federation.path.required - the fed - application/x-www-form-urlencoded
+ * @param {number} year.query - the yeare - application/x-www-form-urlencoded
+ * @param {boolean} cache.query - the cache - application/x-www-form-urlencoded
+ * @security BearerAuth
+ */
 
 /**
  * GET /api/meets/{federation}
@@ -40,7 +48,10 @@ meets.get(
  */
 meets.get(
   '/:federation',
-  validate({ params: MeetsValidations.getFederationsValidation }),
+  validate({
+    params: MeetsValidations.getFederationsParamValidation,
+    query: MeetsValidations.getFederationsQueryValidation,
+  }),
   catchAsyncHandler(MeetsControllers.getFederations),
 );
 

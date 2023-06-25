@@ -6,7 +6,11 @@ import Axios from '../../utils/axios';
 import { tableToJson } from '../../utils/helpers';
 // @ts-ignore
 import redis from '../../utils/redis';
-import { getFederationsType, getMeetsType } from './meets.validations';
+import {
+  getFederationsParamType,
+  getFederationsQueryType,
+  getMeetsType,
+} from './meets.validations';
 
 const api = new Axios(true).instance();
 
@@ -101,13 +105,66 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
   }
 }
 
-export async function getFederations({ federation }: getFederationsType) {
+async function fetchFederations({ federation, year }: any) {
   try {
-    const html = await (await api.get(`/mlist/${federation}`)).data;
+    let url = '';
+    if (year) {
+      url = `/mlist/${federation}/${year}`;
+    } else {
+      url = `/mlist/${federation}`;
+    }
+    const html = await (await api.get(url)).data;
     const dom = new JSDOM(html);
     const elements = dom.window.document.getElementsByTagName('table')[0];
-    const table = tableToJson(elements);
-    return table;
+    const federations = tableToJson(elements);
+
+    return federations;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
+  }
+}
+
+export async function getFederations({
+  federation,
+  cache = true,
+  year,
+}: getFederationsParamType & getFederationsQueryType) {
+  try {
+    if (cache === false) {
+      const federations = await fetchFederations({ federation, year });
+      return {
+        data: federations,
+        cache,
+      };
+    }
+
+    let cacheString = '';
+
+    if (year) {
+      cacheString = `close-powerlifting-meets-federation-${federation}-${year}`;
+    } else {
+      cacheString = `close-powerlifting-meets-federation-${federation}`;
+    }
+
+    // @ts-ignore
+    let federations = JSON.parse(await redis.get(cacheString));
+
+    if (federations === null) {
+      federations = await fetchFederations({ federation, year });
+      // @ts-ignore
+      await redis.set(cacheString, JSON.stringify(federations));
+    }
+
+    return {
+      data: federations,
+      cache,
+    };
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === StatusCodes.NOT_FOUND) {
