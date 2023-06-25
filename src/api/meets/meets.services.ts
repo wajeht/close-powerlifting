@@ -1,10 +1,12 @@
+import { AxiosError } from 'axios';
+import { StatusCodes } from 'http-status-codes';
 import { JSDOM } from 'jsdom';
 
 import Axios from '../../utils/axios';
 import { tableToJson } from '../../utils/helpers';
 // @ts-ignore
 import redis from '../../utils/redis';
-import { getMeetsType } from './meets.validations';
+import { getFederationsType, getMeetsType } from './meets.validations';
 
 const api = new Axios(true).instance();
 
@@ -33,8 +35,14 @@ async function fetchMeets({ current_page, per_page }: any) {
       from,
       to,
     };
-  } catch (e) {
-    return null;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -82,7 +90,31 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
         to: meets?.to,
       },
     };
-  } catch (e) {
-    throw new Error(`Something went wrong while processing meets data!`);
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
+  }
+}
+
+export async function getFederations({ federation }: getFederationsType) {
+  try {
+    const html = await (await api.get(`/mlist/${federation}`)).data;
+    const dom = new JSDOM(html);
+    const elements = dom.window.document.getElementsByTagName('table')[0];
+    const table = tableToJson(elements);
+    return table;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === StatusCodes.NOT_FOUND) {
+        return null;
+      }
+    } else {
+      throw error;
+    }
   }
 }

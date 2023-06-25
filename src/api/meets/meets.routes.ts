@@ -31,4 +31,17 @@ meets.get(
   catchAsyncHandler(MeetsControllers.getMeets),
 );
 
+/**
+ * GET /api/meets/{federation}
+ * @tags meets
+ * @summary get list of meets of a federation
+ * @param {string} federation.path.required - the fed - application/x-www-form-urlencoded
+ * @security BearerAuth
+ */
+meets.get(
+  '/:federation',
+  validate({ params: MeetsValidations.getFederationsValidation }),
+  catchAsyncHandler(MeetsControllers.getFederations),
+);
+
 export default meets;

@@ -22,4 +22,9 @@ export const getMeetsValidation = z.object({
     .optional(),
 });
 
+export const getFederationsValidation = z.object({
+  federation: z.string(),
+});
+
 export type getMeetsType = z.infer<typeof getMeetsValidation>;
+export type getFederationsType = z.infer<typeof getFederationsValidation>;
