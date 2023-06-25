@@ -28,7 +28,7 @@ type VerificationEmailPrams = {
   verification_token: string;
 };
 
-async function updateUser(email: string, updates: any): Promise<any> {
+export async function updateUser(email: string, updates: any): Promise<any> {
   return await User.findOneAndUpdate({ email }, { $set: updates }, { returnOriginal: false });
 }
 
