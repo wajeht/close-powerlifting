@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const getMeetsValidation = z.object({
+export const getFederationsValidation = z.object({
   per_page: z
     .string()
     .transform((val) => Number(val))
@@ -42,6 +42,6 @@ export const getFederationsQueryValidation = z.object({
 
 export const getFederationsParamValidation = z.object({ federation: z.string() });
 
-export type getMeetsType = z.infer<typeof getMeetsValidation>;
+export type getFederationsType = z.infer<typeof getFederationsValidation>;
 export type getFederationsParamType = z.infer<typeof getFederationsParamValidation>;
 export type getFederationsQueryType = z.infer<typeof getFederationsQueryValidation>;

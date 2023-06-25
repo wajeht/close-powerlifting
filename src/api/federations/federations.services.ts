@@ -9,12 +9,12 @@ import redis from '../../utils/redis';
 import {
   getFederationsParamType,
   getFederationsQueryType,
-  getMeetsType,
-} from './meets.validations';
+  getFederationsType,
+} from './federations.validations';
 
 const api = new Axios(true).instance();
 
-async function fetchMeets({ current_page, per_page }: any) {
+async function fetchFederations({ current_page, per_page }: any) {
   try {
     const html = await (await api.get('/mlist')).data;
     const dom = new JSDOM(html);
@@ -50,48 +50,52 @@ async function fetchMeets({ current_page, per_page }: any) {
   }
 }
 
-export async function getMeets({ current_page = 1, per_page = 100, cache = true }: getMeetsType) {
+export async function getFederations({
+  current_page = 1,
+  per_page = 100,
+  cache = true,
+}: getFederationsType) {
   try {
     if (cache === false) {
-      const meets = await fetchMeets({ current_page, per_page });
+      const federations = await fetchFederations({ current_page, per_page });
 
       return {
-        data: meets?.data,
+        data: federations?.data,
         cache: true,
         pagination: {
-          items: meets?.table.length,
-          pages: Math.floor(meets?.table.length! / per_page),
+          items: federations?.table.length,
+          pages: Math.floor(federations?.table.length! / per_page),
           per_page,
           current_page,
-          last_page: Math.floor(meets?.table.length! / per_page),
+          last_page: Math.floor(federations?.table.length! / per_page),
           first_page: 1,
-          from: meets?.from,
-          to: meets?.to,
+          from: federations?.from,
+          to: federations?.to,
         },
       };
     }
 
     // @ts-ignore
-    let meets = JSON.parse(await redis.get(`close-powerlifting-meets`));
+    let federations = JSON.parse(await redis.get(`close-powerlifting-federations`));
 
-    if (meets === null) {
-      meets = await fetchMeets({ current_page, per_page });
+    if (federations === null) {
+      federations = await fetchFederations({ current_page, per_page });
       // @ts-ignore
-      await redis.set(`close-powerlifting-meets`, JSON.stringify(meets));
+      await redis.set(`close-powerlifting-federations`, JSON.stringify(federations));
     }
 
     return {
-      data: meets?.data,
+      data: federations?.data,
       cache: true,
       pagination: {
-        items: meets?.table.length,
-        pages: Math.floor(meets?.table.length! / per_page),
+        items: federations?.table.length,
+        pages: Math.floor(federations?.table.length! / per_page),
         per_page,
         current_page,
-        last_page: Math.floor(meets?.table.length! / per_page),
+        last_page: Math.floor(federations?.table.length! / per_page),
         first_page: 1,
-        from: meets?.from,
-        to: meets?.to,
+        from: federations?.from,
+        to: federations?.to,
       },
     };
   } catch (error) {
@@ -105,7 +109,7 @@ export async function getMeets({ current_page = 1, per_page = 100, cache = true 
   }
 }
 
-async function fetchFederations({ federation, year }: any) {
+async function fetchFederation({ federation, year }: any) {
   try {
     let url = '';
     if (year) {
@@ -130,14 +134,14 @@ async function fetchFederations({ federation, year }: any) {
   }
 }
 
-export async function getFederations({
+export async function getFederation({
   federation,
   cache = true,
   year,
 }: getFederationsParamType & getFederationsQueryType) {
   try {
     if (cache === false) {
-      const federations = await fetchFederations({ federation, year });
+      const federations = await fetchFederation({ federation, year });
       return {
         data: federations,
         cache,
@@ -147,9 +151,9 @@ export async function getFederations({
     let cacheString = '';
 
     if (year) {
-      cacheString = `close-powerlifting-meets-federation-${federation}-${year}`;
+      cacheString = `close-powerlifting-federations-federation-${federation}-${year}`;
     } else {
-      cacheString = `close-powerlifting-meets-federation-${federation}`;
+      cacheString = `close-powerlifting-federations-federation-${federation}`;
     }
 
     // @ts-ignore
