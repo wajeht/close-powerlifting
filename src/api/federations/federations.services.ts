@@ -110,7 +110,6 @@ export async function getFederations({
 }
 
 async function fetchFederation({ federation, year }: any) {
-  console.log('uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu');
   try {
     let url = '';
     if (year) {
