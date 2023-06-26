@@ -29,6 +29,7 @@
 
 We have a few resources available for api call. Resources with larger amount of data are usually cached in memory and paginated for the first call. Pagination is included by default. You can pass in `?cache=false` at the end of a url to get the latest/recent data.
 
+- `/api/federations`
 - `/api/meets`
 - `/api/rankings`
 - `/api/records`
