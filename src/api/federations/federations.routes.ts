@@ -15,7 +15,7 @@ const federations = express.Router();
  */
 
 /**
- * GET /api/federations?current_page={current_page}&per_page=${per_page}
+ * GET /api/federations?current_page={current_page}&per_page={per_page}
  * @tags federations
  * @summary all things relating federations end point with pagination
  * @param {number} per_page.query.required - the per_page - application/x-www-form-urlencoded
@@ -43,7 +43,7 @@ federations.get(
  * GET /api/federations/{federation}
  * @tags federations
  * @summary get list of federations of a federation
- * @param {string} federation.path.required - the fed - application/x-www-form-urlencoded
+ * @param {string} federation.path.required - the federation - application/x-www-form-urlencoded
  * @security BearerAuth
  */
 federations.get(
@@ -52,7 +52,7 @@ federations.get(
     params: FederationsValidations.getFederationsParamValidation,
     query: FederationsValidations.getFederationsQueryValidation,
   }),
-  catchAsyncHandler(FederationsControllers.getFederations),
+  catchAsyncHandler(FederationsControllers.getFederation),
 );
 
 export default federations;

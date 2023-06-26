@@ -110,6 +110,7 @@ export async function getFederations({
 }
 
 async function fetchFederation({ federation, year }: any) {
+  console.log('uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu');
   try {
     let url = '';
     if (year) {
@@ -160,7 +161,7 @@ export async function getFederation({
     let federations = JSON.parse(await redis.get(cacheString));
 
     if (federations === null) {
-      federations = await fetchFederations({ federation, year });
+      federations = await fetchFederation({ federation, year });
       // @ts-ignore
       await redis.set(cacheString, JSON.stringify(federations));
     }
