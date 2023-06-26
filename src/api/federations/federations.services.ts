@@ -50,11 +50,7 @@ async function fetchFederations({ current_page, per_page }: any) {
   }
 }
 
-export async function getFederations({
-  current_page = 1,
-  per_page = 100,
-  cache = true,
-}: getFederationsType) {
+export async function getFederations({ current_page = 1, per_page = 100, cache = true }) {
   try {
     if (cache === false) {
       const federations = await fetchFederations({ current_page, per_page });
@@ -75,13 +71,15 @@ export async function getFederations({
       };
     }
 
+    const cacheKey = `close-powerlifting-federations-${current_page}-${per_page}`;
+
     // @ts-ignore
-    let federations = JSON.parse(await redis.get(`close-powerlifting-federations`));
+    let federations = JSON.parse(await redis.get(cacheKey));
 
     if (federations === null) {
       federations = await fetchFederations({ current_page, per_page });
       // @ts-ignore
-      await redis.set(`close-powerlifting-federations`, JSON.stringify(federations));
+      await redis.set(cacheKey, JSON.stringify(federations));
     }
 
     return {
