@@ -32,7 +32,7 @@ export async function fetchRankings(paginationQuery: string) {
         country_two: r[10],
         state: r[11],
         meet_code: r[12],
-        meet_url: `/api/meets/${r[12].split('/')[1]}`,
+        meet_url: `/api/meets/${r[12]}`,
         sex: r[13],
         equip: r[14],
         age: parseInt(r[15]),

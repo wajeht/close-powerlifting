@@ -8,6 +8,15 @@ import * as MeetsValidations from './meets.validations';
 const meets = express.Router();
 
 /**
+ * GET /api/meets/{meet}?cache={cache}
+ * @tags meets
+ * @summary get specific detail of a meet
+ * @param {string} meet.path.required - the meet - application/x-www-form-urlencoded
+ * @param {boolean} cache.query - the cache - application/x-www-form-urlencoded
+ * @security BearerAuth
+ */
+
+/**
  * GET /api/meets/{meet}
  * @tags meets
  * @summary get specific detail of a meet
@@ -16,7 +25,10 @@ const meets = express.Router();
  */
 meets.get(
   '/:meet',
-  validate({ params: MeetsValidations.getMeetValidation }),
+  validate({
+    params: MeetsValidations.getMeetParamValidation,
+    query: MeetsValidations.getMeetQueryValidation,
+  }),
   catchAsyncHandler(MeetsControllers.getMeet),
 );
 
