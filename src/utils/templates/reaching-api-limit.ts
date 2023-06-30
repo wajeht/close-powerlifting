@@ -1,12 +1,12 @@
 type param = { name: string };
 
-export default function welcomeHTML(param: param): string {
+export default function reachingApiLimitHTML(param: param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>
     <br>
 
-    <p>Your API calls are reaching the limit of 70. Please optimize your usage to avoid interruptions.</p>
+    <p>Your API calls are reaching 70% of given limit. Please optimize your usage to avoid interruptions.</p>
 
     <br>
     <p>Let us know if you need help</p>
