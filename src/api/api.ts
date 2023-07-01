@@ -1,5 +1,6 @@
 import express from 'express';
 
+import AuthRoutes from './auth/auth.routes';
 import FederationsRoutes from './federations/federations.routes';
 import MeetsRoutes from './meets/meets.routes';
 import RankingsRoutes from './rankings/rankings.routes';
@@ -15,5 +16,6 @@ api.use('/records', RecordsRoutes);
 api.use('/meets', MeetsRoutes);
 api.use('/users', UsersRoutes);
 api.use('/status', StatusRoutes);
+api.use('/auth', AuthRoutes);
 
 export default api;
