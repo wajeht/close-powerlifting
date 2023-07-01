@@ -23,6 +23,8 @@ import viewsRoutes from './views/views.routes';
 
 const app = express();
 
+app.disable('x-powered-by');
+
 if (ENV === ENV_ENUMS.PRODUCTION) {
   app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
   app.use(rateLimiters.app);
