@@ -52,7 +52,7 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
   app.use(rateLimiters.app);
 } else {
-  // app.use('/api', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
+  app.use('/api', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
   app.use('/api', apiRoutes);
   logger.info('**** skipping rate limiter for both api and app in dev environment ****');
 }
