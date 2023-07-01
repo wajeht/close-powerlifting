@@ -35,3 +35,16 @@ export const ADMIN = {
   EMAIL: process.env.ADMIN_EMAIL,
   NAME: process.env.ADMIN_NAME,
 };
+
+export const OAUTH = {
+  GOOGLE: {
+    CLIENT_ID: process.env.GOOGLE_CLIENT_ID as unknown as string,
+    CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as unknown as string,
+    OAUTH_REDIRECT_URL: process.env.GOOGLE_OAUTH_REDIRECT_URL as unknown as string,
+  },
+  GITHUB: {
+    CLIENT_ID: process.env.GITHUB_CLIENT_ID as unknown as string,
+    CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET as unknown as string,
+    OAUTH_REDIRECT_URL: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
+  },
+};
