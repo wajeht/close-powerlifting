@@ -4,6 +4,7 @@ import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { DOMAIN, ENV, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
+import { OAUTH } from '../config/constants';
 import { UserParams } from '../views/views.services';
 
 type buildPaginationType = {
@@ -87,4 +88,38 @@ export async function generateAPIKey(userParams: UserParams) {
     unhashedKey: key,
     hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
   };
+}
+
+export function getGoogleOAuthURL() {
+  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+
+  const options = {
+    redirect_uri: OAUTH.GOOGLE.OAUTH_REDIRECT_URL,
+    client_id: OAUTH.GOOGLE.CLIENT_ID,
+    access_type: 'offline',
+    response_type: 'code',
+    prompt: 'consent',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email',
+    ].join(' '),
+  };
+
+  const qs = new URLSearchParams(options);
+
+  return `${rootUrl}?${qs.toString()}`;
+}
+
+export function getGitHubOAuthURL() {
+  const rootUrl = 'https://github.com/login/oauth/authorize';
+
+  const options = {
+    redirect_uri: OAUTH.GITHUB.OAUTH_REDIRECT_URL,
+    client_id: OAUTH.GITHUB.CLIENT_ID,
+    scope: 'user:email',
+  };
+
+  const qs = new URLSearchParams(options);
+
+  return `${rootUrl}?${qs.toString()}`;
 }
