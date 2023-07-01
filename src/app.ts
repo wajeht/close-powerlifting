@@ -25,22 +25,6 @@ const app = express();
 
 app.disable('x-powered-by');
 
-if (ENV === ENV_ENUMS.PRODUCTION) {
-  app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
-  app.use(rateLimiters.app);
-} else {
-  app.use('/api', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
-  logger.info('**** skipping rate limiter for both api and app in dev environment ****');
-}
-
-(async () => {
-  if (ENV == ENV_ENUMS.PRODUCTION) {
-    await adminJs.initialize();
-  } else {
-    adminJs.watch();
-  }
-})();
-
 app.use(appMiddlewares.handleHostname);
 
 app.set('trust proxy', true);
@@ -63,6 +47,24 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({ contentSecurityPolicy: false }));
+
+if (ENV === ENV_ENUMS.PRODUCTION) {
+  app.use('/api', rateLimiters.api, apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
+  app.use(rateLimiters.app);
+} else {
+  // app.use('/api', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, apiRoutes);
+  app.use('/api', apiRoutes);
+  logger.info('**** skipping rate limiter for both api and app in dev environment ****');
+}
+
+(async () => {
+  if (ENV == ENV_ENUMS.PRODUCTION) {
+    await adminJs.initialize();
+  } else {
+    adminJs.watch();
+  }
+})();
+
 app.use(
   express.static(path.resolve(path.join(process.cwd(), 'public')), {
     maxAge: '24h',
