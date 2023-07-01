@@ -5,6 +5,32 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  PORT: 8080
+  ENV: 'testing'
+  DOMAIN: 'https://close-powerlifting.jaw.dev'
+  MONGODB_URI: 'mongodb://username:password@mongodb:27017/close-powerlifting?authSource=admin' # docker
+  PASSWORD_SALT: 5
+  COOKIE_EXPIRATION: 60000
+  JWT_SECRET: 'yeahhhhhhhhhhh'
+  SESSION_SECRET: 'something someting'
+  COOKIE_PASSWORD: 'cookie password'
+  COOKIE_NAME: 'what is this cookie name'
+  SESSION_NAME: 'something cool'
+  ADMIN_EMAIL: 'test@gmail.com'
+  ADMIN_NAME: 'jaw'
+  API_URL: 'https://www.openpowerlifting.org/api'
+  BASE_URL: 'https://www.openpowerlifting.org/'
+  X_API_KEY: ''
+  REDIS_PORT: 6379
+  REDIS_HOST: 'redis' # docker
+  REDIS_USERNAME: 'default'
+  REDIS_PASSWORD: 'password'
+  EMAIL_HOST: 'mailhot' # docker
+  EMAIL_PORT: 1025 # docker
+  EMAIL_AUTH_EMAIL: ''
+  EMAIL_AUTH_PASS: ''
+
 jobs:
   format:
     name: Prettier format
