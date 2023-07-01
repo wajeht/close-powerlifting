@@ -78,7 +78,7 @@ export async function getGithubRedirect(req: Request, res: Response) {
   const githubUser = await AuthServices.getGithubUser({ access_token });
 
   const emails = await AuthServices.getGithuUserEmails({ access_token });
-  const found = await User.findOne({ email: githubUser.email });
+  const found = await User.findOne({ email: emails[0].email });
 
   if (!found) {
     const createdUser = await User.create({
