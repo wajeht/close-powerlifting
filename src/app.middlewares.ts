@@ -97,7 +97,7 @@ export function validate(validators: RequestValidators) {
         req.flash('error', error.issues.map((e) => e.message).join(' '));
         return res.status(StatusCodes.BAD_REQUEST).redirect(req.originalUrl);
       }
-      next();
+      next(error);
     }
   };
 }
