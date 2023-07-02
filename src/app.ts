@@ -12,7 +12,6 @@ import path from 'path';
 
 import { adminJs, adminRouter } from './admin/admin';
 import apiRoutes from './api/api';
-import * as apiMiddlewares from './api/api.middlewares';
 import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
 import * as rateLimiters from './config/rate-limiters.config';
