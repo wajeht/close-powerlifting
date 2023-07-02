@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getRankings } from '../api/rankings/rankings.services';
 import { hashKey } from '../utils/helpers';
@@ -40,7 +40,7 @@ vi.mock('../api/rankings/rankings.services', async () => ({
 }));
 
 vi.mock('./views.models', async () => ({
-  ...((await import('./views.models')) as object),
+  // ...((await import('./views.models')) as object),
   User: {
     findOne: vi.fn(),
     create: vi.fn(),
@@ -214,8 +214,12 @@ describe('getContactPage', () => {
   });
 });
 
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
 describe('getVerifyEmailPage', () => {
-  test('returns verify email page', async () => {
+  test('should return error when user does not exist', async () => {
     const req = {
       flash: vi.fn(() => []),
       query: {
@@ -235,6 +239,72 @@ describe('getVerifyEmailPage', () => {
     await getVerifyEmailPage(req, res);
 
     expect(res.redirect).toHaveBeenCalledWith('/register');
+    expect(req.flash).toHaveBeenCalledWith(
+      'error',
+      'Something wrong while verifying your account!',
+    );
+  });
+
+  test('should return error if email has already been used for verification', async () => {
+    const req = {
+      flash: vi.fn(),
+      query: {
+        token: 'token',
+        email: 'email',
+      },
+    } as any;
+
+    const res = {
+      redirect: vi.fn(),
+    } as any;
+
+    const findOneMock = vi.spyOn(User, 'findOne');
+    findOneMock.mockResolvedValueOnce({
+      verified: true,
+      id: 1,
+      email: 'email',
+      name: 'name',
+      verification_token: 'token',
+    });
+
+    await getVerifyEmailPage(req, res);
+    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(res.redirect).toHaveBeenCalledWith('/register');
+    expect(req.flash).toHaveBeenCalledWith(
+      'error',
+      'This e-mail has already been used for verification!',
+    );
+  });
+
+  test('should return error if token is invalid', async () => {
+    const req = {
+      flash: vi.fn(),
+      query: {
+        token: 'xxxxxx',
+        email: 'email',
+      },
+    } as any;
+
+    const res = {
+      redirect: vi.fn(),
+    } as any;
+
+    const findOneMock = vi.spyOn(User, 'findOne');
+    findOneMock.mockResolvedValueOnce({
+      verified: true,
+      id: 1,
+      email: 'email',
+      name: 'name',
+      verification_token: 'token',
+    });
+
+    await getVerifyEmailPage(req, res);
+    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(res.redirect).toHaveBeenCalledWith('/register');
+    expect(req.flash).toHaveBeenCalledWith(
+      'error',
+      'Something wrong while verifying your account!',
+    );
   });
 });
 
