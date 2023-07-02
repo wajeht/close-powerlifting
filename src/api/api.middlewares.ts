@@ -33,8 +33,6 @@ export function validate(validators: RequestValidators) {
 
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    if (req.originalUrl.split('/').includes('oauth')) return next();
-
     let token = '';
 
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
