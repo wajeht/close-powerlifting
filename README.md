@@ -1,4 +1,4 @@
-# <div align="center"> 🏋️‍♂️ Close Powerlifting </div>
+# <div align="center"> 🏋🏻 Close Powerlifting </div>
 
 <div align="center">
 
