@@ -108,7 +108,7 @@ export async function postResetAPIKeyPage(
 
 export async function getVerifyEmailPage(req: Request, res: Response) {
   const { token, email } = req.query as { token: string; email: string };
-  const [foundUser] = await User.find({ email });
+  let foundUser = await User.findOne({ email });
 
   if (!foundUser) {
     req.flash('error', 'Something wrong while verifying your account!');
@@ -154,7 +154,7 @@ export async function postContactPage(req: Request, res: Response) {
 
   req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
 
-  return res.redirect('/contact');
+  return res.status(StatusCodes.TEMPORARY_REDIRECT).redirect('/contact');
 }
 
 export function getTermsPage(req: Request, res: Response) {

@@ -3,9 +3,20 @@ import { describe, expect, test, vi } from 'vitest';
 import { getRankings } from '../api/rankings/rankings.services';
 import { hashKey } from '../utils/helpers';
 import { getHostName } from '../utils/helpers';
-import { getHomePage, getRegisterPage, postRegisterPage } from './views.controllers';
+import {
+  getAboutPage,
+  getContactPage,
+  getHomePage,
+  getPrivacyPage,
+  getRegisterPage,
+  getResetAPIKeyPage,
+  getStatusPage,
+  getTermsPage,
+  getVerifyEmailPage,
+  postRegisterPage,
+} from './views.controllers';
 import { User } from './views.models';
-import { sendVerificationEmail } from './views.services';
+import { sendWelcomeEmail } from './views.services';
 
 // vi.mock('./views.services', async () => ({
 //   ...((await import('./views.services')) as object),
@@ -16,6 +27,11 @@ import { sendVerificationEmail } from './views.services';
 //   ...((await import('../utils/helpers')) as object),
 //   hashKey: vi.fn(),
 //   getHostName: vi.fn(),
+// }));
+
+// vi.mock('./views.services', async () => ({
+//   ...((await import('./views.services')) as object),
+//   sendWelcomeEmail: vi.fn(),
 // }));
 
 vi.mock('../api/rankings/rankings.services', async () => ({
@@ -106,5 +122,139 @@ describe('postRegisterPage', () => {
     await postRegisterPage(req, res);
 
     expect(res.redirect).toHaveBeenCalledWith('/register');
+  });
+});
+
+describe('getTermsPage', () => {
+  test('returns terms page', async () => {
+    const req = {} as any;
+    const res = {
+      status: vi.fn(() => res),
+      render: vi.fn(),
+    } as any;
+
+    getTermsPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('terms.html', {
+      path: '/terms',
+    });
+  });
+});
+
+describe('getPrivacyPage', () => {
+  test('returns privacy page', async () => {
+    const req = {} as any;
+    const res = {
+      status: vi.fn(() => res),
+      render: vi.fn(),
+    } as any;
+
+    getPrivacyPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('privacy.html', {
+      path: '/privacy',
+    });
+  });
+});
+
+describe('getAboutPage', () => {
+  test('returns about page', async () => {
+    const req = {} as any;
+    const res = {
+      status: vi.fn(() => res),
+      render: vi.fn(),
+    } as any;
+
+    getAboutPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('about.html', {
+      path: '/about',
+    });
+  });
+});
+
+describe('getStatusPage', () => {
+  test('returns status page', async () => {
+    const req = {} as any;
+    const res = {
+      status: vi.fn(() => res),
+      render: vi.fn(),
+    } as any;
+
+    getStatusPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('status.html', {
+      path: '/status',
+    });
+  });
+});
+
+describe('getContactPage', () => {
+  test('returns contact page', async () => {
+    const req = {
+      flash: vi.fn(() => []),
+    } as any;
+    const res = {
+      path: vi.fn(() => res),
+      render: vi.fn(),
+      status: vi.fn(() => res),
+    } as any;
+
+    getContactPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('contact.html', {
+      path: '/contact',
+      messages: req.flash(),
+    });
+  });
+});
+
+describe('getVerifyEmailPage', () => {
+  test('returns verify email page', async () => {
+    const req = {
+      flash: vi.fn(() => []),
+      query: {
+        token: 'token',
+        email: 'email',
+      },
+    } as any;
+
+    const res = {
+      render: vi.fn(),
+      status: vi.fn(() => res),
+      redirect: vi.fn(),
+    } as any;
+
+    User.findOne.mockResolvedValueOnce({ id: 1 });
+
+    await getVerifyEmailPage(req, res);
+
+    expect(res.redirect).toHaveBeenCalledWith('/register');
+  });
+});
+
+describe('getResetAPIKeyPage', () => {
+  test('returns reset api key page', async () => {
+    const req = {
+      flash: vi.fn(() => []),
+    } as any;
+
+    const res = {
+      render: vi.fn(),
+      status: vi.fn(() => res),
+    } as any;
+
+    getResetAPIKeyPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.render).toHaveBeenCalledWith('reset-api-key.html', {
+      path: '/reset-api-key',
+      messages: req.flash(),
+    });
   });
 });
