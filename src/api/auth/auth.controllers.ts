@@ -8,7 +8,7 @@ import { UnauthorizedError } from '../api.errors';
 import * as AuthServices from './auth.services';
 
 export async function getGoogle(req: Request, res: Response) {
-  return res.redirect(getGoogleOAuthURL());
+  res.redirect(getGoogleOAuthURL());
 }
 
 export async function getGoogleRedirect(req: Request, res: Response) {

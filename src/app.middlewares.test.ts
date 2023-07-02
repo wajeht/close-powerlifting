@@ -154,6 +154,7 @@ describe('handleHostname', () => {
     // @ts-ignore
     redis.set = vi.fn();
 
+    // @ts-ignore
     vi.spyOn(utils, 'getHostName').mockImplementation(vi.fn());
   });
 
@@ -179,6 +180,7 @@ describe('handleHostname', () => {
     // @ts-ignore
     redis.set.mockResolvedValue();
 
+    // @ts-ignore
     utils.getHostName.mockReturnValue(mockHostname); // use the mocked getHostName
 
     req.get.mockReturnValue('localhost');

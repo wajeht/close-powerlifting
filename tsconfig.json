@@ -32,6 +32,8 @@
     "dist/**/*",
     "node_modules",
     "logs",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
     ".adminjs",
     ".vscode",
     "mongo-data",
