@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { StatusCodes } from 'http-status-codes';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getRankings } from '../api/rankings/rankings.services';
-import { hashKey } from '../utils/helpers';
-import { getHostName } from '../utils/helpers';
+import { EMAIL } from '../config/constants';
+import { getHostName, hashKey } from '../utils/helpers';
+import mail from '../utils/mail';
 import {
   getAboutPage,
   getContactPage,
@@ -14,10 +16,18 @@ import {
   getStatusPage,
   getTermsPage,
   getVerifyEmailPage,
+  postContactPage,
   postRegisterPage,
 } from './views.controllers';
 import { User } from './views.models';
 import { sendWelcomeEmail } from './views.services';
+
+vi.mock('../utils/mail', async () => ({
+  ...((await import('../utils/mail')) as object),
+  mail: {
+    sendMail: vi.fn(),
+  },
+}));
 
 vi.mock('./views.services', async () => ({
   ...((await import('./views.services')) as object),
@@ -47,6 +57,10 @@ vi.mock('./views.models', async () => ({
     create: vi.fn(),
   },
 }));
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
 
 describe('getHomePage', () => {
   test('returns home page', async () => {
@@ -213,10 +227,6 @@ describe('getContactPage', () => {
       messages: req.flash(),
     });
   });
-});
-
-beforeEach(() => {
-  vi.resetAllMocks();
 });
 
 describe('getVerifyEmailPage', () => {
@@ -407,5 +417,41 @@ describe('getHealthCheckPage', () => {
         ]),
       }),
     );
+  });
+});
+
+describe('postContactPage', () => {
+  test('should be able to send a contact', async () => {
+    const req = {
+      body: {
+        name: '',
+        email: '',
+        message: '',
+      },
+      flash: vi.fn(),
+    } as any;
+
+    const res = {
+      redirect: vi.fn(),
+      status: vi.fn(() => res),
+    } as any;
+
+    mail.sendMail = vi.fn().mockResolvedValue({});
+
+    await postContactPage(req, res);
+
+    expect(mail.sendMail).toHaveBeenCalledWith({
+      from: expect.any(String),
+      to: expect.any(String),
+      subject: expect.any(String),
+      html: expect.any(String),
+    });
+
+    expect(req.flash).toHaveBeenCalledWith(
+      'info',
+      "Thanks for reaching out to us. We'll get back to you shortly!",
+    );
+    expect(res.status).toHaveBeenCalledWith(StatusCodes.TEMPORARY_REDIRECT);
+    expect(res.redirect).toHaveBeenCalledWith('/contact');
   });
 });
