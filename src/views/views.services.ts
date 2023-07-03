@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-import axios from 'axios';
 import bcrypt from 'bcryptjs';
 
 import { EMAIL, PASSWORD_SALT } from '../config/constants';
