@@ -162,11 +162,10 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
   if (data === null) {
     data = await fetchStatus();
 
-    // After fetching the data, store it in the Redis cache
-    // The 'EX' option sets an expiration time on the cache, in seconds
-    // Here we set it to 60 minutes (60 * 60 seconds)
     // @ts-ignore
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60);
+    await redis.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60 * 24);
+
+    logger.info('**** Global status cache was updated! ****');
   }
 
   return data;

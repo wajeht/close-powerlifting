@@ -6,6 +6,7 @@ import { getHostName } from '../utils/helpers';
 import {
   getAboutPage,
   getContactPage,
+  getHealthCheckPage,
   getHomePage,
   getPrivacyPage,
   getRegisterPage,
@@ -18,16 +19,16 @@ import {
 import { User } from './views.models';
 import { sendWelcomeEmail } from './views.services';
 
-// vi.mock('./views.services', async () => ({
-//   ...((await import('./views.services')) as object),
-//   sendVerificationEmail: vi.fn(),
-// }));
+vi.mock('./views.services', async () => ({
+  ...((await import('./views.services')) as object),
+  sendWelcomeEmail: vi.fn(),
+}));
 
-// vi.mock('../utils/helpers', async () => ({
-//   ...((await import('../utils/helpers')) as object),
-//   hashKey: vi.fn(),
-//   getHostName: vi.fn(),
-// }));
+vi.mock('../utils/helpers', async () => ({
+  ...((await import('../utils/helpers')) as object),
+  // hashKey: vi.fn(),
+  getHostName: vi.fn(),
+}));
 
 // vi.mock('./views.services', async () => ({
 //   ...((await import('./views.services')) as object),
@@ -306,6 +307,50 @@ describe('getVerifyEmailPage', () => {
       'Something wrong while verifying your account!',
     );
   });
+
+  test('should be able to successfully verify email', async () => {
+    const res = {
+      redirect: vi.fn(),
+    } as any;
+
+    const req = {
+      flash: vi.fn(),
+      query: {
+        token: 'token',
+        email: 'email',
+      },
+    } as any;
+
+    const findOneMock = vi.spyOn(User, 'findOne');
+
+    findOneMock.mockResolvedValueOnce({
+      userId: 1,
+      verified: false,
+      email: 'email',
+      name: 'name',
+      verification_token: 'token',
+    });
+
+    sendWelcomeEmail.mockResolvedValueOnce({
+      // userId: 1,
+      email: 'email',
+      name: 'name',
+    });
+
+    await getVerifyEmailPage(req, res);
+    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(res.redirect).toHaveBeenCalledWith('/register');
+    expect(sendWelcomeEmail).toHaveBeenCalledWith({
+      // userId: 1,
+      email: 'email',
+      name: 'name',
+    });
+
+    expect(req.flash).toHaveBeenCalledWith(
+      'success',
+      'Thank you for verifying your email address. We will send you an API key to your email very shortly!',
+    );
+  });
 });
 
 describe('getResetAPIKeyPage', () => {
@@ -326,5 +371,41 @@ describe('getResetAPIKeyPage', () => {
       path: '/reset-api-key',
       messages: req.flash(),
     });
+  });
+});
+
+describe('getHealthCheckPage', () => {
+  test('returns health check', async () => {
+    const req = {
+      flash: vi.fn(() => []),
+      originalUrl: 'url',
+      query: {
+        cache: 'true',
+      },
+    } as any;
+    const res = {
+      status: vi.fn(() => res),
+      json: vi.fn(),
+    } as any;
+
+    await getHealthCheckPage(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 'success',
+        request_url: 'url',
+        cache: 'true',
+        message: 'ok',
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            method: expect.stringMatching(/^GET$/),
+            status: expect.any(Boolean),
+            url: expect.stringMatching(/^\/api\/rankings\/?/),
+          }),
+        ]),
+      }),
+    );
   });
 });
