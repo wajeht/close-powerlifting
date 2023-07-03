@@ -79,7 +79,7 @@ async function sendReachingApiLimitEmail() {
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
         to: user.email,
         subject: 'Reaching API Limit',
-        html: reachingApiLimitHTML({ name: user.name! }),
+        html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
       });
 
       logger.info(` **** sendReachingApiLimitEmail() sent to user id ${user.id} ****`);
