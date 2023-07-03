@@ -70,7 +70,7 @@ async function sendReachingApiLimitEmail() {
 
     // 70 % of default api call limit and verified users only
     const users = await User.find({
-      api_call_count: { $gte: DEFAULT_API_CALL_LIMIT * 0.7 },
+      api_call_count: { $eq: DEFAULT_API_CALL_LIMIT * 0.7 },
       verified: true,
     });
 
