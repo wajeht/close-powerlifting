@@ -7,8 +7,7 @@ import { getHostName, hashKey } from '../utils/helpers';
 import mail from '../utils/mail';
 import {
   getAboutPage,
-  getContactPage,
-  getHealthCheckPage,
+  getContactPage, // getHealthCheckPage,
   getHomePage,
   getPrivacyPage,
   getRegisterPage,
@@ -384,41 +383,41 @@ describe('getResetAPIKeyPage', () => {
   });
 });
 
-describe('getHealthCheckPage', () => {
-  test('returns health check', async () => {
-    const req = {
-      flash: vi.fn(() => []),
-      originalUrl: 'url',
-      query: {
-        cache: 'true',
-      },
-    } as any;
-    const res = {
-      status: vi.fn(() => res),
-      json: vi.fn(),
-    } as any;
+// describe('getHealthCheckPage', () => {
+//   test('returns health check', async () => {
+//     const req = {
+//       flash: vi.fn(() => []),
+//       originalUrl: 'url',
+//       query: {
+//         cache: 'true',
+//       },
+//     } as any;
+//     const res = {
+//       status: vi.fn(() => res),
+//       json: vi.fn(),
+//     } as any;
 
-    await getHealthCheckPage(req, res);
+//     await getHealthCheckPage(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(200);
+//     expect(res.status).toHaveBeenCalledWith(200);
 
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 'success',
-        request_url: 'url',
-        cache: 'true',
-        message: 'ok',
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            method: expect.stringMatching(/^GET$/),
-            status: expect.any(Boolean),
-            url: expect.stringMatching(/^\/api\/rankings\/?/),
-          }),
-        ]),
-      }),
-    );
-  });
-});
+//     expect(res.json).toHaveBeenCalledWith(
+//       expect.objectContaining({
+//         status: 'success',
+//         request_url: 'url',
+//         cache: 'true',
+//         message: 'ok',
+//         data: expect.arrayContaining([
+//           expect.objectContaining({
+//             method: expect.stringMatching(/^GET$/),
+//             status: expect.any(Boolean),
+//             url: expect.stringMatching(/^\/api\/rankings\/?/),
+//           }),
+//         ]),
+//       }),
+//     );
+//   });
+// });
 
 describe('postContactPage', () => {
   test('should be able to send a contact', async () => {

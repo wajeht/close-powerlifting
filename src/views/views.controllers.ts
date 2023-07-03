@@ -1,15 +1,18 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
+import mongoose from 'mongoose';
 
 import { getRankings } from '../api/rankings/rankings.services';
-import { EMAIL, X_API_KEY } from '../config/constants';
+import { EMAIL } from '../config/constants';
+import { isCronServiceStarted } from '../utils/crons';
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
+// @ts-ignore
+import redis from '../utils/redis';
 import contactHTML from '../utils/templates/contact';
 import { User } from './views.models';
 import {
-  getAPIStatus,
   resetAPIKey,
   resetAdminAPIKey,
   sendVerificationEmail,
@@ -181,16 +184,19 @@ export function getStatusPage(req: Request, res: Response) {
   });
 }
 
-export async function getHealthCheckPage(req: Request, res: Response) {
-  const url = getHostName(req);
-
-  const data = await getAPIStatus({ X_API_KEY: X_API_KEY!, url });
-
+export function getHealthCheck(req: Request, res: Response) {
+  // mongo
+  // 0: disconnected
+  // 1: connected
+  // 2: connecting
+  // 3: disconnecting
   res.status(StatusCodes.OK).json({
-    status: 'success',
-    request_url: req.originalUrl,
-    message: 'ok',
-    cache: req.query?.cache,
-    data,
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+    // @ts-ignore
+    redis: redis.status === 'ready' ? 'connected' : 'disconnected',
+    mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    crons: isCronServiceStarted() ? 'started' : 'stopped',
   });
 }

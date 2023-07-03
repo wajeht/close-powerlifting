@@ -25,7 +25,7 @@
       async getHealthCheck() {
         try {
           this.loading = true;
-          const res = await window.fetch('/health-check');
+          const res = await window.fetch('/api/health-check');
           const data = await res.json();
           this.loading = false;
           return data;
