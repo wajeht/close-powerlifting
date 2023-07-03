@@ -11,11 +11,12 @@ import adminNewAPIKeyHTML from './templates/admin-new-api-key';
 
 export async function init() {
   try {
-    logger.info('**** attaching admin user ****');
-
     const found = await User.findOne({ email: ADMIN.EMAIL });
 
     if (!found) {
+      logger.info('**** admin user does not exist ****');
+      logger.info('**** attaching admin user ****');
+
       const password = faker.internet.password(50);
       const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
       const { key: token } = await hashKey();
@@ -46,7 +47,7 @@ export async function init() {
 
       const verified = await updateUser(createdAdminUser.email!, { key: hashedKey });
 
-      await mail.sendMail({
+      mail.sendMail({
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
         to: createdAdminUser.email,
         subject: 'API Key and Admin Password for Close Powerlifting',
@@ -54,7 +55,12 @@ export async function init() {
       });
 
       logger.info(`**** admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached! ****`);
+
+      return;
     }
+
+    logger.info('**** admin user exits ****');
+    logger.info('**** skipping admin user attaching ****');
   } catch (e) {
     logger.error(e);
   }
