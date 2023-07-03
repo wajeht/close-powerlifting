@@ -13,10 +13,10 @@
 - **Node** with **Express** for API
 - **Vitest** for unit testing, barely
 - **JsDom** for scraping
-- **MongoDB** because we only need to keep in track of API keys
-- **Redis** to cache some of larger scraping data
+- **MongoDB** because we only need to keep track of API keys
+- **Redis** to cache some of the larger scraping data
 - **Tailwind** for rapid styling
-- **EJS** html template for server side rendering
+- **EJS** HTML template for server-side rendering
 - and of course **Typescript** for everything ❤️
 
 # 👨‍💻 Getting started
@@ -25,9 +25,9 @@
 - [Contribution guide](https://github.com/wajeht/close-powerlifting/blob/main/docs/contribution.md)
 - [Code of Conduct](https://github.com/wajeht/close-powerlifting/blob/main/docs/code-of-conduct.md)
 
-# 📃 API end points
+# 📃 API endpoints
 
-We have a few resources available for api call. Resources with larger amount of data are usually cached in memory and paginated for the first call. Pagination is included by default. You can pass in `?cache=false` at the end of a url to get the latest/recent data.
+We have a few resources available for API calls. Resources with larger amounts of data are usually cached in memory and paginated for the first call. Pagination is included by default. You can pass in `?cache=false` at the end of a URL to get the latest/recent data.
 
 - `/api/federations`
 - `/api/meets`
@@ -77,7 +77,7 @@ $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page
 }
 ```
 
-For more of api documentation, visit `https://close-powerlifting.jaw.dev` and request for `x-api-keys`.
+For more of API documentation, visit `https://close-powerlifting.jaw.dev` and request for `x-api-keys`.
 
 # © License
 
