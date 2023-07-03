@@ -22,6 +22,12 @@ wipe:
 test:
 	docker compose --file ./docker-compose.dev.yml exec app npm run test
 
+test-coverage:
+	docker compose --file ./docker-compose.dev.yml exec app npm run test:coverage
+
+test-ci:
+	docker compose --file ./docker-compose.dev.yml exec app npm run test:coverage
+
 lint:
 	docker compose --file ./docker-compose.dev.yml exec app npm run lint
 
