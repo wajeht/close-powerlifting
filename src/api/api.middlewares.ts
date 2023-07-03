@@ -78,6 +78,11 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
         { new: true },
       );
 
+      // exceeded api call limit
+      if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
+        throw new APICallsExceeded('API Calls exceeded!');
+      }
+
       // 50 %
       if (user?.api_call_count && user.api_call_count === user.api_call_limit / 2 && !user.admin) {
         mail.sendMail({
@@ -86,11 +91,6 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
           subject: 'Reaching API Call Limit',
           html: reachingApiLimitHTML({ name: user.name!, percent: 50 }),
         });
-      }
-
-      // exceeded api call limit
-      if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
-        throw new APICallsExceeded('API Calls exceeded!');
       }
     }
     next();
