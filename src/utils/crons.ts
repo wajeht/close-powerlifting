@@ -70,7 +70,7 @@ async function sendReachingApiLimitEmail() {
 
     // 70 % of default api call limit and verified users only
     const users = await User.find({
-      api_call_count: { $gte: DEFAULT_API_CALL_LIMIT * 0.7 },
+      api_call_count: { $eq: DEFAULT_API_CALL_LIMIT * 0.7 },
       verified: true,
     });
 
@@ -79,7 +79,7 @@ async function sendReachingApiLimitEmail() {
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
         to: user.email,
         subject: 'Reaching API Limit',
-        html: reachingApiLimitHTML({ name: user.name! }),
+        html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
       });
 
       logger.info(` **** sendReachingApiLimitEmail() sent to user id ${user.id} ****`);

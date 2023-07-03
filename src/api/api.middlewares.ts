@@ -2,7 +2,9 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
-import { JWT_SECRET } from '../config/constants';
+import { EMAIL, JWT_SECRET } from '../config/constants';
+import mail from '../utils/mail';
+import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
 import { APICallsExceeded, UnauthorizedError } from './api.errors';
 
@@ -75,6 +77,18 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
         { $inc: { api_call_count: 1 } },
         { new: true },
       );
+
+      // 50 %
+      if (user?.api_call_count && user.api_call_count === user.api_call_limit / 2 && !user.admin) {
+        mail.sendMail({
+          from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+          to: user.email,
+          subject: 'Reaching API Call Limit',
+          html: reachingApiLimitHTML({ name: user.name!, percent: 50 }),
+        });
+      }
+
+      // exceeded api call limit
       if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
         throw new APICallsExceeded('API Calls exceeded!');
       }
