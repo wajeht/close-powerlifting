@@ -1,6 +1,7 @@
 export const ENV_ENUMS = {
   PRODUCTION: 'production',
   DEVELOPMENT: 'development',
+  TESTING: 'testing',
   LOCAL: 'local',
 };
 

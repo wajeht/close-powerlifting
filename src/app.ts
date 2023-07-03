@@ -52,7 +52,9 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
   app.use(rateLimiters.app);
 } else {
   app.use('/api', apiRoutes);
-  logger.info('**** skipping rate limiter for both api and app in dev environment ****');
+  logger.info(
+    `**** skipping rate limiter for both api and app in ${process.env.ENV} environment ****`,
+  );
 }
 
 (async () => {
