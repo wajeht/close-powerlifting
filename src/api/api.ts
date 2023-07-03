@@ -3,6 +3,7 @@ import express from 'express';
 import * as apiMiddlewares from './api.middlewares';
 import AuthRoutes from './auth/auth.routes';
 import FederationsRoutes from './federations/federations.routes';
+import HealthCheckRoutes from './health-check/health-check.routes';
 import MeetsRoutes from './meets/meets.routes';
 import RankingsRoutes from './rankings/rankings.routes';
 import RecordsRoutes from './records/records.routes';
@@ -13,6 +14,7 @@ const api = express.Router();
 
 api.use('/auth', AuthRoutes);
 
+api.use('/health-check', HealthCheckRoutes);
 api.use('/rankings', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, RankingsRoutes);
 api.use('/federations', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, FederationsRoutes);
 api.use('/records', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, RecordsRoutes);

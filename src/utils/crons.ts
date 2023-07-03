@@ -91,17 +91,28 @@ async function sendReachingApiLimitEmail() {
   }
 }
 
+let isCronStarted = false;
+
 export async function init() {
-  logger.info(`**** cron services were started! ****`);
+  try {
+    logger.info(`**** cron services were started! ****`);
 
-  // every week sunday at mid night
-  cron.schedule('0 0 * * 0', removeCaches).start();
+    isCronStarted = true;
 
-  // everyday at mid night
-  cron.schedule('0 0 * * *', sendReachingApiLimitEmail).start();
+    // every week sunday at mid night
+    cron.schedule('0 0 * * 0', removeCaches).start();
 
-  // everyday at mid night
-  cron.schedule('0 0 * * *', resetApiCallCount).start();
+    // everyday at mid night
+    cron.schedule('0 0 * * *', sendReachingApiLimitEmail).start();
 
-  logger.info(`**** finished running all the cron services ****`);
+    // everyday at mid night
+    cron.schedule('0 0 * * *', resetApiCallCount).start();
+
+    logger.info(`**** finished running all the cron services ****`);
+  } catch (err) {
+    isCronStarted = false;
+    logger.error(`**** cron services error: ${err} ****`);
+  }
 }
+
+export const isCronServiceStarted = () => isCronStarted;

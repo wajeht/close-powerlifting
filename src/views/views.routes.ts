@@ -150,6 +150,6 @@ views.get('/status', catchAsyncHandler(ViewsControllers.getStatusPage));
  * @tags views
  * @summary get the health of close-powerlifting app
  */
-views.get('/health-check', catchAsyncHandler(ViewsControllers.getHealthCheckPage));
+views.get('/health-check', catchAsyncHandler(ViewsControllers.getHealthCheck));
 
 export default views;
