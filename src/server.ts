@@ -20,7 +20,7 @@ const server = app.listen(PORT, async () => {
   }
 });
 
-function gracefulShutdown() {
+export async function gracefulShutdown() {
   logger.info('**** Received kill signal, shutting down gracefully. ****');
   server.close(async () => {
     try {
