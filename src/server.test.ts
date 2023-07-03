@@ -18,4 +18,9 @@ describe('server', () => {
     const response = await request(server).get('/');
     expect(response.status).toBe(200);
   });
+
+  test('GET /health-check should return', async () => {
+    const response = await request(server).get('/health-check');
+    expect(response.status).toBe(200);
+  });
 });
