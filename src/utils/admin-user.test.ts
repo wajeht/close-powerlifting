@@ -13,6 +13,7 @@ vi.mock('../views/views.models', async () => ({
   ...((await vi.importActual('../views/views.models')) as object),
   User: {
     findOne: vi.fn(),
+    findOneAndUpdate: vi.fn(),
     create: vi.fn(),
   },
 }));
