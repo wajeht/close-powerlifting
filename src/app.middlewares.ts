@@ -3,7 +3,12 @@ import { StatusCodes } from 'http-status-codes';
 import { ZodError, z } from 'zod';
 import { AnyZodObject } from 'zod';
 
-import { APICallsExceeded, NotFoundError, UnauthorizedError } from './api/api.errors';
+import {
+  APICallsExceededError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from './api/api.errors';
 import { ENV } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { getHostName } from './utils/helpers';
@@ -50,7 +55,12 @@ export function serverErrorHandler(err: any, req: Request, res: Response, next: 
     message = err.message;
   }
 
-  if (err instanceof APICallsExceeded) {
+  if (err instanceof ValidationError) {
+    statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
+    message = err.message;
+  }
+
+  if (err instanceof APICallsExceededError) {
     statusCode = StatusCodes.TOO_MANY_REQUESTS;
     message = err.message;
   }

@@ -1,11 +1,14 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { getGitHubOAuthURL, getGoogleOAuthURL } from '../../utils/helpers';
+import { getGitHubOAuthURL, getGoogleOAuthURL, getHostName, hashKey } from '../../utils/helpers';
+import logger from '../../utils/logger';
 import { User } from '../../views/views.models';
-import { sendWelcomeEmail } from '../../views/views.services';
+import { sendVerificationEmail, sendWelcomeEmail } from '../../views/views.services';
 import { UnauthorizedError } from '../api.errors';
+import { ValidationError } from '../api.errors';
 import * as AuthServices from './auth.services';
+import { postRegisterType } from './auth.validations';
 
 export async function getGoogle(req: Request, res: Response) {
   res.redirect(getGoogleOAuthURL());
@@ -106,4 +109,37 @@ export async function getGithubRedirect(req: Request, res: Response) {
   );
 
   return res.redirect('/register');
+}
+
+export async function postRegister(req: Request<{}, {}, postRegisterType>, res: Response) {
+  const { email, name } = req.body;
+
+  const found = await User.findOne({ email });
+
+  if (found) {
+    throw new ValidationError('email already exist');
+  }
+
+  const { key: token } = await hashKey();
+
+  const createdUser = await User.create({ email, name, verification_token: token });
+
+  const hostname = getHostName(req);
+
+  logger.info(`user_id: ${createdUser.id} has registered an account!`);
+
+  sendVerificationEmail({
+    name,
+    email,
+    verification_token: token,
+    hostname,
+    userId: createdUser.id,
+  });
+
+  res.status(StatusCodes.CREATED).json({
+    status: 'success',
+    request_url: req.originalUrl,
+    message: 'Thank you for registering. Please check your email for confirmation!',
+    data: null,
+  });
 }
