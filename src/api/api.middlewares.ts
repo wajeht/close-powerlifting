@@ -6,7 +6,7 @@ import { EMAIL, JWT_SECRET } from '../config/constants';
 import mail from '../utils/mail';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
-import { APICallsExceeded, UnauthorizedError } from './api.errors';
+import { APICallsExceededError, UnauthorizedError } from './api.errors';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -80,7 +80,7 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
 
       // exceeded api call limit
       if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
-        throw new APICallsExceeded('API Calls exceeded!');
+        throw new APICallsExceededError('API Calls exceeded!');
       }
 
       // 50 %

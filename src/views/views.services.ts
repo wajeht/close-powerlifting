@@ -91,7 +91,7 @@ export function sendVerificationEmail({
   logger.info(`Verification email was sent to user_id: ${userId}!`);
 }
 
-export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
+export async function sendWelcomeEmail(userParams: UserParams) {
   const { email } = userParams;
   const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
@@ -109,4 +109,6 @@ export async function sendWelcomeEmail(userParams: UserParams): Promise<void> {
   });
 
   logger.info(`user_id: ${verified!.id} has verified email!`);
+
+  return unhashedKey;
 }

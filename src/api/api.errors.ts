@@ -18,11 +18,20 @@ export class NotFoundError extends Error {
   }
 }
 
-export class APICallsExceeded extends Error {
+export class APICallsExceededError extends Error {
   statusCode: StatusCodes;
   constructor(message: string) {
     super();
     this.message = message;
     this.statusCode = StatusCodes.TOO_MANY_REQUESTS;
+  }
+}
+
+export class ValidationError extends Error {
+  statusCode: StatusCodes;
+  constructor(message: string) {
+    super();
+    this.message = message;
+    this.statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
   }
 }
