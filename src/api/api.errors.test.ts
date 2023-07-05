@@ -1,7 +1,12 @@
 import { StatusCodes } from 'http-status-codes';
 import { describe, expect, test } from 'vitest';
 
-import { APICallsExceeded, NotFoundError, UnauthorizedError } from './api.errors';
+import {
+  APICallsExceededError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from './api.errors';
 
 describe('api.errors', () => {
   test('UnauthorizedError', () => {
@@ -16,9 +21,15 @@ describe('api.errors', () => {
     expect(error.statusCode).toBe(StatusCodes.NOT_FOUND);
   });
 
-  test('APICallsExceeded', () => {
-    const error = new APICallsExceeded('too many requests');
+  test('APICallsExceededError', () => {
+    const error = new APICallsExceededError('too many requests');
     expect(error.message).toBe('too many requests');
     expect(error.statusCode).toBe(StatusCodes.TOO_MANY_REQUESTS);
+  });
+
+  test('ValidationError', () => {
+    const error = new ValidationError('email already exist');
+    expect(error.message).toBe('email already exist');
+    expect(error.statusCode).toBe(StatusCodes.UNPROCESSABLE_ENTITY);
   });
 });
