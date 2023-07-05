@@ -32,6 +32,6 @@ export class ValidationError extends Error {
   constructor(message: string) {
     super();
     this.message = message;
-    this.statusCode = StatusCodes.UNAVAILABLE_FOR_LEGAL_REASONS;
+    this.statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
   }
 }
