@@ -4,11 +4,16 @@ import { StatusCodes } from 'http-status-codes';
 import { getGitHubOAuthURL, getGoogleOAuthURL, getHostName, hashKey } from '../../utils/helpers';
 import logger from '../../utils/logger';
 import { User } from '../../views/views.models';
-import { sendVerificationEmail, sendWelcomeEmail } from '../../views/views.services';
+import {
+  resetAPIKey,
+  resetAdminAPIKey,
+  sendVerificationEmail,
+  sendWelcomeEmail,
+} from '../../views/views.services';
 import { UnauthorizedError } from '../api.errors';
 import { ValidationError } from '../api.errors';
 import * as AuthServices from './auth.services';
-import { postRegisterType } from './auth.validations';
+import { postRegisterType, postResetApiKeyType, postVerifyEmailType } from './auth.validations';
 
 export async function getGoogle(req: Request, res: Response) {
   res.redirect(getGoogleOAuthURL());
@@ -139,7 +144,84 @@ export async function postRegister(req: Request<{}, {}, postRegisterType>, res: 
   res.status(StatusCodes.CREATED).json({
     status: 'success',
     request_url: req.originalUrl,
-    message: 'Thank you for registering. Please check your email for confirmation!',
-    data: null,
+    message:
+      'Thank you for registering. Please check your email for confirmation or use the follow data to make a post reqeust to /api/auth/verify-email',
+    data: [
+      {
+        email,
+        token,
+      },
+    ],
+  });
+}
+
+export async function postVerifyEmail(req: Request<{}, {}, postVerifyEmailType>, res: Response) {
+  const { token, email } = req.body;
+
+  const foundUser = await User.findOne({ email });
+
+  if (!foundUser) {
+    throw new ValidationError('Something wrong while verifying your account!');
+  }
+
+  if (foundUser.verification_token !== token) {
+    throw new ValidationError('Something wrong while verifying your account!');
+  }
+
+  if (foundUser.verified === true) {
+    throw new ValidationError('This account has already been verified!');
+  }
+
+  const unhashedKey = await sendWelcomeEmail({
+    name: foundUser.name!,
+    email: foundUser.email!,
+    userId: foundUser.id!,
+  });
+
+  res.status(StatusCodes.OK).json({
+    status: 'success',
+    request_url: req.originalUrl,
+    message:
+      'Thank you for verifying your email address. You can use the folow key to access our api or we will send you an API key to your email very shortly!',
+    data: [
+      {
+        email,
+        apiKey: unhashedKey,
+      },
+    ],
+  });
+}
+
+export async function postResetApiKey(req: Request<{}, {}, postResetApiKeyType>, res: Response) {
+  const { email } = req.body;
+
+  const [foundUser] = await User.find({ email });
+
+  if (foundUser && foundUser.verified === false) {
+    sendVerificationEmail({
+      hostname: getHostName(req),
+      userId: foundUser.id!,
+      name: foundUser.name!,
+      email: foundUser.email!,
+      verification_token: foundUser.verification_token!,
+    });
+  }
+
+  if (foundUser && foundUser.verified === true && foundUser.admin === true) {
+    resetAdminAPIKey({
+      userId: foundUser.id!,
+      name: foundUser.name!,
+      email: foundUser.email!,
+    });
+  } else if (foundUser && foundUser.verified === true) {
+    resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: 'success',
+    request_url: req.originalUrl,
+    message:
+      'If you have an account with us, we will send you a new api key to your email very shortly!',
+    data: [],
   });
 }

@@ -48,4 +48,29 @@ auth.post(
   catchAsyncHandler(AuthControllers.postRegister),
 );
 
+/**
+ * POST /api/auth/verify-email
+ * @tags auth
+ * @summary post verify email
+ * @param {string} email.form.required - the email - application/x-www-form-urlencoded
+ * @param {string} token.form.required - the token - application/x-www-form-urlencoded
+ */
+auth.post(
+  '/verify-email',
+  validate({ body: AuthValidation.postVerifyEmailValidation }),
+  catchAsyncHandler(AuthControllers.postVerifyEmail),
+);
+
+/**
+ * POST /api/auth/reset-api-key
+ * @tags auth
+ * @summary post reset api key
+ * @param {string} email.form.required - the email - application/x-www-form-urlencoded
+ */
+auth.post(
+  '/reset-api-key',
+  validate({ body: AuthValidation.postResetApiKeyValidation }),
+  catchAsyncHandler(AuthControllers.postResetApiKey),
+);
+
 export default auth;
