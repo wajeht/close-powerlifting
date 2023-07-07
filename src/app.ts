@@ -19,12 +19,18 @@ import swaggerConfig from './config/swagger.config';
 import { ENV_ENUMS } from './utils/enums';
 import logger from './utils/logger';
 import viewsRoutes from './views/views.routes';
+import * as Sentry from "@sentry/node";
 
 const app = express();
 
+Sentry.init({ dsn: 'http://187bf149b1d5445e9a1f99280e4e7de3@sentry.jaw.dev/2' });
+
 app.disable('x-powered-by');
 
+app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
+app.use(Sentry.Handlers.errorHandler() as express.ErrorRequestHandler);
 app.use(appMiddlewares.handleHostname);
+
 
 app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);
