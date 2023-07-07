@@ -28,9 +28,7 @@ Sentry.init({ dsn: 'http://187bf149b1d5445e9a1f99280e4e7de3@sentry.jaw.dev/2' })
 app.disable('x-powered-by');
 
 app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
-app.use(Sentry.Handlers.errorHandler() as express.ErrorRequestHandler);
 app.use(appMiddlewares.handleHostname);
-
 
 app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);
@@ -87,6 +85,8 @@ app.use(expressLayouts);
 expressJSDocSwagger(app)(swaggerConfig);
 
 app.use(viewsRoutes);
+
+app.use(Sentry.Handlers.errorHandler() as express.ErrorRequestHandler);
 
 app.use(appMiddlewares.notFoundHandler);
 app.use(appMiddlewares.serverErrorHandler);
