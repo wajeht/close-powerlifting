@@ -43,6 +43,7 @@ export async function init() {
         name: createdAdminUser.name!,
         userId: createdAdminUser.id!,
         email: createdAdminUser.email!,
+        admin: true,
       });
 
       const verified = await updateUser(createdAdminUser.email!, { key: hashedKey });
