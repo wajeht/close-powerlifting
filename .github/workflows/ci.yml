@@ -25,6 +25,7 @@ env:
   EMAIL_PORT: 1025 # docker
   EMAIL_AUTH_EMAIL: ''
   EMAIL_AUTH_PASS: ''
+  SENTRY_DNS: ''
 
 jobs:
   format:

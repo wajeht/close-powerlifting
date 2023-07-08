@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import compression from 'compression';
 import flash from 'connect-flash';
 import cookieParser from 'cookie-parser';
@@ -13,23 +14,20 @@ import path from 'path';
 import { adminJs, adminRouter } from './admin/admin';
 import apiRoutes from './api/api';
 import * as appMiddlewares from './app.middlewares';
-import { ENV, SESSION_SECRET } from './config/constants';
+import { ENV, SENTRY_DSN, SESSION_SECRET } from './config/constants';
 import * as rateLimiters from './config/rate-limiters.config';
 import swaggerConfig from './config/swagger.config';
 import { ENV_ENUMS } from './utils/enums';
 import logger from './utils/logger';
 import viewsRoutes from './views/views.routes';
-import * as Sentry from "@sentry/node";
 
 const app = express();
 
-Sentry.init({ dsn: 'http://187bf149b1d5445e9a1f99280e4e7de3@sentry.jaw.dev/2' });
+Sentry.init({ dsn: SENTRY_DSN });
 
+app.use(Sentry.Handlers.requestHandler());
 app.disable('x-powered-by');
-
-app.use(Sentry.Handlers.requestHandler() as express.RequestHandler);
 app.use(appMiddlewares.handleHostname);
-
 app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);
 app.use(cookieParser());
@@ -86,9 +84,8 @@ expressJSDocSwagger(app)(swaggerConfig);
 
 app.use(viewsRoutes);
 
-app.use(Sentry.Handlers.errorHandler() as express.ErrorRequestHandler);
-
 app.use(appMiddlewares.notFoundHandler);
+app.use(Sentry.Handlers.errorHandler());
 app.use(appMiddlewares.serverErrorHandler);
 
 export default app;
