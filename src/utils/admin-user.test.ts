@@ -101,6 +101,7 @@ describe('init', () => {
     });
 
     expect(generateAPIKey).toHaveBeenCalledWith({
+      admin: true,
       name: ADMIN.NAME,
       userId: 'adminId',
       email: ADMIN.EMAIL,
