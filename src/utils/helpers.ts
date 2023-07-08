@@ -70,32 +70,28 @@ export async function hashKey() {
   };
 }
 
-/**
- * Generate an API key with a three-month expiration.
- *
- * @param {UserParams} userParams - The parameters required to generate the API key.
- * @returns {Promise<{ unhashedKey: string, hashedKey: string }>} - The generated API key (unhashed and hashed).
- *
- */
-export async function generateAPIKey(userParams: UserParams) {
-  const { userId, name, email } = userParams;
-  const key = jwt.sign(
-    {
-      id: userId,
-      name,
-      email,
-    },
-    JWT_SECRET!,
-    {
-      issuer: 'Close Powerlifting',
-      expiresIn: '3m', // Three-month expiration
-    },
-  );
-
-  return {
-    unhashedKey: key,
-    hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+export async function generateAPIKey(userParams: UserParams & { admin?: boolean }) {
+  const { userId, name, email, admin } = userParams;
+  const keyOptions = {
+    id: userId,
+    name,
+    email,
+    issuer: 'Close Powerlifting',
   };
+
+  if (admin) {
+    const key = jwt.sign(keyOptions, JWT_SECRET!);
+    return {
+      unhashedKey: key,
+      hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+    };
+  } else {
+    const key = jwt.sign(keyOptions, JWT_SECRET!, { expiresIn: '3m' });
+    return {
+      unhashedKey: key,
+      hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+    };
+  }
 }
 
 export function getGoogleOAuthURL() {

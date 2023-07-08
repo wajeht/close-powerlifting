@@ -52,7 +52,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   const password = faker.internet.password(50);
   const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
 
-  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
+  const { unhashedKey, hashedKey } = await generateAPIKey({ ...userParams, admin: true });
 
   await updateUser(email, {
     key: hashedKey,
