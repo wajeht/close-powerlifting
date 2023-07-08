@@ -58,7 +58,6 @@
     "@adminjs/express": "^5.1.0",
     "@adminjs/mongoose": "^3.0.3",
     "@faker-js/faker": "^8.0.1",
-    "@sentry/node": "^7.57.0",
     "adminjs": "^6.8.7",
     "autoprefixer": "^10.4.14",
     "axios": "^1.4.0",
