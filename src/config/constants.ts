@@ -47,8 +47,6 @@ export const REDIS = {
 
 export const COOKIE_PASSWORD = process.env.COOKIE_PASSWORD as unknown as string;
 
-export const SENTRY_DSN = process.env.SENTRY_DSN as unknown as string;
-
 export const COOKIE_NAME = process.env.COOKIE_NAME as unknown as string;
 
 export const ADMIN = {
