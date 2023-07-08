@@ -70,6 +70,13 @@ export async function hashKey() {
   };
 }
 
+/**
+ * Generate an API key with a three-month expiration.
+ *
+ * @param {UserParams} userParams - The parameters required to generate the API key.
+ * @returns {Promise<{ unhashedKey: string, hashedKey: string }>} - The generated API key (unhashed and hashed).
+ *
+ */
 export async function generateAPIKey(userParams: UserParams) {
   const { userId, name, email } = userParams;
   const key = jwt.sign(
@@ -81,6 +88,7 @@ export async function generateAPIKey(userParams: UserParams) {
     JWT_SECRET!,
     {
       issuer: 'Close Powerlifting',
+      expiresIn: '3m', // Three-month expiration
     },
   );
 
