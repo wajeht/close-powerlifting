@@ -182,12 +182,25 @@ describe('generateAPIKey', () => {
       email: '1test@test.com',
       name: '1Test User',
     });
-    const { unhashedKey: key2, hashedKey: hashedKey2 } = await await generateAPIKey({
+    const { unhashedKey: key2, hashedKey: hashedKey2 } = await generateAPIKey({
       userId: '2',
       email: '2test@test.com',
       name: '2Test User',
     });
     expect(key1).not.toEqual(key2);
     expect(hashedKey1).not.toEqual(hashedKey2);
+  });
+
+  describe('when admin flag is passed', () => {
+    test('returns a hashed key', async () => {
+      const { unhashedKey, hashedKey } = await generateAPIKey({
+        userId: '1',
+        email: '',
+        name: '',
+        admin: true,
+      });
+      expect(unhashedKey).toBeDefined();
+      expect(hashedKey).toBeDefined();
+    });
   });
 });
