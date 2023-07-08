@@ -25,11 +25,9 @@ const app = express();
 
 Sentry.init({ dsn: SENTRY_DSN });
 
-app.use(Sentry.Handlers.requestHandler);
-
+app.use(Sentry.Handlers.requestHandler());
 app.disable('x-powered-by');
 app.use(appMiddlewares.handleHostname);
-
 app.set('trust proxy', true);
 app.use(adminJs.options.rootPath, adminRouter);
 app.use(cookieParser());
@@ -86,9 +84,8 @@ expressJSDocSwagger(app)(swaggerConfig);
 
 app.use(viewsRoutes);
 
-app.use(Sentry.Handlers.errorHandler);
-
 app.use(appMiddlewares.notFoundHandler);
+app.use(Sentry.Handlers.errorHandler());
 app.use(appMiddlewares.serverErrorHandler);
 
 export default app;
