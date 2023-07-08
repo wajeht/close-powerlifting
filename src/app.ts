@@ -24,8 +24,8 @@ import viewsRoutes from './views/views.routes';
 const app = express();
 
 Sentry.init({ dsn: SENTRY_DSN });
-
 app.use(Sentry.Handlers.requestHandler());
+
 app.disable('x-powered-by');
 app.use(appMiddlewares.handleHostname);
 app.set('trust proxy', true);
@@ -85,6 +85,7 @@ expressJSDocSwagger(app)(swaggerConfig);
 app.use(viewsRoutes);
 
 app.use(appMiddlewares.notFoundHandler);
+
 app.use(Sentry.Handlers.errorHandler());
 app.use(appMiddlewares.serverErrorHandler);
 
