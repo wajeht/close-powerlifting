@@ -82,7 +82,7 @@
     "jsdom": "^22.1.0",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^4.13.0",
-    "mongoose": "^6.10.3",
+    "mongoose": "^6.11.3",
     "node-cron": "^3.0.2",
     "nodemailer": "^6.9.3",
     "pino": "^8.11.0",
