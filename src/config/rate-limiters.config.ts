@@ -14,7 +14,7 @@ function apiRateLimitHandler(req: Request, res: Response) {
 }
 
 function skipHealthCheck(req: Request) {
-  if (req.originalUrl === '/health-check') {
+  if (req.originalUrl === '/health-check' || req.originalUrl === '/api/health-check/') {
     return true;
   }
   return false;
