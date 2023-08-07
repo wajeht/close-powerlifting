@@ -7,7 +7,7 @@ import * as MeetsServices from './meets.services';
 import { getMeetParamType, getMeetQueryType } from './meets.validations';
 
 export async function getMeet(req: Request<getMeetParamType, {}, getMeetQueryType>, res: Response) {
-  const rank = await MeetsServices.getMeet({...req.params, ...req.query});
+  const rank = await MeetsServices.getMeet({ ...req.params, ...req.query });
 
   if (!rank) throw new NotFoundError('The resource cannot be found!');
 
