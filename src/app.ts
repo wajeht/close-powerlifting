@@ -65,14 +65,15 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
 
 app.use(
   express.static(path.resolve(path.join(process.cwd(), 'public')), {
-    maxAge: '24h',
+    // 30 days in miliseconds
+    maxAge: 30 * 24 * 60 * 60 * 1000,
   }),
 );
 
 app.engine('html', ejs.renderFile);
 app.set('view engine', 'html');
 app.set('views', path.resolve(path.join(process.cwd(), 'src', 'views', 'pages')));
-app.set('layout', '../layouts/main.html');
+app.set('layout', path.resolve(path.join(process.cwd(), 'src', 'views', 'layouts', 'main.html')));
 
 app.use(expressLayouts);
 
