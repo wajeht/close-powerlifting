@@ -13,12 +13,20 @@ function apiRateLimitHandler(req: Request, res: Response) {
   return res.render('./rate-limit.html');
 }
 
+function skipHealthCheck(req: Request) {
+  if (req.originalUrl === '/health-check' || req.originalUrl === '/api/health-check') {
+    return true;
+  }
+  return false;
+}
+
 export const api = rateLimit({
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: apiRateLimitHandler,
+  skip: skipHealthCheck,
 });
 
 export const app = rateLimit({
@@ -27,4 +35,5 @@ export const app = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   message: apiRateLimitHandler,
+  skip: skipHealthCheck,
 });
