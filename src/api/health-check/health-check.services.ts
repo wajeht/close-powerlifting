@@ -24,8 +24,9 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
       '/api/meets/uspa/1969?cache=false',
       '/api/records?cache=false',
       '/api/users/johnhaack?cache=false',
-      '/api/status?cache=false',
       '/api/users?search=haack&cache=false',
+      '/api/status?cache=false',
+      '/api/health-check?cache=false',
     ];
 
     const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
