@@ -81,7 +81,7 @@
     "ioredis": "^5.3.1",
     "jsdom": "^22.1.0",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^4.13.0",
+    "mongodb": "^4.17.0",
     "mongoose": "^6.10.3",
     "node-cron": "^3.0.2",
     "nodemailer": "^6.9.3",
