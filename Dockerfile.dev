@@ -13,4 +13,6 @@ RUN npm install
 
 EXPOSE 8080
 
+HEALTHCHECK --interval=30s --timeout=15s CMD curl -s http://localhost:8080 || exit 1
+
 CMD ["npm", "run", "dev"]
