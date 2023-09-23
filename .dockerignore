@@ -10,3 +10,5 @@ node_modules
 dist
 deploy.sh
 README.md
+mongo-data
+coverage

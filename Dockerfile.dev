@@ -1,5 +1,7 @@
 FROM node:alpine
 
+RUN apk --no-cache add curl
+
 ENV ENV development
 
 WORKDIR /usr/src/app
@@ -11,8 +13,8 @@ COPY ./ ./
 
 RUN npm install
 
-EXPOSE 8080
+EXPOSE 8082
 
 CMD ["npm", "run", "dev"]
 
-HEALTHCHECK --interval=30s --timeout=15s CMD node healthcheck.js
+HEALTHCHECK CMD curl -f http://localhost:8082/api/health-check || exit 1
