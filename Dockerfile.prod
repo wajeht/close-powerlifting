@@ -18,8 +18,8 @@ RUN npm install
 RUN npm run build
 # RUN npm run minify:html
 
-EXPOSE 8082
+EXPOSE 80
 
 CMD ["npm", "run", "start"]
 
-HEALTHCHECK CMD curl -f http://localhost:8082/api/health-check || exit 1
+HEALTHCHECK CMD curl -f http://localhost:80/api/health-check || exit 1

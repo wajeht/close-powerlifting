@@ -13,8 +13,8 @@ COPY ./ ./
 
 RUN npm install
 
-EXPOSE 8082
+EXPOSE 80
 
 CMD ["npm", "run", "dev"]
 
-HEALTHCHECK CMD curl -f http://localhost:8082/api/health-check || exit 1
+HEALTHCHECK CMD curl -f http://localhost:80/api/health-check || exit 1

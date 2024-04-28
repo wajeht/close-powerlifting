@@ -35,15 +35,15 @@ export async function getMeet({ meet, cache = true }: getMeetParamType & getMeet
     }
 
     // @ts-ignore
-    let cachedMeeet = JSON.parse(await redis.get(`meet-${meet}`));
+    let cachedMeet = JSON.parse(await redis.get(`meet-${meet}`));
 
-    if (!cachedMeeet) {
-      cachedMeeet = await fetchMeet({ meet });
+    if (!cachedMeet) {
+      cachedMeet = await fetchMeet({ meet });
       // @ts-ignore
-      await redis.set(`meet-${meet}`, JSON.stringify(cachedMeeet));
+      await redis.set(`meet-${meet}`, JSON.stringify(cachedMeet));
     }
 
-    return cachedMeeet;
+    return cachedMeet;
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === StatusCodes.NOT_FOUND) {

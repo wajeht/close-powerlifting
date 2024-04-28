@@ -14,10 +14,12 @@
     "multistream",
     "openpowerlifting",
     "pino",
+    "powerlifing",
     "powerlifting",
     "resave",
     "tailwindcss",
     "unhashed",
+    "uspa",
     "wajeht"
   ],
   "dotenv.enableAutocloaking": false

@@ -47,7 +47,7 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
     return data;
   };
 
-  const cacheKey = `close-powerlifting-gloabl-status-call-cache`;
+  const cacheKey = `close-powerlifting-global-status-call-cache`;
 
   // @ts-ignore
   let data = JSON.parse(await redis.get(cacheKey));
