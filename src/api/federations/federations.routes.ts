@@ -34,7 +34,7 @@ federations.get(
  * @tags federations
  * @summary get list of federations of a federation by year
  * @param {string} federation.path.required - the federation - application/x-www-form-urlencoded
- * @param {number} year.query - the yeare - application/x-www-form-urlencoded
+ * @param {number} year.query - the year - application/x-www-form-urlencoded
  * @param {boolean} cache.query - the cache - application/x-www-form-urlencoded
  * @security BearerAuth
  */
