@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./dist/src/server.js",
     "dev": "concurrently --kill-others --names \"EXPRESS,TAILWIND\" -c \"bgGreen.black,bgCyan.black\" \"npm run dev:api\" \"npm run dev:tailwind\"",
-    "dev:api": "nodemon --files ./src/server.ts",
+    "dev:api": "tsx watch --no-warnings --clear-screen=false  ./src/server.ts",
     "dev:tailwind": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/style.css --watch",
     "build": "npm run build:tailwind && npm run build:api && npm run minify:html",
     "build:api": "tsc",
@@ -83,11 +83,10 @@
     "@vitest/coverage-v8": "^0.32.2",
     "eslint": "^8.44.0",
     "eslint-config-prettier": "^8.8.0",
-    "nodemon": "^3.0.1",
     "prettier": "^2.8.8",
     "prettier-plugin-tailwindcss": "^0.3.0",
     "supertest": "^6.3.3",
-    "ts-node": "^10.9.1",
+    "tsx": "^4.19.0",
     "typescript": "^5.1.6",
     "vitest": "^0.32.2"
   }
