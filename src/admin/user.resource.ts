@@ -1,4 +1,3 @@
-// @ts-ignore
 import redis from '../utils/redis';
 import { User } from '../views/views.models';
 import { sendVerificationEmail } from '../views/views.services';

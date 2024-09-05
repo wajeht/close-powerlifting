@@ -8,7 +8,6 @@ import { isCronServiceStarted } from '../utils/crons';
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
-// @ts-ignore
 import redis from '../utils/redis';
 import contactHTML from '../utils/templates/contact';
 import { User } from './views.models';
@@ -194,7 +193,6 @@ export function getHealthCheck(req: Request, res: Response) {
     status: 'ok',
     uptime: process.uptime(),
     timestamp: Date.now(),
-    // @ts-ignore
     redis: redis.status === 'ready' ? 'connected' : 'disconnected',
     mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     crons: isCronServiceStarted() ? 'started' : 'stopped',

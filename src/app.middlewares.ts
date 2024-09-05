@@ -13,7 +13,6 @@ import { ENV } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
-// @ts-ignore
 import redis from './utils/redis';
 
 interface RequestValidators {

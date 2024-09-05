@@ -1,23 +1,29 @@
 import Redis from 'ioredis';
 
-import { REDIS } from '../config/constants';
+import { redisConfig } from '../config/constants';
 import logger from './logger';
 
-let redis;
+const redisOptions = {
+  port: redisConfig.PORT,
+  host: redisConfig.HOST,
+  password: redisConfig.PASSWORD,
+  maxRetriesPerRequest: null,
+  family: 0, // Support both IPv6 and IPv4
+};
 
-try {
-  // @ts-ignore
-  redis = new Redis({
-    host: REDIS.HOST,
-    port: REDIS.PORT,
-    username: REDIS.USERNAME,
-    password: REDIS.PASSWORD,
-    db: REDIS.DATABASE,
-  });
+const createRedisClient = () => {
+  return new Redis(redisOptions);
+};
 
-  logger.info(`**** redis client started! ****`);
-} catch (e) {
-  logger.info(`**** redis client failed! ****`);
-}
+const redis = createRedisClient();
+
+redis.on('ready', () => {
+  logger.error('Redis connection established successfully');
+});
+
+redis.on('error', (error) => {
+  logger.error('Error initializing Redis:', error);
+  process.exit(1);
+});
 
 export default redis;

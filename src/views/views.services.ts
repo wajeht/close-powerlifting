@@ -5,7 +5,6 @@ import { EMAIL, PASSWORD_SALT } from '../config/constants';
 import { generateAPIKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
-// @ts-ignore
 import redis from '../utils/redis';
 import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
 import newAPIKeyHTML from '../utils/templates/new-api-key';

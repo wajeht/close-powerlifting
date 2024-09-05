@@ -37,12 +37,11 @@ export const EMAIL = {
   AUTH_PASS: process.env.EMAIL_AUTH_PASS,
 };
 
-export const REDIS = {
+export const redisConfig = {
   HOST: process.env.REDIS_HOST as unknown as string,
   PORT: process.env.REDIS_PORT as unknown as number,
   USERNAME: process.env.REDIS_USERNAME as unknown as string,
   PASSWORD: process.env.REDIS_PASSWORD as unknown as string,
-  DATABASE: process.env.REDIS_DATABASE as unknown as string,
 };
 
 export const COOKIE_PASSWORD = process.env.COOKIE_PASSWORD as unknown as string;

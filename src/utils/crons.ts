@@ -6,7 +6,6 @@ import logger from '../utils/logger';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
 import mail from './mail';
-// @ts-ignore
 import redis from './redis';
 import apiLimitResetHTML from './templates/api-limits-reset';
 

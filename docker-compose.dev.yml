@@ -21,13 +21,21 @@ services:
       - close-powerlifting-network
 
   redis:
+    image: 'redis:7.2.5'
     container_name: redis
-    image: redis:alpine
-    ports:
-      - '6379:6379'
     restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --port ${REDIS_PORT} --appendonly yes --replica-read-only no
+    ports:
+      - '${REDIS_PORT}:${REDIS_PORT}'
     networks:
       - close-powerlifting-network
+    volumes:
+      - 'redis-data:/data'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   mongodb:
     container_name: mongodb
@@ -88,9 +96,16 @@ services:
       - 8025:8025 # web ui
     networks:
       - close-powerlifting-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8025/']
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   mongo-data:
+    driver: local
+  redis-data:
     driver: local
 
 networks:

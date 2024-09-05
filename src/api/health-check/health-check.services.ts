@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 import logger from '../../utils/logger';
-// @ts-ignore
 import redis from '../../utils/redis';
 
 export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {

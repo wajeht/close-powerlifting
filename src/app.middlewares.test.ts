@@ -6,7 +6,6 @@ import { ZodIssue, ZodIssueCode } from 'zod';
 import { handleHostname, notFoundHandler, validate } from './app.middlewares';
 import { getHostName } from './utils/helpers';
 import * as utils from './utils/helpers';
-// @ts-ignore
 import redis from './utils/redis';
 
 describe('notFoundHandler', () => {

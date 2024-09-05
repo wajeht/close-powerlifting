@@ -4,7 +4,6 @@ import { JSDOM } from 'jsdom';
 
 import Axios from '../../utils/axios';
 import { tableToJson } from '../../utils/helpers';
-// @ts-ignore
 import redis from '../../utils/redis';
 import { getMeetParamType, getMeetQueryType } from './meets.validations';
 
