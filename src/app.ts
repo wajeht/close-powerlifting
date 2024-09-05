@@ -65,7 +65,7 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
 
 app.use(
   express.static(path.resolve(path.join(process.cwd(), 'public')), {
-    // 30 days in miliseconds
+    // 30 days in milliseconds
     maxAge: 30 * 24 * 60 * 60 * 1000,
   }),
 );
