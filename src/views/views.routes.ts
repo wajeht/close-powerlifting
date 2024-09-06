@@ -3,7 +3,21 @@ import catchAsyncHandler from 'express-async-handler';
 import { z } from 'zod';
 
 import { validationMiddleware } from '../app.middlewares';
-import * as ViewsControllers from './views.controllers';
+import {
+  getHomePage,
+  getRegisterPage,
+  postRegisterPage,
+  getResetAPIKeyPage,
+  postResetAPIKeyPage,
+  getVerifyEmailPage,
+  getContactPage,
+  postContactPage,
+  getTermsPage,
+  getPrivacyPage,
+  getAboutPage,
+  getStatusPage,
+  getHealthCheck,
+} from './views.controllers';
 
 const views = express.Router();
 
@@ -12,14 +26,14 @@ const views = express.Router();
  * @tags views
  * @summary get home page
  */
-views.get('/', catchAsyncHandler(ViewsControllers.getHomePage));
+views.get('/', catchAsyncHandler(getHomePage));
 
 /**
  * GET /register
  * @tags views
  * @summary get register page
  */
-views.get('/register', catchAsyncHandler(ViewsControllers.getRegisterPage));
+views.get('/register', catchAsyncHandler(getRegisterPage));
 
 /**
  * POST /register
@@ -38,7 +52,7 @@ views.post(
       name: z.string({ required_error: 'name is required!' }),
     }),
   }),
-  catchAsyncHandler(ViewsControllers.postRegisterPage),
+  catchAsyncHandler(postRegisterPage),
 );
 
 /**
@@ -46,7 +60,7 @@ views.post(
  * @tags views
  * @summary reset/forgot your api key
  */
-views.get('/reset-api-key', catchAsyncHandler(ViewsControllers.getResetAPIKeyPage));
+views.get('/reset-api-key', catchAsyncHandler(getResetAPIKeyPage));
 
 /**
  * POST /reset-api-key
@@ -67,7 +81,7 @@ views.post(
         }),
     }),
   }),
-  catchAsyncHandler(ViewsControllers.postResetAPIKeyPage),
+  catchAsyncHandler(postResetAPIKeyPage),
 );
 
 /**
@@ -85,7 +99,7 @@ views.get(
   //     email: z.string().email().optional(),
   //   }),
   // }),
-  catchAsyncHandler(ViewsControllers.getVerifyEmailPage),
+  catchAsyncHandler(getVerifyEmailPage),
 );
 
 /**
@@ -93,7 +107,7 @@ views.get(
  * @tags views
  * @summary get contact page
  */
-views.get('/contact', catchAsyncHandler(ViewsControllers.getContactPage));
+views.get('/contact', catchAsyncHandler(getContactPage));
 
 /**
  * POST /contact
@@ -114,7 +128,7 @@ views.post(
       message: z.string({ required_error: 'message is required!' }),
     }),
   }),
-  catchAsyncHandler(ViewsControllers.postContactPage),
+  catchAsyncHandler(postContactPage),
 );
 
 /**
@@ -122,34 +136,34 @@ views.post(
  * @tags views
  * @summary get terms page
  */
-views.get('/terms', catchAsyncHandler(ViewsControllers.getTermsPage));
+views.get('/terms', catchAsyncHandler(getTermsPage));
 
 /**
  * GET /privacy
  * @tags views
  * @summary get privacy page
  */
-views.get('/privacy', catchAsyncHandler(ViewsControllers.getPrivacyPage));
+views.get('/privacy', catchAsyncHandler(getPrivacyPage));
 
 /**
  * GET /about
  * @tags views
  * @summary get about page
  */
-views.get('/about', catchAsyncHandler(ViewsControllers.getAboutPage));
+views.get('/about', catchAsyncHandler(getAboutPage));
 
 /**
  * GET /status
  * @tags views
  * @summary get status page
  */
-views.get('/status', catchAsyncHandler(ViewsControllers.getStatusPage));
+views.get('/status', catchAsyncHandler(getStatusPage));
 
 /**
  * GET /health-check
  * @tags views
  * @summary get the health of close-powerlifting app
  */
-views.get('/health-check', catchAsyncHandler(ViewsControllers.getHealthCheck));
+views.get('/health-check', catchAsyncHandler(getHealthCheck));
 
 export default views;
