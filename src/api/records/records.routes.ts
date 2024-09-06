@@ -2,8 +2,8 @@ import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
 import { validationMiddleware } from '../api.middlewares';
-import * as RecordsControllers from './records.controllers';
-import * as RecordsValidation from './records.validations';
+import { getRecordsValidation } from './records.validations';
+import { getRecords } from './records.controllers';
 
 const records = express.Router();
 
@@ -15,8 +15,8 @@ const records = express.Router();
  */
 records.get(
   '/',
-  validationMiddleware({ query: RecordsValidation.getRecordsValidation }),
-  catchAsyncHandler(RecordsControllers.getRecords),
+  validationMiddleware({ query: getRecordsValidation }),
+  catchAsyncHandler(getRecords),
 );
 
 export default records;

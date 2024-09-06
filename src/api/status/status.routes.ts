@@ -4,6 +4,8 @@ import catchAsyncHandler from 'express-async-handler';
 import { validationMiddleware } from '../api.middlewares';
 import * as StatusControllers from './status.controllers';
 import * as StatusValidations from './status.validations';
+import { getStatusValidation } from './status.validations';
+import { getStatus } from './status.controllers';
 
 const status = express.Router();
 
@@ -14,10 +16,6 @@ const status = express.Router();
  * @security BearerAuth
  */
 
-status.get(
-  '/',
-  validationMiddleware({ query: StatusValidations.getStatusValidation }),
-  catchAsyncHandler(StatusControllers.getStatus),
-);
+status.get('/', validationMiddleware({ query: getStatusValidation }), catchAsyncHandler(getStatus));
 
 export default status;

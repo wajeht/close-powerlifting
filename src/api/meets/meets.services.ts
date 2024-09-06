@@ -33,7 +33,7 @@ export async function getMeet({ meet, cache = true }: getMeetParamType & getMeet
       return await fetchMeet({ meet });
     }
 
-    let cachedMeet = JSON.parse(await redis.get(`meet-${meet}`) as any);
+    let cachedMeet = JSON.parse((await redis.get(`meet-${meet}`)) as any);
 
     if (!cachedMeet) {
       cachedMeet = await fetchMeet({ meet });

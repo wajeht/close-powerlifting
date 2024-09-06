@@ -14,7 +14,7 @@ export async function getUser({ username }: getUserType) {
     const html = await (await api.get(`/u/${username}`)).data;
     const dom = new JSDOM(html);
 
-    const div = dom.window.document.getElementsByClassName('mixed-content');
+    const div = dom.window.document.getElementsByClassName('mixed-content') as any;
     return [
       {
         name: stripHTML(div[0].children[0].innerHTML),

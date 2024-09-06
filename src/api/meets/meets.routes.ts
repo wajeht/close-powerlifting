@@ -2,8 +2,8 @@ import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
 import { validationMiddleware } from '../api.middlewares';
-import * as MeetsControllers from './meets.controllers';
-import * as MeetsValidations from './meets.validations';
+import { getMeet } from './meets.controllers';
+import { getMeetParamValidation, getMeetQueryValidation } from './meets.validations';
 
 const meets = express.Router();
 
@@ -26,10 +26,10 @@ const meets = express.Router();
 meets.get(
   '/:meet',
   validationMiddleware({
-    params: MeetsValidations.getMeetParamValidation,
-    query: MeetsValidations.getMeetQueryValidation,
+    params: getMeetParamValidation,
+    query: getMeetQueryValidation,
   }),
-  catchAsyncHandler(MeetsControllers.getMeet),
+  catchAsyncHandler(getMeet),
 );
 
 export default meets;

@@ -2,8 +2,8 @@ import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
 import { validationMiddleware } from '../api.middlewares';
-import * as RankingsControllers from './rankings.controllers';
-import * as RankingsValidation from './rankings.validations';
+import { getRankingsValidation, getRankValidation } from './rankings.validations';
+import { getRank, getRankings } from './rankings.controllers';
 
 const rankings = express.Router();
 
@@ -25,8 +25,8 @@ const rankings = express.Router();
  */
 rankings.get(
   '/',
-  validationMiddleware({ query: RankingsValidation.getRankingsValidation }),
-  catchAsyncHandler(RankingsControllers.getRankings),
+  validationMiddleware({ query: getRankingsValidation }),
+  catchAsyncHandler(getRankings),
 );
 
 /**
@@ -38,8 +38,8 @@ rankings.get(
  */
 rankings.get(
   '/:rank',
-  validationMiddleware({ params: RankingsValidation.getRankValidation }),
-  catchAsyncHandler(RankingsControllers.getRank),
+  validationMiddleware({ params: getRankValidation }),
+  catchAsyncHandler(getRank),
 );
 
 export default rankings;

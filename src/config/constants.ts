@@ -44,7 +44,7 @@ export const REDIS = {
 } as const;
 
 export const COOKIE = {
-EXPIRATION: process.env.COOKIE_EXPIRATION as unknown as number,
+  EXPIRATION: process.env.COOKIE_EXPIRATION as unknown as number,
   PASSWORD: process.env.COOKIE_PASSWORD as unknown as string,
   NAME: process.env.COOKIE_NAME as unknown as string,
 } as const;

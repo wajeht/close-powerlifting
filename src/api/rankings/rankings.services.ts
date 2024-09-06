@@ -89,7 +89,7 @@ export async function getRankings({
       };
     }
 
-    let rankings = JSON.parse(await redis.get(`close-powerlifting-rankings`) as any);
+    let rankings = JSON.parse((await redis.get(`close-powerlifting-rankings`)) as any);
 
     if (rankings === null) {
       rankings = await fetchRankings(paginationQuery);
@@ -112,6 +112,7 @@ export async function getRankings({
       },
     };
   } catch (error) {
+    console.error(error);
     throw error;
   }
 }
@@ -139,6 +140,7 @@ export async function getRank({ rank }: getRankType) {
 
     return rankings?.data.at(index);
   } catch (error) {
+    console.error(error);
     throw error;
   }
 }

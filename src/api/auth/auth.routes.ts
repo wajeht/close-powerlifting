@@ -2,8 +2,20 @@ import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
 import { validationMiddleware } from '../api.middlewares';
-import * as AuthControllers from './auth.controllers';
-import * as AuthValidation from './auth.validations';
+import {
+  postRegisterValidation,
+  postResetApiKeyValidation,
+  postVerifyEmailValidation,
+} from './auth.validations';
+import {
+  getGithub,
+  getGithubRedirect,
+  getGoogle,
+  getGoogleRedirect,
+  postRegister,
+  postResetApiKey,
+  postVerifyEmail,
+} from './auth.controllers';
 
 const auth = express.Router();
 
@@ -12,28 +24,28 @@ const auth = express.Router();
  * @tags auth
  * @summary get google oauth url
  */
-auth.get('/oauth/google', catchAsyncHandler(AuthControllers.getGoogle));
+auth.get('/oauth/google', catchAsyncHandler(getGoogle));
 
 /**
  * GET /api/auth/oauth/google/redirect
  * @tags auth
  * @summary get google oauth redirect url
  */
-auth.get('/oauth/google/redirect', catchAsyncHandler(AuthControllers.getGoogleRedirect));
+auth.get('/oauth/google/redirect', catchAsyncHandler(getGoogleRedirect));
 
 /**
  * GET /api/auth/oauth/github
  * @tags auth
  * @summary get github oauth url
  */
-auth.get('/oauth/github', catchAsyncHandler(AuthControllers.getGithub));
+auth.get('/oauth/github', catchAsyncHandler(getGithub));
 
 /**
  * GET /api/auth/oauth/github/redirect
  * @tags auth
  * @summary get github oauth redirect url
  */
-auth.get('/oauth/github/redirect', catchAsyncHandler(AuthControllers.getGithubRedirect));
+auth.get('/oauth/github/redirect', catchAsyncHandler(getGithubRedirect));
 
 /**
  * POST /api/auth/register
@@ -44,8 +56,8 @@ auth.get('/oauth/github/redirect', catchAsyncHandler(AuthControllers.getGithubRe
  */
 auth.post(
   '/register',
-  validationMiddleware({ body: AuthValidation.postRegisterValidation }),
-  catchAsyncHandler(AuthControllers.postRegister),
+  validationMiddleware({ body: postRegisterValidation }),
+  catchAsyncHandler(postRegister),
 );
 
 /**
@@ -57,8 +69,8 @@ auth.post(
  */
 auth.post(
   '/verify-email',
-  validationMiddleware({ body: AuthValidation.postVerifyEmailValidation }),
-  catchAsyncHandler(AuthControllers.postVerifyEmail),
+  validationMiddleware({ body: postVerifyEmailValidation }),
+  catchAsyncHandler(postVerifyEmail),
 );
 
 /**
@@ -69,8 +81,8 @@ auth.post(
  */
 auth.post(
   '/reset-api-key',
-  validationMiddleware({ body: AuthValidation.postResetApiKeyValidation }),
-  catchAsyncHandler(AuthControllers.postResetApiKey),
+  validationMiddleware({ body: postResetApiKeyValidation }),
+  catchAsyncHandler(postResetApiKey),
 );
 
 export default auth;
