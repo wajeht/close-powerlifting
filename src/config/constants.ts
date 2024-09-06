@@ -11,12 +11,6 @@ export const API_URL = process.env.API_URL as unknown as string;
 
 export const BASE_URL = process.env.BASE_URL as unknown as string;
 
-export const SESSION_SECRET = process.env.SESSION_SECRET as unknown as string;
-
-export const SESSION_NAME = process.env.SESSION_NAME as unknown as string;
-
-export const COOKIE_EXPIRATION = process.env.COOKIE_EXPIRATION as unknown as number;
-
 export const ENV = process.env.ENV as unknown as string;
 
 export const DOMAIN = process.env.DOMAIN;
@@ -29,6 +23,11 @@ export const MONGODB_URI = process.env.MONGODB_URI;
 
 export const X_API_KEY = process.env.X_API_KEY;
 
+export const SESSION = {
+  NAME: process.env.SESSION_NAME as unknown as string,
+  SECRET: process.env.SESSION_SECRET as unknown as string,
+} as const;
+
 export const EMAIL = {
   HOST: process.env.EMAIL_HOST,
   PORT: process.env.EMAIL_PORT,
@@ -37,21 +36,23 @@ export const EMAIL = {
   AUTH_PASS: process.env.EMAIL_AUTH_PASS,
 };
 
-export const redisConfig = {
+export const REDIS = {
   HOST: process.env.REDIS_HOST as unknown as string,
   PORT: process.env.REDIS_PORT as unknown as number,
   USERNAME: process.env.REDIS_USERNAME as unknown as string,
   PASSWORD: process.env.REDIS_PASSWORD as unknown as string,
-};
+} as const;
 
-export const COOKIE_PASSWORD = process.env.COOKIE_PASSWORD as unknown as string;
-
-export const COOKIE_NAME = process.env.COOKIE_NAME as unknown as string;
+export const COOKIE = {
+EXPIRATION: process.env.COOKIE_EXPIRATION as unknown as number,
+  PASSWORD: process.env.COOKIE_PASSWORD as unknown as string,
+  NAME: process.env.COOKIE_NAME as unknown as string,
+} as const;
 
 export const ADMIN = {
   EMAIL: process.env.ADMIN_EMAIL,
   NAME: process.env.ADMIN_NAME,
-};
+} as const;
 
 export const OAUTH = {
   GOOGLE: {
@@ -64,4 +65,4 @@ export const OAUTH = {
     CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET as unknown as string,
     OAUTH_REDIRECT_URL: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
   },
-};
+} as const;

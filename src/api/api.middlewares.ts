@@ -35,13 +35,13 @@ export function validate(validators: RequestValidators) {
 
 export function auth(req: Request, res: Response, next: NextFunction) {
   try {
-    let token = '';
+    let token: string = '';
 
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
     if (req.headers.authorization) {
       if (req.headers.authorization.split(' ').length != 2) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
       if (!req.headers.authorization.startsWith('Bearer')) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
-      token = req.headers.authorization.split(' ')[1];
+      token = req.headers.authorization.split(' ')[1] as string;
     }
     //! -------------------------------- API TOKEN AUTHENTICATION --------------------------------
     else if (req.headers['x-api-key']) {
@@ -70,7 +70,7 @@ export function auth(req: Request, res: Response, next: NextFunction) {
 
 export async function trackAPICalls(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = req.user?.id;
+    const id = req.user?.id as unknown as Uint8Array;
     if (id) {
       const user = await User.findOneAndUpdate(
         { id },
@@ -87,7 +87,7 @@ export async function trackAPICalls(req: Request, res: Response, next: NextFunct
       if (user?.api_call_count && user.api_call_count === user.api_call_limit / 2 && !user.admin) {
         mail.sendMail({
           from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-          to: user.email,
+          to: user.email as string,
           subject: 'Reaching API Call Limit',
           html: reachingApiLimitHTML({ name: user.name!, percent: 50 }),
         });

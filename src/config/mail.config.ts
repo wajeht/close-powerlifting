@@ -7,4 +7,4 @@ export default {
     user: EMAIL.AUTH_EMAIL as unknown as string,
     pass: EMAIL.AUTH_PASS as unknown as string,
   },
-};
+} as const;
