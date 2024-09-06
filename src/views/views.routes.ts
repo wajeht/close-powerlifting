@@ -2,7 +2,7 @@ import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 import { z } from 'zod';
 
-import { validate } from '../app.middlewares';
+import { validationMiddleware } from '../app.middlewares';
 import * as ViewsControllers from './views.controllers';
 
 const views = express.Router();
@@ -30,7 +30,7 @@ views.get('/register', catchAsyncHandler(ViewsControllers.getRegisterPage));
  */
 views.post(
   '/register',
-  validate({
+  validationMiddleware({
     body: z.object({
       email: z
         .string({ required_error: 'email is required!' })
@@ -56,7 +56,7 @@ views.get('/reset-api-key', catchAsyncHandler(ViewsControllers.getResetAPIKeyPag
  */
 views.post(
   '/reset-api-key',
-  validate({
+  validationMiddleware({
     body: z.object({
       email: z
         .string({
@@ -105,7 +105,7 @@ views.get('/contact', catchAsyncHandler(ViewsControllers.getContactPage));
  */
 views.post(
   '/contact',
-  validate({
+  validationMiddleware({
     body: z.object({
       email: z
         .string({ required_error: 'email is required!' })
