@@ -6,7 +6,6 @@ import ejs from 'ejs';
 import express from 'express';
 import expressLayouts from 'express-ejs-layouts';
 import expressJSDocSwagger from 'express-jsdoc-swagger';
-import session from 'express-session';
 import helmet from 'helmet';
 import path from 'path';
 
@@ -16,10 +15,9 @@ import {
   errorMiddleware,
   hostNameMiddleware,
   notFoundMiddleware,
+  sessionMiddleware,
 } from './app.middlewares';
-import { ENV, SESSION } from './config/constants';
 import swaggerConfig from './config/swagger.config';
-import { ENV_ENUMS } from './utils/enums';
 import viewsRoutes from './views/views.routes';
 
 const app = express();
@@ -34,29 +32,19 @@ app.use(cookieParser());
 
 app.use(flash());
 
-app.use(
-  session({
-    secret: SESSION.SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-      httpOnly: ENV === ENV_ENUMS.PRODUCTION,
-      secure: ENV === ENV_ENUMS.PRODUCTION,
-    },
-  }),
-);
+app.use(sessionMiddleware());
+
 app.use(cors({ credentials: true, origin: true }));
+
 app.use(compression());
+
 app.use(express.json());
+
 app.use(express.urlencoded({ extended: true }));
+
 app.use(helmet({ contentSecurityPolicy: false }));
 
-app.use(
-  express.static(path.resolve(path.join(process.cwd(), 'public')), {
-    // 30 days in milliseconds
-    maxAge: 30 * 24 * 60 * 60 * 1000,
-  }),
-);
+app.use(express.static(path.resolve(path.join(process.cwd(), 'public')), { maxAge: '30d' }));
 
 app.engine('html', ejs.renderFile);
 

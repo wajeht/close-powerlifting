@@ -9,12 +9,13 @@ import {
   UnauthorizedError,
   ValidationError,
 } from './api/api.errors';
-import { ENV } from './config/constants';
+import { ENV, SESSION } from './config/constants';
 import { ENV_ENUMS } from './utils/enums';
 import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
 import redis from './utils/redis';
 import rateLimit from 'express-rate-limit';
+import session from 'express-session';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -145,4 +146,16 @@ export async function hostNameMiddleware(req: Request, res: Response, next: Next
     }
   }
   next();
+}
+
+export function sessionMiddleware() {
+  return session({
+    secret: SESSION.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      httpOnly: ENV === ENV_ENUMS.PRODUCTION,
+      secure: ENV === ENV_ENUMS.PRODUCTION,
+    },
+  });
 }
