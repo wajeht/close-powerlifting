@@ -14,7 +14,7 @@ export async function getRecords({ cache = true }: getRecordsType) {
     const dom = new JSDOM(html);
 
     const h2 = dom.window.document.getElementsByClassName('records-col');
-    let data = [];
+    const data = [];
 
     for (const e of h2) {
       data.push({

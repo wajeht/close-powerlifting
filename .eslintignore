@@ -1,2 +1,17 @@
 public/js/vue.esm-browser.prod.js
 mongo-init.js
+public/libs
+public/libs/*
+public/lib*
+public/js*
+public/client.js
+public/script.js
+public/*
+src/views/components/*
+src/views/layouts/*
+src/views/pages/*
+dist/*
+dist
+node_modules/*
+playwright-report/*
+node_modules

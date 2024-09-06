@@ -32,7 +32,7 @@ export function tableToJson(table: any) {
     const tableRow = table.rows[i];
     const rowData = {};
 
-    for (var j = 0; j < tableRow.cells.length; j++) {
+    for (let j = 0; j < tableRow.cells.length; j++) {
       // @ts-ignore
       rowData[headers[j]] = tableRow.cells[j].innerHTML.replace(/(<([^>]+)>)/gi, '');
     }

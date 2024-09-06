@@ -94,7 +94,7 @@ export async function sendWelcomeEmail(userParams: UserParams) {
   const { email } = userParams;
   const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
-  let verified = await updateUser(email, {
+  const verified = await updateUser(email, {
     key: hashedKey,
     verified: true,
     verified_at: new Date().toISOString(),

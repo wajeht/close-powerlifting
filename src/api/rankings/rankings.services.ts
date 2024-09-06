@@ -118,12 +118,12 @@ export async function getRankings({
 
 export async function getRank({ rank }: getRankType) {
   try {
-    let r = parseInt(rank) - 1;
+    const r = parseInt(rank) - 1;
 
     // pagination
     const cache = false;
     let current_page = 1;
-    let per_page = 100;
+    const per_page = 100;
 
     // r = 300
 

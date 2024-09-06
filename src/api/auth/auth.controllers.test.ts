@@ -23,8 +23,8 @@ vi.mock('../api.errors', async () => ({
 }));
 
 describe('getGoogle', () => {
-  let req = {} as any;
-  let res = {
+  const req = {} as any;
+  const res = {
     redirect: vi.fn(),
   } as any;
 
