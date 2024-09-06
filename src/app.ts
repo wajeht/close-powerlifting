@@ -11,24 +11,32 @@ import helmet from 'helmet';
 import path from 'path';
 
 import apiRoutes from './api/api';
-import * as appMiddlewares from './app.middlewares';
-import { ENV, SESSION_SECRET } from './config/constants';
-import * as rateLimiters from './config/rate-limiters.config';
+import {
+  appRateLimitMiddleware,
+  errorMiddleware,
+  hostNameMiddleware,
+  notFoundMiddleware,
+} from './app.middlewares';
+import { ENV, SESSION } from './config/constants';
 import swaggerConfig from './config/swagger.config';
 import { ENV_ENUMS } from './utils/enums';
-import logger from './utils/logger';
 import viewsRoutes from './views/views.routes';
 
 const app = express();
 
 app.disable('x-powered-by');
-app.use(appMiddlewares.handleHostname);
+
+app.use(hostNameMiddleware);
+
 app.set('trust proxy', true);
+
 app.use(cookieParser());
+
 app.use(flash());
+
 app.use(
   session({
-    secret: SESSION_SECRET,
+    secret: SESSION.SECRET,
     resave: false,
     saveUninitialized: true,
     cookie: {
@@ -62,14 +70,14 @@ app.use(expressLayouts);
 
 expressJSDocSwagger(app)(swaggerConfig);
 
-app.use('/api', rateLimiters.api, apiRoutes);
+app.use(apiRoutes);
 
-app.use(rateLimiters.app);
+app.use(appRateLimitMiddleware());
 
 app.use(viewsRoutes);
 
-app.use(appMiddlewares.notFoundHandler);
+app.use(notFoundMiddleware);
 
-app.use(appMiddlewares.serverErrorHandler);
+app.use(errorMiddleware);
 
 export default app;

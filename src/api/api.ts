@@ -1,6 +1,10 @@
 import express from 'express';
 
-import * as apiMiddlewares from './api.middlewares';
+import {
+  apiRateLimitMiddleware,
+  authenticationMiddleware,
+  trackAPICallsMiddleware,
+} from './api.middlewares';
 import AuthRoutes from './auth/auth.routes';
 import FederationsRoutes from './federations/federations.routes';
 import HealthCheckRoutes from './health-check/health-check.routes';
@@ -12,14 +16,16 @@ import UsersRoutes from './users/users.routes';
 
 const api = express.Router();
 
-api.use('/auth', AuthRoutes);
+api.use(apiRateLimitMiddleware());
 
-api.use('/health-check', HealthCheckRoutes);
-api.use('/rankings', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, RankingsRoutes);
-api.use('/federations', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, FederationsRoutes);
-api.use('/records', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, RecordsRoutes);
-api.use('/meets', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, MeetsRoutes);
-api.use('/users', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, UsersRoutes);
-api.use('/status', apiMiddlewares.auth, apiMiddlewares.trackAPICalls, StatusRoutes);
+api.use('/api/auth', AuthRoutes);
+
+api.use('/api/health-check', HealthCheckRoutes);
+api.use('/api/rankings', authenticationMiddleware, trackAPICallsMiddleware, RankingsRoutes);
+api.use('/api/federations', authenticationMiddleware, trackAPICallsMiddleware, FederationsRoutes);
+api.use('/api/records', authenticationMiddleware, trackAPICallsMiddleware, RecordsRoutes);
+api.use('/api/meets', authenticationMiddleware, trackAPICallsMiddleware, MeetsRoutes);
+api.use('/api/users', authenticationMiddleware, trackAPICallsMiddleware, UsersRoutes);
+api.use('/api/status', authenticationMiddleware, trackAPICallsMiddleware, StatusRoutes);
 
 export default api;

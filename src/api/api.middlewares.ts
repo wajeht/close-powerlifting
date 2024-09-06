@@ -2,11 +2,13 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
-import { EMAIL, JWT_SECRET } from '../config/constants';
+import { EMAIL, ENV, JWT_SECRET } from '../config/constants';
 import mail from '../utils/mail';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
 import { APICallsExceededError, UnauthorizedError } from './api.errors';
+import rateLimit from 'express-rate-limit';
+import { ENV_ENUMS } from 'utils/enums';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -14,7 +16,28 @@ interface RequestValidators {
   query?: AnyZodObject;
 }
 
-export function validate(validators: RequestValidators) {
+export function apiRateLimitMiddleware() {
+  return rateLimit({
+    windowMs: 60 * 60 * 1000, // 60 minutes
+    max: 50, // Limit each IP to 50 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    message: (req: Request, res: Response) => {
+      if (req.get('Content-Type') === 'application/json') {
+        return res.json({
+          status: 'fail',
+          request_url: req.originalUrl,
+          message: 'Too many requests, please try again later?',
+          data: [],
+        });
+      }
+      return res.render('./rate-limit.html');
+    },
+    skip: () => ENV !== ENV_ENUMS.PRODUCTION,
+  });
+}
+
+export function validationMiddleware(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (validators.params) {
@@ -33,7 +56,7 @@ export function validate(validators: RequestValidators) {
   };
 }
 
-export function auth(req: Request, res: Response, next: NextFunction) {
+export function authenticationMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     let token: string = '';
 
@@ -68,7 +91,7 @@ export function auth(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export async function trackAPICalls(req: Request, res: Response, next: NextFunction) {
+export async function trackAPICallsMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const id = req.user?.id as unknown as Uint8Array;
     if (id) {

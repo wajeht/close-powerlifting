@@ -1,7 +1,7 @@
 import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
-import { validate } from '../api.middlewares';
+import { validationMiddleware } from '../api.middlewares';
 import * as UsersControllers from './users.controllers';
 import * as UsersValidation from './users.validations';
 
@@ -16,7 +16,7 @@ const users = express.Router();
  */
 users.get(
   '/:username',
-  validate({ params: UsersValidation.getUserValidation }),
+  validationMiddleware({ params: UsersValidation.getUserValidation }),
   catchAsyncHandler(UsersControllers.getUser),
 );
 
@@ -29,7 +29,7 @@ users.get(
  */
 users.get(
   '/',
-  validate({ params: UsersValidation.getUsersValidation }),
+  validationMiddleware({ params: UsersValidation.getUsersValidation }),
   catchAsyncHandler(UsersControllers.getUsers),
 );
 

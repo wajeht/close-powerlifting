@@ -1,7 +1,7 @@
 import express from 'express';
 import catchAsyncHandler from 'express-async-handler';
 
-import { validate } from '../api.middlewares';
+import { validationMiddleware } from '../api.middlewares';
 import * as AuthControllers from './auth.controllers';
 import * as AuthValidation from './auth.validations';
 
@@ -44,7 +44,7 @@ auth.get('/oauth/github/redirect', catchAsyncHandler(AuthControllers.getGithubRe
  */
 auth.post(
   '/register',
-  validate({ body: AuthValidation.postRegisterValidation }),
+  validationMiddleware({ body: AuthValidation.postRegisterValidation }),
   catchAsyncHandler(AuthControllers.postRegister),
 );
 
@@ -57,7 +57,7 @@ auth.post(
  */
 auth.post(
   '/verify-email',
-  validate({ body: AuthValidation.postVerifyEmailValidation }),
+  validationMiddleware({ body: AuthValidation.postVerifyEmailValidation }),
   catchAsyncHandler(AuthControllers.postVerifyEmail),
 );
 
@@ -69,7 +69,7 @@ auth.post(
  */
 auth.post(
   '/reset-api-key',
-  validate({ body: AuthValidation.postResetApiKeyValidation }),
+  validationMiddleware({ body: AuthValidation.postResetApiKeyValidation }),
   catchAsyncHandler(AuthControllers.postResetApiKey),
 );
 
