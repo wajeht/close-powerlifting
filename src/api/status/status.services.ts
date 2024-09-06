@@ -11,7 +11,7 @@ export async function fetchStatus() {
   try {
     const html = await (await api.get('/status')).data;
     const dom = new JSDOM(html);
-    const div = dom.window.document.getElementsByClassName('text-content');
+    const div = dom.window.document.getElementsByClassName('text-content') as any;
     return {
       server_version: stripHTML(div[0].children[2].innerHTML),
       meets: div[0].childNodes[8].textContent?.toString(),
@@ -31,12 +31,10 @@ export async function getStatus({ cache = true }: getStatusType) {
       };
     }
 
-    // @ts-ignore
-    let data = JSON.parse(await redis.get(`close-powerlifting-status`));
+    let data = JSON.parse(await redis.get(`close-powerlifting-status`) as any);
 
     if (data === null) {
       data = await fetchStatus();
-      // @ts-ignore
       await redis.set(`close-powerlifting-status`, JSON.stringify(data));
     }
 

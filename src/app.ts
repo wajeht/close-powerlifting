@@ -10,7 +10,6 @@ import session from 'express-session';
 import helmet from 'helmet';
 import path from 'path';
 
-import { adminJs, adminRouter } from './admin/admin';
 import apiRoutes from './api/api';
 import * as appMiddlewares from './app.middlewares';
 import { ENV, SESSION_SECRET } from './config/constants';
@@ -25,7 +24,6 @@ const app = express();
 app.disable('x-powered-by');
 app.use(appMiddlewares.handleHostname);
 app.set('trust proxy', true);
-app.use(adminJs.options.rootPath, adminRouter);
 app.use(cookieParser());
 app.use(flash());
 app.use(
@@ -54,14 +52,6 @@ if (ENV === ENV_ENUMS.PRODUCTION) {
     `**** skipping rate limiter for both api and app in ${process.env.ENV} environment ****`,
   );
 }
-
-(async () => {
-  if (ENV == ENV_ENUMS.PRODUCTION) {
-    await adminJs.initialize();
-  } else {
-    adminJs.watch();
-  }
-})();
 
 app.use(
   express.static(path.resolve(path.join(process.cwd(), 'public')), {

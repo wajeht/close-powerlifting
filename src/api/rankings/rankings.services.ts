@@ -89,13 +89,11 @@ export async function getRankings({
       };
     }
 
-    // @ts-ignore
-    let rankings = JSON.parse(await redis.get(`close-powerlifting-rankings`));
+    let rankings = JSON.parse(await redis.get(`close-powerlifting-rankings`) as any);
 
     if (rankings === null) {
       rankings = await fetchRankings(paginationQuery);
       if (rankings === null) return null;
-      // @ts-ignore
       await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
     }
 
@@ -139,7 +137,6 @@ export async function getRank({ rank }: getRankType) {
 
     const index = r % per_page;
 
-    // @ts-ignore
     return rankings?.data.at(index);
   } catch (error) {
     throw error;

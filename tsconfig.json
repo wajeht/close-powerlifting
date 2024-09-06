@@ -25,10 +25,6 @@
     "lib": ["es2022"],
 
     "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "*": ["node_modules/*", "src/types/*"]
-    },
-    "typeRoots": ["src/@types", "node_modules/@types"]
   },
   "include": ["./src/**/*.ts", "./src/**/*.json", "./src/**/*.d.ts", ".env"],
   "exclude": [
@@ -37,7 +33,6 @@
     "logs",
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
-    ".adminjs",
     ".vscode",
     "mongo-data",
     "public"

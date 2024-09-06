@@ -68,14 +68,14 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   logger.info(`**** admin user: ${email} has been updated! ****`);
 }
 
-export function sendVerificationEmail({
+export async function sendVerificationEmail({
   hostname,
   email,
   name,
   verification_token,
   userId,
 }: VerificationEmailPrams) {
-  mail.sendMail({
+  await mail.sendMail({
     from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
     to: email,
     subject: 'Account verification',

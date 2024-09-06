@@ -113,13 +113,10 @@ export function validate(validators: RequestValidators) {
 
 export async function handleHostname(req: Request, res: Response, next: NextFunction) {
   if (!req.app.locals.hostname) {
-    // @ts-ignore
     const hostname = await redis.get('hostname');
 
     if (hostname === null) {
-      // @ts-ignore
       await redis.set('hostname', getHostName(req));
-      // @ts-ignore
       req.app.locals.hostname = await redis.get('hostname');
     } else {
       req.app.locals.hostname = hostname;

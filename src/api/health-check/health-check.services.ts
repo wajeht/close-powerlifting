@@ -48,13 +48,11 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
 
   const cacheKey = `close-powerlifting-global-status-call-cache`;
 
-  // @ts-ignore
-  let data = JSON.parse(await redis.get(cacheKey));
+  let data = JSON.parse((await redis.get(cacheKey)) as any);
 
   if (data === null) {
     data = await fetchStatus();
 
-    // @ts-ignore
     await redis.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60 * 24);
 
     logger.info('**** Global status cache was updated! ****');

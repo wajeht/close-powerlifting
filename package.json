@@ -27,10 +27,7 @@
   "author": "wajeht",
   "license": "MIT",
   "dependencies": {
-    "@adminjs/express": "^5.1.0",
-    "@adminjs/mongoose": "^3.0.3",
     "@faker-js/faker": "^9.0.0",
-    "adminjs": "^6.8.7",
     "autoprefixer": "^10.4.14",
     "axios": "^1.4.0",
     "bcryptjs": "^2.4.3",

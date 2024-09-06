@@ -12,3 +12,11 @@ export interface User {
   verified_at: Date;
   created_at: Date;
 }
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: Pick<User, 'id' | 'name' | 'email'>;
+    }
+  }
+}

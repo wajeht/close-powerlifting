@@ -72,12 +72,10 @@ export async function getFederations({ current_page = 1, per_page = 100, cache =
 
     const cacheKey = `close-powerlifting-federations-${current_page}-${per_page}`;
 
-    // @ts-ignore
-    let federations = JSON.parse(await redis.get(cacheKey));
+    let federations = JSON.parse((await redis.get(cacheKey)) as any);
 
     if (federations === null) {
       federations = await fetchFederations({ current_page, per_page });
-      // @ts-ignore
       await redis.set(cacheKey, JSON.stringify(federations));
     }
 
@@ -153,12 +151,10 @@ export async function getFederation({
       cacheString = `close-powerlifting-federations-federation-${federation}`;
     }
 
-    // @ts-ignore
-    let federations = JSON.parse(await redis.get(cacheString));
+    let federations = JSON.parse((await redis.get(cacheString)) as any);
 
     if (federations === null) {
       federations = await fetchFederation({ federation, year });
-      // @ts-ignore
       await redis.set(cacheString, JSON.stringify(federations));
     }
 
