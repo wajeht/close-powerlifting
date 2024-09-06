@@ -43,16 +43,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(helmet({ contentSecurityPolicy: false }));
 
-if (ENV === ENV_ENUMS.PRODUCTION) {
-  app.use('/api', rateLimiters.api, apiRoutes);
-  app.use(rateLimiters.app);
-} else {
-  app.use('/api', apiRoutes);
-  logger.info(
-    `**** skipping rate limiter for both api and app in ${process.env.ENV} environment ****`,
-  );
-}
-
 app.use(
   express.static(path.resolve(path.join(process.cwd(), 'public')), {
     // 30 days in milliseconds
@@ -61,17 +51,25 @@ app.use(
 );
 
 app.engine('html', ejs.renderFile);
+
 app.set('view engine', 'html');
+
 app.set('views', path.resolve(path.join(process.cwd(), 'src', 'views', 'pages')));
+
 app.set('layout', path.resolve(path.join(process.cwd(), 'src', 'views', 'layouts', 'main.html')));
 
 app.use(expressLayouts);
 
 expressJSDocSwagger(app)(swaggerConfig);
 
+app.use('/api', rateLimiters.api, apiRoutes);
+
+app.use(rateLimiters.app);
+
 app.use(viewsRoutes);
 
 app.use(appMiddlewares.notFoundHandler);
+
 app.use(appMiddlewares.serverErrorHandler);
 
 export default app;
