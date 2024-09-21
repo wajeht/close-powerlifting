@@ -91,7 +91,7 @@ type Email = {
   visibility: string | null;
 };
 
-export async function getGithuUserEmails({
+export async function getGithubUserEmails({
   access_token,
 }: {
   access_token: string;

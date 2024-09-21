@@ -85,12 +85,12 @@ export async function getGithubRedirect(req: Request, res: Response) {
 
   const githubUser = await AuthServices.getGithubUser({ access_token });
 
-  const emails = await AuthServices.getGithuUserEmails({ access_token });
-  const found = await User.findOne({ email: emails[0].email });
+  const emails = await AuthServices.getGithubUserEmails({ access_token });
+  const found = await User.findOne({ email: emails[0]!.email });
 
   if (!found) {
     const createdUser = await User.create({
-      email: emails[0].email,
+      email: emails[0]!.email,
       name: githubUser.name,
       verification_token: access_token,
       verified: true,
@@ -145,7 +145,7 @@ export async function postRegister(req: Request<{}, {}, postRegisterType>, res: 
     status: 'success',
     request_url: req.originalUrl,
     message:
-      'Thank you for registering. Please check your email for confirmation or use the follow data to make a post reqeust to /api/auth/verify-email',
+      'Thank you for registering. Please check your email for confirmation or use the follow data to make a post request to /api/auth/verify-email',
     data: [
       {
         email,
@@ -182,7 +182,7 @@ export async function postVerifyEmail(req: Request<{}, {}, postVerifyEmailType>,
     status: 'success',
     request_url: req.originalUrl,
     message:
-      'Thank you for verifying your email address. You can use the folow key to access our api or we will send you an API key to your email very shortly!',
+      'Thank you for verifying your email address. You can use the following key to access our api or we will send you an API key to your email very shortly!',
     data: [
       {
         email,

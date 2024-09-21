@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest';
+import { describe, expect, Mock, test, vi } from 'vitest';
 
 import { hashKey } from '../../utils/helpers';
 import { User } from '../../views/views.models';
@@ -48,9 +48,9 @@ describe('postRegister', async () => {
       json: vi.fn(() => res),
     } as any;
 
-    hashKey.mockReturnValue({ key: 'mock-key' });
+    (hashKey as Mock).mockReturnValue({ key: 'mock-key' });
 
-    User.create.mockReturnValue({ id: 'mock-id' });
+    (User.create as Mock).mockReturnValue({ id: 'mock-id' });
 
     await postRegister(req, res);
 

@@ -1,47 +1,29 @@
-import path from 'path';
 import pino from 'pino';
+import path from 'node:path';
 import pretty from 'pino-pretty';
 
-const today = new Date().toISOString().split('T')[0];
-const root = path.resolve(process.cwd());
-
-const levels = {
-  // emerg: 80,
-  // alert: 70,
-  // crit: 60,
-  // error: 50,
-  // warn: 40,
-  // notice: 30,
-  // info: 20,
-  // debug: 10,
-};
-
-const streams = [
-  { stream: pino.destination(`${root}/logs/${today}.log`) },
-  // // this will print to the console
+export default pino(
   {
-    stream: pretty({
-      translateTime: 'yyyy-mm-dd HH:MM:ss TT',
-      colorize: true,
-      sync: true,
-      ignore: 'hostname,pid',
-    }),
-  },
-];
-
-const logger = pino(
-  {
-    customLevels: levels,
     level: process.env.PINO_LOG_LEVEL || 'info',
-    useOnlyCustomProps: true,
     formatters: {
-      level: (label) => {
-        return { level: label };
-      },
+      level: (label) => ({ level: label }),
     },
     timestamp: pino.stdTimeFunctions.isoTime,
   },
-  pino.multistream(streams),
+  pino.multistream([
+    {
+      stream: pino.destination({
+        dest: `${path.resolve(process.cwd())}/logs/${new Date().toISOString().split('T')[0]}.log`,
+        sync: false,
+        mkdir: true,
+      }),
+    },
+    {
+      stream: pretty({
+        translateTime: 'yyyy-mm-dd HH:MM:ss TT',
+        colorize: true,
+        ignore: 'hostname,pid',
+      }),
+    },
+  ]),
 );
-
-export default logger;
