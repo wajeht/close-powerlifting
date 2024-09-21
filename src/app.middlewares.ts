@@ -152,7 +152,7 @@ export function sessionMiddleware() {
   return session({
     secret: SESSION.SECRET,
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
       httpOnly: ENV === ENV_ENUMS.PRODUCTION,
       secure: ENV === ENV_ENUMS.PRODUCTION,
