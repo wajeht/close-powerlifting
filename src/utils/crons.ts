@@ -16,6 +16,7 @@ function removeCaches() {
     // @ts-ignore
     redis.keys('*', function (err, keys) {
       if (err) return null;
+    // @ts-ignore
       keys.forEach((key: any) => {
         if (key.match(/close-powerlifting.+/g)) {
           logger.info(`deleted redis cache ${key}!`);
@@ -48,7 +49,7 @@ async function resetApiCallCount() {
 
         mail.sendMail({
           from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-          to: user.email,
+          to: user.email!,
           subject: 'API Call Limit Reset',
           html: apiLimitResetHTML({ name: user.name! }),
         });
@@ -76,7 +77,7 @@ async function sendReachingApiLimitEmail() {
     users.forEach((user) => {
       mail.sendMail({
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: user.email,
+        to: user.email!,
         subject: 'Reaching API Limit',
         html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
       });

@@ -23,7 +23,6 @@ export async function gracefulShutdown() {
   logger.info('**** Received kill signal, shutting down gracefully. ****');
   server.close(async () => {
     try {
-      // @ts-ignore
       redis.disconnect();
       await db.stop();
       logger.info('**** Closed out remaining connections. ****');

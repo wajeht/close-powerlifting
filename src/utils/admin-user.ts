@@ -50,9 +50,9 @@ export async function init() {
 
       mail.sendMail({
         from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: createdAdminUser.email,
+        to: createdAdminUser.email!,
         subject: 'API Key and Admin Password for Close Powerlifting',
-        html: adminNewAPIKeyHTML({ name: verified?.name!, password, apiKey: unhashedKey }),
+        html: adminNewAPIKeyHTML({ name: verified.name!, password, apiKey: unhashedKey }),
       });
 
       logger.info(`**** admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached! ****`);
