@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
-import { X_API_KEY } from '../../config/constants';
+import { appConfig } from '../../config/constants';
 import { getHostName } from '../../utils/helpers';
 import { getAPIStatus } from './health-check.services';
 

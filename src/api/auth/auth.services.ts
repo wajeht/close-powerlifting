@@ -1,7 +1,7 @@
 import axios from 'axios';
 import qs from 'qs';
 
-import { OAUTH } from '../../config/constants';
+import { oauthConfig } from '../../config/constants';
 import logger from '../../utils/logger';
 
 export interface GoogleOauthToken {
@@ -40,9 +40,9 @@ export async function getGoogleOauthToken({ code }: { code: string }): Promise<G
 
   const options = {
     code,
-    client_id: OAUTH.GOOGLE.CLIENT_ID,
-    client_secret: OAUTH.GOOGLE.CLIENT_SECRET,
-    redirect_uri: OAUTH.GOOGLE.OAUTH_REDIRECT_URL,
+    client_id: oauthConfig.google.client_id,
+    client_secret: oauthConfig.google.client_secret,
+    redirect_uri: oauthConfig.google.oauth_redirect_url,
     grant_type: 'authorization_code',
   };
 
@@ -132,8 +132,8 @@ export async function getGithubUser({
 export async function getGithubOauthToken({ code }: { code: string }): Promise<GitHubOauthToken> {
   const rootUrl = 'https://github.com/login/oauth/access_token';
   const options = {
-    client_id: OAUTH.GITHUB.CLIENT_ID,
-    client_secret: OAUTH.GITHUB.CLIENT_SECRET,
+    client_id: oauthConfig.google.client_id,
+    client_secret: oauthConfig.google.client_secret,
     code,
   };
 

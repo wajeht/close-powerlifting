@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 
 import Axios from '../../utils/axios';
 import { buildPagination } from '../../utils/helpers';
-// @ts-ignore
 import redis from '../../utils/redis';
 import { getRankType, getRankingsType } from './rankings.validations';
 
