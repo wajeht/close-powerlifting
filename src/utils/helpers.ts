@@ -71,10 +71,12 @@ export async function hashKey() {
 
 export async function generateAPIKey(userParams: UserParams & { admin?: boolean }) {
   const { userId, name, email, admin } = userParams;
+
   const keyOptions = {
     id: userId,
     name,
     email,
+    apiKeyVersion: 1,
     issuer: 'Close Powerlifting',
   };
 

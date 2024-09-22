@@ -90,8 +90,10 @@ export async function sendVerificationEmail({
   logger.info(`Verification email was sent to user_id: ${userId}!`);
 }
 
+// TODO: add api key version
 export async function sendWelcomeEmail(userParams: UserParams) {
   const { email } = userParams;
+
   const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
 
   const verified = await updateUser(email, {

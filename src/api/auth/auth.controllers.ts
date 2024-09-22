@@ -23,7 +23,6 @@ export async function getGoogleRedirect(req: Request, res: Response) {
   const code = req.query.code as string;
 
   if (!code) {
-    // if no code is provided
     throw new UnauthorizedError('Something went wrong while authenticating with Google');
   }
 
@@ -35,7 +34,6 @@ export async function getGoogleRedirect(req: Request, res: Response) {
   });
 
   if (!googleUser.verified_email) {
-    // if email is not verified
     throw new UnauthorizedError('Something went wrong while authenticating with Google');
   }
 
@@ -77,7 +75,6 @@ export async function getGithubRedirect(req: Request, res: Response) {
   const code = req.query.code as string;
 
   if (!code) {
-    // if no code is provided
     throw new UnauthorizedError('Something went wrong while authenticating with github');
   }
 
@@ -86,6 +83,7 @@ export async function getGithubRedirect(req: Request, res: Response) {
   const githubUser = await AuthServices.getGithubUser({ access_token });
 
   const emails = await AuthServices.getGithubUserEmails({ access_token });
+
   const found = await User.findOne({ email: emails[0]!.email });
 
   if (!found) {

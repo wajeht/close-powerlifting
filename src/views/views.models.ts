@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, require: false },
   email: { type: String, unique: true, require: true },
   api_call_count: { type: Number, require: false },
+  api_key_version: { type: Number, require: true, default: 0 },
   api_call_limit: { type: Number, require: false, default: DEFAULT_API_CALL_LIMIT },
   key: { type: String, require: false },
   admin: { type: Boolean, default: false },
