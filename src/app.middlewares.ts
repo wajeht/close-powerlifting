@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import { ZodError, z } from 'zod';
-import { AnyZodObject } from 'zod';
+import { AnyZodObject, ZodError } from 'zod';
 
 import {
   APICallsExceededError,
@@ -9,8 +8,7 @@ import {
   UnauthorizedError,
   ValidationError,
 } from './api/api.errors';
-import { ENV, SESSION } from './config/constants';
-import { ENV_ENUMS } from './utils/enums';
+import { appConfig, sessionConfig } from './config/constants';
 import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
 import redis from './utils/redis';
@@ -53,17 +51,14 @@ export function appRateLimitMiddleware() {
       }
       return res.render('./rate-limit.html');
     },
-    skip: () => ENV !== ENV_ENUMS.PRODUCTION,
+    skip: () => appConfig.env !== 'production',
   });
 }
 
 export function errorMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
-  let statusCode;
-  let message;
-
-  statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
-  message =
-    ENV === ENV_ENUMS.DEVELOPMENT
+  let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  let message =
+    appConfig.env === 'development'
       ? err.stack
       : 'The server encountered an internal error or misconfiguration and was unable to complete your request!';
 
@@ -94,9 +89,10 @@ export function errorMiddleware(err: any, req: Request, res: Response, next: Nex
 
   const isApiPrefix = req.url.match(/\/api\//g);
   const isHealthcheck = req.originalUrl === '/health-check';
+
   if (!isApiPrefix && !isHealthcheck)
     return res.status(statusCode).render('error.html', {
-      error: ENV === ENV_ENUMS.DEVELOPMENT ? err.stack : null,
+      error: appConfig.env === 'development' ? err.stack : null,
     });
 
   logger.error(err);
@@ -150,12 +146,12 @@ export async function hostNameMiddleware(req: Request, res: Response, next: Next
 
 export function sessionMiddleware() {
   return session({
-    secret: SESSION.SECRET,
+    secret: sessionConfig.secret,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: ENV === ENV_ENUMS.PRODUCTION,
-      secure: ENV === ENV_ENUMS.PRODUCTION,
+      httpOnly: appConfig.env === 'production',
+      secure: appConfig.env === 'production',
     },
   });
 }

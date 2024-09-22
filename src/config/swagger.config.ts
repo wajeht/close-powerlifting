@@ -1,25 +1,22 @@
 import path from 'path';
 
 import pkg from '../../package.json';
-import { DOMAIN, ENV, PORT } from '../config/constants';
-import { ENV_ENUMS } from '../utils/enums';
+import { appConfig } from '../config/constants';
 
-let LINK = '';
+let link = `http://localhost:${appConfig.port}`;
 
-if (ENV === ENV_ENUMS.PRODUCTION) {
-  LINK = DOMAIN!;
-} else {
-  LINK = `http://localhost:${PORT}`;
+if (appConfig.env === 'production') {
+  link = appConfig.domain!;
 }
 
 export default {
   info: {
     title: 'close-powerlifting',
     description: 'an intuitive api for open-powerlifting database',
-    termsOfService: `${LINK}/terms`,
+    termsOfService: `${link}/terms`,
     contact: {
       name: 'API Support',
-      url: `${LINK}/contact`,
+      url: `${link}/contact`,
     },
     license: {
       name: 'MIT',

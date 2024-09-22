@@ -3,66 +3,56 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(path.join(process.cwd(), '.env')) });
 
-export const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN as unknown as string;
-
-export const PORT = process.env.PORT as unknown as number;
-
-export const API_URL = process.env.API_URL as unknown as string;
-
-export const BASE_URL = process.env.BASE_URL as unknown as string;
-
-export const ENV = process.env.ENV as unknown as string;
-
-export const DOMAIN = process.env.DOMAIN;
-
-export const JWT_SECRET = process.env.JWT_SECRET;
-
-export const PASSWORD_SALT = process.env.PASSWORD_SALT;
-
-export const MONGODB_URI = process.env.MONGODB_URI;
-
-export const X_API_KEY = process.env.X_API_KEY;
-
-export const SESSION = {
-  NAME: process.env.SESSION_NAME as unknown as string,
-  SECRET: process.env.SESSION_SECRET as unknown as string,
+export const appConfig = {
+  frontend_origin: process.env.FRONTEND_ORIGIN as unknown as string,
+  port: process.env.PORT as unknown as number,
+  api_url: process.env.API_URL as unknown as string,
+  base_url: process.env.BASE_URL as unknown as string,
+  env: process.env.ENV as 'production' | 'development' | 'testing' | 'local',
+  domain: process.env.DOMAIN,
+  jwt_secret: process.env.JWT_SECRET,
+  password_salt: process.env.PASSWORD_SALT,
+  mongodb_uri: process.env.MONGODB_URI,
+  admin_email: process.env.ADMIN_EMAIL,
+  admin_name: process.env.ADMIN_NAME,
+  x_api_key: process.env.X_API_KEY,
 } as const;
 
-export const EMAIL = {
-  HOST: process.env.EMAIL_HOST,
-  PORT: process.env.EMAIL_PORT,
-  SECURE: process.env.EMAIL_SECURE,
-  AUTH_EMAIL: process.env.EMAIL_AUTH_EMAIL,
-  AUTH_PASS: process.env.EMAIL_AUTH_PASS,
-};
+export const sessionConfig = {
+  name: process.env.SESSION_NAME as unknown as string,
+  secret: process.env.SESSION_SECRET as unknown as string,
+} as const;
+
+export const emailConfig = {
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: process.env.EMAIL_SECURE,
+  auth_email: process.env.EMAIL_AUTH_EMAIL,
+  auth_pass: process.env.EMAIL_AUTH_PASS,
+} as const;
 
 export const redisConfig = {
-  HOST: process.env.REDIS_HOST as unknown as string,
-  PORT: process.env.REDIS_PORT as unknown as number,
-  USERNAME: process.env.REDIS_USERNAME as unknown as string,
-  PASSWORD: process.env.REDIS_PASSWORD as unknown as string,
+  host: process.env.REDIS_HOST as unknown as string,
+  port: process.env.REDIS_PORT as unknown as number,
+  username: process.env.REDIS_USERNAME as unknown as string,
+  password: process.env.REDIS_PASSWORD as unknown as string,
 } as const;
 
-export const COOKIE = {
-  EXPIRATION: process.env.COOKIE_EXPIRATION as unknown as number,
-  PASSWORD: process.env.COOKIE_PASSWORD as unknown as string,
-  NAME: process.env.COOKIE_NAME as unknown as string,
+export const cookieConfig = {
+  expiration: process.env.COOKIE_EXPIRATION as unknown as number,
+  password: process.env.COOKIE_PASSWORD as unknown as string,
+  name: process.env.COOKIE_NAME as unknown as string,
 } as const;
 
-export const ADMIN = {
-  EMAIL: process.env.ADMIN_EMAIL,
-  NAME: process.env.ADMIN_NAME,
-} as const;
-
-export const OAUTH = {
-  GOOGLE: {
-    CLIENT_ID: process.env.GOOGLE_CLIENT_ID as unknown as string,
-    CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as unknown as string,
-    OAUTH_REDIRECT_URL: process.env.GOOGLE_OAUTH_REDIRECT_URL as unknown as string,
+export const oauthConfig = {
+  google: {
+    client_id: process.env.GOOGLE_CLIENT_ID as unknown as string,
+    client_secret: process.env.GOOGLE_CLIENT_SECRET as unknown as string,
+    oauth_redirect_url: process.env.GOOGLE_OAUTH_REDIRECT_URL as unknown as string,
   },
   GITHUB: {
-    CLIENT_ID: process.env.GITHUB_CLIENT_ID as unknown as string,
-    CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET as unknown as string,
-    OAUTH_REDIRECT_URL: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
+    client_id: process.env.GITHUB_CLIENT_ID as unknown as string,
+    client_secret: process.env.GITHUB_CLIENT_SECRET as unknown as string,
+    oauth_redirect_url: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
   },
 } as const;

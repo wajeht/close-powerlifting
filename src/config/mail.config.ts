@@ -1,10 +1,10 @@
-import { EMAIL } from './constants';
+import { emailConfig } from './constants';
 
 export default {
-  host: EMAIL.HOST as unknown as string,
-  port: EMAIL.PORT as unknown as number,
+  host: emailConfig.host as unknown as string,
+  port: emailConfig.port as unknown as number,
   auth: {
-    user: EMAIL.AUTH_EMAIL as unknown as string,
-    pass: EMAIL.AUTH_PASS as unknown as string,
+    user: emailConfig.auth_email as unknown as string,
+    pass: emailConfig.auth_pass as unknown as string,
   },
 } as const;

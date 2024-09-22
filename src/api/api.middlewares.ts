@@ -2,13 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
-import { EMAIL, ENV, JWT_SECRET } from '../config/constants';
+import { appConfig, emailConfig } from '../config/constants';
 import mail from '../utils/mail';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
 import { APICallsExceededError, UnauthorizedError } from './api.errors';
 import rateLimit from 'express-rate-limit';
-import { ENV_ENUMS } from 'utils/enums';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -33,7 +32,7 @@ export function apiRateLimitMiddleware() {
       }
       return res.render('./rate-limit.html');
     },
-    skip: () => ENV !== ENV_ENUMS.PRODUCTION,
+    skip: () => appConfig.env !== 'production',
   });
 }
 
@@ -74,7 +73,7 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
+      const decoded = jwt.verify(token, appConfig.jwt_secret!) as JwtPayload;
 
       req.user = {
         id: decoded.id,
@@ -109,7 +108,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
       // 50 %
       if (user?.api_call_count && user.api_call_count === user.api_call_limit / 2 && !user.admin) {
         mail.sendMail({
-          from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+          from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
           to: user.email as string,
           subject: 'Reaching API Call Limit',
           html: reachingApiLimitHTML({ name: user.name!, percent: 50 }),
