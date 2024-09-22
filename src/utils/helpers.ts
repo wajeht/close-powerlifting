@@ -3,8 +3,7 @@ import crypto from 'crypto';
 import { Request } from 'express';
 import jwt from 'jsonwebtoken';
 
-import { DOMAIN, ENV, JWT_SECRET, PASSWORD_SALT } from '../config/constants';
-import { OAUTH } from '../config/constants';
+import { oauthConfig, appConfig } from '../config/constants';
 import { UserParams } from '../views/views.services';
 
 type buildPaginationType = {
@@ -50,12 +49,12 @@ export function stripHTML(innerHTML: string): string {
 export function getHostName(req: Request): string {
   let origin = '';
 
-  if (ENV === 'development') {
+  if (appConfig.env === 'development') {
     const protocol = req.protocol;
     const hostname = req.get('host');
     origin = `${protocol}://${hostname}`;
   } else {
-    origin = DOMAIN!;
+    origin = appConfig.domain!;
   }
 
   return origin;
@@ -80,16 +79,16 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
   };
 
   if (admin) {
-    const key = jwt.sign(keyOptions, JWT_SECRET!);
+    const key = jwt.sign(keyOptions, appConfig.jwt_secret);
     return {
       unhashedKey: key,
-      hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+      hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
     };
   } else {
-    const key = jwt.sign(keyOptions, JWT_SECRET!, { expiresIn: '3m' });
+    const key = jwt.sign(keyOptions, appConfig.jwt_secret, { expiresIn: '3m' });
     return {
       unhashedKey: key,
-      hashedKey: await bcrypt.hash(key, parseInt(PASSWORD_SALT!)),
+      hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
     };
   }
 }
@@ -98,8 +97,8 @@ export function getGoogleOAuthURL() {
   const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
 
   const options = {
-    redirect_uri: OAUTH.GOOGLE.OAUTH_REDIRECT_URL,
-    client_id: OAUTH.GOOGLE.CLIENT_ID,
+    redirect_uri: oauthConfig.google.oauth_redirect_url,
+    client_id: oauthConfig.github.client_id,
     access_type: 'offline',
     response_type: 'code',
     prompt: 'consent',
@@ -118,8 +117,8 @@ export function getGitHubOAuthURL() {
   const rootUrl = 'https://github.com/login/oauth/authorize';
 
   const options = {
-    redirect_uri: OAUTH.GITHUB.OAUTH_REDIRECT_URL,
-    client_id: OAUTH.GITHUB.CLIENT_ID,
+    redirect_uri: oauthConfig.google.oauth_redirect_url,
+    client_id: oauthConfig.github.client_id,
     scope: 'user:email',
   };
 

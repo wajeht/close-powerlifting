@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { ZodError } from 'zod';
 import { ZodIssue, ZodIssueCode } from 'zod';
 
-import { handleHostname, notFoundHandler, validate } from './app.middlewares';
+import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from './app.middlewares';
 import { getHostName } from './utils/helpers';
 import * as utils from './utils/helpers';
 import redis from './utils/redis';
@@ -33,7 +33,7 @@ describe('notFoundHandler', () => {
 
   test('renders "not-found.html" if the URL does not start with "/api/"', () => {
     req.url = '/some-url';
-    notFoundHandler(req, res, next);
+    notFoundMiddleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
     expect(res.render).toHaveBeenCalledWith('not-found.html');
@@ -44,7 +44,7 @@ describe('notFoundHandler', () => {
   test('returns a JSON response if the URL starts with "/api/"', () => {
     req.url = '/api/some-url';
     req.originalUrl = '/api/some-url';
-    notFoundHandler(req, res, next);
+    notFoundMiddleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
     expect(res.json).toHaveBeenCalledWith({
@@ -91,7 +91,7 @@ describe('validate', () => {
   test('successfully validates and calls next if no errors', async () => {
     validators.body.parseAsync.mockResolvedValue({ foo: 'bar' });
 
-    const middleware = validate(validators);
+    const middleware = validationMiddleware(validators);
     await middleware(req, res, next);
 
     expect(req.body).toEqual({ foo: 'bar' });
@@ -112,7 +112,7 @@ describe('validate', () => {
 
     validators.body.parseAsync.mockRejectedValue(error);
 
-    const middleware = validate(validators);
+    const middleware = validationMiddleware(validators);
     await middleware(req, res, next);
 
     expect(req.flash).toHaveBeenCalledWith('error', errorMessage);
@@ -125,7 +125,7 @@ describe('validate', () => {
     const error = new Error('Something bad happened');
     validators.body.parseAsync.mockRejectedValue(error);
 
-    const middleware = validate(validators);
+    const middleware = validationMiddleware(validators);
     await middleware(req, res, next);
 
     expect(next).toHaveBeenCalledWith(error);
@@ -163,7 +163,7 @@ describe('handleHostname', () => {
     // @ts-ignore
     redis.get.mockResolvedValue(mockHostname);
 
-    await handleHostname(req, res, next);
+    await hostNameMiddleware(req, res, next);
 
     // @ts-ignore
     expect(redis.get).toHaveBeenCalledWith('hostname');
@@ -184,7 +184,7 @@ describe('handleHostname', () => {
 
     req.get.mockReturnValue('localhost');
 
-    await handleHostname(req, res, next);
+    await hostNameMiddleware(req, res, next);
 
     // @ts-ignore
     expect(redis.get).toHaveBeenCalledWith('hostname');

@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
-import { afterEach, describe, expect, it, test, vi } from 'vitest';
+import { afterEach, describe, expect, it, Mock, test, vi } from 'vitest';
 
-import { ADMIN, EMAIL, PASSWORD_SALT } from '../config/constants';
+import { emailConfig, appConfig } from '../config/constants';
 import { generateAPIKey, hashKey, updateUser } from '../utils/helpers';
 import mail from '../utils/mail';
 import { User } from '../views/views.models';
@@ -62,37 +62,37 @@ describe('init', () => {
   });
 
   it('should create a new admin user if one does not exist', async () => {
-    User.findOne.mockResolvedValueOnce(null);
+    (User.findOne as Mock).mockResolvedValueOnce(null);
 
-    faker.internet.password.mockReturnValueOnce('password');
+    (faker.internet.password as Mock).mockReturnValueOnce('password');
 
     // bcrypt.hash.mockResolvedValueOnce('hashedPassword');
 
-    await hashKey.mockResolvedValueOnce({ key: 'token' });
+    ((await hashKey) as Mock).mockResolvedValueOnce({ key: 'token' });
 
-    User.create.mockResolvedValueOnce({
-      name: ADMIN.NAME,
+    (User.create as Mock).mockResolvedValueOnce({
+      name: appConfig.admin_name,
       id: 'adminId',
-      email: ADMIN.EMAIL,
+      email: appConfig.admin_email,
     });
 
-    await generateAPIKey.mockResolvedValueOnce({
+    ((await generateAPIKey) as Mock).mockResolvedValueOnce({
       hashedKey: 'hashedKey',
       unhashedKey: 'unhashedKey',
     });
 
-    updateUser.mockResolvedValueOnce({ name: ADMIN.NAME });
+    updateUser.mockResolvedValueOnce({ name: appConfig.admin_email });
 
     mail.sendMail = vi.fn().mockResolvedValue({});
 
     await init();
 
-    expect(User.findOne).toHaveBeenCalledWith({ email: ADMIN.EMAIL });
+    expect(User.findOne).toHaveBeenCalledWith({ email: appConfig.admin_email });
     expect(faker.internet.password).toHaveBeenCalledWith(50);
     // expect(bcrypt.hash).toHaveBeenCalledWith('password', parseInt(PASSWORD_SALT!));
     expect(User.create).toHaveBeenCalledWith({
-      email: ADMIN.EMAIL,
-      name: ADMIN.NAME,
+      email: appConfig.admin_email,
+      name: appConfig.admin_name,
       admin: true,
       password: expect.any(String),
       verification_token: expect.any(String),
@@ -102,9 +102,9 @@ describe('init', () => {
 
     expect(generateAPIKey).toHaveBeenCalledWith({
       admin: true,
-      name: ADMIN.NAME,
+      name: appConfig.admin_name,
       userId: 'adminId',
-      email: ADMIN.EMAIL,
+      email: appConfig.admin_email,
     });
 
     // expect(updateUser).toHaveBeenCalledWith(ADMIN.EMAIL, { key: 'hashedKey' });
@@ -118,16 +118,16 @@ describe('init', () => {
   });
 
   it('should not create a new admin user if one exists', async () => {
-    User.findOne.mockResolvedValueOnce({ id: 'existingAdminId' });
+    (User.findOne as Mock).mockResolvedValueOnce({ id: 'existingAdminId' });
 
     await init();
 
-    expect(User.findOne).toHaveBeenCalledWith({ email: ADMIN.EMAIL });
+    expect(User.findOne).toHaveBeenCalledWith({ email: appConfig.admin_email });
     expect(User.create).not.toHaveBeenCalled();
   });
 
   it('should log an error if anything goes wrong', async () => {
-    User.findOne.mockRejectedValueOnce(new Error('Error message'));
+    (User.findOne as Mock).mockRejectedValueOnce(new Error('Error message'));
     const errorSpy = vi.spyOn(logger, 'error');
 
     await init();

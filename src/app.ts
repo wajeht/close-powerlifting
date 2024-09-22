@@ -19,7 +19,7 @@ import {
 } from './app.middlewares';
 import swaggerConfig from './config/swagger.config';
 import viewsRoutes from './views/views.routes';
-import { ENV } from 'config/constants';
+import { appConfig } from 'config/constants';
 
 const app = express();
 
@@ -55,7 +55,7 @@ app.set('views', path.resolve(path.join(process.cwd(), 'src', 'views', 'pages'))
 
 app.set('layout', path.resolve(path.join(process.cwd(), 'src', 'views', 'layouts', 'main.html')));
 
-app.set('view cache', ENV === 'production');
+app.set('view cache', appConfig.env === 'production');
 
 app.use(expressLayouts);
 

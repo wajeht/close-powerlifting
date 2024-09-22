@@ -18,7 +18,7 @@ export async function getRecords({ cache = true }: getRecordsType) {
 
     for (const e of h2) {
       data.push({
-        title: e.children[0].innerHTML,
+        title: e.children[0]!.innerHTML,
         records: tableToJson(e.children[1]),
       });
     }
