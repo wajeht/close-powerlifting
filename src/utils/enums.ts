@@ -1,1 +1,0 @@
-export const DEFAULT_API_CALL_LIMIT = 500;

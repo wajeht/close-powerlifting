@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { DEFAULT_API_CALL_LIMIT } from '../utils/enums';
+import { DEFAULT_API_CALL_LIMIT } from '../config/constants';
 
 const UserSchema = new mongoose.Schema({
   name: { type: String, require: true },

@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 import { databaseConfig } from '../config/constants';
+
 import logger from '../utils/logger';
 
 export async function init() {

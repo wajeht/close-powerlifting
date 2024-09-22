@@ -59,3 +59,5 @@ export const oauthConfig = {
     oauth_redirect_url: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
   },
 } as const;
+
+export const DEFAULT_API_CALL_LIMIT = 500;

@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 
 import { emailConfig } from '../config/constants';
-import { DEFAULT_API_CALL_LIMIT } from '../utils/enums';
+import { DEFAULT_API_CALL_LIMIT } from '../config/constants';
 import logger from '../utils/logger';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
 import { User } from '../views/views.models';
