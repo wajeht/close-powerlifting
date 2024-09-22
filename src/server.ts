@@ -62,6 +62,13 @@ function gracefulShutdown(signal: string): void {
       logger.error('Error closing Redis connection:', error);
     }
 
+    try {
+      db.stop();
+      logger.info('mongo connection closed.');
+    } catch (error) {
+      logger.error('Error closing mongo connection:', error);
+    }
+
     logger.info('All connections closed successfully.');
     process.exit(0);
   });
