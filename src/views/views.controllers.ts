@@ -110,7 +110,7 @@ export async function postResetAPIKeyPage(
 
 export async function getVerifyEmailPage(req: Request, res: Response) {
   const { token, email } = req.query as { token: string; email: string };
-  const foundUser = await User.findOne({ email });
+  const foundUser = await User.findOne({ email: { $eq: email } });
 
   if (!foundUser) {
     req.flash('error', 'Something wrong while verifying your account!');
