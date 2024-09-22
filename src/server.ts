@@ -1,5 +1,5 @@
 import app from './app';
-import { PORT } from './config/constants';
+import { appConfig } from './config/constants';
 import * as admin from './utils/admin-user';
 import * as crons from './utils/crons';
 import { AddressInfo } from 'net';
@@ -9,7 +9,7 @@ import { Server } from 'http';
 import logger from './utils/logger';
 import redis from './utils/redis';
 
-const server: Server = app.listen(PORT);
+const server: Server = app.listen(appConfig.port);
 
 server.on('listening', async () => {
   const addr: string | AddressInfo | null = server.address();
@@ -32,7 +32,8 @@ server.on('error', (error: NodeJS.ErrnoException) => {
     throw error;
   }
 
-  const bind: string = typeof PORT === 'string' ? 'Pipe ' + PORT : 'Port ' + PORT;
+  const bind: string =
+    typeof appConfig.port === 'string' ? 'Pipe ' + appConfig.port : 'Port ' + appConfig.port;
 
   switch (error.code) {
     case 'EACCES':

@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 
-import { MONGODB_URI } from '../config/constants';
+import { databaseConfig } from '../config/constants';
 import logger from '../utils/logger';
 
 export async function init() {
   try {
-    await mongoose.connect(MONGODB_URI!);
+    await mongoose.connect(databaseConfig.mongodb_uri);
     logger.info('db connection started!');
   } catch (e) {
     logger.error('db connection failed!');

@@ -12,10 +12,13 @@ export const appConfig = {
   domain: process.env.DOMAIN,
   jwt_secret: process.env.JWT_SECRET,
   password_salt: process.env.PASSWORD_SALT,
-  mongodb_uri: process.env.MONGODB_URI,
   admin_email: process.env.ADMIN_EMAIL,
   admin_name: process.env.ADMIN_NAME,
   x_api_key: process.env.X_API_KEY,
+} as const;
+
+export const databaseConfig = {
+  mongodb_uri: process.env.MONGODB_URI as unknown as string,
 } as const;
 
 export const sessionConfig = {

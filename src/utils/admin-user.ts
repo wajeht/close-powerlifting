@@ -1,7 +1,8 @@
+// @ts-expect-error - it's ok
 import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 
-import { ADMIN, EMAIL, PASSWORD_SALT } from '../config/constants';
+import { appConfig } from '../config/constants';
 import { generateAPIKey, hashKey } from '../utils/helpers';
 import { User } from '../views/views.models';
 import { updateUser } from '../views/views.services';
@@ -11,19 +12,19 @@ import adminNewAPIKeyHTML from './templates/admin-new-api-key';
 
 export async function init() {
   try {
-    const found = await User.findOne({ email: ADMIN.EMAIL });
+    const found = await User.findOne({ email: appConfig.admin_email });
 
     if (!found) {
       logger.info('admin user does not exist');
       logger.info('attaching admin user');
 
       const password = faker.internet.password(50);
-      const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
+      const hashedPassword = await bcrypt.hash(password, parseInt(appConfig.password_salt!));
       const { key: token } = await hashKey();
 
       const createdAdminUser = await User.create({
-        email: ADMIN.EMAIL,
-        name: ADMIN.NAME,
+        email: appConfig.admin_email,
+        name: appConfig.admin_name,
         admin: true,
         password: hashedPassword,
         verification_token: token,
@@ -34,7 +35,7 @@ export async function init() {
       logger.info(``);
       logger.info(``);
       logger.info(`admin user has been created with the following credentials! `);
-      logger.info(`email: ${ADMIN.EMAIL}`);
+      logger.info(`email: ${appConfig.admin_email}`);
       logger.info(`password: ${password}`);
       logger.info(``);
       logger.info(``);
@@ -49,13 +50,15 @@ export async function init() {
       const verified = await updateUser(createdAdminUser.email!, { key: hashedKey });
 
       mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        from: `"Close Powerlifting" <${appConfig.admin_email}>`,
         to: createdAdminUser.email!,
         subject: 'API Key and Admin Password for Close Powerlifting',
         html: adminNewAPIKeyHTML({ name: verified.name!, password, apiKey: unhashedKey }),
       });
 
-      logger.info(`admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached!`);
+      logger.info(
+        `admin user: ${appConfig.admin_email} - ${appConfig.admin_email} has been attached!`,
+      );
 
       return;
     }

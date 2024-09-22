@@ -4,9 +4,9 @@ import { redisConfig } from '../config/constants';
 import logger from './logger';
 
 const redisOptions = {
-  port: redisConfig.PORT,
-  host: redisConfig.HOST,
-  password: redisConfig.PASSWORD,
+  port: redisConfig.port,
+  host: redisConfig.host,
+  password: redisConfig.password,
   maxRetriesPerRequest: null,
   family: 0, // Support both IPv6 and IPv4
 };
