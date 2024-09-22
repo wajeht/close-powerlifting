@@ -104,10 +104,17 @@ jobs:
         image: mongo:latest
         ports:
           - 27017:27017
+
       redis:
         image: redis:latest
         ports:
           - 6379:6379
+
+     mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
 
     steps:
       - uses: actions/checkout@v3
