@@ -35,16 +35,15 @@ export const emailConfig = {
 } as const;
 
 export const redisConfig = {
-  host: process.env.REDIS_HOST as unknown as string,
-  port: process.env.REDIS_PORT as unknown as number,
-  username: process.env.REDIS_USERNAME as unknown as string,
-  password: process.env.REDIS_PASSWORD as unknown as string,
+  host: process.env.REDIS_HOST as unknown as string | 'redis',
+  port: process.env.REDIS_PORT as unknown as number | 6379,
+  password: process.env.REDIS_PASSWORD as unknown as string | 'password',
 } as const;
 
 export const cookieConfig = {
-  expiration: process.env.COOKIE_EXPIRATION as unknown as number,
-  password: process.env.COOKIE_PASSWORD as unknown as string,
-  name: process.env.COOKIE_NAME as unknown as string,
+  expiration: process.env.COOKIE_EXPIRATION as unknown as number | 60000,
+  password: process.env.COOKIE_PASSWORD as unknown as string | 'password',
+  name: process.env.COOKIE_NAME as unknown as string | 'close-powerlifting',
 } as const;
 
 export const oauthConfig = {
