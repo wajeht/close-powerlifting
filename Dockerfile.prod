@@ -20,6 +20,6 @@ RUN npm run build
 
 EXPOSE 80
 
-CMD ["npm", "run", "start"]
-
 HEALTHCHECK CMD curl -f http://localhost:80/api/health-check || exit 1
+
+CMD ["npm", "run", "start"]
