@@ -53,7 +53,7 @@ export async function init() {
         from: `"Close Powerlifting" <${appConfig.admin_email}>`,
         to: createdAdminUser.email!,
         subject: 'API Key and Admin Password for Close Powerlifting',
-        html: adminNewAPIKeyHTML({ name: verified.name!, password, apiKey: unhashedKey }),
+        html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
       });
 
       logger.info(

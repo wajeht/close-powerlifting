@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { afterEach, describe, expect, it, Mock, test, vi } from 'vitest';
 
 import { emailConfig, appConfig } from '../config/constants';
-import { generateAPIKey, hashKey, updateUser } from '../utils/helpers';
+import { generateAPIKey, hashKey } from '../utils/helpers';
 import mail from '../utils/mail';
 import { User } from '../views/views.models';
 import { init } from './admin-user';
@@ -81,7 +81,7 @@ describe('init', () => {
       unhashedKey: 'unhashedKey',
     });
 
-    updateUser.mockResolvedValueOnce({ name: appConfig.admin_email });
+    // updateUser.mockResolvedValueOnce({ name: appConfig.admin_email });
 
     mail.sendMail = vi.fn().mockResolvedValue({});
 

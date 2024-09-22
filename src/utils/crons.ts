@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 
-import { EMAIL } from '../config/constants';
+import { emailConfig } from '../config/constants';
 import { DEFAULT_API_CALL_LIMIT } from '../utils/enums';
 import logger from '../utils/logger';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
@@ -48,7 +48,7 @@ async function resetApiCallCount() {
         user.save();
 
         mail.sendMail({
-          from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+          from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
           to: user.email!,
           subject: 'API Call Limit Reset',
           html: apiLimitResetHTML({ name: user.name! }),
@@ -76,7 +76,7 @@ async function sendReachingApiLimitEmail() {
 
     users.forEach((user) => {
       mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
         to: user.email!,
         subject: 'Reaching API Limit',
         html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
