@@ -34,9 +34,9 @@ export async function init() {
 
       logger.info(``);
       logger.info(``);
-      logger.info(`admin user has been created with the following credentials! `);
+      logger.info(`admin user has been created.`);
       logger.info(`email: ${appConfig.admin_email}`);
-      logger.info(`password: ${password}`);
+      logger.info(`A temporary password has been generated and sent to the admin email.`);
       logger.info(``);
       logger.info(``);
 
