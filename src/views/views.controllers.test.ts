@@ -278,7 +278,11 @@ describe('getVerifyEmailPage', () => {
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(findOneMock).toHaveBeenCalledWith({
+      email: {
+        $eq: 'email',
+      },
+    });
     expect(res.redirect).toHaveBeenCalledWith('/register');
     expect(req.flash).toHaveBeenCalledWith(
       'error',
@@ -309,7 +313,11 @@ describe('getVerifyEmailPage', () => {
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(findOneMock).toHaveBeenCalledWith({
+      email: {
+        $eq: 'email',
+      },
+    });
     expect(res.redirect).toHaveBeenCalledWith('/register');
     expect(req.flash).toHaveBeenCalledWith(
       'error',
@@ -347,7 +355,11 @@ describe('getVerifyEmailPage', () => {
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({ email: 'email' });
+    expect(findOneMock).toHaveBeenCalledWith({
+      email: {
+        $eq: 'email',
+      },
+    });
     expect(res.redirect).toHaveBeenCalledWith('/register');
     expect(sendWelcomeEmail).toHaveBeenCalledWith({
       // userId: 1,

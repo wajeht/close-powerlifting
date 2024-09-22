@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 import { ZodError } from 'zod';
 import { ZodIssue, ZodIssueCode } from 'zod';
 
@@ -148,24 +148,19 @@ describe('handleHostname', () => {
     res = {};
     next = vi.fn();
 
-    // @ts-ignore
     redis.get = vi.fn();
-    // @ts-ignore
     redis.set = vi.fn();
 
-    // @ts-ignore
     vi.spyOn(utils, 'getHostName').mockImplementation(vi.fn());
   });
 
   test('sets hostname from redis if available', async () => {
     const mockHostname = 'redis-hostname';
 
-    // @ts-ignore
-    redis.get.mockResolvedValue(mockHostname);
+    (redis.get as Mock).mockResolvedValue(mockHostname);
 
     await hostNameMiddleware(req, res, next);
 
-    // @ts-ignore
     expect(redis.get).toHaveBeenCalledWith('hostname');
     expect(req.app.locals.hostname).toBe(mockHostname);
     expect(next).toHaveBeenCalled();
@@ -174,24 +169,18 @@ describe('handleHostname', () => {
   test('sets hostname using getHostName if not available in redis', async () => {
     const mockHostname = 'new-hostname';
 
-    // @ts-ignore
-    redis.get.mockResolvedValue(null);
-    // @ts-ignore
-    redis.set.mockResolvedValue();
+    (redis.get as Mock).mockResolvedValue(null);
+    (redis.set as Mock).mockResolvedValue(null);
 
-    // @ts-ignore
-    utils.getHostName.mockReturnValue(mockHostname); // use the mocked getHostName
+    (utils.getHostName as Mock).mockReturnValue(mockHostname); // use the mocked getHostName
 
     req.get.mockReturnValue('localhost');
 
     await hostNameMiddleware(req, res, next);
 
-    // @ts-ignore
     expect(redis.get).toHaveBeenCalledWith('hostname');
-    // @ts-ignore
     expect(redis.set).toHaveBeenCalledWith('hostname', mockHostname);
     expect(getHostName).toHaveBeenCalledWith(req);
-    // expect(req.app.locals.hostname).toBe(mockHostname);
     expect(next).toHaveBeenCalled();
   });
 });
