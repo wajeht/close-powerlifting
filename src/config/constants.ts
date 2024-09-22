@@ -9,12 +9,12 @@ export const appConfig = {
   api_url: process.env.API_URL as unknown as string,
   base_url: process.env.BASE_URL as unknown as string,
   env: process.env.ENV as 'production' | 'development' | 'testing' | 'local',
-  domain: process.env.DOMAIN,
-  jwt_secret: process.env.JWT_SECRET,
-  password_salt: process.env.PASSWORD_SALT,
-  admin_email: process.env.ADMIN_EMAIL,
-  admin_name: process.env.ADMIN_NAME,
-  x_api_key: process.env.X_API_KEY,
+  domain: process.env.DOMAIN as unknown as string,
+  jwt_secret: process.env.JWT_SECRET as unknown as string,
+  password_salt: process.env.PASSWORD_SALT as unknown as string,
+  admin_email: process.env.ADMIN_EMAIL as unknown as string,
+  admin_name: process.env.ADMIN_NAME as unknown as string,
+  x_api_key: process.env.X_API_KEY as unknown as string,
 } as const;
 
 export const databaseConfig = {
@@ -27,11 +27,11 @@ export const sessionConfig = {
 } as const;
 
 export const emailConfig = {
-  host: process.env.EMAIL_HOST,
-  port: process.env.EMAIL_PORT,
-  secure: process.env.EMAIL_SECURE,
-  auth_email: process.env.EMAIL_AUTH_EMAIL,
-  auth_pass: process.env.EMAIL_AUTH_PASS,
+  host: process.env.EMAIL_HOST as unknown as string,
+  port: process.env.EMAIL_PORT as unknown as string,
+  secure: process.env.EMAIL_SECURE as unknown as string,
+  auth_email: process.env.EMAIL_AUTH_EMAIL as unknown as string,
+  auth_pass: process.env.EMAIL_AUTH_PASS as unknown as string,
 } as const;
 
 export const redisConfig = {
@@ -53,7 +53,7 @@ export const oauthConfig = {
     client_secret: process.env.GOOGLE_CLIENT_SECRET as unknown as string,
     oauth_redirect_url: process.env.GOOGLE_OAUTH_REDIRECT_URL as unknown as string,
   },
-  GITHUB: {
+  github: {
     client_id: process.env.GITHUB_CLIENT_ID as unknown as string,
     client_secret: process.env.GITHUB_CLIENT_SECRET as unknown as string,
     oauth_redirect_url: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,

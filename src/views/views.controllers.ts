@@ -3,7 +3,7 @@ import { StatusCodes } from 'http-status-codes';
 import mongoose from 'mongoose';
 
 import { getRankings } from '../api/rankings/rankings.services';
-import { EMAIL } from '../config/constants';
+import { emailConfig } from '../config/constants';
 import { isCronServiceStarted } from '../utils/crons';
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
@@ -148,8 +148,8 @@ export async function postContactPage(req: Request, res: Response) {
   const { name, email, message } = req.body;
 
   mail.sendMail({
-    from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-    to: EMAIL.AUTH_EMAIL,
+    from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
+    to: emailConfig.auth_email,
     subject: `Contact Request from ${email}`,
     html: contactHTML({ name, email, message }),
   });

@@ -1,8 +1,8 @@
 import { StatusCodes } from 'http-status-codes';
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, Mock, test, vi } from 'vitest';
 
 import { getRankings } from '../api/rankings/rankings.services';
-import { EMAIL } from '../config/constants';
+import { emailConfig } from '../config/constants';
 import { getHostName, hashKey } from '../utils/helpers';
 import mail from '../utils/mail';
 import {
@@ -69,7 +69,7 @@ describe('getHomePage', () => {
       render: vi.fn(),
     } as any;
 
-    getRankings.mockResolvedValueOnce([]);
+    (getRankings as Mock).mockResolvedValueOnce([]);
 
     await getHomePage(req, res);
 
@@ -119,11 +119,11 @@ describe('postRegisterPage', () => {
       redirect: vi.fn(),
     } as any;
 
-    User.findOne.mockResolvedValueOnce({
+    (User.findOne as Mock).mockResolvedValueOnce({
       id: 1,
     });
 
-    User.create.mockResolvedValueOnce({
+    (User.create as Mock).mockResolvedValueOnce({
       id: 1,
     });
 
@@ -244,7 +244,7 @@ describe('getVerifyEmailPage', () => {
       redirect: vi.fn(),
     } as any;
 
-    User.findOne.mockResolvedValueOnce({ id: 1 });
+    (User.findOne as Mock).mockResolvedValueOnce({ id: 1 });
 
     await getVerifyEmailPage(req, res);
 
@@ -340,7 +340,7 @@ describe('getVerifyEmailPage', () => {
       verification_token: 'token',
     });
 
-    sendWelcomeEmail.mockResolvedValueOnce({
+    (sendWelcomeEmail as Mock).mockResolvedValueOnce({
       // userId: 1,
       email: 'email',
       name: 'name',

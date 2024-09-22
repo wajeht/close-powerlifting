@@ -16,7 +16,7 @@ function removeCaches() {
     // @ts-ignore
     redis.keys('*', function (err, keys) {
       if (err) return null;
-    // @ts-ignore
+      // @ts-ignore
       keys.forEach((key: any) => {
         if (key.match(/close-powerlifting.+/g)) {
           logger.info(`deleted redis cache ${key}!`);
