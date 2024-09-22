@@ -8,6 +8,7 @@ on:
 env:
   PORT: 80
   ENV: 'testing'
+  DOMAIN: 'localhost'
   MONGODB_URI: 'localhost://username:password@mongodb:27017/close-powerlifting?authSource=admin'
   FRONTEND_ORIGIN: 'http://localhost:8080'
 
@@ -15,7 +16,7 @@ env:
   JWT_SECRET: 'yeahhhhhhhhhhh'
 
   ADMIN_EMAIL: 'test@gmail.com'
-  ADMIN_NAME: 'jaw'
+  ADMIN_NAME: 'test'
 
   COOKIE_EXPIRATION: 60000
   COOKIE_PASSWORD: 'cookie password'
@@ -24,17 +25,24 @@ env:
   SESSION_SECRET: 'something someting'
   SESSION_NAME: 'something cool'
 
+  GOOGLE_CLIENT_ID: ''
+  GOOGLE_CLIENT_SECRET: ''
+  GOOGLE_OAUTH_REDIRECT_URL: 'http://localhost:8080/api/auth/oauth/google/redirect'
+
+  GITHUB_CLIENT_ID: ''
+  GITHUB_CLIENT_SECRET: ''
+  GITHUB_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/github/redirect"
+
   API_URL: 'https://www.openpowerlifting.org/api'
   BASE_URL: 'https://www.openpowerlifting.org/'
   X_API_KEY: ''
 
-  # redis
   REDIS_HOST: 'localhost'
   REDIS_PORT: 6379
   REDIS_PASSWORD: 'password'
 
-  EMAIL_HOST: 'mailhot' # docker
-  EMAIL_PORT: 1025 # docker
+  EMAIL_HOST: 'localhost'
+  EMAIL_PORT: 1025
   EMAIL_AUTH_EMAIL: ''
   EMAIL_AUTH_PASS: ''
 
