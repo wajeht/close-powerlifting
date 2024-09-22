@@ -638,24 +638,12 @@ video {
   margin-top: 4rem !important;
 }
 
-.mt-3 {
-  margin-top: 0.75rem !important;
-}
-
-.mt-6 {
-  margin-top: 1.5rem !important;
+.mt-5 {
+  margin-top: 1.25rem !important;
 }
 
 .mt-7 {
   margin-top: 1.75rem !important;
-}
-
-.mt-8 {
-  margin-top: 2rem !important;
-}
-
-.mt-5 {
-  margin-top: 1.25rem !important;
 }
 
 .block {
