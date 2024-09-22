@@ -19,7 +19,7 @@ import {
 } from './app.middlewares';
 import swaggerConfig from './config/swagger.config';
 import viewsRoutes from './views/views.routes';
-import { appConfig } from 'config/constants';
+import { appConfig } from './config/constants';
 
 const app = express();
 
