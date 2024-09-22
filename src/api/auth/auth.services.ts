@@ -55,7 +55,7 @@ export async function getGoogleOauthToken({ code }: { code: string }): Promise<G
 
     return data;
   } catch (error: any) {
-    logger.error('**** Failed to fetch Google Oauth Tokens ****');
+    logger.error('Failed to fetch Google Oauth Tokens');
     throw error;
   }
 }
@@ -79,7 +79,7 @@ export async function getGoogleUser({
 
     return data;
   } catch (error: any) {
-    logger.error('**** Failed to fetch Google User info ****');
+    logger.error('Failed to fetch Google User info');
     throw error;
   }
 }
@@ -105,7 +105,7 @@ export async function getGithubUserEmails({
 
     return data;
   } catch (error: any) {
-    logger.error('**** Failed to fetch Github User emails ****');
+    logger.error('Failed to fetch Github User emails');
     throw error;
   }
 }
@@ -124,7 +124,7 @@ export async function getGithubUser({
 
     return data;
   } catch (error: any) {
-    logger.error('**** Failed to fetch Github User info ****');
+    logger.error('Failed to fetch Github User info');
     throw error;
   }
 }
@@ -150,7 +150,7 @@ export async function getGithubOauthToken({ code }: { code: string }): Promise<G
 
     return decoded;
   } catch (error: any) {
-    logger.error('**** Failed to fetch Github Oauth Tokens ****');
+    logger.error('Failed to fetch Github Oauth Tokens');
     throw error;
   }
 }

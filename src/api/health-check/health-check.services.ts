@@ -55,7 +55,7 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
 
     await redis.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60 * 24);
 
-    logger.info('**** Global status cache was updated! ****');
+    logger.info('Global status cache was updated!');
   }
 
   return data;

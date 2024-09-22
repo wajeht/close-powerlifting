@@ -14,8 +14,8 @@ export async function init() {
     const found = await User.findOne({ email: ADMIN.EMAIL });
 
     if (!found) {
-      logger.info('**** admin user does not exist ****');
-      logger.info('**** attaching admin user ****');
+      logger.info('admin user does not exist');
+      logger.info('attaching admin user');
 
       const password = faker.internet.password(50);
       const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
@@ -33,9 +33,9 @@ export async function init() {
 
       logger.info(``);
       logger.info(``);
-      logger.info(`**** admin user has been created with the following credentials! ****`);
-      logger.info(`**** email: ${ADMIN.EMAIL} ****`);
-      logger.info(`**** password: ${password} ****`);
+      logger.info(`admin user has been created with the following credentials! `);
+      logger.info(`email: ${ADMIN.EMAIL}`);
+      logger.info(`password: ${password}`);
       logger.info(``);
       logger.info(``);
 
@@ -55,13 +55,13 @@ export async function init() {
         html: adminNewAPIKeyHTML({ name: verified.name!, password, apiKey: unhashedKey }),
       });
 
-      logger.info(`**** admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached! ****`);
+      logger.info(`admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached!`);
 
       return;
     }
 
-    logger.info('**** admin user exits ****');
-    logger.info('**** skipping admin user attaching ****');
+    logger.info('admin user exits');
+    logger.info('skipping admin user attaching');
   } catch (e) {
     logger.error(e);
   }

@@ -65,7 +65,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
     html: adminNewAPIKeyHTML({ name, password, apiKey: unhashedKey }),
   });
 
-  logger.info(`**** admin user: ${email} has been updated! ****`);
+  logger.info(`admin user: ${email} has been updated!`);
 }
 
 export async function sendVerificationEmail({

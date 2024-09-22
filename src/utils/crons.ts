@@ -11,7 +11,7 @@ import apiLimitResetHTML from './templates/api-limits-reset';
 
 function removeCaches() {
   try {
-    logger.info(` **** removeCaches() cron starts! ****`);
+    logger.info(`removeCaches() cron starts!`);
 
     // @ts-ignore
     redis.keys('*', function (err, keys) {
@@ -26,7 +26,7 @@ function removeCaches() {
       });
     });
 
-    logger.info(` **** removeCaches() cron ends! ****`);
+    logger.info(`removeCaches() cron ends!`);
   } catch (err) {
     logger.error(`removeCaches() error: ${err}`);
   }
@@ -34,7 +34,7 @@ function removeCaches() {
 
 async function resetApiCallCount() {
   try {
-    logger.info(` **** resetApiCallCount() cron starts! ****`);
+    logger.info(`resetApiCallCount() cron starts!`);
 
     const today = new Date();
     const isStartOfMonth = today.getDate() === 1;
@@ -54,11 +54,11 @@ async function resetApiCallCount() {
           html: apiLimitResetHTML({ name: user.name! }),
         });
 
-        logger.info(` **** resetApiCallCount() sent to user id ${user.id} ****`);
+        logger.info(`resetApiCallCount() sent to user id ${user.id}`);
       });
     }
 
-    logger.info(` **** resetApiCallCount() cron starts! ****`);
+    logger.info(`resetApiCallCount() cron starts!`);
   } catch (err) {
     logger.error(`resetApiCallCount() error: ${err}`);
   }
@@ -66,7 +66,7 @@ async function resetApiCallCount() {
 
 async function sendReachingApiLimitEmail() {
   try {
-    logger.info(` **** sendReachingApiLimitEmail() cron starts! ****`);
+    logger.info(`sendReachingApiLimitEmail() cron starts!`);
 
     // 70 % of default api call limit and verified users only
     const users = await User.find({
@@ -82,10 +82,10 @@ async function sendReachingApiLimitEmail() {
         html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
       });
 
-      logger.info(` **** sendReachingApiLimitEmail() sent to user id ${user.id} ****`);
+      logger.info(`sendReachingApiLimitEmail() sent to user id ${user.id}`);
     });
 
-    logger.info(` **** sendReachingApiLimitEmail() cron ends! ****`);
+    logger.info(`sendReachingApiLimitEmail() cron ends!`);
   } catch (error) {
     logger.error(`sendReachingApiLimitEmail() error: ${error}`);
   }
@@ -95,7 +95,7 @@ let isCronStarted = false;
 
 export async function init() {
   try {
-    logger.info(`**** cron services were started! ****`);
+    logger.info(`cron services were started!`);
 
     isCronStarted = true;
 
@@ -108,10 +108,10 @@ export async function init() {
     // everyday at mid night
     cron.schedule('0 0 * * *', resetApiCallCount).start();
 
-    logger.info(`**** finished running all the cron services ****`);
+    logger.info(`finished running all the cron services`);
   } catch (err) {
     isCronStarted = false;
-    logger.error(`**** cron services error: ${err} ****`);
+    logger.error(`cron services error: ${err}`);
   }
 }
 
