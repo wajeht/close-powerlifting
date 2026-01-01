@@ -1,16 +1,16 @@
 // @ts-expect-error - it's ok
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
+import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
 
-import { emailConfig, appConfig } from '../config/constants';
-import * as UserRepository from '../db/repositories/user.repository';
-import { generateAPIKey } from '../utils/helpers';
-import logger from '../utils/logger';
-import mail from '../utils/mail';
-import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
-import newAPIKeyHTML from '../utils/templates/new-api-key';
-import verifyEmailHTML from '../utils/templates/verify-email';
-import welcomeHTML from '../utils/templates/welcome';
+import { emailConfig, appConfig } from "../config/constants";
+import * as UserRepository from "../db/repositories/user.repository";
+import { generateAPIKey } from "../utils/helpers";
+import logger from "../utils/logger";
+import mail from "../utils/mail";
+import adminNewAPIKeyHTML from "../utils/templates/admin-new-api-key";
+import newAPIKeyHTML from "../utils/templates/new-api-key";
+import verifyEmailHTML from "../utils/templates/verify-email";
+import welcomeHTML from "../utils/templates/welcome";
 
 export type UserParams = {
   userId: string;
@@ -39,7 +39,7 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
   mail.sendMail({
     from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
     to: email,
-    subject: 'New API key for Close Powerlifting',
+    subject: "New API key for Close Powerlifting",
     html: newAPIKeyHTML({ name: verified!.name!, key: unhashedKey }),
   });
 
@@ -61,7 +61,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   mail.sendMail({
     from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
     to: email,
-    subject: 'New API Key and Admin Password for Close Powerlifting',
+    subject: "New API Key and Admin Password for Close Powerlifting",
     html: adminNewAPIKeyHTML({ name, password, apiKey: unhashedKey }),
   });
 
@@ -78,7 +78,7 @@ export async function sendVerificationEmail({
   await mail.sendMail({
     from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
     to: email,
-    subject: 'Account verification',
+    subject: "Account verification",
     html: verifyEmailHTML({
       name,
       hostname,
@@ -105,7 +105,7 @@ export async function sendWelcomeEmail(userParams: UserParams) {
   mail.sendMail({
     from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
     to: email,
-    subject: 'API Key for Close Powerlifting',
+    subject: "API Key for Close Powerlifting",
     html: welcomeHTML({ name: verified!.name!, key: unhashedKey }),
   });
 

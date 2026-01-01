@@ -1,9 +1,9 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
-import * as UsersControllers from './users.controllers';
-import * as UsersValidation from './users.validations';
+import { validationMiddleware } from "../api.middlewares";
+import * as UsersControllers from "./users.controllers";
+import * as UsersValidation from "./users.validations";
 
 const users = express.Router();
 
@@ -15,7 +15,7 @@ const users = express.Router();
  * @security BearerAuth
  */
 users.get(
-  '/:username',
+  "/:username",
   validationMiddleware({ params: UsersValidation.getUserValidation }),
   catchAsyncHandler(UsersControllers.getUser),
 );
@@ -28,7 +28,7 @@ users.get(
  * @security BearerAuth
  */
 users.get(
-  '/',
+  "/",
   validationMiddleware({ params: UsersValidation.getUsersValidation }),
   catchAsyncHandler(UsersControllers.getUsers),
 );

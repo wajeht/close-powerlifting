@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const getFederationsValidation = z.object({
   per_page: z
@@ -12,10 +12,10 @@ export const getFederationsValidation = z.object({
   cache: z
     .string()
     .transform((val) => {
-      if (val === 'true') {
+      if (val === "true") {
         return true;
       }
-      if (val === 'false') {
+      if (val === "false") {
         return false;
       }
     })
@@ -30,10 +30,10 @@ export const getFederationsQueryValidation = z.object({
   cache: z
     .string()
     .transform((val) => {
-      if (val === 'true') {
+      if (val === "true") {
         return true;
       }
-      if (val === 'false') {
+      if (val === "false") {
         return false;
       }
     })

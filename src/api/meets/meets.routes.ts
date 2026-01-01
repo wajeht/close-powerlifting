@@ -1,9 +1,9 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
-import { getMeet } from './meets.controllers';
-import { getMeetParamValidation, getMeetQueryValidation } from './meets.validations';
+import { validationMiddleware } from "../api.middlewares";
+import { getMeet } from "./meets.controllers";
+import { getMeetParamValidation, getMeetQueryValidation } from "./meets.validations";
 
 const meets = express.Router();
 
@@ -24,7 +24,7 @@ const meets = express.Router();
  * @security BearerAuth
  */
 meets.get(
-  '/:meet',
+  "/:meet",
   validationMiddleware({
     params: getMeetParamValidation,
     query: getMeetQueryValidation,

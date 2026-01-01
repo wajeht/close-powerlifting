@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import type { Knex } from 'knex';
+import fs from "fs";
+import path from "path";
+import type { Knex } from "knex";
 
 class CustomMigrationSource implements Knex.MigrationSource<string> {
   private migrationsDir: string;
@@ -16,7 +16,7 @@ class CustomMigrationSource implements Knex.MigrationSource<string> {
           return reject(err);
         }
         const migrations = files
-          .filter((file) => file.endsWith('.ts') || file.endsWith('.js'))
+          .filter((file) => file.endsWith(".ts") || file.endsWith(".js"))
           .sort();
         resolve(migrations);
       });

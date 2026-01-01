@@ -1,7 +1,7 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { getHealthCheck } from './health-check.controllers';
+import { getHealthCheck } from "./health-check.controllers";
 
 const healthCheck = express.Router();
 
@@ -10,6 +10,6 @@ const healthCheck = express.Router();
  * @tags health-check
  * @summary get the health of open powerlifing api
  */
-healthCheck.get('/', catchAsyncHandler(getHealthCheck));
+healthCheck.get("/", catchAsyncHandler(getHealthCheck));
 
 export default healthCheck;

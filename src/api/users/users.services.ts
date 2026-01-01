@@ -1,11 +1,11 @@
-import { AxiosError } from 'axios';
-import { StatusCodes } from 'http-status-codes';
-import { JSDOM } from 'jsdom';
+import { AxiosError } from "axios";
+import { StatusCodes } from "http-status-codes";
+import { JSDOM } from "jsdom";
 
-import Axios from '../../utils/axios';
-import { stripHTML, tableToJson } from '../../utils/helpers';
-import { fetchRankings } from '../rankings/rankings.services';
-import { getUserType, getUsersType } from './users.validations';
+import Axios from "../../utils/axios";
+import { stripHTML, tableToJson } from "../../utils/helpers";
+import { fetchRankings } from "../rankings/rankings.services";
+import { getUserType, getUsersType } from "./users.validations";
 
 const api = new Axios(true).instance();
 
@@ -14,7 +14,7 @@ export async function getUser({ username }: getUserType) {
     const html = await (await api.get(`/u/${username}`)).data;
     const dom = new JSDOM(html);
 
-    const div = dom.window.document.getElementsByClassName('mixed-content') as any;
+    const div = dom.window.document.getElementsByClassName("mixed-content") as any;
     return [
       {
         name: stripHTML(div[0].children[0].innerHTML),

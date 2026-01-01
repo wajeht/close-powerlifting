@@ -1,19 +1,19 @@
-import { AddressInfo } from 'net';
-import { Server } from 'http';
+import { AddressInfo } from "net";
+import { Server } from "http";
 
-import app from './app';
-import { appConfig } from './config/constants';
-import * as db from './db/db';
-import * as admin from './utils/admin-user';
-import * as crons from './utils/crons';
-import logger from './utils/logger';
+import app from "./app";
+import { appConfig } from "./config/constants";
+import * as db from "./db/db";
+import * as admin from "./utils/admin-user";
+import * as crons from "./utils/crons";
+import logger from "./utils/logger";
 
 const server: Server = app.listen(appConfig.port);
 
-server.on('listening', async () => {
+server.on("listening", async () => {
   const addr: string | AddressInfo | null = server.address();
   const bind: string =
-    typeof addr === 'string' ? 'pipe ' + addr : 'port ' + (addr as AddressInfo).port;
+    typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
 
   logger.info(`Server is listening on ${bind}`);
 
@@ -26,20 +26,20 @@ server.on('listening', async () => {
   }
 });
 
-server.on('error', (error: NodeJS.ErrnoException) => {
-  if (error.syscall !== 'listen') {
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.syscall !== "listen") {
     throw error;
   }
 
   const bind: string =
-    typeof appConfig.port === 'string' ? 'Pipe ' + appConfig.port : 'Port ' + appConfig.port;
+    typeof appConfig.port === "string" ? "Pipe " + appConfig.port : "Port " + appConfig.port;
 
   switch (error.code) {
-    case 'EACCES':
+    case "EACCES":
       logger.error(`${bind} requires elevated privileges`);
       process.exit(1);
     // eslint-disable-next-line no-fallthrough
-    case 'EADDRINUSE':
+    case "EADDRINUSE":
       logger.error(`${bind} is already in use`);
       process.exit(1);
     // eslint-disable-next-line no-fallthrough
@@ -52,39 +52,39 @@ function gracefulShutdown(signal: string): void {
   logger.info(`Received ${signal}, shutting down gracefully.`);
 
   server.close(async () => {
-    logger.info('HTTP server closed.');
+    logger.info("HTTP server closed.");
 
     try {
       await db.stop();
-      logger.info('Database connection closed.');
+      logger.info("Database connection closed.");
     } catch (error) {
-      logger.error('Error closing database connection:', error);
+      logger.error("Error closing database connection:", error);
     }
 
-    logger.info('All connections closed successfully.');
+    logger.info("All connections closed successfully.");
     process.exit(0);
   });
 
   setTimeout(() => {
-    logger.error('Could not close connections in time, forcefully shutting down');
+    logger.error("Could not close connections in time, forcefully shutting down");
     process.exit(1);
   }, 10000);
 }
 
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGQUIT', () => gracefulShutdown('SIGQUIT'));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
 
-process.on('uncaughtException', async (error: Error, origin: string) => {
-  logger.error('Uncaught Exception:', error, 'Origin:', origin);
-  gracefulShutdown('uncaughtException');
+process.on("uncaughtException", async (error: Error, origin: string) => {
+  logger.error("Uncaught Exception:", error, "Origin:", origin);
+  gracefulShutdown("uncaughtException");
 });
 
-process.on('warning', (warning: Error) => {
-  logger.warn('Process warning:', warning.name, warning.message);
+process.on("warning", (warning: Error) => {
+  logger.warn("Process warning:", warning.name, warning.message);
 });
 
-process.on('unhandledRejection', async (reason: unknown, promise: Promise<unknown>) => {
-  logger.error('Unhandled Rejection:', promise, 'reason:', reason);
-  gracefulShutdown('unhandledRejection');
+process.on("unhandledRejection", async (reason: unknown, promise: Promise<unknown>) => {
+  logger.error("Unhandled Rejection:", promise, "reason:", reason);
+  gracefulShutdown("unhandledRejection");
 });

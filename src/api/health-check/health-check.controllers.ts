@@ -1,9 +1,9 @@
-import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
-import { appConfig } from '../../config/constants';
-import { getHostName } from '../../utils/helpers';
-import { getAPIStatus } from './health-check.services';
+import { appConfig } from "../../config/constants";
+import { getHostName } from "../../utils/helpers";
+import { getAPIStatus } from "./health-check.services";
 
 export async function getHealthCheck(req: Request, res: Response) {
   const url = getHostName(req);
@@ -12,9 +12,9 @@ export async function getHealthCheck(req: Request, res: Response) {
   const data: any = [];
 
   res.status(StatusCodes.OK).json({
-    status: 'success',
+    status: "success",
     request_url: req.originalUrl,
-    message: 'ok',
+    message: "ok",
     cache: req.query?.cache,
     data,
   });

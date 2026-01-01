@@ -1,8 +1,8 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
-import { z } from 'zod';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
+import { z } from "zod";
 
-import { validationMiddleware } from '../app.middlewares';
+import { validationMiddleware } from "../app.middlewares";
 import {
   getHomePage,
   getRegisterPage,
@@ -17,7 +17,7 @@ import {
   getAboutPage,
   getStatusPage,
   getHealthCheck,
-} from './views.controllers';
+} from "./views.controllers";
 
 const views = express.Router();
 
@@ -26,14 +26,14 @@ const views = express.Router();
  * @tags views
  * @summary get home page
  */
-views.get('/', catchAsyncHandler(getHomePage));
+views.get("/", catchAsyncHandler(getHomePage));
 
 /**
  * GET /register
  * @tags views
  * @summary get register page
  */
-views.get('/register', catchAsyncHandler(getRegisterPage));
+views.get("/register", catchAsyncHandler(getRegisterPage));
 
 /**
  * POST /register
@@ -43,13 +43,13 @@ views.get('/register', catchAsyncHandler(getRegisterPage));
  * @param {string} name.query.required - the name - application/x-www-form-urlencoded
  */
 views.post(
-  '/register',
+  "/register",
   validationMiddleware({
     body: z.object({
       email: z
-        .string({ required_error: 'email is required!' })
-        .email({ message: 'must be a valid email address!' }),
-      name: z.string({ required_error: 'name is required!' }),
+        .string({ required_error: "email is required!" })
+        .email({ message: "must be a valid email address!" }),
+      name: z.string({ required_error: "name is required!" }),
     }),
   }),
   catchAsyncHandler(postRegisterPage),
@@ -60,7 +60,7 @@ views.post(
  * @tags views
  * @summary reset/forgot your api key
  */
-views.get('/reset-api-key', catchAsyncHandler(getResetAPIKeyPage));
+views.get("/reset-api-key", catchAsyncHandler(getResetAPIKeyPage));
 
 /**
  * POST /reset-api-key
@@ -69,15 +69,15 @@ views.get('/reset-api-key', catchAsyncHandler(getResetAPIKeyPage));
  * @param {string} request.body.required - the email - application/x-www-form-urlencoded
  */
 views.post(
-  '/reset-api-key',
+  "/reset-api-key",
   validationMiddleware({
     body: z.object({
       email: z
         .string({
-          required_error: 'email address required!',
+          required_error: "email address required!",
         })
         .email({
-          message: 'must be a valid email address!',
+          message: "must be a valid email address!",
         }),
     }),
   }),
@@ -92,7 +92,7 @@ views.post(
  * @param {string} email.token.required - the token - application/x-www-form-urlencoded
  */
 views.get(
-  '/verify-email',
+  "/verify-email",
   // validate({
   //   query: z.object({
   //     token: z.string().optional(),
@@ -107,7 +107,7 @@ views.get(
  * @tags views
  * @summary get contact page
  */
-views.get('/contact', catchAsyncHandler(getContactPage));
+views.get("/contact", catchAsyncHandler(getContactPage));
 
 /**
  * POST /contact
@@ -118,14 +118,14 @@ views.get('/contact', catchAsyncHandler(getContactPage));
  * @param {string} message.query.required - the message - application/x-www-form-urlencoded
  */
 views.post(
-  '/contact',
+  "/contact",
   validationMiddleware({
     body: z.object({
       email: z
-        .string({ required_error: 'email is required!' })
-        .email({ message: 'must be valid email address!' }),
-      name: z.string({ required_error: 'name is required!' }),
-      message: z.string({ required_error: 'message is required!' }),
+        .string({ required_error: "email is required!" })
+        .email({ message: "must be valid email address!" }),
+      name: z.string({ required_error: "name is required!" }),
+      message: z.string({ required_error: "message is required!" }),
     }),
   }),
   catchAsyncHandler(postContactPage),
@@ -136,34 +136,34 @@ views.post(
  * @tags views
  * @summary get terms page
  */
-views.get('/terms', catchAsyncHandler(getTermsPage));
+views.get("/terms", catchAsyncHandler(getTermsPage));
 
 /**
  * GET /privacy
  * @tags views
  * @summary get privacy page
  */
-views.get('/privacy', catchAsyncHandler(getPrivacyPage));
+views.get("/privacy", catchAsyncHandler(getPrivacyPage));
 
 /**
  * GET /about
  * @tags views
  * @summary get about page
  */
-views.get('/about', catchAsyncHandler(getAboutPage));
+views.get("/about", catchAsyncHandler(getAboutPage));
 
 /**
  * GET /status
  * @tags views
  * @summary get status page
  */
-views.get('/status', catchAsyncHandler(getStatusPage));
+views.get("/status", catchAsyncHandler(getStatusPage));
 
 /**
  * GET /health-check
  * @tags views
  * @summary get the health of close-powerlifting app
  */
-views.get('/health-check', catchAsyncHandler(getHealthCheck));
+views.get("/health-check", catchAsyncHandler(getHealthCheck));
 
 export default views;

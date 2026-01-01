@@ -1,5 +1,5 @@
-import { getDb } from './db';
-import logger from '../utils/logger';
+import { getDb } from "./db";
+import logger from "../utils/logger";
 
 interface CacheEntry {
   key: string;
@@ -14,7 +14,7 @@ interface CacheEntry {
  */
 export async function get(key: string): Promise<string | null> {
   const db = getDb();
-  const entry = await db<CacheEntry>('cache').where({ key }).first();
+  const entry = await db<CacheEntry>("cache").where({ key }).first();
 
   if (!entry) {
     return null;
@@ -38,16 +38,16 @@ export async function set(key: string, value: string, ttlSeconds?: number): Prom
   const now = new Date().toISOString();
   const expiresAt = ttlSeconds ? new Date(Date.now() + ttlSeconds * 1000).toISOString() : null;
 
-  const existing = await db<CacheEntry>('cache').where({ key }).first();
+  const existing = await db<CacheEntry>("cache").where({ key }).first();
 
   if (existing) {
-    await db<CacheEntry>('cache').where({ key }).update({
+    await db<CacheEntry>("cache").where({ key }).update({
       value,
       expires_at: expiresAt,
       updated_at: now,
     });
   } else {
-    await db<CacheEntry>('cache').insert({
+    await db<CacheEntry>("cache").insert({
       key,
       value,
       expires_at: expiresAt,
@@ -62,7 +62,7 @@ export async function set(key: string, value: string, ttlSeconds?: number): Prom
  */
 export async function del(key: string): Promise<void> {
   const db = getDb();
-  await db<CacheEntry>('cache').where({ key }).delete();
+  await db<CacheEntry>("cache").where({ key }).delete();
 }
 
 /**
@@ -71,7 +71,7 @@ export async function del(key: string): Promise<void> {
  */
 export async function delPattern(pattern: string): Promise<number> {
   const db = getDb();
-  const result = await db<CacheEntry>('cache').where('key', 'like', pattern).delete();
+  const result = await db<CacheEntry>("cache").where("key", "like", pattern).delete();
   return result;
 }
 
@@ -80,9 +80,7 @@ export async function delPattern(pattern: string): Promise<number> {
  */
 export async function keys(pattern: string): Promise<string[]> {
   const db = getDb();
-  const entries = await db<CacheEntry>('cache')
-    .where('key', 'like', pattern)
-    .select('key');
+  const entries = await db<CacheEntry>("cache").where("key", "like", pattern).select("key");
   return entries.map((e) => e.key);
 }
 
@@ -92,9 +90,9 @@ export async function keys(pattern: string): Promise<string[]> {
 export async function clearExpired(): Promise<number> {
   const db = getDb();
   const now = new Date().toISOString();
-  const result = await db<CacheEntry>('cache')
-    .whereNotNull('expires_at')
-    .where('expires_at', '<', now)
+  const result = await db<CacheEntry>("cache")
+    .whereNotNull("expires_at")
+    .where("expires_at", "<", now)
     .delete();
   logger.info(`Cleared ${result} expired cache entries`);
   return result;
@@ -105,8 +103,8 @@ export async function clearExpired(): Promise<number> {
  */
 export async function clearAll(): Promise<void> {
   const db = getDb();
-  await db<CacheEntry>('cache').delete();
-  logger.info('Cleared all cache entries');
+  await db<CacheEntry>("cache").delete();
+  logger.info("Cleared all cache entries");
 }
 
 /**

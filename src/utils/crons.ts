@@ -1,20 +1,20 @@
-import cron from 'node-cron';
+import cron from "node-cron";
 
-import { emailConfig } from '../config/constants';
-import { DEFAULT_API_CALL_LIMIT } from '../config/constants';
-import cache from '../db/cache';
-import * as UserRepository from '../db/repositories/user.repository';
-import logger from '../utils/logger';
-import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
-import mail from './mail';
-import apiLimitResetHTML from './templates/api-limits-reset';
+import { emailConfig } from "../config/constants";
+import { DEFAULT_API_CALL_LIMIT } from "../config/constants";
+import cache from "../db/cache";
+import * as UserRepository from "../db/repositories/user.repository";
+import logger from "../utils/logger";
+import reachingApiLimitHTML from "../utils/templates/reaching-api-limit";
+import mail from "./mail";
+import apiLimitResetHTML from "./templates/api-limits-reset";
 
 async function removeCaches() {
   try {
     logger.info(`removeCaches() cron starts!`);
 
     // Delete all cache entries matching the pattern
-    const deleted = await cache.delPattern('close-powerlifting%');
+    const deleted = await cache.delPattern("close-powerlifting%");
     logger.info(`deleted ${deleted} cache entries!`);
 
     // Also clear expired cache entries
@@ -45,7 +45,7 @@ async function resetApiCallCount() {
         mail.sendMail({
           from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
           to: user.email,
-          subject: 'API Call Limit Reset',
+          subject: "API Call Limit Reset",
           html: apiLimitResetHTML({ name: user.name }),
         });
 
@@ -71,7 +71,7 @@ async function sendReachingApiLimitEmail() {
       mail.sendMail({
         from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
         to: user.email,
-        subject: 'Reaching API Limit',
+        subject: "Reaching API Limit",
         html: reachingApiLimitHTML({ name: user.name, percent: 70 }),
       });
 
@@ -93,13 +93,13 @@ export async function init() {
     isCronStarted = true;
 
     // every week sunday at mid night
-    cron.schedule('0 0 * * 0', removeCaches).start();
+    cron.schedule("0 0 * * 0", removeCaches).start();
 
     // everyday at mid night
-    cron.schedule('0 0 * * *', sendReachingApiLimitEmail).start();
+    cron.schedule("0 0 * * *", sendReachingApiLimitEmail).start();
 
     // everyday at mid night
-    cron.schedule('0 0 * * *', resetApiCallCount).start();
+    cron.schedule("0 0 * * *", resetApiCallCount).start();
 
     logger.info(`finished running all the cron services`);
   } catch (err) {

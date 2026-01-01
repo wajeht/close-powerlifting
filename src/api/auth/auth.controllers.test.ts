@@ -1,45 +1,45 @@
-import { describe, expect, Mock, test, vi } from 'vitest';
+import { describe, expect, Mock, test, vi } from "vitest";
 
-import { hashKey } from '../../utils/helpers';
-import { User } from '../../views/views.models';
-import { getGoogle, postRegister } from './auth.controllers';
+import { hashKey } from "../../utils/helpers";
+import { User } from "../../views/views.models";
+import { getGoogle, postRegister } from "./auth.controllers";
 
-vi.mock('../../utils/helpers', () => ({
-  getGoogleOAuthURL: vi.fn().mockReturnValue('mock-url'),
+vi.mock("../../utils/helpers", () => ({
+  getGoogleOAuthURL: vi.fn().mockReturnValue("mock-url"),
   hashKey: vi.fn(),
   getHostName: vi.fn(),
 }));
 
-vi.mock('../../views/views.models', async () => ({
+vi.mock("../../views/views.models", async () => ({
   User: {
     findOne: vi.fn(),
     create: vi.fn(),
   },
 }));
 
-vi.mock('../api.errors', async () => ({
+vi.mock("../api.errors", async () => ({
   UnauthorizedError: vi.fn(),
   ValidationError: vi.fn(),
 }));
 
-describe('getGoogle', () => {
+describe("getGoogle", () => {
   const req = {} as any;
   const res = {
     redirect: vi.fn(),
   } as any;
 
-  test('redirects to google o auth url', async () => {
+  test("redirects to google o auth url", async () => {
     await getGoogle(req, res);
-    expect(res.redirect).toHaveBeenCalledWith('mock-url');
+    expect(res.redirect).toHaveBeenCalledWith("mock-url");
   });
 });
 
-describe('postRegister', async () => {
-  test('should be able to register a user', async () => {
+describe("postRegister", async () => {
+  test("should be able to register a user", async () => {
     const req = {
       body: {
-        email: 'jaw@jaw.com',
-        name: 'jaw',
+        email: "jaw@jaw.com",
+        name: "jaw",
       },
     } as any;
 
@@ -48,9 +48,9 @@ describe('postRegister', async () => {
       json: vi.fn(() => res),
     } as any;
 
-    (hashKey as Mock).mockReturnValue({ key: 'mock-key' });
+    (hashKey as Mock).mockReturnValue({ key: "mock-key" });
 
-    (User.create as Mock).mockReturnValue({ id: 'mock-id' });
+    (User.create as Mock).mockReturnValue({ id: "mock-id" });
 
     await postRegister(req, res);
 

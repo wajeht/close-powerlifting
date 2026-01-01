@@ -1,16 +1,16 @@
-import { AxiosError } from 'axios';
-import { StatusCodes } from 'http-status-codes';
+import { AxiosError } from "axios";
+import { StatusCodes } from "http-status-codes";
 
-import cache from '../../db/cache';
-import Axios from '../../utils/axios';
-import { buildPagination } from '../../utils/helpers';
-import { getRankType, getRankingsType } from './rankings.validations';
+import cache from "../../db/cache";
+import Axios from "../../utils/axios";
+import { buildPagination } from "../../utils/helpers";
+import { getRankType, getRankingsType } from "./rankings.validations";
 
 const api = new Axios(false).instance();
 
 export async function fetchRankings(paginationQuery: string) {
   try {
-    const rankings = await (await api.get('/rankings' + '?' + paginationQuery)).data;
+    const rankings = await (await api.get("/rankings" + "?" + paginationQuery)).data;
 
     // TODO!: there is probably a better way to do this!
     const data = rankings.rows.map((r: any) => {
@@ -26,7 +26,7 @@ export async function fetchRankings(paginationQuery: string) {
         country: r[6],
         location: r[7],
         fed: r[8],
-        federation_url: `/api/federations/${r[12].split('/')[0]}`,
+        federation_url: `/api/federations/${r[12].split("/")[0]}`,
         date: r[9],
         country_two: r[10],
         state: r[11],

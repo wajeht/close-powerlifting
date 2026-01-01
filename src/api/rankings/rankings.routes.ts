@@ -1,9 +1,9 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
-import { getRankingsValidation, getRankValidation } from './rankings.validations';
-import { getRank, getRankings } from './rankings.controllers';
+import { validationMiddleware } from "../api.middlewares";
+import { getRankingsValidation, getRankValidation } from "./rankings.validations";
+import { getRank, getRankings } from "./rankings.controllers";
 
 const rankings = express.Router();
 
@@ -24,7 +24,7 @@ const rankings = express.Router();
  * @security BearerAuth
  */
 rankings.get(
-  '/',
+  "/",
   validationMiddleware({ query: getRankingsValidation }),
   catchAsyncHandler(getRankings),
 );
@@ -37,7 +37,7 @@ rankings.get(
  * @security BearerAuth
  */
 rankings.get(
-  '/:rank',
+  "/:rank",
   validationMiddleware({ params: getRankValidation }),
   catchAsyncHandler(getRank),
 );

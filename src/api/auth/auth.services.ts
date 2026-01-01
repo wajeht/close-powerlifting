@@ -1,8 +1,8 @@
-import axios from 'axios';
-import qs from 'qs';
+import axios from "axios";
+import qs from "qs";
 
-import { oauthConfig } from '../../config/constants';
-import logger from '../../utils/logger';
+import { oauthConfig } from "../../config/constants";
+import logger from "../../utils/logger";
 
 export interface GoogleOauthToken {
   access_token: string;
@@ -36,26 +36,26 @@ export type GitHubOauthToken = {
 };
 
 export async function getGoogleOauthToken({ code }: { code: string }): Promise<GoogleOauthToken> {
-  const rootURl = 'https://oauth2.googleapis.com/token';
+  const rootURl = "https://oauth2.googleapis.com/token";
 
   const options = {
     code,
     client_id: oauthConfig.google.client_id,
     client_secret: oauthConfig.google.client_secret,
     redirect_uri: oauthConfig.google.oauth_redirect_url,
-    grant_type: 'authorization_code',
+    grant_type: "authorization_code",
   };
 
   try {
     const { data } = await axios.post<GoogleOauthToken>(rootURl, qs.stringify(options), {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
     });
 
     return data;
   } catch (error: any) {
-    logger.error('Failed to fetch Google Oauth Tokens');
+    logger.error("Failed to fetch Google Oauth Tokens");
     throw error;
   }
 }
@@ -79,7 +79,7 @@ export async function getGoogleUser({
 
     return data;
   } catch (error: any) {
-    logger.error('Failed to fetch Google User info');
+    logger.error("Failed to fetch Google User info");
     throw error;
   }
 }
@@ -97,7 +97,7 @@ export async function getGithubUserEmails({
   access_token: string;
 }): Promise<Email[]> {
   try {
-    const { data } = await axios.get<Email[]>('https://api.github.com/user/emails', {
+    const { data } = await axios.get<Email[]>("https://api.github.com/user/emails", {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -105,7 +105,7 @@ export async function getGithubUserEmails({
 
     return data;
   } catch (error: any) {
-    logger.error('Failed to fetch Github User emails');
+    logger.error("Failed to fetch Github User emails");
     throw error;
   }
 }
@@ -116,7 +116,7 @@ export async function getGithubUser({
   access_token: string;
 }): Promise<GitHubUser> {
   try {
-    const { data } = await axios.get<GitHubUser>('https://api.github.com/user', {
+    const { data } = await axios.get<GitHubUser>("https://api.github.com/user", {
       headers: {
         Authorization: `Bearer ${access_token}`,
       },
@@ -124,13 +124,13 @@ export async function getGithubUser({
 
     return data;
   } catch (error: any) {
-    logger.error('Failed to fetch Github User info');
+    logger.error("Failed to fetch Github User info");
     throw error;
   }
 }
 
 export async function getGithubOauthToken({ code }: { code: string }): Promise<GitHubOauthToken> {
-  const rootUrl = 'https://github.com/login/oauth/access_token';
+  const rootUrl = "https://github.com/login/oauth/access_token";
   const options = {
     client_id: oauthConfig.google.client_id,
     client_secret: oauthConfig.google.client_secret,
@@ -142,7 +142,7 @@ export async function getGithubOauthToken({ code }: { code: string }): Promise<G
   try {
     const { data } = await axios.post(`${rootUrl}?${queryString}`, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        "Content-Type": "application/x-www-form-urlencoded",
       },
     });
 
@@ -150,7 +150,7 @@ export async function getGithubOauthToken({ code }: { code: string }): Promise<G
 
     return decoded;
   } catch (error: any) {
-    logger.error('Failed to fetch Github Oauth Tokens');
+    logger.error("Failed to fetch Github Oauth Tokens");
     throw error;
   }
 }

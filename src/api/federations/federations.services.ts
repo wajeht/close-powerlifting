@@ -1,23 +1,23 @@
-import { AxiosError } from 'axios';
-import { StatusCodes } from 'http-status-codes';
-import { JSDOM } from 'jsdom';
+import { AxiosError } from "axios";
+import { StatusCodes } from "http-status-codes";
+import { JSDOM } from "jsdom";
 
-import cache from '../../db/cache';
-import Axios from '../../utils/axios';
-import { tableToJson } from '../../utils/helpers';
+import cache from "../../db/cache";
+import Axios from "../../utils/axios";
+import { tableToJson } from "../../utils/helpers";
 import {
   getFederationsParamType,
   getFederationsQueryType,
   getFederationsType,
-} from './federations.validations';
+} from "./federations.validations";
 
 const api = new Axios(true).instance();
 
 async function fetchFederations({ current_page, per_page }: any) {
   try {
-    const html = await (await api.get('/mlist')).data;
+    const html = await (await api.get("/mlist")).data;
     const dom = new JSDOM(html);
-    const elements = dom.window.document.getElementsByTagName('table')[0];
+    const elements = dom.window.document.getElementsByTagName("table")[0];
     const table = tableToJson(elements);
 
     let from;
@@ -107,7 +107,7 @@ export async function getFederations({ current_page = 1, per_page = 100, cache: 
 
 async function fetchFederation({ federation, year }: any) {
   try {
-    let url = '';
+    let url = "";
     if (year) {
       url = `/mlist/${federation}/${year}`;
     } else {
@@ -115,7 +115,7 @@ async function fetchFederation({ federation, year }: any) {
     }
     const html = await (await api.get(url)).data;
     const dom = new JSDOM(html);
-    const elements = dom.window.document.getElementsByTagName('table')[0];
+    const elements = dom.window.document.getElementsByTagName("table")[0];
     const federations = tableToJson(elements);
 
     return federations;
@@ -144,7 +144,7 @@ export async function getFederation({
       };
     }
 
-    let cacheString = '';
+    let cacheString = "";
 
     if (year) {
       cacheString = `close-powerlifting-federations-federation-${federation}-${year}`;

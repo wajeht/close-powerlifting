@@ -1,19 +1,19 @@
-import { AxiosError } from 'axios';
-import { StatusCodes } from 'http-status-codes';
-import { JSDOM } from 'jsdom';
+import { AxiosError } from "axios";
+import { StatusCodes } from "http-status-codes";
+import { JSDOM } from "jsdom";
 
-import Axios from '../../utils/axios';
-import { tableToJson } from '../../utils/helpers';
-import { getRecordsType } from './records.validations';
+import Axios from "../../utils/axios";
+import { tableToJson } from "../../utils/helpers";
+import { getRecordsType } from "./records.validations";
 
 const api = new Axios(true).instance();
 
 export async function getRecords({ cache = true }: getRecordsType) {
   try {
-    const html = await (await api.get('/records')).data;
+    const html = await (await api.get("/records")).data;
     const dom = new JSDOM(html);
 
-    const h2 = dom.window.document.getElementsByClassName('records-col');
+    const h2 = dom.window.document.getElementsByClassName("records-col");
     const data = [];
 
     for (const e of h2) {

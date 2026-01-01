@@ -1,13 +1,13 @@
-import { NextFunction, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
-import jwt, { JwtPayload } from 'jsonwebtoken';
-import { AnyZodObject } from 'zod';
+import { NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { AnyZodObject } from "zod";
 
-import { appConfig, emailConfig } from '../config/constants';
-import * as UserRepository from '../db/repositories/user.repository';
-import mail from '../utils/mail';
-import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
-import { APICallsExceededError, UnauthorizedError } from './api.errors';
+import { appConfig, emailConfig } from "../config/constants";
+import * as UserRepository from "../db/repositories/user.repository";
+import mail from "../utils/mail";
+import reachingApiLimitHTML from "../utils/templates/reaching-api-limit";
+import { APICallsExceededError, UnauthorizedError } from "./api.errors";
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -22,17 +22,17 @@ export function apiRateLimitMiddleware() {
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: (req: Request, res: Response) => {
-      if (req.get('Content-Type') === 'application/json') {
+      if (req.get("Content-Type") === "application/json") {
         return res.json({
-          status: 'fail',
+          status: "fail",
           request_url: req.originalUrl,
-          message: 'Too many requests, please try again later?',
+          message: "Too many requests, please try again later?",
           data: [],
         });
       }
-      return res.render('./rate-limit.html');
+      return res.render("./rate-limit.html");
     },
-    skip: () => appConfig.env !== 'production',
+    skip: () => appConfig.env !== "production",
   });
 }
 
@@ -57,19 +57,21 @@ export function validationMiddleware(validators: RequestValidators) {
 
 export function authenticationMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
-    let token: string = '';
+    let token: string = "";
 
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
     if (req.headers.authorization) {
-      if (req.headers.authorization.split(' ').length != 2) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
-      if (!req.headers.authorization.startsWith('Bearer')) throw new UnauthorizedError('Must use bearer token authentication!'); // prettier-ignore
-      token = req.headers.authorization.split(' ')[1] as string;
+      if (req.headers.authorization.split(" ").length != 2)
+        throw new UnauthorizedError("Must use bearer token authentication!"); // prettier-ignore
+      if (!req.headers.authorization.startsWith("Bearer"))
+        throw new UnauthorizedError("Must use bearer token authentication!"); // prettier-ignore
+      token = req.headers.authorization.split(" ")[1] as string;
     }
     //! -------------------------------- API TOKEN AUTHENTICATION --------------------------------
-    else if (req.headers['x-api-key']) {
-      token = req.headers['x-api-key'] as string;
+    else if (req.headers["x-api-key"]) {
+      token = req.headers["x-api-key"] as string;
     } else {
-      throw new UnauthorizedError('Invalid authentication!');
+      throw new UnauthorizedError("Invalid authentication!");
     }
 
     try {
@@ -81,7 +83,7 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
         email: decoded.email,
       };
     } catch (error) {
-      throw new UnauthorizedError('Invalid signature!');
+      throw new UnauthorizedError("Invalid signature!");
     }
 
     next();
@@ -102,7 +104,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
 
       // exceeded api call limit
       if (user.api_call_count >= user.api_call_limit && !user.admin) {
-        throw new APICallsExceededError('API Calls exceeded!');
+        throw new APICallsExceededError("API Calls exceeded!");
       }
 
       // 50 %
@@ -110,7 +112,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
         mail.sendMail({
           from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
           to: user.email,
-          subject: 'Reaching API Call Limit',
+          subject: "Reaching API Call Limit",
           html: reachingApiLimitHTML({ name: user.name, percent: 50 }),
         });
       }

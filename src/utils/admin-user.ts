@@ -1,22 +1,22 @@
 // @ts-expect-error - it's ok
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
+import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
 
-import { appConfig } from '../config/constants';
-import * as UserRepository from '../db/repositories/user.repository';
-import { generateAPIKey, hashKey } from '../utils/helpers';
-import { updateUser } from '../views/views.services';
-import logger from './logger';
-import mail from './mail';
-import adminNewAPIKeyHTML from './templates/admin-new-api-key';
+import { appConfig } from "../config/constants";
+import * as UserRepository from "../db/repositories/user.repository";
+import { generateAPIKey, hashKey } from "../utils/helpers";
+import { updateUser } from "../views/views.services";
+import logger from "./logger";
+import mail from "./mail";
+import adminNewAPIKeyHTML from "./templates/admin-new-api-key";
 
 export async function init() {
   try {
     const found = await UserRepository.findByEmail(appConfig.admin_email);
 
     if (!found) {
-      logger.info('admin user does not exist');
-      logger.info('attaching admin user');
+      logger.info("admin user does not exist");
+      logger.info("attaching admin user");
 
       const password = faker.internet.password(50);
       const hashedPassword = await bcrypt.hash(password, parseInt(appConfig.password_salt!));
@@ -52,7 +52,7 @@ export async function init() {
       mail.sendMail({
         from: `"Close Powerlifting" <${appConfig.admin_email}>`,
         to: createdAdminUser.email,
-        subject: 'API Key and Admin Password for Close Powerlifting',
+        subject: "API Key and Admin Password for Close Powerlifting",
         html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
       });
 
@@ -63,8 +63,8 @@ export async function init() {
       return;
     }
 
-    logger.info('admin user exits');
-    logger.info('skipping admin user attaching');
+    logger.info("admin user exits");
+    logger.info("skipping admin user attaching");
   } catch (e) {
     logger.error(e);
   }

@@ -1,9 +1,9 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
-import * as FederationsControllers from './federations.controllers';
-import * as FederationsValidations from './federations.validations';
+import { validationMiddleware } from "../api.middlewares";
+import * as FederationsControllers from "./federations.controllers";
+import * as FederationsValidations from "./federations.validations";
 
 const federations = express.Router();
 
@@ -24,7 +24,7 @@ const federations = express.Router();
  * @security BearerAuth
  */
 federations.get(
-  '/',
+  "/",
   validationMiddleware({ query: FederationsValidations.getFederationsValidation }),
   catchAsyncHandler(FederationsControllers.getFederations),
 );
@@ -47,7 +47,7 @@ federations.get(
  * @security BearerAuth
  */
 federations.get(
-  '/:federation',
+  "/:federation",
   validationMiddleware({
     params: FederationsValidations.getFederationsParamValidation,
     query: FederationsValidations.getFederationsQueryValidation,

@@ -1,10 +1,10 @@
-import pino from 'pino';
-import path from 'node:path';
-import pretty from 'pino-pretty';
+import pino from "pino";
+import path from "node:path";
+import pretty from "pino-pretty";
 
 export default pino(
   {
-    level: process.env.PINO_LOG_LEVEL || 'info',
+    level: process.env.PINO_LOG_LEVEL || "info",
     formatters: {
       level: (label) => ({ level: label }),
     },
@@ -13,16 +13,16 @@ export default pino(
   pino.multistream([
     {
       stream: pino.destination({
-        dest: `${path.resolve(process.cwd())}/logs/${new Date().toISOString().split('T')[0]}.log`,
+        dest: `${path.resolve(process.cwd())}/logs/${new Date().toISOString().split("T")[0]}.log`,
         sync: false,
         mkdir: true,
       }),
     },
     {
       stream: pretty({
-        translateTime: 'yyyy-mm-dd HH:MM:ss TT',
+        translateTime: "yyyy-mm-dd HH:MM:ss TT",
         colorize: true,
-        ignore: 'hostname,pid',
+        ignore: "hostname,pid",
       }),
     },
   ]),

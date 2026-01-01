@@ -2,6 +2,11 @@
   "name": "close-powerlifting",
   "version": "0.0.1",
   "description": "an intuitive api for open-powerlifting database",
+  "keywords": [
+    "powerlifting"
+  ],
+  "license": "MIT",
+  "author": "wajeht",
   "main": "server.ts",
   "scripts": {
     "start": "node ./dist/src/server.js",
@@ -22,11 +27,6 @@
     "lint:check": "oxlint .",
     "lint": "oxlint --fix ."
   },
-  "keywords": [
-    "powerlifting"
-  ],
-  "author": "wajeht",
-  "license": "MIT",
   "dependencies": {
     "@faker-js/faker": "^9.0.0",
     "autoprefixer": "^10.4.14",

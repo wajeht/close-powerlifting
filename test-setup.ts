@@ -1,1 +1,1 @@
-console.log('test-setup.ts');
+console.log("test-setup.ts");

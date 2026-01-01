@@ -1,16 +1,16 @@
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
-import { afterEach, describe, expect, it, Mock, test, vi } from 'vitest';
+import { faker } from "@faker-js/faker";
+import bcrypt from "bcryptjs";
+import { afterEach, describe, expect, it, Mock, test, vi } from "vitest";
 
-import { emailConfig, appConfig } from '../config/constants';
-import { generateAPIKey, hashKey } from '../utils/helpers';
-import mail from '../utils/mail';
-import { User } from '../views/views.models';
-import { init } from './admin-user';
-import logger from './logger';
+import { emailConfig, appConfig } from "../config/constants";
+import { generateAPIKey, hashKey } from "../utils/helpers";
+import mail from "../utils/mail";
+import { User } from "../views/views.models";
+import { init } from "./admin-user";
+import logger from "./logger";
 
-vi.mock('../views/views.models', async () => ({
-  ...((await vi.importActual('../views/views.models')) as object),
+vi.mock("../views/views.models", async () => ({
+  ...((await vi.importActual("../views/views.models")) as object),
   User: {
     findOne: vi.fn(),
     findOneAndUpdate: vi.fn(),
@@ -18,8 +18,8 @@ vi.mock('../views/views.models', async () => ({
   },
 }));
 
-vi.mock('@faker-js/faker', async () => ({
-  ...((await vi.importActual('@faker-js/faker')) as object),
+vi.mock("@faker-js/faker", async () => ({
+  ...((await vi.importActual("@faker-js/faker")) as object),
   faker: {
     internet: {
       password: vi.fn(),
@@ -27,15 +27,15 @@ vi.mock('@faker-js/faker', async () => ({
   },
 }));
 
-vi.mock('bcryptjs', async () => ({
-  ...((await vi.importActual('bcryptjs')) as object),
+vi.mock("bcryptjs", async () => ({
+  ...((await vi.importActual("bcryptjs")) as object),
   bcrypt: {
     hash: vi.fn(),
   },
 }));
 
-vi.mock('./helpers', async () => ({
-  ...((await vi.importActual('./helpers')) as object),
+vi.mock("./helpers", async () => ({
+  ...((await vi.importActual("./helpers")) as object),
   generateAPIKey: vi.fn(),
   hashKey: vi.fn(),
   updateUser: vi.fn(),
@@ -56,29 +56,29 @@ vi.mock('./helpers', async () => ({
 //   },
 // }));
 
-describe('init', () => {
+describe("init", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should create a new admin user if one does not exist', async () => {
+  it("should create a new admin user if one does not exist", async () => {
     (User.findOne as Mock).mockResolvedValueOnce(null);
 
-    (faker.internet.password as Mock).mockReturnValueOnce('password');
+    (faker.internet.password as Mock).mockReturnValueOnce("password");
 
     // bcrypt.hash.mockResolvedValueOnce('hashedPassword');
 
-    ((await hashKey) as Mock).mockResolvedValueOnce({ key: 'token' });
+    ((await hashKey) as Mock).mockResolvedValueOnce({ key: "token" });
 
     (User.create as Mock).mockResolvedValueOnce({
       name: appConfig.admin_name,
-      id: 'adminId',
+      id: "adminId",
       email: appConfig.admin_email,
     });
 
     ((await generateAPIKey) as Mock).mockResolvedValueOnce({
-      hashedKey: 'hashedKey',
-      unhashedKey: 'unhashedKey',
+      hashedKey: "hashedKey",
+      unhashedKey: "unhashedKey",
     });
 
     // updateUser.mockResolvedValueOnce({ name: appConfig.admin_email });
@@ -103,7 +103,7 @@ describe('init', () => {
     expect(generateAPIKey).toHaveBeenCalledWith({
       admin: true,
       name: appConfig.admin_name,
-      userId: 'adminId',
+      userId: "adminId",
       email: appConfig.admin_email,
     });
 
@@ -117,8 +117,8 @@ describe('init', () => {
     // });
   });
 
-  it('should not create a new admin user if one exists', async () => {
-    (User.findOne as Mock).mockResolvedValueOnce({ id: 'existingAdminId' });
+  it("should not create a new admin user if one exists", async () => {
+    (User.findOne as Mock).mockResolvedValueOnce({ id: "existingAdminId" });
 
     await init();
 
@@ -126,12 +126,12 @@ describe('init', () => {
     expect(User.create).not.toHaveBeenCalled();
   });
 
-  it('should log an error if anything goes wrong', async () => {
-    (User.findOne as Mock).mockRejectedValueOnce(new Error('Error message'));
-    const errorSpy = vi.spyOn(logger, 'error');
+  it("should log an error if anything goes wrong", async () => {
+    (User.findOne as Mock).mockRejectedValueOnce(new Error("Error message"));
+    const errorSpy = vi.spyOn(logger, "error");
 
     await init();
 
-    expect(errorSpy).toHaveBeenCalledWith(new Error('Error message'));
+    expect(errorSpy).toHaveBeenCalledWith(new Error("Error message"));
   });
 });

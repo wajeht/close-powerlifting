@@ -1,12 +1,12 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
+import { validationMiddleware } from "../api.middlewares";
 import {
   postRegisterValidation,
   postResetApiKeyValidation,
   postVerifyEmailValidation,
-} from './auth.validations';
+} from "./auth.validations";
 import {
   getGithub,
   getGithubRedirect,
@@ -15,7 +15,7 @@ import {
   postRegister,
   postResetApiKey,
   postVerifyEmail,
-} from './auth.controllers';
+} from "./auth.controllers";
 
 const auth = express.Router();
 
@@ -24,28 +24,28 @@ const auth = express.Router();
  * @tags auth
  * @summary get google oauth url
  */
-auth.get('/oauth/google', catchAsyncHandler(getGoogle));
+auth.get("/oauth/google", catchAsyncHandler(getGoogle));
 
 /**
  * GET /api/auth/oauth/google/redirect
  * @tags auth
  * @summary get google oauth redirect url
  */
-auth.get('/oauth/google/redirect', catchAsyncHandler(getGoogleRedirect));
+auth.get("/oauth/google/redirect", catchAsyncHandler(getGoogleRedirect));
 
 /**
  * GET /api/auth/oauth/github
  * @tags auth
  * @summary get github oauth url
  */
-auth.get('/oauth/github', catchAsyncHandler(getGithub));
+auth.get("/oauth/github", catchAsyncHandler(getGithub));
 
 /**
  * GET /api/auth/oauth/github/redirect
  * @tags auth
  * @summary get github oauth redirect url
  */
-auth.get('/oauth/github/redirect', catchAsyncHandler(getGithubRedirect));
+auth.get("/oauth/github/redirect", catchAsyncHandler(getGithubRedirect));
 
 /**
  * POST /api/auth/register
@@ -55,7 +55,7 @@ auth.get('/oauth/github/redirect', catchAsyncHandler(getGithubRedirect));
  * @param {string} name.form.required - the name - application/x-www-form-urlencoded
  */
 auth.post(
-  '/register',
+  "/register",
   validationMiddleware({ body: postRegisterValidation }),
   catchAsyncHandler(postRegister),
 );
@@ -68,7 +68,7 @@ auth.post(
  * @param {string} token.form.required - the token - application/x-www-form-urlencoded
  */
 auth.post(
-  '/verify-email',
+  "/verify-email",
   validationMiddleware({ body: postVerifyEmailValidation }),
   catchAsyncHandler(postVerifyEmail),
 );
@@ -80,7 +80,7 @@ auth.post(
  * @param {string} email.form.required - the email - application/x-www-form-urlencoded
  */
 auth.post(
-  '/reset-api-key',
+  "/reset-api-key",
   validationMiddleware({ body: postResetApiKeyValidation }),
   catchAsyncHandler(postResetApiKey),
 );

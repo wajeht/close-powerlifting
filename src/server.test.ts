@@ -1,9 +1,9 @@
-import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, test } from 'vitest';
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
-import app from './app';
+import app from "./app";
 
-describe('server', () => {
+describe("server", () => {
   let server: any;
 
   beforeAll(() => {
@@ -14,13 +14,13 @@ describe('server', () => {
     server.close(done);
   });
 
-  test('GET / should return 200 OK', async () => {
-    const response = await request(server).get('/');
+  test("GET / should return 200 OK", async () => {
+    const response = await request(server).get("/");
     expect(response.status).toBe(200);
   });
 
-  test('GET /health-check should return', async () => {
-    const response = await request(server).get('/health-check');
+  test("GET /health-check should return", async () => {
+    const response = await request(server).get("/health-check");
     expect(response.status).toBe(200);
   });
 });

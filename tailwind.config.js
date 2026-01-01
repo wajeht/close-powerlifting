@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const defaultTheme = require('tailwindcss/defaultTheme');
+const defaultTheme = require("tailwindcss/defaultTheme");
 module.exports = {
-  content: ['./src/views/**/*.{html,js}'],
+  content: ["./src/views/**/*.{html,js}"],
   important: true,
   theme: {
     screens: {
-      xs: '475px',
+      xs: "475px",
       ...defaultTheme.screens,
     },
     extend: {},

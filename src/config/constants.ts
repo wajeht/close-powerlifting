@@ -1,14 +1,14 @@
-import dotenv from 'dotenv';
-import path from 'path';
+import dotenv from "dotenv";
+import path from "path";
 
-dotenv.config({ path: path.resolve(path.join(process.cwd(), '.env')) });
+dotenv.config({ path: path.resolve(path.join(process.cwd(), ".env")) });
 
 export const appConfig = {
   frontend_origin: process.env.FRONTEND_ORIGIN as unknown as string,
   port: process.env.PORT as unknown as number,
   api_url: process.env.API_URL as unknown as string,
   base_url: process.env.BASE_URL as unknown as string,
-  env: process.env.ENV as 'production' | 'development' | 'testing' | 'local',
+  env: process.env.ENV as "production" | "development" | "testing" | "local",
   domain: process.env.DOMAIN as unknown as string,
   jwt_secret: process.env.JWT_SECRET as unknown as string,
   password_salt: process.env.PASSWORD_SALT as unknown as string,
@@ -16,7 +16,6 @@ export const appConfig = {
   admin_name: process.env.ADMIN_NAME as unknown as string,
   x_api_key: process.env.X_API_KEY as unknown as string,
 } as const;
-
 
 export const sessionConfig = {
   name: process.env.SESSION_NAME as unknown as string,
@@ -31,11 +30,10 @@ export const emailConfig = {
   auth_pass: process.env.EMAIL_AUTH_PASS as unknown as string,
 } as const;
 
-
 export const cookieConfig = {
   expiration: process.env.COOKIE_EXPIRATION as unknown as number | 60000,
-  password: process.env.COOKIE_PASSWORD as unknown as string | 'password',
-  name: process.env.COOKIE_NAME as unknown as string | 'close-powerlifting',
+  password: process.env.COOKIE_PASSWORD as unknown as string | "password",
+  name: process.env.COOKIE_NAME as unknown as string | "close-powerlifting",
 } as const;
 
 export const oauthConfig = {

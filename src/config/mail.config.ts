@@ -1,4 +1,4 @@
-import { emailConfig } from './constants';
+import { emailConfig } from "./constants";
 
 export default {
   host: emailConfig.host as unknown as string,

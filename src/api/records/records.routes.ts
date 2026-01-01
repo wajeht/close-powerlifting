@@ -1,9 +1,9 @@
-import express from 'express';
-import catchAsyncHandler from 'express-async-handler';
+import express from "express";
+import catchAsyncHandler from "express-async-handler";
 
-import { validationMiddleware } from '../api.middlewares';
-import { getRecordsValidation } from './records.validations';
-import { getRecords } from './records.controllers';
+import { validationMiddleware } from "../api.middlewares";
+import { getRecordsValidation } from "./records.validations";
+import { getRecords } from "./records.controllers";
 
 const records = express.Router();
 
@@ -14,7 +14,7 @@ const records = express.Router();
  * @security BearerAuth
  */
 records.get(
-  '/',
+  "/",
   validationMiddleware({ query: getRecordsValidation }),
   catchAsyncHandler(getRecords),
 );

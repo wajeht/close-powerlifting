@@ -1,10 +1,10 @@
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
-import { Request } from 'express';
-import jwt from 'jsonwebtoken';
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
+import { Request } from "express";
+import jwt from "jsonwebtoken";
 
-import { oauthConfig, appConfig } from '../config/constants';
-import { UserParams } from '../views/views.services';
+import { oauthConfig, appConfig } from "../config/constants";
+import { UserParams } from "../views/views.services";
 
 type buildPaginationType = {
   current_page: number;
@@ -23,7 +23,7 @@ export function tableToJson(table: any) {
   // first row needs to be headers
   const headers: string[] = [];
   for (let i = 0; i < table.rows[0].cells.length; i++) {
-    headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
+    headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, "");
   }
 
   // go through cells
@@ -33,7 +33,7 @@ export function tableToJson(table: any) {
 
     for (let j = 0; j < tableRow.cells.length; j++) {
       // @ts-ignore
-      rowData[headers[j]] = tableRow.cells[j].innerHTML.replace(/(<([^>]+)>)/gi, '');
+      rowData[headers[j]] = tableRow.cells[j].innerHTML.replace(/(<([^>]+)>)/gi, "");
     }
 
     data.push(rowData);
@@ -43,15 +43,15 @@ export function tableToJson(table: any) {
 }
 
 export function stripHTML(innerHTML: string): string {
-  return innerHTML.replace(/(<([^>]+)>)/gi, '');
+  return innerHTML.replace(/(<([^>]+)>)/gi, "");
 }
 
 export function getHostName(req: Request): string {
-  let origin = '';
+  let origin = "";
 
-  if (appConfig.env === 'development') {
+  if (appConfig.env === "development") {
     const protocol = req.protocol;
-    const hostname = req.get('host');
+    const hostname = req.get("host");
     origin = `${protocol}://${hostname}`;
   } else {
     origin = appConfig.domain!;
@@ -77,7 +77,7 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
     name,
     email,
     apiKeyVersion: 1,
-    issuer: 'Close Powerlifting',
+    issuer: "Close Powerlifting",
   };
 
   if (admin) {
@@ -87,7 +87,7 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
       hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
     };
   } else {
-    const key = jwt.sign(keyOptions, appConfig.jwt_secret, { expiresIn: '3m' });
+    const key = jwt.sign(keyOptions, appConfig.jwt_secret, { expiresIn: "3m" });
     return {
       unhashedKey: key,
       hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
@@ -96,18 +96,18 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
 }
 
 export function getGoogleOAuthURL() {
-  const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+  const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
   const options = {
     redirect_uri: oauthConfig.google.oauth_redirect_url,
     client_id: oauthConfig.github.client_id,
-    access_type: 'offline',
-    response_type: 'code',
-    prompt: 'consent',
+    access_type: "offline",
+    response_type: "code",
+    prompt: "consent",
     scope: [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email',
-    ].join(' '),
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ].join(" "),
   };
 
   const qs = new URLSearchParams(options);
@@ -116,12 +116,12 @@ export function getGoogleOAuthURL() {
 }
 
 export function getGitHubOAuthURL() {
-  const rootUrl = 'https://github.com/login/oauth/authorize';
+  const rootUrl = "https://github.com/login/oauth/authorize";
 
   const options = {
     redirect_uri: oauthConfig.google.oauth_redirect_url,
     client_id: oauthConfig.github.client_id,
-    scope: 'user:email',
+    scope: "user:email",
   };
 
   const qs = new URLSearchParams(options);

@@ -1,35 +1,35 @@
-import { Request, Response } from 'express';
-import { StatusCodes } from 'http-status-codes';
+import { Request, Response } from "express";
+import { StatusCodes } from "http-status-codes";
 
-import { getRankings } from '../api/rankings/rankings.services';
-import { emailConfig } from '../config/constants';
-import cache from '../db/cache';
-import { getDb } from '../db/db';
-import * as UserRepository from '../db/repositories/user.repository';
-import { isCronServiceStarted } from '../utils/crons';
-import { getHostName, hashKey } from '../utils/helpers';
-import logger from '../utils/logger';
-import mail from '../utils/mail';
-import contactHTML from '../utils/templates/contact';
+import { getRankings } from "../api/rankings/rankings.services";
+import { emailConfig } from "../config/constants";
+import cache from "../db/cache";
+import { getDb } from "../db/db";
+import * as UserRepository from "../db/repositories/user.repository";
+import { isCronServiceStarted } from "../utils/crons";
+import { getHostName, hashKey } from "../utils/helpers";
+import logger from "../utils/logger";
+import mail from "../utils/mail";
+import contactHTML from "../utils/templates/contact";
 import {
   resetAPIKey,
   resetAdminAPIKey,
   sendVerificationEmail,
   sendWelcomeEmail,
-} from './views.services';
+} from "./views.services";
 
 export async function getHomePage(req: Request, res: Response) {
   const rankings = await getRankings({ current_page: 1, per_page: 5, cache: true });
 
-  return res.status(StatusCodes.OK).render('home.html', {
-    path: '/home',
+  return res.status(StatusCodes.OK).render("home.html", {
+    path: "/home",
     rankings,
   });
 }
 
 export function getRegisterPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('register.html', {
-    path: '/register',
+  return res.status(StatusCodes.OK).render("register.html", {
+    path: "/register",
     messages: req.flash(),
   });
 }
@@ -43,8 +43,8 @@ export async function postRegisterPage(
   const found = await UserRepository.findByEmail(email);
 
   if (found) {
-    req.flash('error', 'Email already exist!');
-    return res.redirect('/register');
+    req.flash("error", "Email already exist!");
+    return res.redirect("/register");
   }
 
   const { key: token } = await hashKey();
@@ -63,14 +63,14 @@ export async function postRegisterPage(
     userId: String(createdUser.id),
   });
 
-  req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
+  req.flash("info", "Thank you for registering. Please check your email for confirmation!");
 
-  return res.redirect('/register');
+  return res.redirect("/register");
 }
 
 export function getResetAPIKeyPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('reset-api-key.html', {
-    path: '/reset-api-key',
+  return res.status(StatusCodes.OK).render("reset-api-key.html", {
+    path: "/reset-api-key",
     messages: req.flash(),
   });
 }
@@ -103,9 +103,9 @@ export async function postResetAPIKeyPage(
     resetAPIKey({ userId: String(foundUser.id), name: foundUser.name, email: foundUser.email });
   }
 
-  req.flash('info', 'If you have an account with us, we will send you a new api key!');
+  req.flash("info", "If you have an account with us, we will send you a new api key!");
 
-  res.redirect('/reset-api-key');
+  res.redirect("/reset-api-key");
 }
 
 export async function getVerifyEmailPage(req: Request, res: Response) {
@@ -113,33 +113,33 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
   const foundUser = await UserRepository.findByEmail(email);
 
   if (!foundUser) {
-    req.flash('error', 'Something wrong while verifying your account!');
-    return res.redirect('/register');
+    req.flash("error", "Something wrong while verifying your account!");
+    return res.redirect("/register");
   }
 
   if (foundUser.verification_token !== token) {
-    req.flash('error', 'Something wrong while verifying your account!');
-    return res.redirect('/register');
+    req.flash("error", "Something wrong while verifying your account!");
+    return res.redirect("/register");
   }
 
   if (foundUser.verified === true) {
-    req.flash('error', 'This e-mail has already been used for verification!');
-    return res.redirect('/register');
+    req.flash("error", "This e-mail has already been used for verification!");
+    return res.redirect("/register");
   }
 
   sendWelcomeEmail({ name: foundUser.name, email: foundUser.email, userId: String(foundUser.id) });
 
   req.flash(
-    'success',
-    'Thank you for verifying your email address. We will send you an API key to your email very shortly!',
+    "success",
+    "Thank you for verifying your email address. We will send you an API key to your email very shortly!",
   );
 
-  return res.redirect('/register');
+  return res.redirect("/register");
 }
 
 export function getContactPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('contact.html', {
-    path: '/contact',
+  return res.status(StatusCodes.OK).render("contact.html", {
+    path: "/contact",
     messages: req.flash(),
   });
 }
@@ -154,32 +154,32 @@ export async function postContactPage(req: Request, res: Response) {
     html: contactHTML({ name, email, message }),
   });
 
-  req.flash('info', "Thanks for reaching out to us. We'll get back to you shortly!");
+  req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 
-  return res.status(StatusCodes.TEMPORARY_REDIRECT).redirect('/contact');
+  return res.status(StatusCodes.TEMPORARY_REDIRECT).redirect("/contact");
 }
 
 export function getTermsPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('terms.html', {
-    path: '/terms',
+  return res.status(StatusCodes.OK).render("terms.html", {
+    path: "/terms",
   });
 }
 
 export function getPrivacyPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('privacy.html', {
-    path: '/privacy',
+  return res.status(StatusCodes.OK).render("privacy.html", {
+    path: "/privacy",
   });
 }
 
 export function getAboutPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('about.html', {
-    path: '/about',
+  return res.status(StatusCodes.OK).render("about.html", {
+    path: "/about",
   });
 }
 
 export function getStatusPage(req: Request, res: Response) {
-  return res.status(StatusCodes.OK).render('status.html', {
-    path: '/status',
+  return res.status(StatusCodes.OK).render("status.html", {
+    path: "/status",
   });
 }
 
@@ -193,11 +193,11 @@ export function getHealthCheck(req: Request, res: Response) {
   }
 
   res.status(StatusCodes.OK).json({
-    status: 'ok',
+    status: "ok",
     uptime: process.uptime(),
     timestamp: Date.now(),
-    database: dbConnected ? 'connected' : 'disconnected',
-    cache: cache.isReady() ? 'connected' : 'disconnected',
-    crons: isCronServiceStarted() ? 'started' : 'stopped',
+    database: dbConnected ? "connected" : "disconnected",
+    cache: cache.isReady() ? "connected" : "disconnected",
+    crons: isCronServiceStarted() ? "started" : "stopped",
   });
 }

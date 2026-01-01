@@ -1,19 +1,19 @@
-import { NextFunction, Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
-import session from 'express-session';
-import { StatusCodes } from 'http-status-codes';
-import { AnyZodObject, ZodError } from 'zod';
+import { NextFunction, Request, Response } from "express";
+import rateLimit from "express-rate-limit";
+import session from "express-session";
+import { StatusCodes } from "http-status-codes";
+import { AnyZodObject, ZodError } from "zod";
 
 import {
   APICallsExceededError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
-} from './api/api.errors';
-import { appConfig, sessionConfig } from './config/constants';
-import cache from './db/cache';
-import { getHostName } from './utils/helpers';
-import logger from './utils/logger';
+} from "./api/api.errors";
+import { appConfig, sessionConfig } from "./config/constants";
+import cache from "./db/cache";
+import { getHostName } from "./utils/helpers";
+import logger from "./utils/logger";
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -23,12 +23,12 @@ interface RequestValidators {
 
 export function notFoundMiddleware(req: Request, res: Response, next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render('not-found.html');
+  if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render("not-found.html");
 
   return res.status(StatusCodes.NOT_FOUND).json({
-    status: 'fail',
+    status: "fail",
     request_url: req.originalUrl,
-    message: 'The resource does not exist!',
+    message: "The resource does not exist!",
     cache: req.query?.cache,
     data: [],
   });
@@ -41,26 +41,26 @@ export function appRateLimitMiddleware() {
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
     message: (req: Request, res: Response) => {
-      if (req.get('Content-Type') === 'application/json') {
+      if (req.get("Content-Type") === "application/json") {
         return res.json({
-          status: 'fail',
+          status: "fail",
           request_url: req.originalUrl,
-          message: 'Too many requests, please try again later?',
+          message: "Too many requests, please try again later?",
           data: [],
         });
       }
-      return res.render('./rate-limit.html');
+      return res.render("./rate-limit.html");
     },
-    skip: () => appConfig.env !== 'production',
+    skip: () => appConfig.env !== "production",
   });
 }
 
 export function errorMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message =
-    appConfig.env === 'development'
+    appConfig.env === "development"
       ? err.stack
-      : 'The server encountered an internal error or misconfiguration and was unable to complete your request!';
+      : "The server encountered an internal error or misconfiguration and was unable to complete your request!";
 
   if (err instanceof ZodError) {
     statusCode = StatusCodes.BAD_REQUEST;
@@ -88,17 +88,17 @@ export function errorMiddleware(err: any, req: Request, res: Response, next: Nex
   }
 
   const isApiPrefix = req.url.match(/\/api\//g);
-  const isHealthcheck = req.originalUrl === '/health-check';
+  const isHealthcheck = req.originalUrl === "/health-check";
 
   if (!isApiPrefix && !isHealthcheck)
-    return res.status(statusCode).render('error.html', {
-      error: appConfig.env === 'development' ? err.stack : null,
+    return res.status(statusCode).render("error.html", {
+      error: appConfig.env === "development" ? err.stack : null,
     });
 
   logger.error(err);
 
   return res.status(statusCode).json({
-    status: 'fail',
+    status: "fail",
     request_url: req.originalUrl,
     cache: req.query?.cache,
     message,
@@ -122,7 +122,7 @@ export function validationMiddleware(validators: RequestValidators) {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        req.flash('error', error.issues.map((e) => e.message).join(' '));
+        req.flash("error", error.issues.map((e) => e.message).join(" "));
         return res.status(StatusCodes.BAD_REQUEST).redirect(req.originalUrl);
       }
       next(error);
@@ -132,11 +132,11 @@ export function validationMiddleware(validators: RequestValidators) {
 
 export async function hostNameMiddleware(req: Request, res: Response, next: NextFunction) {
   if (!req.app.locals.hostname) {
-    const hostname = await cache.get('hostname');
+    const hostname = await cache.get("hostname");
 
     if (hostname === null) {
-      await cache.set('hostname', getHostName(req));
-      req.app.locals.hostname = await cache.get('hostname');
+      await cache.set("hostname", getHostName(req));
+      req.app.locals.hostname = await cache.get("hostname");
     } else {
       req.app.locals.hostname = hostname;
     }
@@ -150,8 +150,8 @@ export function sessionMiddleware() {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: appConfig.env === 'production',
-      secure: appConfig.env === 'production',
+      httpOnly: appConfig.env === "production",
+      secure: appConfig.env === "production",
     },
   });
 }

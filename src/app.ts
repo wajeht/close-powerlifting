@@ -1,33 +1,33 @@
-import compression from 'compression';
-import flash from 'connect-flash';
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import ejs from 'ejs';
-import express from 'express';
-import expressLayouts from 'express-ejs-layouts';
-import expressJSDocSwagger from 'express-jsdoc-swagger';
-import helmet from 'helmet';
-import path from 'path';
+import compression from "compression";
+import flash from "connect-flash";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import ejs from "ejs";
+import express from "express";
+import expressLayouts from "express-ejs-layouts";
+import expressJSDocSwagger from "express-jsdoc-swagger";
+import helmet from "helmet";
+import path from "path";
 
-import apiRoutes from './api/api';
+import apiRoutes from "./api/api";
 import {
   appRateLimitMiddleware,
   errorMiddleware,
   hostNameMiddleware,
   notFoundMiddleware,
   sessionMiddleware,
-} from './app.middlewares';
-import swaggerConfig from './config/swagger.config';
-import viewsRoutes from './views/views.routes';
-import { appConfig } from './config/constants';
+} from "./app.middlewares";
+import swaggerConfig from "./config/swagger.config";
+import viewsRoutes from "./views/views.routes";
+import { appConfig } from "./config/constants";
 
 const app = express();
 
-app.disable('x-powered-by');
+app.disable("x-powered-by");
 
 app.use(hostNameMiddleware);
 
-app.set('trust proxy', true);
+app.set("trust proxy", true);
 
 app.use(cookieParser());
 
@@ -45,17 +45,17 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(helmet({ contentSecurityPolicy: false }));
 
-app.use(express.static(path.resolve(path.join(process.cwd(), 'public')), { maxAge: '30d' }));
+app.use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }));
 
-app.engine('html', ejs.renderFile);
+app.engine("html", ejs.renderFile);
 
-app.set('view engine', 'html');
+app.set("view engine", "html");
 
-app.set('views', path.resolve(path.join(process.cwd(), 'src', 'views', 'pages')));
+app.set("views", path.resolve(path.join(process.cwd(), "src", "views", "pages")));
 
-app.set('layout', path.resolve(path.join(process.cwd(), 'src', 'views', 'layouts', 'main.html')));
+app.set("layout", path.resolve(path.join(process.cwd(), "src", "views", "layouts", "main.html")));
 
-app.set('view cache', appConfig.env === 'production');
+app.set("view cache", appConfig.env === "production");
 
 app.use(expressLayouts);
 
