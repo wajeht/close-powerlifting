@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import qs from "qs";
 import { z } from "zod";
 
-import { oauthConfig } from "../../config/constants";
+import { config } from "../../config";
 import * as UserRepository from "../../db/repositories/user.repository";
 import { UnauthorizedError, ValidationError } from "../../error";
 import { getGoogleOAuthURL, getHostName, hashKey } from "../../utils/helpers";
@@ -66,9 +66,9 @@ async function getGoogleOauthToken({ code }: { code: string }): Promise<GoogleOa
 
   const options = {
     code,
-    client_id: oauthConfig.google.client_id,
-    client_secret: oauthConfig.google.client_secret,
-    redirect_uri: oauthConfig.google.oauth_redirect_url,
+    client_id: config.oauth.google.clientId,
+    client_secret: config.oauth.google.clientSecret,
+    redirect_uri: config.oauth.google.redirectUrl,
     grant_type: "authorization_code",
   };
 

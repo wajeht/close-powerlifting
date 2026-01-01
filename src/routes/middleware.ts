@@ -5,7 +5,7 @@ import { StatusCodes } from "http-status-codes";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { AnyZodObject, ZodError } from "zod";
 
-import { appConfig, emailConfig, sessionConfig } from "../config/constants";
+import { config } from "../config";
 import cache from "../db/cache";
 import * as UserRepository from "../db/repositories/user.repository";
 import { APICallsExceededError, NotFoundError, UnauthorizedError, ValidationError } from "../error";
@@ -37,7 +37,7 @@ export function rateLimitMiddleware() {
       }
       return res.render("general/general-rate-limit.html");
     },
-    skip: () => appConfig.env !== "production",
+    skip: () => config.app.env !== "production",
   });
 }
 
@@ -58,7 +58,7 @@ export function notFoundMiddleware(req: Request, res: Response, _next: NextFunct
 export function errorMiddleware(err: any, req: Request, res: Response, _next: NextFunction) {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message =
-    appConfig.env === "development"
+    config.app.env === "development"
       ? err.stack
       : "The server encountered an internal error or misconfiguration and was unable to complete your request!";
 
@@ -92,7 +92,7 @@ export function errorMiddleware(err: any, req: Request, res: Response, _next: Ne
 
   if (!isApiPrefix && !isHealthcheck)
     return res.status(statusCode).render("general/general-error.html", {
-      error: appConfig.env === "development" ? err.stack : null,
+      error: config.app.env === "development" ? err.stack : null,
     });
 
   logger.error(err);
@@ -166,7 +166,7 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
     }
 
     try {
-      const decoded = jwt.verify(token, appConfig.jwt_secret!) as JwtPayload;
+      const decoded = jwt.verify(token, config.app.jwtSecret) as JwtPayload;
 
       req.user = {
         id: decoded.id,
@@ -199,7 +199,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
 
       if (user.api_call_count === Math.floor(user.api_call_limit / 2) && !user.admin) {
         mail.sendMail({
-          from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
+          from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
           subject: "Reaching API Call Limit",
           html: reachingApiLimitHTML({ name: user.name, percent: 50 }),
@@ -228,12 +228,12 @@ export async function hostNameMiddleware(req: Request, res: Response, next: Next
 
 export function sessionMiddleware() {
   return session({
-    secret: sessionConfig.secret,
+    secret: config.session.secret,
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: appConfig.env === "production",
-      secure: appConfig.env === "production",
+      httpOnly: config.app.env === "production",
+      secure: config.app.env === "production",
     },
   });
 }
