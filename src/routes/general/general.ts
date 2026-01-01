@@ -3,7 +3,7 @@ import catchAsyncHandler from "express-async-handler";
 import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
-import { emailConfig } from "../../config/constants";
+import { config } from "../../config";
 import cache from "../../db/cache";
 import { getDb } from "../../db/db";
 import { isCronServiceStarted } from "../../utils/crons";
@@ -78,8 +78,8 @@ router.post(
     const { name, email, message } = req.body;
 
     mail.sendMail({
-      from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
-      to: emailConfig.auth_email,
+      from: `"Close Powerlifting" <${config.email.user}>`,
+      to: config.email.user,
       subject: `Contact Request from ${email}`,
       html: contactHTML({ name, email, message }),
     });

@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
 
-import { oauthConfig, appConfig } from "../config/constants";
+import { config } from "../config";
 import { UserParams } from "../routes/auth/auth.service";
 
 type buildPaginationType = {
@@ -49,12 +49,12 @@ export function stripHTML(innerHTML: string): string {
 export function getHostName(req: Request): string {
   let origin = "";
 
-  if (appConfig.env === "development") {
+  if (config.app.env === "development") {
     const protocol = req.protocol;
     const hostname = req.get("host");
     origin = `${protocol}://${hostname}`;
   } else {
-    origin = appConfig.domain!;
+    origin = config.app.domain;
   }
 
   return origin;
@@ -81,16 +81,16 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
   };
 
   if (admin) {
-    const key = jwt.sign(keyOptions, appConfig.jwt_secret);
+    const key = jwt.sign(keyOptions, config.app.jwtSecret);
     return {
       unhashedKey: key,
-      hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
+      hashedKey: await bcrypt.hash(key, parseInt(config.app.passwordSalt)),
     };
   } else {
-    const key = jwt.sign(keyOptions, appConfig.jwt_secret, { expiresIn: "3m" });
+    const key = jwt.sign(keyOptions, config.app.jwtSecret, { expiresIn: "3m" });
     return {
       unhashedKey: key,
-      hashedKey: await bcrypt.hash(key, parseInt(appConfig.password_salt)),
+      hashedKey: await bcrypt.hash(key, parseInt(config.app.passwordSalt)),
     };
   }
 }
@@ -99,8 +99,8 @@ export function getGoogleOAuthURL() {
   const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
   const options = {
-    redirect_uri: oauthConfig.google.oauth_redirect_url,
-    client_id: oauthConfig.google.client_id,
+    redirect_uri: config.oauth.google.redirectUrl,
+    client_id: config.oauth.google.clientId,
     access_type: "offline",
     response_type: "code",
     prompt: "consent",

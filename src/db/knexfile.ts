@@ -1,9 +1,9 @@
 import path from "path";
 import type { Knex } from "knex";
 import CustomMigrationSource from "./migration-source";
-import { appConfig } from "../config/constants";
+import { config } from "../config";
 
-const isTestEnv = process.env.NODE_ENV === "testing" || appConfig.env === "testing";
+const isTestEnv = process.env.NODE_ENV === "testing" || config.app.env === "testing";
 
 const knexConfig: Knex.Config = {
   client: "better-sqlite3",
