@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
-import { StatusCodes } from "http-status-codes";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { AnyZodObject, ZodError } from "zod";
 
@@ -43,10 +42,9 @@ export function rateLimitMiddleware() {
 
 export function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix)
-    return res.status(StatusCodes.NOT_FOUND).render("general/general-not-found.html");
+  if (!isApiPrefix) return res.status(404).render("general/general-not-found.html");
 
-  return res.status(StatusCodes.NOT_FOUND).json({
+  return res.status(404).json({
     status: "fail",
     request_url: req.originalUrl,
     message: "The resource does not exist!",

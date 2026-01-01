@@ -1,37 +1,35 @@
-import { StatusCodes } from "http-status-codes";
-
 export class UnauthorizedError extends Error {
-  statusCode: StatusCodes;
+  statusCode: number;
   constructor(message: string) {
     super();
     this.message = message;
-    this.statusCode = StatusCodes.UNAUTHORIZED;
+    this.statusCode = 401;
   }
 }
 
 export class NotFoundError extends Error {
-  statusCode: StatusCodes;
+  statusCode: number;
   constructor(message: string) {
     super();
     this.message = message;
-    this.statusCode = StatusCodes.NOT_FOUND;
+    this.statusCode = 404;
   }
 }
 
 export class APICallsExceededError extends Error {
-  statusCode: StatusCodes;
+  statusCode: number;
   constructor(message: string) {
     super();
     this.message = message;
-    this.statusCode = StatusCodes.TOO_MANY_REQUESTS;
+    this.statusCode = 429;
   }
 }
 
 export class ValidationError extends Error {
-  statusCode: StatusCodes;
+  statusCode: number;
   constructor(message: string) {
     super();
     this.message = message;
-    this.statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
+    this.statusCode = 422;
   }
 }
