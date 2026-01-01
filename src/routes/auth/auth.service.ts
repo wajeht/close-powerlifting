@@ -34,14 +34,17 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
 
   const verified = await updateUser(email, { key: hashedKey });
 
-  mail.sendMail({
-    from: `"Close Powerlifting" <${config.email.user}>`,
-    to: email,
-    subject: "New API key for Close Powerlifting",
-    html: newAPIKeyHTML({ name: verified!.name!, key: unhashedKey }),
-  });
-
-  logger.info(`Reset API email was sent to email: ${email}!`);
+  try {
+    await mail.sendMail({
+      from: `"Close Powerlifting" <${config.email.from}>`,
+      to: email,
+      subject: "New API key for Close Powerlifting",
+      html: newAPIKeyHTML({ name: verified!.name!, key: unhashedKey }),
+    });
+    logger.info(`Reset API email was sent to email: ${email}!`);
+  } catch (error) {
+    logger.error(`Failed to send reset API email to ${email}: ${error}`);
+  }
 }
 
 export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
@@ -56,14 +59,17 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
     password: hashedPassword,
   });
 
-  mail.sendMail({
-    from: `"Close Powerlifting" <${config.email.user}>`,
-    to: email,
-    subject: "New API Key and Admin Password for Close Powerlifting",
-    html: adminNewAPIKeyHTML({ name, password, apiKey: unhashedKey }),
-  });
-
-  logger.info(`admin user: ${email} has been updated!`);
+  try {
+    await mail.sendMail({
+      from: `"Close Powerlifting" <${config.email.from}>`,
+      to: email,
+      subject: "New API Key and Admin Password for Close Powerlifting",
+      html: adminNewAPIKeyHTML({ name, password, apiKey: unhashedKey }),
+    });
+    logger.info(`admin user: ${email} has been updated!`);
+  } catch (error) {
+    logger.error(`Failed to send admin reset email to ${email}: ${error}`);
+  }
 }
 
 export async function sendVerificationEmail({
@@ -73,19 +79,22 @@ export async function sendVerificationEmail({
   verification_token,
   userId,
 }: VerificationEmailParams) {
-  await mail.sendMail({
-    from: `"Close Powerlifting" <${config.email.user}>`,
-    to: email,
-    subject: "Account verification",
-    html: verifyEmailHTML({
-      name,
-      hostname,
-      email,
-      verification_token,
-    }),
-  });
-
-  logger.info(`Verification email was sent to user_id: ${userId}!`);
+  try {
+    await mail.sendMail({
+      from: `"Close Powerlifting" <${config.email.from}>`,
+      to: email,
+      subject: "Account verification",
+      html: verifyEmailHTML({
+        name,
+        hostname,
+        email,
+        verification_token,
+      }),
+    });
+    logger.info(`Verification email was sent to user_id: ${userId}!`);
+  } catch (error) {
+    logger.error(`Failed to send verification email to ${email}: ${error}`);
+  }
 }
 
 export async function sendWelcomeEmail(userParams: UserParams) {
@@ -99,14 +108,17 @@ export async function sendWelcomeEmail(userParams: UserParams) {
     verified_at: new Date().toISOString(),
   });
 
-  mail.sendMail({
-    from: `"Close Powerlifting" <${config.email.user}>`,
-    to: email,
-    subject: "API Key for Close Powerlifting",
-    html: welcomeHTML({ name: verified!.name!, key: unhashedKey }),
-  });
-
-  logger.info(`user_id: ${verified!.id} has verified email!`);
+  try {
+    await mail.sendMail({
+      from: `"Close Powerlifting" <${config.email.from}>`,
+      to: email,
+      subject: "API Key for Close Powerlifting",
+      html: welcomeHTML({ name: verified!.name!, key: unhashedKey }),
+    });
+    logger.info(`user_id: ${verified!.id} has verified email!`);
+  } catch (error) {
+    logger.error(`Failed to send welcome email to ${email}: ${error}`);
+  }
 
   return unhashedKey;
 }
