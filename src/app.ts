@@ -21,7 +21,7 @@ import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
 import { initDatabase, stopDatabase } from "./db/db";
 import { initAdminUser } from "./utils/admin-user";
-import { initCrons } from "./utils/crons";
+import { cronService } from "./crons";
 import { logger } from "./utils/logger";
 
 export interface ServerInfo {
@@ -94,7 +94,7 @@ export function createServer(): ServerInfo {
 
     try {
       await initDatabase();
-      await initCrons();
+      cronService.start();
       await initAdminUser();
     } catch (error) {
       logger.error((error as any).message);
@@ -126,6 +126,8 @@ export function createServer(): ServerInfo {
 
 export async function closeServer({ server }: ServerInfo): Promise<void> {
   logger.info("Shutting down server gracefully");
+
+  cronService.stop();
 
   try {
     await stopDatabase();

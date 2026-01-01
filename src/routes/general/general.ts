@@ -4,7 +4,7 @@ import { z } from "zod";
 import { config } from "../../config";
 import { cache } from "../../db/cache";
 import { getDb } from "../../db/db";
-import { isCronServiceStarted } from "../../utils/crons";
+import { cronService } from "../../crons";
 import { getHostName } from "../../utils/helpers";
 import { mail } from "../../utils/mail";
 import { createContactText } from "../../utils/templates/contact";
@@ -108,7 +108,7 @@ generalRouter.get("/health-check", (req: Request, res: Response) => {
     timestamp: Date.now(),
     database: dbConnected ? "connected" : "disconnected",
     cache: cache.isReady() ? "connected" : "disconnected",
-    crons: isCronServiceStarted() ? "started" : "stopped",
+    crons: cronService.getStatus().isRunning ? "started" : "stopped",
   });
 });
 
@@ -127,7 +127,7 @@ generalRouter.get("/healthz", (req: Request, res: Response) => {
     timestamp: Date.now(),
     database: dbConnected ? "connected" : "disconnected",
     cache: cache.isReady() ? "connected" : "disconnected",
-    crons: isCronServiceStarted() ? "started" : "stopped",
+    crons: cronService.getStatus().isRunning ? "started" : "stopped",
   });
 });
 
