@@ -5,12 +5,10 @@ import cors from "cors";
 import ejs from "ejs";
 import express from "express";
 import expressLayouts from "express-ejs-layouts";
-import expressJSDocSwagger from "express-jsdoc-swagger";
 import helmet from "helmet";
 import path from "path";
 
-import { appConfig } from "./config/constants";
-import swaggerConfig from "./config/swagger.config";
+import { config } from "./config";
 import {
   errorMiddleware,
   hostNameMiddleware,
@@ -19,6 +17,7 @@ import {
   sessionMiddleware,
 } from "./routes/middleware";
 import routes from "./routes/routes";
+import { expressJSDocSwaggerHandler } from "./utils/swagger";
 
 const app = express();
 
@@ -54,11 +53,11 @@ app.set("views", path.resolve(path.join(process.cwd(), "src", "routes")));
 
 app.set("layout", path.resolve(path.join(process.cwd(), "src", "routes", "_layouts", "main.html")));
 
-app.set("view cache", appConfig.env === "production");
+app.set("view cache", config.app.env === "production");
 
 app.use(expressLayouts);
 
-expressJSDocSwagger(app)(swaggerConfig);
+expressJSDocSwaggerHandler(app);
 
 app.use(rateLimitMiddleware());
 
