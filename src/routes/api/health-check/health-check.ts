@@ -1,6 +1,4 @@
 import express, { Request, Response } from "express";
-import catchAsyncHandler from "express-async-handler";
-import { StatusCodes } from "http-status-codes";
 
 const router = express.Router();
 

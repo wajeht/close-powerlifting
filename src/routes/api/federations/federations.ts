@@ -24,12 +24,12 @@ const router = express.Router();
 router.get(
   "/",
   apiValidationMiddleware({ query: getFederationsValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
+  async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
     const federations = await FederationsService.getFederations(req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
@@ -37,7 +37,7 @@ router.get(
       data: federations?.data,
       pagination: federations?.pagination,
     });
-  }),
+  },
 );
 
 /**
@@ -52,23 +52,21 @@ router.get(
     params: getFederationsParamValidation,
     query: getFederationsQueryValidation,
   }),
-  catchAsyncHandler(
-    async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
-      const federations = await FederationsService.getFederation({ ...req.params, ...req.query });
+  async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
+    const federations = await FederationsService.getFederation({ ...req.params, ...req.query });
 
-      if (!federations) throw new NotFoundError("The resource cannot be found!");
+    if (!federations) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-      res.status(StatusCodes.OK).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "The resource was returned successfully!",
-        cache: federations?.cache,
-        data: federations?.data,
-      });
-    },
-  ),
+    res.status(200).json({
+      status: "success",
+      request_url: req.originalUrl,
+      message: "The resource was returned successfully!",
+      cache: federations?.cache,
+      data: federations?.data,
+    });
+  },
 );
 
 export default router;

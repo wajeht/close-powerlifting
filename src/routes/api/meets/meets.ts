@@ -1,6 +1,4 @@
 import express, { Request, Response } from "express";
-import catchAsyncHandler from "express-async-handler";
-import { StatusCodes } from "http-status-codes";
 
 import { NotFoundError } from "../../../error";
 import logger from "../../../utils/logger";
@@ -27,20 +25,20 @@ router.get(
     params: getMeetParamValidation,
     query: getMeetQueryValidation,
   }),
-  catchAsyncHandler(async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
+  async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
     const meet = await MeetsService.getMeet({ ...req.params, ...req.query });
 
     if (!meet) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
       data: meet,
     });
-  }),
+  },
 );
 
 export default router;
