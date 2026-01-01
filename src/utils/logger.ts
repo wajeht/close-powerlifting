@@ -1,3 +1,5 @@
+import { styleText } from "node:util";
+
 type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR" | "SILENT";
 
 const priority: Record<LogLevel, number> = {
@@ -6,6 +8,13 @@ const priority: Record<LogLevel, number> = {
   WARN: 2,
   ERROR: 3,
   SILENT: 4,
+};
+
+const levelStyles: Record<Exclude<LogLevel, "SILENT">, Parameters<typeof styleText>[0]> = {
+  DEBUG: "gray",
+  INFO: "green",
+  WARN: "yellow",
+  ERROR: "red",
 };
 
 let globalLevel: LogLevel = "INFO";
@@ -28,22 +37,20 @@ function formatValue(value: unknown): string {
   return String(value);
 }
 
-function log(level: LogLevel, message: string, ...args: unknown[]): void {
+function log(level: Exclude<LogLevel, "SILENT">, message: string, ...args: unknown[]): void {
   if (priority[level] < priority[globalLevel]) return;
 
-  const timestamp = `[${formatTimestamp()}]`;
-  const levelLabel = level.padStart(5);
+  const timestamp = styleText("dim", `[${formatTimestamp()}]`);
+  const levelLabel = styleText(levelStyles[level], level.padStart(5));
   const formattedArgs = args.map(formatValue).join(" ");
   const output = formattedArgs
-    ? `${timestamp} ${levelLabel}: ${message} ${formattedArgs}`
-    : `${timestamp} ${levelLabel}: ${message}`;
+    ? `${timestamp} ${levelLabel}: ${message} ${formattedArgs}\n`
+    : `${timestamp} ${levelLabel}: ${message}\n`;
 
-  if (level === "ERROR") {
-    console.error(output);
-  } else if (level === "WARN") {
-    console.warn(output);
+  if (level === "ERROR" || level === "WARN") {
+    process.stderr.write(output);
   } else {
-    console.log(output);
+    process.stdout.write(output);
   }
 }
 
