@@ -1,5 +1,5 @@
 import { getDb } from "./db";
-import logger from "../utils/logger";
+import { logger } from "../utils/logger";
 
 interface CacheEntry {
   key: string;
@@ -119,7 +119,7 @@ export function isReady(): boolean {
   }
 }
 
-export default {
+export const cache = {
   get,
   set,
   del,

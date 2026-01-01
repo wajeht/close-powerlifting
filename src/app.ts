@@ -14,7 +14,7 @@ import {
   rateLimitMiddleware,
   sessionMiddleware,
 } from "./routes/middleware";
-import routes from "./routes/routes";
+import { mainRouter } from "./routes/routes";
 import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
 
@@ -58,10 +58,10 @@ expressJSDocSwaggerHandler(app);
 
 app.use(rateLimitMiddleware());
 
-app.use(routes);
+app.use(mainRouter);
 
 app.use(notFoundMiddleware);
 
 app.use(errorMiddleware);
 
-export default app;
+export { app };

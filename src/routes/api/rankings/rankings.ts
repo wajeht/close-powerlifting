@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as RankingsService from "./rankings.service";
+import { getRankings, getRank, getFilteredRankings } from "./rankings.service";
 import {
   getRankingsValidation,
   getRankValidation,
@@ -15,7 +15,7 @@ import {
   GetFilteredRankingsQueryType,
 } from "./rankings.validation";
 
-const router = express.Router();
+const rankingsRouter = express.Router();
 
 /**
  * GET /api/rankings
@@ -27,11 +27,11 @@ const router = express.Router();
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/",
   apiValidationMiddleware({ query: getRankingsValidation }),
   async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
-    const rankings = await RankingsService.getRankings(req.query);
+    const rankings = await getRankings(req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -57,7 +57,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation.pick({ equipment: true }),
@@ -72,7 +72,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -99,7 +99,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment/:sex",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true }),
@@ -114,7 +114,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -142,7 +142,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment/:sex/:weight_class",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation.pick({
@@ -161,7 +161,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -190,7 +190,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment/:sex/:weight_class/:year",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation.pick({
@@ -210,7 +210,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -240,7 +240,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment/:sex/:weight_class/:year/:event",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation.pick({
@@ -261,7 +261,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -292,7 +292,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+rankingsRouter.get(
   "/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
   apiValidationMiddleware({
     params: getFilteredRankingsParamValidation,
@@ -302,7 +302,7 @@ router.get(
     req: Request<GetFilteredRankingsParamType, {}, {}, GetFilteredRankingsQueryType>,
     res: Response,
   ) => {
-    const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
+    const rankings = await getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -326,11 +326,11 @@ router.get(
  * @return {object} 200 - success response
  * @return {object} 404 - not found
  */
-router.get(
+rankingsRouter.get(
   "/:rank",
   apiValidationMiddleware({ params: getRankValidation }),
   async (req: Request<GetRankType, {}, {}>, res: Response) => {
-    const rank = await RankingsService.getRank(req.params);
+    const rank = await getRank(req.params);
 
     if (!rank) throw new NotFoundError("The resource cannot be found!");
 
@@ -345,4 +345,4 @@ router.get(
   },
 );
 
-export default router;
+export { rankingsRouter };

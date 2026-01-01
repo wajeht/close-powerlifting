@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as FederationsService from "./federations.service";
+import { getFederations, getFederation } from "./federations.service";
 import {
   getFederationsValidation,
   getFederationsParamValidation,
@@ -13,7 +13,7 @@ import {
   GetFederationsQueryType,
 } from "./federations.validation";
 
-const router = express.Router();
+const federationsRouter = express.Router();
 
 /**
  * GET /api/federations
@@ -25,11 +25,11 @@ const router = express.Router();
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+federationsRouter.get(
   "/",
   apiValidationMiddleware({ query: getFederationsValidation }),
   async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
-    const federations = await FederationsService.getFederations(req.query);
+    const federations = await getFederations(req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -55,14 +55,14 @@ router.get(
  * @return {object} 200 - success response
  * @return {object} 404 - not found
  */
-router.get(
+federationsRouter.get(
   "/:federation",
   apiValidationMiddleware({
     params: getFederationsParamValidation,
     query: getFederationsQueryValidation,
   }),
   async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
-    const federations = await FederationsService.getFederation({ ...req.params, ...req.query });
+    const federations = await getFederation({ ...req.params, ...req.query });
 
     if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -78,4 +78,4 @@ router.get(
   },
 );
 
-export default router;
+export { federationsRouter };

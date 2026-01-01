@@ -1,16 +1,16 @@
 import bcrypt from "bcryptjs";
 
 import { config } from "../config";
-import * as UserRepository from "../db/repositories/user.repository";
+import { findByEmail, create } from "../db/repositories/user.repository";
 import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
 import { updateUser } from "../routes/auth/auth.service";
-import logger from "./logger";
-import mail from "./mail";
-import adminNewAPIKeyHTML from "./templates/admin-new-api-key";
+import { logger } from "./logger";
+import { mail } from "./mail";
+import { createAdminNewApiKeyHtml } from "./templates/admin-new-api-key";
 
-export async function init() {
+export async function initAdminUser() {
   try {
-    const found = await UserRepository.findByEmail(config.app.adminEmail);
+    const found = await findByEmail(config.app.adminEmail);
 
     if (!found) {
       logger.info("admin user does not exist");
@@ -20,7 +20,7 @@ export async function init() {
       const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
       const { key: token } = await hashKey();
 
-      const createdAdminUser = await UserRepository.create({
+      const createdAdminUser = await create({
         email: config.app.adminEmail,
         name: config.app.adminName,
         admin: true,
@@ -52,7 +52,7 @@ export async function init() {
           from: `"Close Powerlifting" <${config.email.from}>`,
           to: createdAdminUser.email,
           subject: "API Key and Admin Password for Close Powerlifting",
-          html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
+          html: createAdminNewApiKeyHtml({ name: verified.name, password, apiKey: unhashedKey }),
         });
         logger.info(`Admin welcome email sent to ${createdAdminUser.email}`);
       } catch (error) {

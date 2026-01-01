@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
-import knexConfig from "./knexfile";
-import logger from "../utils/logger";
+import { knexConfig } from "./knexfile";
+import { logger } from "../utils/logger";
 
 let db: Knex;
 
@@ -11,7 +11,7 @@ export function getDb(): Knex {
   return db;
 }
 
-export async function init(): Promise<void> {
+export async function initDatabase(): Promise<void> {
   try {
     db = getDb();
     await db.migrate.latest();
@@ -23,11 +23,9 @@ export async function init(): Promise<void> {
   }
 }
 
-export async function stop(): Promise<void> {
+export async function stopDatabase(): Promise<void> {
   if (db) {
     await db.destroy();
     logger.info("Database connection closed!");
   }
 }
-
-export default db!;

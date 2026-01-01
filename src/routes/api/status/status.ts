@@ -1,11 +1,11 @@
 import express, { Request, Response } from "express";
 
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as StatusService from "./status.service";
+import { getStatus } from "./status.service";
 import { getStatusValidation, GetStatusType } from "./status.validation";
 
-const router = express.Router();
+const statusRouter = express.Router();
 
 /**
  * GET /api/status
@@ -14,11 +14,11 @@ const router = express.Router();
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+statusRouter.get(
   "/",
   apiValidationMiddleware({ query: getStatusValidation }),
   async (req: Request<{}, {}, GetStatusType>, res: Response) => {
-    const status = await StatusService.getStatus(req.query);
+    const status = await getStatus(req.query);
 
     logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 
@@ -32,4 +32,4 @@ router.get(
   },
 );
 
-export default router;
+export { statusRouter };

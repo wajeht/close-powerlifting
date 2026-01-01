@@ -2,7 +2,7 @@ process.env.APP_ENV = "testing";
 process.env.NODE_ENV = "testing";
 
 import { beforeAll, afterAll } from "vitest";
-import { getDb, stop } from "../db/db";
+import { getDb, stopDatabase } from "../db/db";
 
 beforeAll(async () => {
   try {
@@ -16,7 +16,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    await stop();
+    await stopDatabase();
   } catch (error) {
     console.error("Error cleaning up test database:", error);
     throw error;

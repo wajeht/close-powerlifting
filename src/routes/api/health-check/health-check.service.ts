@@ -1,6 +1,6 @@
-import cache from "../../../db/cache";
+import { cache } from "../../../db/cache";
 import { fetchWithAuth } from "../../../utils/scraper";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 
 export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
   const fetchStatus = async () => {

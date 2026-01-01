@@ -33,4 +33,4 @@ class CustomMigrationSource implements Knex.MigrationSource<string> {
   }
 }
 
-export default CustomMigrationSource;
+export { CustomMigrationSource };

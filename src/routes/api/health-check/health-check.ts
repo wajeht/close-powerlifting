@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 
-const router = express.Router();
+const healthCheckRouter = express.Router();
 
 /**
  * GET /api/health-check
@@ -8,7 +8,7 @@ const router = express.Router();
  * @summary get the health of open powerlifting api
  * @return {object} 200 - success response
  */
-router.get("/", async (req: Request, res: Response) => {
+healthCheckRouter.get("/", async (req: Request, res: Response) => {
   const data: any = [];
 
   res.status(200).json({
@@ -20,4 +20,4 @@ router.get("/", async (req: Request, res: Response) => {
   });
 });
 
-export default router;
+export { healthCheckRouter };

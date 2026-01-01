@@ -1,6 +1,6 @@
 import { JSDOM } from "jsdom";
-import cache from "../db/cache";
-import logger from "./logger";
+import { cache } from "../db/cache";
+import { logger } from "./logger";
 import { config } from "../config";
 import type { CacheConfig, ApiResponse } from "../types/api";
 

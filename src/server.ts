@@ -1,12 +1,12 @@
 import { AddressInfo } from "net";
 import { Server } from "http";
 
-import app from "./app";
+import { app } from "./app";
 import { config } from "./config";
-import * as db from "./db/db";
-import * as admin from "./utils/admin-user";
-import * as crons from "./utils/crons";
-import logger from "./utils/logger";
+import { initDatabase, stopDatabase } from "./db/db";
+import { initAdminUser } from "./utils/admin-user";
+import { initCrons } from "./utils/crons";
+import { logger } from "./utils/logger";
 
 const server: Server = app.listen(config.app.port);
 
@@ -18,9 +18,9 @@ server.on("listening", async () => {
   logger.info(`Server is listening on ${bind}`);
 
   try {
-    await db.init();
-    await crons.init();
-    await admin.init();
+    await initDatabase();
+    await initCrons();
+    await initAdminUser();
   } catch (error) {
     logger.error((error as any).message);
   }
@@ -53,7 +53,7 @@ function gracefulShutdown(signal: string): void {
     logger.info("HTTP server closed.");
 
     try {
-      await db.stop();
+      await stopDatabase();
       logger.info("Database connection closed.");
     } catch (error) {
       logger.error("Error closing database connection", error);

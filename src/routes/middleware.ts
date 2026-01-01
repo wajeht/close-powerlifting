@@ -5,13 +5,13 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { AnyZodObject, ZodError } from "zod";
 
 import { config } from "../config";
-import cache from "../db/cache";
-import * as UserRepository from "../db/repositories/user.repository";
+import { cache } from "../db/cache";
+import { incrementApiCallCount } from "../db/repositories/user.repository";
 import { APICallsExceededError, NotFoundError, UnauthorizedError, ValidationError } from "../error";
 import { getHostName } from "../utils/helpers";
-import logger from "../utils/logger";
-import mail from "../utils/mail";
-import reachingApiLimitHTML from "../utils/templates/reaching-api-limit";
+import { logger } from "../utils/logger";
+import { mail } from "../utils/mail";
+import { createReachingApiLimitHtml } from "../utils/templates/reaching-api-limit";
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -185,7 +185,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
   try {
     const id = req.user?.id as unknown as number;
     if (id) {
-      const user = await UserRepository.incrementApiCallCount(id);
+      const user = await incrementApiCallCount(id);
 
       if (!user) {
         return next();
@@ -200,7 +200,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
           from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
           subject: "Reaching API Call Limit",
-          html: reachingApiLimitHTML({ name: user.name, percent: 50 }),
+          html: createReachingApiLimitHtml({ name: user.name, percent: 50 }),
         });
       }
     }

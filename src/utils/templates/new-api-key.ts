@@ -3,7 +3,7 @@ type param = {
   key: string;
 };
 
-export default function newAPIKeyHTML(param: param): string {
+export function createNewApiKeyHtml(param: param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>

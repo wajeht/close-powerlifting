@@ -4,7 +4,7 @@ type param = {
   apiKey: string;
 };
 
-export default function adminNewAPIKeyHTML(param: param): string {
+export function createAdminNewApiKeyHtml(param: param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>

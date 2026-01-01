@@ -5,7 +5,7 @@ type param = {
   email: string;
 };
 
-export default function verifyEmailHTML(param: param): string {
+export function createVerifyEmailHtml(param: param): string {
   return `
     <div>
       <p>Hi ${param.name},</p>

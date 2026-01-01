@@ -2,20 +2,20 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 
 import { config } from "../../config";
-import cache from "../../db/cache";
+import { cache } from "../../db/cache";
 import { getDb } from "../../db/db";
 import { isCronServiceStarted } from "../../utils/crons";
 import { getHostName } from "../../utils/helpers";
-import mail from "../../utils/mail";
-import contactHTML from "../../utils/templates/contact";
+import { mail } from "../../utils/mail";
+import { createContactHtml } from "../../utils/templates/contact";
 import { validationMiddleware } from "../middleware";
-import * as HealthCheckService from "../api/health-check/health-check.service";
-import * as RankingsService from "../api/rankings/rankings.service";
+import { getAPIStatus } from "../api/health-check/health-check.service";
+import { getRankings } from "../api/rankings/rankings.service";
 
-const router = express.Router();
+const generalRouter = express.Router();
 
-router.get("/", async (req: Request, res: Response) => {
-  const rankings = await RankingsService.getRankings({
+generalRouter.get("/", async (req: Request, res: Response) => {
+  const rankings = await getRankings({
     current_page: 1,
     per_page: 5,
     cache: true,
@@ -27,20 +27,20 @@ router.get("/", async (req: Request, res: Response) => {
   });
 });
 
-router.get("/about", (req: Request, res: Response) => {
+generalRouter.get("/about", (req: Request, res: Response) => {
   return res.status(200).render("general/general-about.html", {
     path: "/about",
   });
 });
 
-router.get("/contact", (req: Request, res: Response) => {
+generalRouter.get("/contact", (req: Request, res: Response) => {
   return res.status(200).render("general/general-contact.html", {
     path: "/contact",
     messages: req.flash(),
   });
 });
 
-router.post(
+generalRouter.post(
   "/contact",
   validationMiddleware({
     body: z.object({
@@ -58,7 +58,7 @@ router.post(
       from: `"Close Powerlifting" <${config.email.user}>`,
       to: config.email.user,
       subject: `Contact Request from ${email}`,
-      html: contactHTML({ name, email, message }),
+      html: createContactHtml({ name, email, message }),
     });
 
     req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
@@ -67,21 +67,21 @@ router.post(
   },
 );
 
-router.get("/terms", (req: Request, res: Response) => {
+generalRouter.get("/terms", (req: Request, res: Response) => {
   return res.status(200).render("general/general-terms.html", {
     path: "/terms",
   });
 });
 
-router.get("/privacy", (req: Request, res: Response) => {
+generalRouter.get("/privacy", (req: Request, res: Response) => {
   return res.status(200).render("general/general-privacy.html", {
     path: "/privacy",
   });
 });
 
-router.get("/status", async (req: Request, res: Response) => {
+generalRouter.get("/status", async (req: Request, res: Response) => {
   const hostname = getHostName(req);
-  const apiStatuses = await HealthCheckService.getAPIStatus({
+  const apiStatuses = await getAPIStatus({
     X_API_KEY: config.app.xApiKey,
     url: hostname,
   });
@@ -95,7 +95,7 @@ router.get("/status", async (req: Request, res: Response) => {
   });
 });
 
-router.get("/health-check", (req: Request, res: Response) => {
+generalRouter.get("/health-check", (req: Request, res: Response) => {
   let dbConnected = false;
   try {
     getDb();
@@ -114,7 +114,7 @@ router.get("/health-check", (req: Request, res: Response) => {
   });
 });
 
-router.get("/healthz", (req: Request, res: Response) => {
+generalRouter.get("/healthz", (req: Request, res: Response) => {
   let dbConnected = false;
   try {
     getDb();
@@ -133,4 +133,4 @@ router.get("/healthz", (req: Request, res: Response) => {
   });
 });
 
-export default router;
+export { generalRouter };

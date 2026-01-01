@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as UsersService from "./users.service";
+import { getUser, searchUser } from "./users.service";
 import {
   getUserValidation,
   getUsersValidation,
@@ -11,7 +11,7 @@ import {
   GetUsersType,
 } from "./users.validation";
 
-const router = express.Router();
+const usersRouter = express.Router();
 
 /**
  * GET /api/users
@@ -23,12 +23,12 @@ const router = express.Router();
  * @return {object} 308 - redirect to rankings
  * @return {object} 404 - not found
  */
-router.get(
+usersRouter.get(
   "/",
   apiValidationMiddleware({ query: getUsersValidation }),
   async (req: Request<GetUsersType, {}, {}>, res: Response) => {
     if (req.query.search) {
-      const searched = await UsersService.searchUser(req.query);
+      const searched = await searchUser(req.query);
 
       if (!searched?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -57,11 +57,11 @@ router.get(
  * @return {object} 200 - success response
  * @return {object} 404 - not found
  */
-router.get(
+usersRouter.get(
   "/:username",
   apiValidationMiddleware({ params: getUserValidation }),
   async (req: Request<GetUserType, {}, {}>, res: Response) => {
-    const user = await UsersService.getUser(req.params);
+    const user = await getUser(req.params);
 
     if (!user) throw new NotFoundError("The resource cannot be found!");
 
@@ -76,4 +76,4 @@ router.get(
   },
 );
 
-export default router;
+export { usersRouter };

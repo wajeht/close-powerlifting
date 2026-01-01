@@ -3,7 +3,7 @@ type Param = {
   key: string;
 };
 
-export default function welcomeHTML(param: Param): string {
+export function createWelcomeHtml(param: Param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>

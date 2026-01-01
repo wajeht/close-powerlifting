@@ -1,6 +1,6 @@
 import path from "path";
 import type { Knex } from "knex";
-import CustomMigrationSource from "./migration-source";
+import { CustomMigrationSource } from "./migration-source";
 import { config } from "../config";
 
 const isTestEnv = process.env.NODE_ENV === "testing" || config.app.env === "testing";
@@ -43,4 +43,4 @@ const knexConfig: Knex.Config = {
     : undefined,
 };
 
-export default knexConfig;
+export { knexConfig };

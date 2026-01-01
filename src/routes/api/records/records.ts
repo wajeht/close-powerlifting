@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as RecordsService from "./records.service";
+import { getRecords, getFilteredRecords } from "./records.service";
 import {
   getRecordsValidation,
   getFilteredRecordsParamValidation,
@@ -13,7 +13,7 @@ import {
   GetFilteredRecordsQueryType,
 } from "./records.validation";
 
-const router = express.Router();
+const recordsRouter = express.Router();
 
 /**
  * GET /api/records
@@ -23,11 +23,11 @@ const router = express.Router();
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+recordsRouter.get(
   "/",
   apiValidationMiddleware({ query: getRecordsValidation }),
   async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
-    const records = await RecordsService.getRecords(req.query);
+    const records = await getRecords(req.query);
 
     if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -52,7 +52,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+recordsRouter.get(
   "/:equipment",
   apiValidationMiddleware({
     params: getFilteredRecordsParamValidation.pick({ equipment: true }),
@@ -67,7 +67,7 @@ router.get(
     >,
     res: Response,
   ) => {
-    const records = await RecordsService.getFilteredRecords(req.params, req.query);
+    const records = await getFilteredRecords(req.params, req.query);
 
     if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -93,7 +93,7 @@ router.get(
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
-router.get(
+recordsRouter.get(
   "/:equipment/:sex",
   apiValidationMiddleware({
     params: getFilteredRecordsParamValidation,
@@ -103,7 +103,7 @@ router.get(
     req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
     res: Response,
   ) => {
-    const records = await RecordsService.getFilteredRecords(req.params, req.query);
+    const records = await getFilteredRecords(req.params, req.query);
 
     if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -119,4 +119,4 @@ router.get(
   },
 );
 
-export default router;
+export { recordsRouter };

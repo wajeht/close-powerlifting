@@ -15,4 +15,4 @@ const mail = nodemailer.createTransport({
       : undefined,
 });
 
-export default mail;
+export { mail };

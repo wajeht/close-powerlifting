@@ -1,12 +1,16 @@
 import cron from "node-cron";
 
 import { config } from "../config";
-import cache from "../db/cache";
-import * as UserRepository from "../db/repositories/user.repository";
-import logger from "../utils/logger";
-import reachingApiLimitHTML from "../utils/templates/reaching-api-limit";
-import mail from "./mail";
-import apiLimitResetHTML from "./templates/api-limits-reset";
+import { cache } from "../db/cache";
+import {
+  findVerified,
+  findByApiCallCount,
+  resetAllApiCallCounts,
+} from "../db/repositories/user.repository";
+import { logger } from "../utils/logger";
+import { createReachingApiLimitHtml } from "../utils/templates/reaching-api-limit";
+import { mail } from "./mail";
+import { createApiLimitResetHtml } from "./templates/api-limits-reset";
 
 async function removeCaches() {
   try {
@@ -30,16 +34,16 @@ async function resetApiCallCount() {
     const isStartOfMonth = today.getDate() === 1;
 
     if (isStartOfMonth) {
-      const users = await UserRepository.findVerified();
+      const users = await findVerified();
 
-      await UserRepository.resetAllApiCallCounts();
+      await resetAllApiCallCounts();
 
       for (const user of users) {
         mail.sendMail({
           from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
           subject: "API Call Limit Reset",
-          html: apiLimitResetHTML({ name: user.name }),
+          html: createApiLimitResetHtml({ name: user.name }),
         });
 
         logger.info(`resetApiCallCount() sent to user id ${user.id}`);
@@ -58,14 +62,14 @@ async function sendReachingApiLimitEmail() {
 
     // 70 % of default api call limit and verified users only
     const targetCount = Math.floor(config.app.defaultApiCallLimit * 0.7);
-    const users = await UserRepository.findByApiCallCount(targetCount);
+    const users = await findByApiCallCount(targetCount);
 
     for (const user of users) {
       mail.sendMail({
         from: `"Close Powerlifting" <${config.email.user}>`,
         to: user.email,
         subject: "Reaching API Limit",
-        html: reachingApiLimitHTML({ name: user.name, percent: 70 }),
+        html: createReachingApiLimitHtml({ name: user.name, percent: 70 }),
       });
 
       logger.info(`sendReachingApiLimitEmail() sent to user id ${user.id}`);
@@ -79,7 +83,7 @@ async function sendReachingApiLimitEmail() {
 
 let isCronStarted = false;
 
-export async function init() {
+export async function initCrons() {
   try {
     logger.info(`cron services were started!`);
 

@@ -3,9 +3,8 @@ import { ZodError } from "zod";
 import { ZodIssue, ZodIssueCode } from "zod";
 
 import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from "./middleware";
-import cache from "../db/cache";
+import { cache } from "../db/cache";
 import { getHostName } from "../utils/helpers";
-import * as utils from "../utils/helpers";
 
 describe("notFoundHandler", () => {
   let req: any;
@@ -150,7 +149,13 @@ describe("handleHostname", () => {
     cache.get = vi.fn();
     cache.set = vi.fn();
 
-    vi.spyOn(utils, "getHostName").mockImplementation(vi.fn());
+    vi.mock("../utils/helpers", async () => {
+      const actual = (await vi.importActual("../utils/helpers")) as any;
+      return {
+        ...actual,
+        getHostName: vi.fn(),
+      };
+    });
   });
 
   test("sets hostname from cache if available", async () => {
@@ -171,7 +176,7 @@ describe("handleHostname", () => {
     (cache.get as Mock).mockResolvedValue(null);
     (cache.set as Mock).mockResolvedValue(null);
 
-    (utils.getHostName as Mock).mockReturnValue(mockHostname); // use the mocked getHostName
+    (getHostName as Mock).mockReturnValue(mockHostname); // use the mocked getHostName
 
     req.get.mockReturnValue("localhost");
 

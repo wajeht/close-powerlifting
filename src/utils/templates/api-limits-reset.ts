@@ -1,6 +1,6 @@
 type param = { name: string };
 
-export default function apiLimitResetHTML(param: param): string {
+export function createApiLimitResetHtml(param: param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>

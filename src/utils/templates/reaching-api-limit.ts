@@ -1,6 +1,6 @@
 type param = { name: string; percent: number };
 
-export default function reachingApiLimitHTML(param: param): string {
+export function createReachingApiLimitHtml(param: param): string {
   return `
   <div>
     <p>Hi ${param.name},</p>

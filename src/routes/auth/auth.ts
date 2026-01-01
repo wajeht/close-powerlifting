@@ -2,14 +2,19 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 
 import { config } from "../../config";
-import * as UserRepository from "../../db/repositories/user.repository";
+import { findByEmail, create } from "../../db/repositories/user.repository";
 import { UnauthorizedError, ValidationError } from "../../error";
 import { getGoogleOAuthURL, getHostName, hashKey } from "../../utils/helpers";
-import logger from "../../utils/logger";
+import { logger } from "../../utils/logger";
 import { apiValidationMiddleware, validationMiddleware } from "../middleware";
-import * as AuthService from "./auth.service";
+import {
+  sendVerificationEmail,
+  sendWelcomeEmail,
+  resetAPIKey,
+  resetAdminAPIKey,
+} from "./auth.service";
 
-const router = express.Router();
+const authRouter = express.Router();
 
 const registerValidation = z.object({
   email: z
@@ -106,20 +111,20 @@ async function getGoogleUser({
   }
 }
 
-router.get("/register", (req: Request, res: Response) => {
+authRouter.get("/register", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-register.html", {
     path: "/register",
     messages: req.flash(),
   });
 });
 
-router.post(
+authRouter.post(
   "/register",
   validationMiddleware({ body: registerValidation }),
   async (req: Request<{}, {}, RegisterType>, res: Response) => {
     const { email, name } = req.body;
 
-    const found = await UserRepository.findByEmail(email);
+    const found = await findByEmail(email);
 
     if (found) {
       req.flash("error", "Email already exist!");
@@ -128,13 +133,13 @@ router.post(
 
     const { key: token } = await hashKey();
 
-    const createdUser = await UserRepository.create({ email, name, verification_token: token });
+    const createdUser = await create({ email, name, verification_token: token });
 
     const hostname = getHostName(req);
 
     logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-    AuthService.sendVerificationEmail({
+    sendVerificationEmail({
       name,
       email,
       verification_token: token,
@@ -148,20 +153,20 @@ router.post(
   },
 );
 
-router.get("/reset-api-key", (req: Request, res: Response) => {
+authRouter.get("/reset-api-key", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-reset-api-key.html", {
     path: "/reset-api-key",
     messages: req.flash(),
   });
 });
 
-router.post(
+authRouter.post(
   "/reset-api-key",
   validationMiddleware({ body: resetApiKeyValidation }),
   async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
     const { email } = req.body;
 
-    const foundUser = await UserRepository.findByEmail(email);
+    const foundUser = await findByEmail(email);
 
     logger.info(
       `Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`,
@@ -169,7 +174,7 @@ router.post(
 
     if (foundUser && !foundUser.verified) {
       logger.info(`User ${email} not verified, sending verification email`);
-      await AuthService.sendVerificationEmail({
+      await sendVerificationEmail({
         hostname: getHostName(req),
         userId: String(foundUser.id),
         name: foundUser.name,
@@ -178,14 +183,14 @@ router.post(
       });
     } else if (foundUser && foundUser.verified && foundUser.admin) {
       logger.info(`User ${email} is admin, resetting admin API key`);
-      await AuthService.resetAdminAPIKey({
+      await resetAdminAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
       });
     } else if (foundUser && foundUser.verified) {
       logger.info(`User ${email} is verified, resetting API key`);
-      await AuthService.resetAPIKey({
+      await resetAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
@@ -198,9 +203,9 @@ router.post(
   },
 );
 
-router.get("/verify-email", async (req: Request, res: Response) => {
+authRouter.get("/verify-email", async (req: Request, res: Response) => {
   const { token, email } = req.query as { token: string; email: string };
-  const foundUser = await UserRepository.findByEmail(email);
+  const foundUser = await findByEmail(email);
 
   if (!foundUser) {
     req.flash("error", "Something wrong while verifying your account!");
@@ -217,7 +222,7 @@ router.get("/verify-email", async (req: Request, res: Response) => {
     return res.redirect("/register");
   }
 
-  AuthService.sendWelcomeEmail({
+  sendWelcomeEmail({
     name: foundUser.name,
     email: foundUser.email,
     userId: String(foundUser.id),
@@ -231,11 +236,11 @@ router.get("/verify-email", async (req: Request, res: Response) => {
   return res.redirect("/register");
 });
 
-router.get("/oauth/google", async (req: Request, res: Response) => {
+authRouter.get("/oauth/google", async (req: Request, res: Response) => {
   res.redirect(getGoogleOAuthURL());
 });
 
-router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
+authRouter.get("/oauth/google/redirect", async (req: Request, res: Response) => {
   const code = req.query.code as string;
 
   if (!code) {
@@ -253,10 +258,10 @@ router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
     throw new UnauthorizedError("Something went wrong while authenticating with Google");
   }
 
-  const found = await UserRepository.findByEmail(googleUser.email);
+  const found = await findByEmail(googleUser.email);
 
   if (!found) {
-    const createdUser = await UserRepository.create({
+    const createdUser = await create({
       email: googleUser.email,
       name: googleUser.name,
       verification_token: access_token,
@@ -264,7 +269,7 @@ router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
       verified_at: new Date().toISOString(),
     });
 
-    AuthService.sendWelcomeEmail({
+    sendWelcomeEmail({
       name: createdUser.name,
       email: createdUser.email,
       userId: String(createdUser.id),
@@ -283,13 +288,13 @@ router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
   return res.redirect("/register");
 });
 
-router.post(
+authRouter.post(
   "/api/register",
   apiValidationMiddleware({ body: registerValidation }),
   async (req: Request<{}, {}, RegisterType>, res: Response) => {
     const { email, name } = req.body;
 
-    const found = await UserRepository.findByEmail(email);
+    const found = await findByEmail(email);
 
     if (found) {
       throw new ValidationError("email already exist");
@@ -297,13 +302,13 @@ router.post(
 
     const { key: token } = await hashKey();
 
-    const createdUser = await UserRepository.create({ email, name, verification_token: token });
+    const createdUser = await create({ email, name, verification_token: token });
 
     const hostname = getHostName(req);
 
     logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-    AuthService.sendVerificationEmail({
+    sendVerificationEmail({
       name,
       email,
       verification_token: token,
@@ -326,13 +331,13 @@ router.post(
   },
 );
 
-router.post(
+authRouter.post(
   "/api/verify-email",
   apiValidationMiddleware({ body: verifyEmailValidation }),
   async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
     const { token, email } = req.body;
 
-    const foundUser = await UserRepository.findByEmail(email);
+    const foundUser = await findByEmail(email);
 
     if (!foundUser) {
       throw new ValidationError("Something wrong while verifying your account!");
@@ -346,7 +351,7 @@ router.post(
       throw new ValidationError("This account has already been verified!");
     }
 
-    const unhashedKey = await AuthService.sendWelcomeEmail({
+    const unhashedKey = await sendWelcomeEmail({
       name: foundUser.name,
       email: foundUser.email,
       userId: String(foundUser.id),
@@ -367,16 +372,16 @@ router.post(
   },
 );
 
-router.post(
+authRouter.post(
   "/api/reset-api-key",
   apiValidationMiddleware({ body: resetApiKeyValidation }),
   async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
     const { email } = req.body;
 
-    const foundUser = await UserRepository.findByEmail(email);
+    const foundUser = await findByEmail(email);
 
     if (foundUser && !foundUser.verified) {
-      await AuthService.sendVerificationEmail({
+      await sendVerificationEmail({
         hostname: getHostName(req),
         userId: String(foundUser.id),
         name: foundUser.name,
@@ -384,13 +389,13 @@ router.post(
         verification_token: foundUser.verification_token!,
       });
     } else if (foundUser && foundUser.verified && foundUser.admin) {
-      await AuthService.resetAdminAPIKey({
+      await resetAdminAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
       });
     } else if (foundUser && foundUser.verified) {
-      await AuthService.resetAPIKey({
+      await resetAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
@@ -407,4 +412,4 @@ router.post(
   },
 );
 
-export default router;
+export { authRouter };

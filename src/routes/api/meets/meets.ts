@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import logger from "../../../utils/logger";
+import { logger } from "../../../utils/logger";
 import { apiValidationMiddleware } from "../../middleware";
-import * as MeetsService from "./meets.service";
+import { getMeet } from "./meets.service";
 import {
   getMeetParamValidation,
   getMeetQueryValidation,
@@ -11,7 +11,7 @@ import {
   GetMeetQueryType,
 } from "./meets.validation";
 
-const router = express.Router();
+const meetsRouter = express.Router();
 
 /**
  * GET /api/meets/{meet}
@@ -23,14 +23,14 @@ const router = express.Router();
  * @return {object} 200 - success response with meet metadata and results
  * @return {object} 404 - not found
  */
-router.get(
+meetsRouter.get(
   "/:meet",
   apiValidationMiddleware({
     params: getMeetParamValidation,
     query: getMeetQueryValidation,
   }),
   async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
-    const result = await MeetsService.getMeet({ ...req.params, ...req.query });
+    const result = await getMeet({ ...req.params, ...req.query });
 
     if (!result.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -46,4 +46,4 @@ router.get(
   },
 );
 
-export default router;
+export { meetsRouter };
