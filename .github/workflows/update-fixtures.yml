@@ -54,7 +54,7 @@ jobs:
 
       - name: Commit updated fixtures
         if: steps.verify-changed-files.outputs.changed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "chore: update OpenPowerlifting fixtures"
           file_pattern: "src/routes/api/**/fixtures/*"
