@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import {
   rankingsDefault,
@@ -56,7 +56,6 @@ describe("rankings service", () => {
       const rank = row[1];
       const fullName = row[2];
       const username = row[3];
-      const instagram = row[4];
 
       expect(typeof id).toBe("number");
       expect(typeof rank).toBe("number");

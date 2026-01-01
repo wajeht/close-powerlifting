@@ -3,7 +3,6 @@ import {
   fetchJson,
   parseHtml,
   tableToJson,
-  stripHtml,
   getElementByClass,
   withCache,
 } from "../../../utils/scraper";
@@ -73,13 +72,13 @@ async function fetchUserProfile(username: string): Promise<UserProfile> {
   // Extract sex from h1 text (e.g., "(M)" or "(F)")
   const h1Text = h1?.textContent || "";
   const sexMatch = h1Text.match(/\(([MF])\)/);
-  const sex = sexMatch ? sexMatch[1] : "";
+  const sex = sexMatch?.[1] ?? "";
 
   // Extract instagram handle from link
   const igLink = h1?.querySelector("a.instagram");
   const igHref = igLink?.getAttribute("href") || "";
   const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
-  const instagram = igMatch ? igMatch[1] : "";
+  const instagram = igMatch?.[1] ?? "";
 
   const tables = mixedContent.querySelectorAll("table");
   const personalBest = tables[0] ? tableToJson<PersonalBest>(tables[0]) : [];

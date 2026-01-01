@@ -134,6 +134,7 @@
     "coverage/**/*",
     "node_modules/**/*",
     "**/db.sqlite*",
-    "src/tests/**/*"
+    "src/tests/**/*",
+    "**/fixtures/**/*"
   ]
 }

@@ -20,6 +20,7 @@
     "./src/db/db.sqlite",
     "./public/js/*",
     "/public/js/*",
-    "src/routes/**/*.html"
+    "src/routes/**/*.html",
+    "**/fixtures/**/*"
   ]
 }

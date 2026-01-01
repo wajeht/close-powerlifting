@@ -204,9 +204,12 @@ describe("users service", () => {
         name,
         sex,
         instagram,
-        personalBests: pbTable?.tagName === "TABLE" ? tableToJson<Record<string, string>>(pbTable) : [],
+        personalBests:
+          pbTable?.tagName === "TABLE" ? tableToJson<Record<string, string>>(pbTable) : [],
         competitionResults:
-          resultsTable?.tagName === "TABLE" ? tableToJson<Record<string, string>>(resultsTable) : [],
+          resultsTable?.tagName === "TABLE"
+            ? tableToJson<Record<string, string>>(resultsTable)
+            : [],
       };
     }
 

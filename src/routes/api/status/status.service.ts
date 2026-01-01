@@ -2,7 +2,6 @@ import {
   fetchHtml,
   parseHtml,
   tableToJson,
-  stripHtml,
   getElementByClass,
   withCache,
 } from "../../../utils/scraper";
@@ -30,7 +29,7 @@ async function fetchStatus(): Promise<StatusData> {
       const link = p?.querySelector("a");
       const href = link?.getAttribute("href") || "";
       const match = href.match(/commits\/([a-f0-9]+)/);
-      serverVersion = match ? match[1] : "";
+      serverVersion = match?.[1] ?? "";
       break;
     }
   }
