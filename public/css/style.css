@@ -385,9 +385,6 @@
 }
 @layer components;
 @layer utilities {
-  .invisible {
-    visibility: hidden !important;
-  }
   .visible {
     visibility: visible !important;
   }

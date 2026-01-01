@@ -25,14 +25,16 @@ export const sortEnum = z.enum([
 ]);
 export const eventEnum = z.enum(["full-power", "push-pull", "squat", "bench", "deadlift"]);
 
+const MAX_PER_PAGE = 500;
+
 export const getRankingsValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
     .optional(),
   current_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.max(1, Number(val)))
     .optional(),
   cache: cacheTransform,
 });
@@ -49,11 +51,11 @@ export const getFilteredRankingsParamValidation = z.object({
 export const getFilteredRankingsQueryValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
     .optional(),
   current_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.max(1, Number(val)))
     .optional(),
   cache: cacheTransform,
 });

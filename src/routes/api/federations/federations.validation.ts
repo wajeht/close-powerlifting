@@ -1,13 +1,15 @@
 import { z } from "zod";
 
+const MAX_PER_PAGE = 500;
+
 export const getFederationsValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
     .optional(),
   current_page: z
     .string()
-    .transform((val) => Number(val))
+    .transform((val) => Math.max(1, Number(val)))
     .optional(),
   cache: z
     .string()

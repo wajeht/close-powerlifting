@@ -7,16 +7,27 @@ dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 export type Env = "production" | "development" | "testing" | "local";
 
+const env = (process.env.APP_ENV || process.env.NODE_ENV || "development") as Env;
+const isProduction = env === "production";
+
+function requireEnv(name: string, defaultValue?: string): string {
+  const value = process.env[name] || defaultValue;
+  if (!value && isProduction) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value || defaultValue || "";
+}
+
 export const config = {
   app: {
     port: parseInt(process.env.APP_PORT || "80", 10),
-    env: (process.env.APP_ENV || process.env.NODE_ENV || "development") as Env,
+    env,
     version: packageJson.version,
     domain: process.env.APP_DOMAIN || "localhost",
     apiUrl: process.env.API_URL || "",
     baseUrl: process.env.BASE_URL || "",
-    jwtSecret: process.env.APP_JWT_SECRET || "secret",
-    passwordSalt: process.env.APP_PASSWORD_SALT || "5",
+    jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
+    passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
     adminName: process.env.APP_ADMIN_NAME || "",
     xApiKey: process.env.X_API_KEY || "",
@@ -25,7 +36,7 @@ export const config = {
 
   session: {
     name: process.env.SESSION_NAME || "close-powerlifting",
-    secret: process.env.SESSION_SECRET || "secret",
+    secret: requireEnv("SESSION_SECRET", isProduction ? undefined : "dev-session-secret-change-me"),
   } as const,
 
   email: {
@@ -39,7 +50,10 @@ export const config = {
 
   cookie: {
     expiration: parseInt(process.env.COOKIE_EXPIRATION || "60000", 10),
-    password: process.env.COOKIE_PASSWORD || "password",
+    password: requireEnv(
+      "COOKIE_PASSWORD",
+      isProduction ? undefined : "dev-cookie-password-change-me",
+    ),
     name: process.env.COOKIE_NAME || "close-powerlifting",
   } as const,
 

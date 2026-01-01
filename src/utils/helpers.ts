@@ -55,6 +55,13 @@ export function generatePassword(length = 50): string {
   return crypto.randomBytes(length).toString("base64").slice(0, length);
 }
 
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
+
 export function getGoogleOAuthURL(): string {
   const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 

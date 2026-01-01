@@ -216,8 +216,10 @@ export function sessionMiddleware() {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: config.app.env === "production",
+      httpOnly: true,
       secure: config.app.env === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
     },
   });
 }

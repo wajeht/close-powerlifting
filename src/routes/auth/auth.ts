@@ -4,7 +4,7 @@ import { z } from "zod";
 import { config } from "../../config";
 import { findByEmail, create } from "../../db/repositories/user.repository";
 import { UnauthorizedError, ValidationError } from "../../error";
-import { getGoogleOAuthURL, getHostName, hashKey } from "../../utils/helpers";
+import { getGoogleOAuthURL, getHostName, hashKey, timingSafeEqual } from "../../utils/helpers";
 import { logger } from "../../utils/logger";
 import { apiValidationMiddleware, validationMiddleware } from "../middleware";
 import {
@@ -206,7 +206,7 @@ authRouter.get("/verify-email", async (req: Request, res: Response) => {
     return res.redirect("/register");
   }
 
-  if (foundUser.verification_token !== token) {
+  if (!foundUser.verification_token || !timingSafeEqual(foundUser.verification_token, token)) {
     req.flash("error", "Something wrong while verifying your account!");
     return res.redirect("/register");
   }
@@ -313,14 +313,8 @@ authRouter.post(
     res.status(201).json({
       status: "success",
       request_url: req.originalUrl,
-      message:
-        "Thank you for registering. Please check your email for confirmation or use the follow data to make a post request to /api/auth/verify-email",
-      data: [
-        {
-          email,
-          token,
-        },
-      ],
+      message: "Thank you for registering. Please check your email for confirmation.",
+      data: [],
     });
   },
 );
@@ -337,7 +331,7 @@ authRouter.post(
       throw new ValidationError("Something wrong while verifying your account!");
     }
 
-    if (foundUser.verification_token !== token) {
+    if (!foundUser.verification_token || !timingSafeEqual(foundUser.verification_token, token)) {
       throw new ValidationError("Something wrong while verifying your account!");
     }
 

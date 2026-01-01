@@ -32,7 +32,12 @@ app.use(flash());
 
 app.use(sessionMiddleware());
 
-app.use(cors({ credentials: true, origin: true }));
+app.use(
+  cors({
+    credentials: true,
+    origin: config.app.env === "production" ? config.app.domain : true,
+  }),
+);
 
 app.use(compression());
 
@@ -40,7 +45,22 @@ app.use(express.json());
 
 app.use(express.urlencoded({ extended: true }));
 
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+      },
+    },
+  }),
+);
 
 app.use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }));
 
