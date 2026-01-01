@@ -47,9 +47,5 @@ async function fetchStatus(): Promise<StatusData> {
 export async function getStatus({
   cache: useCache = true,
 }: GetStatusType): Promise<ApiResponse<StatusData>> {
-  return withCache<StatusData>(
-    { key: CACHE_KEY, ttlSeconds: CACHE_TTL },
-    fetchStatus,
-    useCache,
-  );
+  return withCache<StatusData>({ key: CACHE_KEY, ttlSeconds: CACHE_TTL }, fetchStatus, useCache);
 }

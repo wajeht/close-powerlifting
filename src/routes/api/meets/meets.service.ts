@@ -1,9 +1,4 @@
-import {
-  fetchHtml,
-  parseHtml,
-  tableToJson,
-  withCache,
-} from "../../../utils/scraper";
+import { fetchHtml, parseHtml, tableToJson, withCache } from "../../../utils/scraper";
 import type { MeetData, MeetResult, ApiResponse } from "../../../types/api";
 import type { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 

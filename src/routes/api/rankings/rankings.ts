@@ -64,7 +64,12 @@ router.get(
     query: getFilteredRankingsQueryValidation,
   }),
   async (
-    req: Request<Pick<GetFilteredRankingsParamType, "equipment">, {}, {}, GetFilteredRankingsQueryType>,
+    req: Request<
+      Pick<GetFilteredRankingsParamType, "equipment">,
+      {},
+      {},
+      GetFilteredRankingsQueryType
+    >,
     res: Response,
   ) => {
     const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
@@ -101,7 +106,12 @@ router.get(
     query: getFilteredRankingsQueryValidation,
   }),
   async (
-    req: Request<Pick<GetFilteredRankingsParamType, "equipment" | "sex">, {}, {}, GetFilteredRankingsQueryType>,
+    req: Request<
+      Pick<GetFilteredRankingsParamType, "equipment" | "sex">,
+      {},
+      {},
+      GetFilteredRankingsQueryType
+    >,
     res: Response,
   ) => {
     const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
@@ -135,7 +145,11 @@ router.get(
 router.get(
   "/filter/:equipment/:sex/:weight_class",
   apiValidationMiddleware({
-    params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true, weight_class: true }),
+    params: getFilteredRankingsParamValidation.pick({
+      equipment: true,
+      sex: true,
+      weight_class: true,
+    }),
     query: getFilteredRankingsQueryValidation,
   }),
   async (
@@ -179,7 +193,12 @@ router.get(
 router.get(
   "/filter/:equipment/:sex/:weight_class/:year",
   apiValidationMiddleware({
-    params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true, weight_class: true, year: true }),
+    params: getFilteredRankingsParamValidation.pick({
+      equipment: true,
+      sex: true,
+      weight_class: true,
+      year: true,
+    }),
     query: getFilteredRankingsQueryValidation,
   }),
   async (
@@ -279,7 +298,10 @@ router.get(
     params: getFilteredRankingsParamValidation,
     query: getFilteredRankingsQueryValidation,
   }),
-  async (req: Request<GetFilteredRankingsParamType, {}, {}, GetFilteredRankingsQueryType>, res: Response) => {
+  async (
+    req: Request<GetFilteredRankingsParamType, {}, {}, GetFilteredRankingsQueryType>,
+    res: Response,
+  ) => {
     const rankings = await RankingsService.getFilteredRankings(req.params, req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);

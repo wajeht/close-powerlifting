@@ -59,7 +59,12 @@ router.get(
     query: getFilteredRecordsQueryValidation,
   }),
   async (
-    req: Request<Pick<GetFilteredRecordsParamType, "equipment">, {}, {}, GetFilteredRecordsQueryType>,
+    req: Request<
+      Pick<GetFilteredRecordsParamType, "equipment">,
+      {},
+      {},
+      GetFilteredRecordsQueryType
+    >,
     res: Response,
   ) => {
     const records = await RecordsService.getFilteredRecords(req.params, req.query);
@@ -94,7 +99,10 @@ router.get(
     params: getFilteredRecordsParamValidation,
     query: getFilteredRecordsQueryValidation,
   }),
-  async (req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>, res: Response) => {
+  async (
+    req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
+    res: Response,
+  ) => {
     const records = await RecordsService.getFilteredRecords(req.params, req.query);
 
     if (!records?.data) throw new NotFoundError("The resource cannot be found!");

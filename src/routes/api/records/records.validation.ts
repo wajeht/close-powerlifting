@@ -5,7 +5,14 @@ const cacheTransform = z
   .transform((val) => val === "true")
   .optional();
 
-export const recordsEquipmentEnum = z.enum(["raw", "wraps", "raw-wraps", "single-ply", "multi-ply", "unlimited"]);
+export const recordsEquipmentEnum = z.enum([
+  "raw",
+  "wraps",
+  "raw-wraps",
+  "single-ply",
+  "multi-ply",
+  "unlimited",
+]);
 export const recordsSexEnum = z.enum(["men", "women"]);
 
 export const getRecordsValidation = z.object({

@@ -52,10 +52,7 @@ export async function getFederations({
   };
 }
 
-async function fetchFederationMeets(
-  federation: string,
-  year?: number,
-): Promise<FederationMeet[]> {
+async function fetchFederationMeets(federation: string, year?: number): Promise<FederationMeet[]> {
   const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
   const html = await fetchHtml(path);
   const doc = parseHtml(html);
@@ -68,9 +65,7 @@ export async function getFederation({
   year,
   cache: useCache = true,
 }: GetFederationsParamType & GetFederationsQueryType): Promise<ApiResponse<FederationMeet[]>> {
-  const cacheKey = year
-    ? `federation-${federation}-${year}`
-    : `federation-${federation}`;
+  const cacheKey = year ? `federation-${federation}-${year}` : `federation-${federation}`;
 
   return withCache<FederationMeet[]>(
     { key: cacheKey, ttlSeconds: CACHE_TTL },

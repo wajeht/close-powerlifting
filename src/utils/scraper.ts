@@ -109,11 +109,7 @@ export function getElementText(
   return element?.textContent?.trim() || null;
 }
 
-export function getElementByClass(
-  doc: Document,
-  className: string,
-  index = 0,
-): Element | null {
+export function getElementByClass(doc: Document, className: string, index = 0): Element | null {
   const elements = doc.getElementsByClassName(className);
   return elements[index] || null;
 }

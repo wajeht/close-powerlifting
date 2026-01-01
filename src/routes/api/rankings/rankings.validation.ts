@@ -5,9 +5,24 @@ const cacheTransform = z
   .transform((val) => val === "true")
   .optional();
 
-export const equipmentEnum = z.enum(["raw", "wraps", "raw-wraps", "single-ply", "multi-ply", "unlimited"]);
+export const equipmentEnum = z.enum([
+  "raw",
+  "wraps",
+  "raw-wraps",
+  "single-ply",
+  "multi-ply",
+  "unlimited",
+]);
 export const sexEnum = z.enum(["men", "women"]);
-export const sortEnum = z.enum(["by-dots", "by-wilks", "by-glossbrenner", "by-total", "by-squat", "by-bench", "by-deadlift"]);
+export const sortEnum = z.enum([
+  "by-dots",
+  "by-wilks",
+  "by-glossbrenner",
+  "by-total",
+  "by-squat",
+  "by-bench",
+  "by-deadlift",
+]);
 export const eventEnum = z.enum(["full-power", "push-pull", "squat", "bench", "deadlift"]);
 
 export const getRankingsValidation = z.object({
