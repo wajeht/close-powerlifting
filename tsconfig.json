@@ -8,6 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
+    "removeComments": true,
 
     /* Strictness */
     "strict": true,
@@ -22,17 +23,19 @@
     "sourceMap": true,
 
     /* If your code doesn't run in the DOM: */
-    "lib": ["es2022"],
-
-    "forceConsistentCasingInFileNames": true
+    "lib": ["es2022"]
   },
   "exclude": [
-    "dist/**/*",
     "node_modules",
-    "logs",
-    "src/**/*.spec.ts",
-    "src/**/*.test.ts",
-    ".vscode",
-    "public"
+    "**/*.test.ts",
+    "**/*.test.mts",
+    "**/*.test.mjs",
+    "**/*.test.js",
+    "**/*.spec.ts",
+    "src/tests/**/*",
+    "dist",
+    "coverage",
+    "public",
+    "vitest.config.mts"
   ]
 }
