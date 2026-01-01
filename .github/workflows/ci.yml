@@ -9,7 +9,6 @@ env:
   PORT: 80
   ENV: 'testing'
   DOMAIN: 'localhost'
-  MONGODB_URI: 'localhost://username:password@mongodb:27017/close-powerlifting?authSource=admin'
   FRONTEND_ORIGIN: 'http://localhost:8080'
 
   PASSWORD_SALT: 5
@@ -29,17 +28,9 @@ env:
   GOOGLE_CLIENT_SECRET: ''
   GOOGLE_OAUTH_REDIRECT_URL: 'http://localhost:8080/api/auth/oauth/google/redirect'
 
-  GITHUB_CLIENT_ID: ''
-  GITHUB_CLIENT_SECRET: ''
-  GITHUB_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/github/redirect"
-
   API_URL: 'https://www.openpowerlifting.org/api'
   BASE_URL: 'https://www.openpowerlifting.org/'
   X_API_KEY: ''
-
-  REDIS_HOST: 'localhost'
-  REDIS_PORT: 6379
-  REDIS_PASSWORD: 'password'
 
   EMAIL_HOST: 'localhost'
   EMAIL_PORT: 1025
@@ -48,48 +39,48 @@ env:
 
 jobs:
   format:
-    name: Prettier format
+    name: Oxfmt format
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [19.x]
+        node-version: [22.x]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
       - name: Format codes
-        run: npm run format
+        run: npm run format:check
 
   lint:
-    name: ESLint
+    name: Oxlint
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [19.x]
+        node-version: [22.x]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
       - name: Lint codes
-        run: npm run lint
+        run: npm run lint:check
 
   test:
     name: Unit tests
@@ -97,38 +88,28 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [19.x]
+        node-version: [22.x]
 
     services:
-      mongodb:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-
-     mailhog:
+      mailhog:
         image: mailhog/mailhog:latest
         ports:
           - 1025:1025
           - 8025:8025
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm i
+        run: npm ci
 
       - name: Test codes
-        run: npm run test
+        run: npm run test:ci
 
   deploy:
     needs: [format, test, lint]
@@ -141,13 +122,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -157,10 +138,10 @@ jobs:
         run: echo "IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$(echo ${{ github.sha }} | cut -c1-7) | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Build and push Docker Image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.prod
+          file: ./Dockerfile
           push: true
           tags: ${{ env.IMAGE_URL }}
 
