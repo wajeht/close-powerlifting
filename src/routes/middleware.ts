@@ -11,7 +11,7 @@ import { APICallsExceededError, NotFoundError, UnauthorizedError, ValidationErro
 import { getHostName } from "../utils/helpers";
 import { logger } from "../utils/logger";
 import { mail } from "../utils/mail";
-import { createReachingApiLimitHtml } from "../utils/templates/reaching-api-limit";
+import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -200,7 +200,7 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
           from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
           subject: "Reaching API Call Limit",
-          html: createReachingApiLimitHtml({ name: user.name, percent: 50 }),
+          text: createReachingApiLimitText({ name: user.name, percent: 50 }),
         });
       }
     }

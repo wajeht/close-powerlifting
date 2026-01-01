@@ -1,16 +1,14 @@
-type param = { name: string };
+type ApiLimitResetParams = {
+  name: string;
+};
 
-export function createApiLimitResetHtml(param: param): string {
-  return `
-  <div>
-    <p>Hi ${param.name},</p>
-    <br>
+export function createApiLimitResetText(params: ApiLimitResetParams): string {
+  return `Hi ${params.name},
 
-    <p>Your API call limit has been reset. You can now continue using our services without restrictions.</p>
+Your API call limit has been reset. You can now continue using our services without restrictions.
 
-    <br>
-    <p>Thank you for using Close Powerlifting Api</p>
-    <p>Let's make all kinds of gains. All kindszzzz.!</p>
-  </div>
-  `;
+Thank you for using Close Powerlifting!
+
+- The Close Powerlifting Team
+`;
 }

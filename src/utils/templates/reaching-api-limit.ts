@@ -1,16 +1,15 @@
-type param = { name: string; percent: number };
+type ReachingApiLimitParams = {
+  name: string;
+  percent: number;
+};
 
-export function createReachingApiLimitHtml(param: param): string {
-  return `
-  <div>
-    <p>Hi ${param.name},</p>
-    <br>
+export function createReachingApiLimitText(params: ReachingApiLimitParams): string {
+  return `Hi ${params.name},
 
-    <p>Your API calls are reaching ${param.percent}% of given limit. Please optimize your usage to avoid interruptions.</p>
+Your API calls are reaching ${params.percent}% of your limit. Please optimize your usage to avoid interruptions.
 
-    <br>
-    <p>Let us know if you need help</p>
-    <p>Let's make all kinds of gains. All kindszzzz.!</p>
-  </div>
-  `;
+Let us know if you need help.
+
+- The Close Powerlifting Team
+`;
 }

@@ -1,15 +1,16 @@
-type contact = {
+type ContactParams = {
   name: string;
   email: string;
   message: string;
 };
 
-export function createContactHtml(contact: contact): string {
-  return `
-    <div>
-      <p><span style="font-weight: bold;">Name:</span> ${contact.name}</p>
-      <p><span style="font-weight: bold;">Email:</span> ${contact.email}</p>
-      <p><span style="font-weight: bold;">Message:</span> ${contact.message}</p>
-    </div>
-  `;
+export function createContactText(params: ContactParams): string {
+  return `New Contact Request
+
+Name: ${params.name}
+Email: ${params.email}
+
+Message:
+${params.message}
+`;
 }

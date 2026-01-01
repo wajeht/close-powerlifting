@@ -1,25 +1,17 @@
-type param = {
+type NewApiKeyParams = {
   name: string;
   key: string;
 };
 
-export function createNewApiKeyHtml(param: param): string {
-  return `
-  <div>
-    <p>Hi ${param.name},</p>
-    <br>
+export function createNewApiKeyText(params: NewApiKeyParams): string {
+  return `Hi ${params.name},
 
-    <p>We've received a request to reset a new api key. Here below is your API key to access Close Powerlifting!</p>
+We've received a request to reset your API key. Here is your new API key to access Close Powerlifting:
 
-    <br>
-    <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${param.key}</div>
-    <br>
+API Key: ${params.key}
 
-    <p>Note: This API key will expire after three months. Please make sure to renew your key before it expires to continue accessing Close Powerlifting.</p>
+Note: This API key will expire after three months. Please make sure to renew your key before it expires to continue accessing Close Powerlifting.
 
-    <br>
-    <p>Welcome to the Close Powerlifting,</p>
-    <p>Let's make all kinds of gains. All kindszzzz.!</p>
-  </div>
-  `;
+- The Close Powerlifting Team
+`;
 }

@@ -8,9 +8,9 @@ import {
   resetAllApiCallCounts,
 } from "../db/repositories/user.repository";
 import { logger } from "../utils/logger";
-import { createReachingApiLimitHtml } from "../utils/templates/reaching-api-limit";
+import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
 import { mail } from "./mail";
-import { createApiLimitResetHtml } from "./templates/api-limits-reset";
+import { createApiLimitResetText } from "./templates/api-limits-reset";
 
 async function removeCaches() {
   try {
@@ -43,7 +43,7 @@ async function resetApiCallCount() {
           from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
           subject: "API Call Limit Reset",
-          html: createApiLimitResetHtml({ name: user.name }),
+          text: createApiLimitResetText({ name: user.name }),
         });
 
         logger.info(`resetApiCallCount() sent to user id ${user.id}`);
@@ -69,7 +69,7 @@ async function sendReachingApiLimitEmail() {
         from: `"Close Powerlifting" <${config.email.user}>`,
         to: user.email,
         subject: "Reaching API Limit",
-        html: createReachingApiLimitHtml({ name: user.name, percent: 70 }),
+        text: createReachingApiLimitText({ name: user.name, percent: 70 }),
       });
 
       logger.info(`sendReachingApiLimitEmail() sent to user id ${user.id}`);

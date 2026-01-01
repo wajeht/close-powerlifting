@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 
 import { config } from "../config";
 
-const mail = nodemailer.createTransport({
+export const mail = nodemailer.createTransport({
   host: config.email.host,
   port: config.email.port,
   secure: config.email.secure,
@@ -14,5 +14,3 @@ const mail = nodemailer.createTransport({
         }
       : undefined,
 });
-
-export { mail };

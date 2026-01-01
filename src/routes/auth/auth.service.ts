@@ -5,10 +5,10 @@ import { update } from "../../db/repositories/user.repository";
 import { generateAPIKey, generatePassword } from "../../utils/helpers";
 import { logger } from "../../utils/logger";
 import { mail } from "../../utils/mail";
-import { createAdminNewApiKeyHtml } from "../../utils/templates/admin-new-api-key";
-import { createNewApiKeyHtml } from "../../utils/templates/new-api-key";
-import { createVerifyEmailHtml } from "../../utils/templates/verify-email";
-import { createWelcomeHtml } from "../../utils/templates/welcome";
+import { createAdminNewApiKeyText } from "../../utils/templates/admin-new-api-key";
+import { createNewApiKeyText } from "../../utils/templates/new-api-key";
+import { createVerifyEmailText } from "../../utils/templates/verify-email";
+import { createWelcomeText } from "../../utils/templates/welcome";
 
 export type UserParams = {
   userId: string;
@@ -39,7 +39,7 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
       from: `"Close Powerlifting" <${config.email.from}>`,
       to: email,
       subject: "New API key for Close Powerlifting",
-      html: createNewApiKeyHtml({ name: verified!.name!, key: unhashedKey }),
+      text: createNewApiKeyText({ name: verified!.name!, key: unhashedKey }),
     });
     logger.info(`Reset API email was sent to email: ${email}!`);
   } catch (error) {
@@ -64,7 +64,7 @@ export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
       from: `"Close Powerlifting" <${config.email.from}>`,
       to: email,
       subject: "New API Key and Admin Password for Close Powerlifting",
-      html: createAdminNewApiKeyHtml({ name, password, apiKey: unhashedKey }),
+      text: createAdminNewApiKeyText({ name, password, apiKey: unhashedKey }),
     });
     logger.info(`admin user: ${email} has been updated!`);
   } catch (error) {
@@ -84,7 +84,7 @@ export async function sendVerificationEmail({
       from: `"Close Powerlifting" <${config.email.from}>`,
       to: email,
       subject: "Account verification",
-      html: createVerifyEmailHtml({
+      text: createVerifyEmailText({
         name,
         hostname,
         email,
@@ -113,7 +113,7 @@ export async function sendWelcomeEmail(userParams: UserParams) {
       from: `"Close Powerlifting" <${config.email.from}>`,
       to: email,
       subject: "API Key for Close Powerlifting",
-      html: createWelcomeHtml({ name: verified!.name!, key: unhashedKey }),
+      text: createWelcomeText({ name: verified!.name!, key: unhashedKey }),
     });
     logger.info(`user_id: ${verified!.id} has verified email!`);
   } catch (error) {

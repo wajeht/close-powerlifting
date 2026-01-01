@@ -7,7 +7,7 @@ import { getDb } from "../../db/db";
 import { isCronServiceStarted } from "../../utils/crons";
 import { getHostName } from "../../utils/helpers";
 import { mail } from "../../utils/mail";
-import { createContactHtml } from "../../utils/templates/contact";
+import { createContactText } from "../../utils/templates/contact";
 import { validationMiddleware } from "../middleware";
 import { getAPIStatus } from "../api/health-check/health-check.service";
 import { getRankings } from "../api/rankings/rankings.service";
@@ -58,7 +58,7 @@ generalRouter.post(
       from: `"Close Powerlifting" <${config.email.user}>`,
       to: config.email.user,
       subject: `Contact Request from ${email}`,
-      html: createContactHtml({ name, email, message }),
+      text: createContactText({ name, email, message }),
     });
 
     req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");

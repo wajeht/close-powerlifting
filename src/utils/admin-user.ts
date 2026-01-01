@@ -6,7 +6,7 @@ import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
 import { updateUser } from "../routes/auth/auth.service";
 import { logger } from "./logger";
 import { mail } from "./mail";
-import { createAdminNewApiKeyHtml } from "./templates/admin-new-api-key";
+import { createAdminNewApiKeyText } from "./templates/admin-new-api-key";
 
 export async function initAdminUser() {
   try {
@@ -52,7 +52,7 @@ export async function initAdminUser() {
           from: `"Close Powerlifting" <${config.email.from}>`,
           to: createdAdminUser.email,
           subject: "API Key and Admin Password for Close Powerlifting",
-          html: createAdminNewApiKeyHtml({ name: verified.name, password, apiKey: unhashedKey }),
+          text: createAdminNewApiKeyText({ name: verified.name, password, apiKey: unhashedKey }),
         });
         logger.info(`Admin welcome email sent to ${createdAdminUser.email}`);
       } catch (error) {
