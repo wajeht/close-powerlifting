@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 
 import * as UserRepository from "../../db/repositories/user.repository";
-import { getGitHubOAuthURL, getGoogleOAuthURL, getHostName, hashKey } from "../../utils/helpers";
+import { getGoogleOAuthURL, getHostName, hashKey } from "../../utils/helpers";
 import logger from "../../utils/logger";
 import {
   resetAPIKey,
@@ -43,53 +43,6 @@ export async function getGoogleRedirect(req: Request, res: Response) {
     const createdUser = await UserRepository.create({
       email: googleUser.email,
       name: googleUser.name,
-      verification_token: access_token,
-      verified: true,
-      verified_at: new Date().toISOString(),
-    });
-
-    sendWelcomeEmail({
-      name: createdUser.name,
-      email: createdUser.email,
-      userId: String(createdUser.id),
-    });
-
-    req.flash("success", "We will send you an API key to your email very shortly!");
-
-    return res.redirect("/register");
-  }
-
-  req.flash(
-    "error",
-    "Email already exist, please click on 'Forgot api key?' to request a new one!",
-  );
-
-  return res.redirect("/register");
-}
-
-export async function getGithub(req: Request, res: Response) {
-  res.redirect(getGitHubOAuthURL());
-}
-
-export async function getGithubRedirect(req: Request, res: Response) {
-  const code = req.query.code as string;
-
-  if (!code) {
-    throw new UnauthorizedError("Something went wrong while authenticating with github");
-  }
-
-  const { access_token } = await AuthServices.getGithubOauthToken({ code });
-
-  const githubUser = await AuthServices.getGithubUser({ access_token });
-
-  const emails = await AuthServices.getGithubUserEmails({ access_token });
-
-  const found = await UserRepository.findByEmail(emails[0]!.email);
-
-  if (!found) {
-    const createdUser = await UserRepository.create({
-      email: emails[0]!.email,
-      name: githubUser.name,
       verification_token: access_token,
       verified: true,
       verified_at: new Date().toISOString(),

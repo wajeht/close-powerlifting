@@ -8,8 +8,6 @@ import {
   postVerifyEmailValidation,
 } from "./auth.validations";
 import {
-  getGithub,
-  getGithubRedirect,
   getGoogle,
   getGoogleRedirect,
   postRegister,
@@ -32,20 +30,6 @@ auth.get("/oauth/google", catchAsyncHandler(getGoogle));
  * @summary get google oauth redirect url
  */
 auth.get("/oauth/google/redirect", catchAsyncHandler(getGoogleRedirect));
-
-/**
- * GET /api/auth/oauth/github
- * @tags auth
- * @summary get github oauth url
- */
-auth.get("/oauth/github", catchAsyncHandler(getGithub));
-
-/**
- * GET /api/auth/oauth/github/redirect
- * @tags auth
- * @summary get github oauth redirect url
- */
-auth.get("/oauth/github/redirect", catchAsyncHandler(getGithubRedirect));
 
 /**
  * POST /api/auth/register

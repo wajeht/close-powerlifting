@@ -24,17 +24,6 @@ export interface GoogleUserResult {
   locale: string;
 }
 
-export interface GitHubUser {
-  login: string;
-  avatar_url: string;
-  name: string;
-  email: string;
-}
-
-export type GitHubOauthToken = {
-  access_token: string;
-};
-
 export async function getGoogleOauthToken({ code }: { code: string }): Promise<GoogleOauthToken> {
   const rootURl = "https://oauth2.googleapis.com/token";
 
@@ -84,73 +73,3 @@ export async function getGoogleUser({
   }
 }
 
-type Email = {
-  email: string;
-  primary: boolean;
-  verified: boolean;
-  visibility: string | null;
-};
-
-export async function getGithubUserEmails({
-  access_token,
-}: {
-  access_token: string;
-}): Promise<Email[]> {
-  try {
-    const { data } = await axios.get<Email[]>("https://api.github.com/user/emails", {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
-
-    return data;
-  } catch (error: any) {
-    logger.error("Failed to fetch Github User emails");
-    throw error;
-  }
-}
-
-export async function getGithubUser({
-  access_token,
-}: {
-  access_token: string;
-}): Promise<GitHubUser> {
-  try {
-    const { data } = await axios.get<GitHubUser>("https://api.github.com/user", {
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
-
-    return data;
-  } catch (error: any) {
-    logger.error("Failed to fetch Github User info");
-    throw error;
-  }
-}
-
-export async function getGithubOauthToken({ code }: { code: string }): Promise<GitHubOauthToken> {
-  const rootUrl = "https://github.com/login/oauth/access_token";
-  const options = {
-    client_id: oauthConfig.google.client_id,
-    client_secret: oauthConfig.google.client_secret,
-    code,
-  };
-
-  const queryString = qs.stringify(options);
-
-  try {
-    const { data } = await axios.post(`${rootUrl}?${queryString}`, {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
-
-    const decoded = qs.parse(data) as GitHubOauthToken;
-
-    return decoded;
-  } catch (error: any) {
-    logger.error("Failed to fetch Github Oauth Tokens");
-    throw error;
-  }
-}

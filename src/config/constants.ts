@@ -42,11 +42,6 @@ export const oauthConfig = {
     client_secret: process.env.GOOGLE_CLIENT_SECRET as unknown as string,
     oauth_redirect_url: process.env.GOOGLE_OAUTH_REDIRECT_URL as unknown as string,
   },
-  github: {
-    client_id: process.env.GITHUB_CLIENT_ID as unknown as string,
-    client_secret: process.env.GITHUB_CLIENT_SECRET as unknown as string,
-    oauth_redirect_url: process.env.GITHUB_OAUTH_REDIRECT_URL as unknown as string,
-  },
 } as const;
 
 export const DEFAULT_API_CALL_LIMIT = 500;

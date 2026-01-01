@@ -100,7 +100,7 @@ export function getGoogleOAuthURL() {
 
   const options = {
     redirect_uri: oauthConfig.google.oauth_redirect_url,
-    client_id: oauthConfig.github.client_id,
+    client_id: oauthConfig.google.client_id,
     access_type: "offline",
     response_type: "code",
     prompt: "consent",
@@ -108,20 +108,6 @@ export function getGoogleOAuthURL() {
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/userinfo.email",
     ].join(" "),
-  };
-
-  const qs = new URLSearchParams(options);
-
-  return `${rootUrl}?${qs.toString()}`;
-}
-
-export function getGitHubOAuthURL() {
-  const rootUrl = "https://github.com/login/oauth/authorize";
-
-  const options = {
-    redirect_uri: oauthConfig.google.oauth_redirect_url,
-    client_id: oauthConfig.github.client_id,
-    scope: "user:email",
   };
 
   const qs = new URLSearchParams(options);
