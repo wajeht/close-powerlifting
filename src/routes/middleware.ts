@@ -25,6 +25,7 @@ export function rateLimitMiddleware() {
     max: 50, // Limit each IP to 50 requests per `window`
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
     message: (req: Request, res: Response) => {
       if (req.get("Content-Type") === "application/json") {
         return res.json({
