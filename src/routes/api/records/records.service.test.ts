@@ -1,68 +1,34 @@
 import { describe, expect, test } from "vitest";
 
-import { parseHtml, tableToJson } from "../../../utils/scraper";
+import { parseHtml } from "../../../utils/scraper";
+import { parseRecordsHtml } from "./records.service";
 import { recordsDefaultHtml, recordsRawHtml, recordsRawMenHtml } from "./fixtures";
 
 const defaultDoc = parseHtml(recordsDefaultHtml);
 const rawDoc = parseHtml(recordsRawHtml);
 const rawMenDoc = parseHtml(recordsRawMenHtml);
 
-function extractCategories(doc: Document) {
-  const recordCols = doc.getElementsByClassName("records-col");
-  const data: { title: string; records: Record<string, string>[] }[] = [];
-
-  for (const col of recordCols) {
-    const heading = col.querySelector("h2, h3");
-    const table = col.querySelector("table");
-
-    if (heading && table) {
-      data.push({
-        title: heading.textContent?.trim() || "",
-        records: tableToJson<Record<string, string>>(table),
-      });
-    }
-  }
-
-  return data;
-}
-
-const defaultCategories = extractCategories(defaultDoc);
-const rawCategories = extractCategories(rawDoc);
-const rawMenCategories = extractCategories(rawMenDoc);
+const defaultCategories = parseRecordsHtml(defaultDoc);
+const rawCategories = parseRecordsHtml(rawDoc);
+const rawMenCategories = parseRecordsHtml(rawMenDoc);
 
 describe("records service", () => {
-  describe("records HTML parsing", () => {
-    test("default records HTML parses correctly", () => {
-      expect(defaultDoc).toBeDefined();
+  describe("parseRecordsHtml", () => {
+    test("parses default records HTML correctly", () => {
+      expect(defaultCategories).toBeDefined();
+      expect(Array.isArray(defaultCategories)).toBe(true);
     });
 
-    test("raw records HTML parses correctly", () => {
-      expect(rawDoc).toBeDefined();
+    test("parses raw records HTML correctly", () => {
+      expect(rawCategories).toBeDefined();
+      expect(Array.isArray(rawCategories)).toBe(true);
     });
 
-    test("raw men records HTML parses correctly", () => {
-      expect(rawMenDoc).toBeDefined();
-    });
-  });
-
-  describe("records-col extraction", () => {
-    test("finds records-col elements in default records", () => {
-      const recordCols = defaultDoc.getElementsByClassName("records-col");
-      expect(recordCols.length).toBeGreaterThan(0);
+    test("parses raw men records HTML correctly", () => {
+      expect(rawMenCategories).toBeDefined();
+      expect(Array.isArray(rawMenCategories)).toBe(true);
     });
 
-    test("finds records-col elements in raw records", () => {
-      const recordCols = rawDoc.getElementsByClassName("records-col");
-      expect(recordCols.length).toBeGreaterThan(0);
-    });
-
-    test("finds records-col elements in raw men records", () => {
-      const recordCols = rawMenDoc.getElementsByClassName("records-col");
-      expect(recordCols.length).toBeGreaterThan(0);
-    });
-  });
-
-  describe("record categories extraction", () => {
     test("extracts record categories from default records", () => {
       expect(defaultCategories.length).toBeGreaterThan(0);
     });
@@ -80,26 +46,19 @@ describe("records service", () => {
       });
     });
 
-    test("categories include expected titles", () => {
+    test("categories include expected lift titles", () => {
       const titles = defaultCategories.map((c) => c.title.toLowerCase());
-
       const hasSquat = titles.some((t) => t.includes("squat"));
       const hasBench = titles.some((t) => t.includes("bench"));
       const hasDeadlift = titles.some((t) => t.includes("deadlift"));
-
       expect(hasSquat || hasBench || hasDeadlift).toBe(true);
     });
-  });
 
-  describe("record entries structure", () => {
-    test("record entries have expected fields", () => {
+    test("record entries have fields", () => {
       const firstCategory = defaultCategories[0];
-
       if (firstCategory && firstCategory.records.length > 0) {
         const record = firstCategory.records[0];
-        const keys = Object.keys(record);
-
-        expect(keys.length).toBeGreaterThan(0);
+        expect(Object.keys(record).length).toBeGreaterThan(0);
       }
     });
 
@@ -117,15 +76,13 @@ describe("records service", () => {
         }
       }
     });
-  });
 
-  describe("filtered records comparison", () => {
-    test("default and raw records have same structure", () => {
+    test("default and raw records have categories", () => {
       expect(defaultCategories.length).toBeGreaterThan(0);
       expect(rawCategories.length).toBeGreaterThan(0);
     });
 
-    test("raw and raw men records have same structure", () => {
+    test("raw and raw men records have categories", () => {
       expect(rawCategories.length).toBeGreaterThan(0);
       expect(rawMenCategories.length).toBeGreaterThan(0);
     });

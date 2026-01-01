@@ -11,16 +11,12 @@ import type { GetStatusType } from "./status.validation";
 const CACHE_KEY = "status";
 const CACHE_TTL = 3600;
 
-async function fetchStatus(): Promise<StatusData> {
-  const html = await fetchHtml("/status");
-  const doc = parseHtml(html);
-
+export function parseStatusHtml(doc: Document): StatusData {
   const textContent = getElementByClass(doc, "text-content");
   if (!textContent) {
     throw new Error("Could not find text-content element on status page");
   }
 
-  // Extract server version commit hash from the link in the paragraph after "Server Version" h2
   let serverVersion = "";
   const h2s = textContent.querySelectorAll("h2");
   for (const h2 of h2s) {
@@ -34,18 +30,25 @@ async function fetchStatus(): Promise<StatusData> {
     }
   }
 
-  // Extract meets info from paragraph containing "Tracking"
-  const paragraphs = textContent.querySelectorAll("p");
   let meetsInfo = "";
-  for (const p of paragraphs) {
-    const text = p.textContent || "";
-    if (text.includes("Tracking")) {
-      meetsInfo = text.trim();
+  for (const h2 of h2s) {
+    if (h2.textContent?.includes("Meets")) {
+      let sibling = h2.nextSibling;
+      while (sibling) {
+        if (sibling.nodeType === 3) {
+          const text = sibling.textContent?.trim() || "";
+          if (text.includes("Tracking")) {
+            meetsInfo = text;
+            break;
+          }
+        }
+        if (sibling.nodeType === 1) break;
+        sibling = sibling.nextSibling;
+      }
       break;
     }
   }
 
-  // Extract federations table
   const table = textContent.querySelector("table");
   const federations = tableToJson(table) as Federation[];
 
@@ -54,6 +57,12 @@ async function fetchStatus(): Promise<StatusData> {
     meets: meetsInfo,
     federations,
   };
+}
+
+async function fetchStatus(): Promise<StatusData> {
+  const html = await fetchHtml("/status");
+  const doc = parseHtml(html);
+  return parseStatusHtml(doc);
 }
 
 export async function getStatus({

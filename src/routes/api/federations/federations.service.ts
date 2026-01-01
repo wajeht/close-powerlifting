@@ -18,11 +18,15 @@ const { defaultPerPage } = config.pagination;
 
 type FederationMeet = Meet;
 
+export function parseFederationMeetsHtml(doc: Document): FederationMeet[] {
+  const table = doc.querySelector("table");
+  return tableToJson(table) as FederationMeet[];
+}
+
 async function fetchFederationsList(): Promise<FederationMeet[]> {
   const html = await fetchHtml("/mlist");
   const doc = parseHtml(html);
-  const table = doc.querySelector("table");
-  return tableToJson(table) as FederationMeet[];
+  return parseFederationMeetsHtml(doc);
 }
 
 export async function getFederations({
@@ -58,8 +62,7 @@ async function fetchFederationMeets(federation: string, year?: number): Promise<
   const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
   const html = await fetchHtml(path);
   const doc = parseHtml(html);
-  const table = doc.querySelector("table");
-  return tableToJson(table) as FederationMeet[];
+  return parseFederationMeetsHtml(doc);
 }
 
 export async function getFederation({

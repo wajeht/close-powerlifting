@@ -8,10 +8,7 @@ import type {
 
 const CACHE_TTL = 3600;
 
-async function fetchRecordsData(filterPath: string = ""): Promise<RecordCategory[]> {
-  const html = await fetchHtml(`/records${filterPath}`);
-  const doc = parseHtml(html);
-
+export function parseRecordsHtml(doc: Document): RecordCategory[] {
   const recordCols = doc.getElementsByClassName("records-col");
   const data: RecordCategory[] = [];
 
@@ -28,6 +25,12 @@ async function fetchRecordsData(filterPath: string = ""): Promise<RecordCategory
   }
 
   return data;
+}
+
+async function fetchRecordsData(filterPath: string = ""): Promise<RecordCategory[]> {
+  const html = await fetchHtml(`/records${filterPath}`);
+  const doc = parseHtml(html);
+  return parseRecordsHtml(doc);
 }
 
 export async function getRecords({

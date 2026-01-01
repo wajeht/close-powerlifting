@@ -56,26 +56,20 @@ function transformRankingRow(row: (string | number)[]): RankingRow {
   };
 }
 
-async function fetchUserProfile(username: string): Promise<UserProfile> {
-  const html = await fetchHtml(`/u/${username}`);
-  const doc = parseHtml(html);
-
+export function parseUserProfileHtml(doc: Document, username: string): UserProfile {
   const mixedContent = getElementByClass(doc, "mixed-content");
   if (!mixedContent) {
     throw new Error(`User profile not found: ${username}`);
   }
 
-  // Extract name from span inside h1 (can be span.green or just span)
   const h1 = mixedContent.querySelector("h1");
   const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
   const name = nameSpan?.textContent?.trim() || username;
 
-  // Extract sex from h1 text (e.g., "(M)" or "(F)")
   const h1Text = h1?.textContent || "";
   const sexMatch = h1Text.match(/\(([MF])\)/);
   const sex = sexMatch?.[1] ?? "";
 
-  // Extract instagram handle from link
   const igLink = h1?.querySelector("a.instagram");
   const igHref = igLink?.getAttribute("href") || "";
   const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
@@ -94,6 +88,12 @@ async function fetchUserProfile(username: string): Promise<UserProfile> {
     personal_best: personalBest,
     competition_results: competitionResults,
   };
+}
+
+async function fetchUserProfile(username: string): Promise<UserProfile> {
+  const html = await fetchHtml(`/u/${username}`);
+  const doc = parseHtml(html);
+  return parseUserProfileHtml(doc, username);
 }
 
 export async function getUser({ username }: GetUserType): Promise<UserProfile[] | null> {

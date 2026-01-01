@@ -4,10 +4,7 @@ import type { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 
 const CACHE_TTL = 3600;
 
-async function fetchMeetData(meet: string): Promise<MeetData> {
-  const html = await fetchHtml(`/m/${meet}`);
-  const doc = parseHtml(html);
-
+export function parseMeetHtml(doc: Document): MeetData {
   const h1 = doc.querySelector("h1#meet");
   const title = h1?.textContent?.trim() || "";
 
@@ -25,6 +22,12 @@ async function fetchMeetData(meet: string): Promise<MeetData> {
     location: location || "",
     results,
   };
+}
+
+async function fetchMeetData(meet: string): Promise<MeetData> {
+  const html = await fetchHtml(`/m/${meet}`);
+  const doc = parseHtml(html);
+  return parseMeetHtml(doc);
 }
 
 export async function getMeet({
