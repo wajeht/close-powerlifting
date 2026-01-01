@@ -22,24 +22,25 @@ export async function fetchStatus() {
   }
 }
 
-export async function getStatus({ cache = true }: getStatusType) {
+export async function getStatus({ cache: useCache = true }: getStatusType) {
   try {
-    if (cache === false) {
+    if (useCache === false) {
       return {
         data: await fetchStatus(),
-        cache,
+        cache: useCache,
       };
     }
 
-    let data = JSON.parse((await redis.get(`close-powerlifting-status`)) as any);
+    const cachedData = await cache.get(`close-powerlifting-status`);
+    let data = cachedData ? JSON.parse(cachedData) : null;
 
     if (data === null) {
       data = await fetchStatus();
-      await redis.set(`close-powerlifting-status`, JSON.stringify(data));
+      await cache.set(`close-powerlifting-status`, JSON.stringify(data));
     }
 
     return {
-      cache,
+      cache: useCache,
       data,
     };
   } catch (e) {
