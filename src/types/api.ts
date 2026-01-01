@@ -28,6 +28,30 @@ export interface Meet extends Record<string, string> {
   location: string;
 }
 
+// Meet result entry from /m/{fed}/{id}
+export interface MeetResult extends Record<string, string> {
+  rank: string;
+  lifter: string;
+  sex: string;
+  age: string;
+  equip: string;
+  class: string;
+  weight: string;
+  squat: string;
+  bench: string;
+  deadlift: string;
+  total: string;
+  dots: string;
+}
+
+// Full meet data with metadata
+export interface MeetData {
+  title: string;
+  date: string;
+  location: string;
+  results: MeetResult[];
+}
+
 // Rankings row from /api/rankings
 export interface RankingRow {
   id: number;
