@@ -1,26 +1,28 @@
 import request from "supertest";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { app } from "./app";
 
 describe("server", () => {
-  let server: any;
-
-  beforeAll(() => {
-    server = app.listen(3000);
+  test("GET /health-check returns status ok", async () => {
+    const response = await request(app).get("/health-check");
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("ok");
   });
 
-  afterAll((done) => {
-    server.close(done);
+  test("GET /healthz returns status ok", async () => {
+    const response = await request(app).get("/healthz");
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("ok");
   });
 
-  test("GET / should return 200 OK", async () => {
-    const response = await request(server).get("/");
+  test("GET /about returns 200", async () => {
+    const response = await request(app).get("/about");
     expect(response.status).toBe(200);
   });
 
-  test("GET /health-check should return", async () => {
-    const response = await request(server).get("/health-check");
-    expect(response.status).toBe(200);
+  test("GET /nonexistent returns 404", async () => {
+    const response = await request(app).get("/nonexistent-route-xyz");
+    expect(response.status).toBe(404);
   });
 });
