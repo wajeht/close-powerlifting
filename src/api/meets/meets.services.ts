@@ -27,17 +27,18 @@ async function fetchMeet({ meet }: getMeetParamType) {
   }
 }
 
-export async function getMeet({ meet, cache = true }: getMeetParamType & getMeetQueryType) {
+export async function getMeet({ meet, cache: useCache = true }: getMeetParamType & getMeetQueryType) {
   try {
-    if (cache === false) {
+    if (useCache === false) {
       return await fetchMeet({ meet });
     }
 
-    let cachedMeet = JSON.parse((await redis.get(`meet-${meet}`)) as any);
+    const cachedData = await cache.get(`meet-${meet}`);
+    let cachedMeet = cachedData ? JSON.parse(cachedData) : null;
 
     if (!cachedMeet) {
       cachedMeet = await fetchMeet({ meet });
-      await redis.set(`meet-${meet}`, JSON.stringify(cachedMeet));
+      await cache.set(`meet-${meet}`, JSON.stringify(cachedMeet));
     }
 
     return cachedMeet;

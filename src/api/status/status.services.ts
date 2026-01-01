@@ -1,8 +1,8 @@
 import { JSDOM } from 'jsdom';
 
+import cache from '../../db/cache';
 import Axios from '../../utils/axios';
 import { stripHTML, tableToJson } from '../../utils/helpers';
-import redis from '../../utils/redis';
 import { getStatusType } from './status.validations';
 
 const api = new Axios(true).instance();
