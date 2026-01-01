@@ -2,9 +2,7 @@ import compression from "compression";
 import flash from "connect-flash";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import ejs from "ejs";
 import express from "express";
-import expressLayouts from "express-ejs-layouts";
 import helmet from "helmet";
 import path from "path";
 
@@ -18,6 +16,7 @@ import {
 } from "./routes/middleware";
 import routes from "./routes/routes";
 import { expressJSDocSwaggerHandler } from "./utils/swagger";
+import { engine, layoutMiddleware } from "./utils/template";
 
 const app = express();
 
@@ -45,17 +44,15 @@ app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }));
 
-app.engine("html", ejs.renderFile);
+app.engine("html", engine);
 
 app.set("view engine", "html");
 
 app.set("views", path.resolve(path.join(process.cwd(), "src", "routes")));
 
-app.set("layout", path.resolve(path.join(process.cwd(), "src", "routes", "_layouts", "main.html")));
-
 app.set("view cache", config.app.env === "production");
 
-app.use(expressLayouts);
+app.use(layoutMiddleware);
 
 expressJSDocSwaggerHandler(app);
 
