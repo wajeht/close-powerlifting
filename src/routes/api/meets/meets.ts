@@ -1,0 +1,46 @@
+import express, { Request, Response } from "express";
+import catchAsyncHandler from "express-async-handler";
+import { StatusCodes } from "http-status-codes";
+
+import { NotFoundError } from "../../../error";
+import logger from "../../../utils/logger";
+import { apiValidationMiddleware } from "../../middleware";
+import * as MeetsService from "./meets.service";
+import {
+  getMeetParamValidation,
+  getMeetQueryValidation,
+  GetMeetParamType,
+  GetMeetQueryType,
+} from "./meets.validation";
+
+const router = express.Router();
+
+/**
+ * GET /api/meets/:meet
+ * @tags meets
+ * @summary get specific meet details
+ * @security BearerAuth
+ */
+router.get(
+  "/:meet",
+  apiValidationMiddleware({
+    params: getMeetParamValidation,
+    query: getMeetQueryValidation,
+  }),
+  catchAsyncHandler(async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
+    const meet = await MeetsService.getMeet({ ...req.params, ...req.query });
+
+    if (!meet) throw new NotFoundError("The resource cannot be found!");
+
+    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+    res.status(StatusCodes.OK).json({
+      status: "success",
+      request_url: req.originalUrl,
+      message: "The resource was returned successfully!",
+      data: meet,
+    });
+  }),
+);
+
+export default router;
