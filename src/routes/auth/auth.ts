@@ -189,7 +189,7 @@ router.post(
 
     const foundUser = await UserRepository.findByEmail(email);
 
-    logger.info(`Reset API key requested for email: ${email}, found: ${!!foundUser}`);
+    logger.info(`Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`);
 
     if (foundUser && foundUser.verified === false) {
       logger.info(`User ${email} not verified, sending verification email`);
