@@ -1,8 +1,9 @@
 import { JSDOM } from "jsdom";
 import { cache } from "../db/cache";
-import { logger } from "./logger";
 import { config } from "../config";
+import { ScraperError } from "../error";
 import type { ApiResponse } from "../types";
+import { logger } from "./logger";
 
 type CacheConfig = {
   key: string;
@@ -44,21 +45,6 @@ export async function fetchJson<T>(path: string): Promise<T> {
 export function parseHtml(html: string): Document {
   const dom = new JSDOM(html);
   return dom.window.document;
-}
-
-export class ScraperError extends Error {
-  constructor(
-    message: string,
-    public statusCode: number,
-    public path: string,
-  ) {
-    super(message);
-    this.name = "ScraperError";
-  }
-
-  isNotFound(): boolean {
-    return this.statusCode === 404;
-  }
 }
 
 export function tableToJson<T extends Record<string, string> = Record<string, string>>(

@@ -1,35 +1,47 @@
-export class UnauthorizedError extends Error {
-  statusCode: number;
-  constructor(message: string) {
-    super();
-    this.message = message;
-    this.statusCode = 401;
+export class AppError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+  ) {
+    super(message);
+    this.name = this.constructor.name;
   }
 }
 
-export class NotFoundError extends Error {
-  statusCode: number;
+export class UnauthorizedError extends AppError {
   constructor(message: string) {
-    super();
-    this.message = message;
-    this.statusCode = 404;
+    super(message, 401);
   }
 }
 
-export class APICallsExceededError extends Error {
-  statusCode: number;
+export class NotFoundError extends AppError {
   constructor(message: string) {
-    super();
-    this.message = message;
-    this.statusCode = 429;
+    super(message, 404);
   }
 }
 
-export class ValidationError extends Error {
-  statusCode: number;
+export class ValidationError extends AppError {
   constructor(message: string) {
-    super();
-    this.message = message;
-    this.statusCode = 422;
+    super(message, 422);
+  }
+}
+
+export class APICallsExceededError extends AppError {
+  constructor(message: string) {
+    super(message, 429);
+  }
+}
+
+export class ScraperError extends AppError {
+  constructor(
+    message: string,
+    statusCode: number,
+    public path: string,
+  ) {
+    super(message, statusCode);
+  }
+
+  isNotFound(): boolean {
+    return this.statusCode === 404;
   }
 }

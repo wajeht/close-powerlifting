@@ -7,7 +7,7 @@ import { AnyZodObject, ZodError } from "zod";
 import { config } from "../config";
 import { cache } from "../db/cache";
 import { incrementApiCallCount } from "../db/repositories/user.repository";
-import { APICallsExceededError, NotFoundError, UnauthorizedError, ValidationError } from "../error";
+import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
 import { getHostName } from "../utils/helpers";
 import { logger } from "../utils/logger";
 import { mail } from "../utils/mail";
@@ -53,54 +53,39 @@ export function notFoundMiddleware(req: Request, res: Response, _next: NextFunct
   });
 }
 
-export function errorMiddleware(err: any, req: Request, res: Response, _next: NextFunction) {
+export function errorMiddleware(err: unknown, req: Request, res: Response, _next: NextFunction) {
   let statusCode = 500;
-  let message =
-    config.app.env === "development"
-      ? err.stack
-      : "The server encountered an internal error or misconfiguration and was unable to complete your request!";
+  let message = "The server encountered an internal error and was unable to complete your request.";
 
   if (err instanceof ZodError) {
     statusCode = 400;
     message = err.message;
-  }
-
-  if (err instanceof UnauthorizedError) {
-    statusCode = 401;
+  } else if (err instanceof AppError) {
+    statusCode = err.statusCode;
     message = err.message;
+  } else if (err instanceof Error) {
+    message = config.app.env === "development" ? err.stack || err.message : message;
   }
 
-  if (err instanceof ValidationError) {
-    statusCode = 422;
-    message = err.message;
-  }
-
-  if (err instanceof APICallsExceededError) {
-    statusCode = 429;
-    message = err.message;
-  }
-
-  if (err instanceof NotFoundError) {
-    statusCode = 404;
-    message = err.message;
-  }
-
-  const isApiPrefix = req.url.match(/\/api\//g);
+  const isApiRoute = req.url.includes("/api/");
   const isHealthcheck = req.originalUrl === "/health-check";
 
-  if (!isApiPrefix && !isHealthcheck)
+  if (!isApiRoute && !isHealthcheck) {
     return res.status(statusCode).render("general/general-error.html", {
-      error: config.app.env === "development" ? err.stack : null,
+      error: config.app.env === "development" && err instanceof Error ? err.stack : null,
     });
+  }
 
-  logger.error(err);
+  if (err instanceof Error) {
+    logger.error(err);
+  }
 
   return res.status(statusCode).json({
     status: "fail",
     request_url: req.originalUrl,
     cache: req.query?.cache,
     message,
-    errors: err?.errors,
+    errors: err instanceof ZodError ? err.errors : undefined,
     data: [],
   });
 }
