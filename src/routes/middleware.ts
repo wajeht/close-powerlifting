@@ -54,34 +54,34 @@ export function notFoundMiddleware(req: Request, res: Response, _next: NextFunct
 }
 
 export function errorMiddleware(err: any, req: Request, res: Response, _next: NextFunction) {
-  let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
+  let statusCode = 500;
   let message =
     config.app.env === "development"
       ? err.stack
       : "The server encountered an internal error or misconfiguration and was unable to complete your request!";
 
   if (err instanceof ZodError) {
-    statusCode = StatusCodes.BAD_REQUEST;
+    statusCode = 400;
     message = err.message;
   }
 
   if (err instanceof UnauthorizedError) {
-    statusCode = StatusCodes.UNAUTHORIZED;
+    statusCode = 401;
     message = err.message;
   }
 
   if (err instanceof ValidationError) {
-    statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
+    statusCode = 422;
     message = err.message;
   }
 
   if (err instanceof APICallsExceededError) {
-    statusCode = StatusCodes.TOO_MANY_REQUESTS;
+    statusCode = 429;
     message = err.message;
   }
 
   if (err instanceof NotFoundError) {
-    statusCode = StatusCodes.NOT_FOUND;
+    statusCode = 404;
     message = err.message;
   }
 
@@ -121,7 +121,7 @@ export function validationMiddleware(validators: RequestValidators) {
     } catch (error) {
       if (error instanceof ZodError) {
         req.flash("error", error.issues.map((e) => e.message).join(" "));
-        return res.status(StatusCodes.BAD_REQUEST).redirect(req.originalUrl);
+        return res.status(400).redirect(req.originalUrl);
       }
       next(error);
     }

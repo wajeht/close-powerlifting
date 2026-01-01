@@ -1,4 +1,3 @@
-import { StatusCodes } from "http-status-codes";
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { ZodIssue, ZodIssueCode } from "zod";
@@ -35,7 +34,7 @@ describe("notFoundHandler", () => {
     req.url = "/some-url";
     notFoundMiddleware(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
+    expect(res.status).toHaveBeenCalledWith(404);
     expect(res.render).toHaveBeenCalledWith("general/general-not-found.html");
     expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
@@ -46,7 +45,7 @@ describe("notFoundHandler", () => {
     req.originalUrl = "/api/some-url";
     notFoundMiddleware(req, res, next);
 
-    expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
+    expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({
       status: "fail",
       request_url: req.originalUrl,
@@ -116,7 +115,7 @@ describe("validate", () => {
     await middleware(req, res, next);
 
     expect(req.flash).toHaveBeenCalledWith("error", errorMessage);
-    expect(res.status).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+    expect(res.status).toHaveBeenCalledWith(400);
     expect(res.redirect).toHaveBeenCalledWith(req.originalUrl);
     expect(next).not.toHaveBeenCalled();
   });
