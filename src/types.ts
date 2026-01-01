@@ -1,7 +1,3 @@
-// ============================================================================
-// Express Extensions
-// ============================================================================
-
 declare global {
   namespace Express {
     interface Request {
@@ -9,10 +5,6 @@ declare global {
     }
   }
 }
-
-// ============================================================================
-// User Types
-// ============================================================================
 
 export interface User {
   id: number;
@@ -43,10 +35,6 @@ export type UserParams = {
   email: string;
 };
 
-// ============================================================================
-// API Response Types
-// ============================================================================
-
 export interface ApiResponse<T> {
   data: T | null;
   cache: boolean;
@@ -64,10 +52,6 @@ export interface Pagination {
   to: number;
 }
 
-// ============================================================================
-// Federation Types
-// ============================================================================
-
 export interface Federation extends Record<string, string> {
   name: string;
   meetsentered: string;
@@ -78,19 +62,11 @@ export interface Federation extends Record<string, string> {
   maintainers: string;
 }
 
-// ============================================================================
-// Status Types
-// ============================================================================
-
 export interface StatusData {
   server_version: string;
   meets: string;
   federations: Federation[];
 }
-
-// ============================================================================
-// Meet Types
-// ============================================================================
 
 export interface Meet extends Record<string, string> {
   federation: string;
@@ -120,10 +96,6 @@ export interface MeetData {
   location: string;
   results: MeetResult[];
 }
-
-// ============================================================================
-// Rankings Types
-// ============================================================================
 
 export interface RankingRow {
   id: number;
@@ -161,10 +133,6 @@ export interface RankingsApiResponse {
   total_length: number;
 }
 
-// ============================================================================
-// User Profile Types
-// ============================================================================
-
 export interface PersonalBest {
   [key: string]: string;
 }
@@ -182,10 +150,6 @@ export interface UserProfile {
   personal_best: PersonalBest[];
   competition_results: CompetitionResult[];
 }
-
-// ============================================================================
-// Records Types
-// ============================================================================
 
 export interface RecordCategory {
   title: string;
