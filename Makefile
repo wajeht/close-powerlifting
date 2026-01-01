@@ -115,7 +115,7 @@ push:
 	@git push --no-verify
 
 deploy:
-	@./deploy.sh
+	@./scripts/deploy.sh
 
 clean:
 	@$(DC) down --rmi all --volumes --remove-orphans
