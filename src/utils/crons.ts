@@ -13,11 +13,8 @@ async function removeCaches() {
   try {
     logger.info(`removeCaches() cron starts!`);
 
-    // Delete all cache entries matching the pattern
     const deleted = await cache.delPattern("close-powerlifting%");
     logger.info(`deleted ${deleted} cache entries!`);
-
-    // Also clear expired cache entries
     await cache.clearExpired();
 
     logger.info(`removeCaches() cron ends!`);
@@ -34,13 +31,10 @@ async function resetApiCallCount() {
     const isStartOfMonth = today.getDate() === 1;
 
     if (isStartOfMonth) {
-      // Get users who have been verified, then reset counts
       const users = await UserRepository.findVerified();
 
-      // Reset all api call counts at once
       await UserRepository.resetAllApiCallCounts();
 
-      // Send emails to each user
       for (const user of users) {
         mail.sendMail({
           from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
