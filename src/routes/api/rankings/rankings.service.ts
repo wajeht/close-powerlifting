@@ -10,7 +10,12 @@ import type {
   ApiResponse,
   Pagination,
 } from "../../../types/api";
-import type { GetRankingsType, GetRankType } from "./rankings.validation";
+import type {
+  GetRankingsType,
+  GetRankType,
+  GetFilteredRankingsParamType,
+  GetFilteredRankingsQueryType,
+} from "./rankings.validation";
 
 const CACHE_TTL = 300;
 
@@ -109,6 +114,62 @@ export async function getRank({ rank }: GetRankType): Promise<RankingRow | null>
   }
 
   return result.data[indexInPage];
+}
+
+function buildFilterPath(filters: GetFilteredRankingsParamType): string {
+  const parts: string[] = [];
+  if (filters.equipment) parts.push(filters.equipment);
+  if (filters.sex) parts.push(filters.sex);
+  if (filters.weight_class) parts.push(filters.weight_class);
+  if (filters.year) parts.push(filters.year);
+  if (filters.event) parts.push(filters.event);
+  if (filters.sort) parts.push(filters.sort);
+  return parts.length > 0 ? `/${parts.join("/")}` : "";
+}
+
+async function fetchFilteredRankingsData(
+  filters: GetFilteredRankingsParamType,
+  currentPage: number,
+  perPage: number,
+): Promise<{ rows: RankingRow[]; totalLength: number }> {
+  const filterPath = buildFilterPath(filters);
+  const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
+  const end = start + perPage;
+  const query = `start=${start}&end=${end}&lang=en&units=lbs`;
+  const response = await fetchJson<RankingsApiResponse>(`/rankings${filterPath}?${query}`);
+
+  return {
+    rows: response.rows.map(transformRankingRow),
+    totalLength: response.total_length,
+  };
+}
+
+export async function getFilteredRankings(
+  filters: GetFilteredRankingsParamType,
+  query: GetFilteredRankingsQueryType,
+): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
+  const currentPage = query.current_page ?? 1;
+  const perPage = query.per_page ?? 100;
+  const useCache = query.cache ?? true;
+
+  const filterPath = buildFilterPath(filters);
+  const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
+
+  const result = await withCache<{ rows: RankingRow[]; totalLength: number }>(
+    { key: cacheKey, ttlSeconds: CACHE_TTL },
+    () => fetchFilteredRankingsData(filters, currentPage, perPage),
+    useCache,
+  );
+
+  if (!result.data) {
+    return { data: null, cache: result.cache };
+  }
+
+  return {
+    data: result.data.rows,
+    cache: result.cache,
+    pagination: calculatePagination(result.data.totalLength, currentPage, perPage),
+  };
 }
 
 export { fetchRankingsData };
