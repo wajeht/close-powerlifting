@@ -60,7 +60,6 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
-    "@trivago/prettier-plugin-sort-imports": "^4.1.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/better-sqlite3": "^7.6.13",
     "@types/compression": "^1.7.2",
@@ -77,13 +76,9 @@
     "@types/node-cron": "^3.0.8",
     "@types/nodemailer": "^6.4.8",
     "@types/supertest": "^6.0.2",
-    "@typescript-eslint/eslint-plugin": "^8.4.0",
     "@vitest/coverage-v8": "^2.0.5",
-    "eslint": "^8.44.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.6",
+    "oxfmt": "^0.21.0",
+    "oxlint": "^1.36.0",
     "supertest": "^7.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.1.6",
