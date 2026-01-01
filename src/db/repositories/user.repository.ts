@@ -60,12 +60,16 @@ export async function findByApiCallCount(count: number): Promise<User[]> {
 
 export async function create(data: CreateUserInput): Promise<User> {
   const db = getDb();
-  const [id] = await db<User>('users').insert({
+  const [insertedId] = await db<User>('users').insert({
     ...data,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
-  return (await findById(id)) as User;
+  const user = await findById(insertedId as number);
+  if (!user) {
+    throw new Error('Failed to create user');
+  }
+  return user;
 }
 
 export async function update(email: string, data: UpdateUserInput): Promise<User | undefined> {

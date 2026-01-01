@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     testTimeout: 20000,
     coverage: {
-      provider: 'c8',
+      provider: 'v8',
     },
     setupFiles: ['./test-setup.ts'],
     globals: true,
