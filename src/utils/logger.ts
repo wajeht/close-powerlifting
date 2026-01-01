@@ -47,7 +47,7 @@ function log(level: LogLevel, message: string, ...args: unknown[]): void {
   }
 }
 
-const logger = {
+export const logger = {
   debug: (message: string, ...args: unknown[]) => log("DEBUG", message, ...args),
   info: (message: string, ...args: unknown[]) => log("INFO", message, ...args),
   warn: (message: string, ...args: unknown[]) => log("WARN", message, ...args),
@@ -62,5 +62,3 @@ const logger = {
     globalLevel = level;
   },
 };
-
-export { logger };
