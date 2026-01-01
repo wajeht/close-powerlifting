@@ -1,0 +1,39 @@
+import express, { Request, Response } from "express";
+import catchAsyncHandler from "express-async-handler";
+import { StatusCodes } from "http-status-codes";
+
+import { NotFoundError } from "../../../error";
+import logger from "../../../utils/logger";
+import { apiValidationMiddleware } from "../../middleware";
+import * as RecordsService from "./records.service";
+import { getRecordsValidation, GetRecordsType } from "./records.validation";
+
+const router = express.Router();
+
+/**
+ * GET /api/records
+ * @tags records
+ * @summary get all records
+ * @security BearerAuth
+ */
+router.get(
+  "/",
+  apiValidationMiddleware({ query: getRecordsValidation }),
+  catchAsyncHandler(async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
+    const records = await RecordsService.getRecords(req.query);
+
+    if (!records) throw new NotFoundError("The resource cannot be found!");
+
+    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+    res.status(StatusCodes.OK).json({
+      status: "success",
+      request_url: req.originalUrl,
+      message: "The resource was returned successfully!",
+      cache: records?.cache,
+      data: records?.data,
+    });
+  }),
+);
+
+export default router;
