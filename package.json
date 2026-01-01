@@ -34,7 +34,8 @@
     "db:migrate:rollback": "tsx ./node_modules/knex/bin/cli.js migrate:rollback --knexfile=./src/db/knexfile.ts",
     "db:seed:make": "tsx ./node_modules/knex/bin/cli.js seed:make --knexfile=./src/db/knexfile.ts",
     "db:seed:run": "tsx ./node_modules/knex/bin/cli.js seed:run --knexfile=./src/db/knexfile.ts",
-    "rmds": "find . -name '.DS_Store' -delete"
+    "rmds": "find . -name '.DS_Store' -delete",
+    "update:fixtures": "tsx ./scripts/update-fixtures.ts"
   },
   "dependencies": {
     "autoprefixer": "^10.4.20",

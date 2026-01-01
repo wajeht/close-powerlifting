@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="utf-8" />
+  
+  <meta name="theme-color" content="#272727">
+
+  
+  <title>2023 WRPF The American Pro 2</title>
+  <meta name="description" content="The OpenPowerlifting project aims to create a permanent, accurate, convenient, accessible, open archive of the world&#x27;s powerlifting data.">
+
+  
+  <link rel="stylesheet" type="text/css" href="/static/css/style.9c18dbc57dac6704a9e3e9c6884f8870.css"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="OpenPowerlifting">
+
+  
+  <script type="text/javascript">const DISTRIBUTION="OPENPOWERLIFTING"</script>
+
+  
+  <script type="text/javascript">
+    const PAGE_KIND = "MEET";
+    const path_if_by_ah = "/m/wrpf-usa/23e1/by-ah";
+    const path_if_by_division = "/m/wrpf-usa/23e1/by-division";
+    const path_if_by_dots = "/m/wrpf-usa/23e1";
+    const path_if_by_glossbrenner = "/m/wrpf-usa/23e1/by-glossbrenner";
+    const path_if_by_goodlift = "/m/wrpf-usa/23e1/by-goodlift";
+    const path_if_by_ipfpoints = "/m/wrpf-usa/23e1/by-ipf-points";
+    const path_if_by_mcculloch = "/m/wrpf-usa/23e1/by-mcculloch";
+    const path_if_by_nasa = "/m/wrpf-usa/23e1/by-nasa";
+    const path_if_by_reshel = "/m/wrpf-usa/23e1/by-reshel";
+    const path_if_by_schwartzmalone = "/m/wrpf-usa/23e1/by-schwartz-malone";
+    const path_if_by_total = "/m/wrpf-usa/23e1/by-total";
+    const path_if_by_wilks = "/m/wrpf-usa/23e1/by-wilks";
+    const path_if_by_wilks2020 = "/m/wrpf-usa/23e1/by-wilks2020";
+  </script>
+
+
+  
+  
+  
+  <script defer src="/static/scripts/main.4fa8beb3b43adfff1aedab1b2cbe09dd.js"></script>
+</head>
+<body>
+  
+  
+    
+  <div class="topbar">
+
+      <div id="header">
+  <a href="https://www.openpowerlifting.org"><img class="header-logo pad" src="/static/images/logo-compressed.e87731f9ce53411287c05e88356bf68e.svg" alt="OpenPowerlifting"/></a>
+  <a href="/" class="nav__link">Rankings</a>
+  <a href="/records" class="nav__link">Records</a>
+  <a href="/mlist" class="nav__link">Meets</a>
+  <a href="/status" class="nav__link">Status</a>
+  <a href="/faq" class="nav__link">FAQ</a>
+  <a href="https://openpowerlifting.gitlab.io/opl-csv/" class="nav__link">Data</a>
+  <a href="https://www.plsource.org" class="nav__link" rel="noopener" target="_blank">Apps</a>
+  <a href="https://openpowerlifting.bigcartel.com" class="nav__link" rel="noopener" target="_blank">Shop</a>
+  <a href="https://gitlab.com/openpowerlifting/opl-data/-/issues/new" class="nav__link" rel="noopener" target="_blank">Contact</a>
+  <a href="https://www.patreon.com/join/openpowerlifting" class="nav__link" rel="noopener" target="_blank">Support Us</a>
+  <a href="https://instagram.com/openpowerlifting/" class="nav__link" rel="noopener" target="_blank"><i class="iglogo-alt"></i></a>
+  <a href="javascript:void(0)" class="nav__link header-hamburger" onClick="document.getElementById('header').classList.toggle('responsive')">&#9776;</a>
+  <div id="header-right">
+    <select id="weightunits">
+  <option value="lbs" >lbs</option>
+  <option value="kg" selected>kg</option>
+</select>
+
+    <select id="langselect">
+  <option value="ar" >العربية</option>
+  <option value="cs" >Česky</option>
+  <option value="de" >Deutsch</option>
+  <option value="el" >Ελληνικά</option>
+  <option value="en" selected>English</option>
+  <option value="es" >Español</option>
+  <option value="eo" >Esperanto</option>
+  <option value="fr" >Français</option>
+  <option value="hr" >Hrvatski</option>
+  <option value="it" >Italiano</option>
+  <option value="lt" >Lietuvių</option>
+  <option value="hu" >Magyar</option>
+  <option value="nl" >Nederlands</option>
+  <option value="pl" >Polski</option>
+  <option value="pt" >Português</option>
+  <option value="ru" >Русский</option>
+  <option value="sk" >Slovenčina</option>
+  <option value="sl" >Slovenščina</option>
+  <option value="sr" >Srpski</option>
+  <option value="fi" >Suomi</option>
+  <option value="sv" >Svenska</option>
+  <option value="vi" >Tiếng Việt</option>
+  <option value="tr" >Türkçe</option>
+  <option value="uk" >Українська</option>
+  <option value="ko" >한국어</option>
+  <option value="ja" >日本語</option>
+  <option value="zh-Hant" >繁體中文</option>
+  <option value="zh-Hans" >简体中文</option>
+</select>
+
+  </div>
+</div>
+
+      
+  <div id="controls">
+    <div id="controls-left">
+      <select id="sortselect">
+        <optgroup label="Weight Sorts">
+          <option value="by-division" >By Division</option>
+          <option value="by-total" >By Total</option>
+        </optgroup>
+        <optgroup label="Point Sorts">
+          <option value="by-ah" >By AH (Haleczko)</option>
+          <option value="by-dots" selected>By Dots</option>
+          <option value="by-glossbrenner" >By Glossbrenner</option>
+          <option value="by-goodlift" >By GL Points</option>
+          <option value="by-ipf-points" >By IPF Points</option>
+          <option value="by-mcculloch" >By McCulloch</option>
+          <option value="by-nasa" >By NASA Points</option>
+          <option value="by-reshel" >By Reshel</option>
+          <option value="by-schwartz-malone" >By Schwartz&#x2F;Malone</option>
+          <option value="by-wilks" >By Wilks</option>
+          <option value="by-wilks2020" >By Wilks 2020</option>
+        </optgroup>
+      </select>
+    </div>
+    <div id="controls-right">
+      <button onclick="location.href='https://gitlab.com/openpowerlifting/opl-data/tree/main/meet-data/wrpf-usa&#x2F;23e1'" type="button">Edit Meet</button>
+    </div>
+  </div>
+
+    
+  </div>
+
+    
+  <div class="mixed-content-with-controls">
+    <h1 id="meet">2023 WRPF The American Pro 2</h1>
+    <p>2023-10-28, USA-VA, Manassas
+      <a href="/api/meetcsv/wrpf-usa&#x2F;23e1" style="float: right; margin-right: 20px;">
+        <button style="width: 120px">Download as CSV</button>
+      </a>
+    </p>
+
+    <table>
+      <thead><tr>
+        
+          <th>Rank</th>
+        
+        <th>Lifter</th>
+        <th>Sex</th>
+        
+          <th>Age</th>
+        
+        <th>Equip</th>
+        <th>Class</th>
+        <th>Weight</th>
+        <th>Squat</th>
+        <th>Bench</th>
+        <th>Deadlift</th>
+        <th>Total</th>
+        <th>Dots</th>
+      </tr></thead>
+      <tbody>
+      
+        
+      
+        <tr class="">
+          
+            <td>1</td>
+          
+          <td>
+            <a class="anchor" id="kristyhawkins" href="#"></a>
+            <a class="green" href="/u/kristyhawkins">Kristy Hawkins</a><a href="https://www.instagram.com/kristy_hawkins/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>43</td>
+          
+          <td>Wraps</td>
+          <td>75</td>
+          <td>74</td>
+          <td class="squat">310</td>
+          <td class="bench">152.5</td>
+          <td class="deadlift">262.5</td>
+          <td>725</td>
+          <td>711.19</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>2</td>
+          
+          <td>
+            <a class="anchor" id="samantharice" href="#"></a>
+            <a class="" href="/u/samantharice">Samantha Rice</a><a href="https://www.instagram.com/quadslikemom/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>33</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>82.4</td>
+          <td class="squat">280</td>
+          <td class="bench">157.5</td>
+          <td class="deadlift">291</td>
+          <td>728.5</td>
+          <td>676.54</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>3</td>
+          
+          <td>
+            <a class="anchor" id="hunterhenderson1" href="#"></a>
+            <a class="" href="/u/hunterhenderson1">Hunter Henderson #1</a><a href="https://www.instagram.com/huntermhenderson/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>80.5</td>
+          <td class="squat">295</td>
+          <td class="bench">167.5</td>
+          <td class="deadlift">250</td>
+          <td>712.5</td>
+          <td>669.28</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>4</td>
+          
+          <td>
+            <a class="anchor" id="deniseherber" href="#"></a>
+            <a class="" href="/u/deniseherber">Denise Herber</a><a href="https://www.instagram.com/deniseherber_/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>32</td>
+          
+          <td>Wraps</td>
+          <td>75</td>
+          <td>73.2</td>
+          <td class="squat">250</td>
+          <td class="bench">137.5</td>
+          <td class="deadlift">280</td>
+          <td>667.5</td>
+          <td>658.62</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>5</td>
+          
+          <td>
+            <a class="anchor" id="briannyterry" href="#"></a>
+            <a class="" href="/u/briannyterry">Brianny Terry</a><a href="https://www.instagram.com/briannyt/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>27</td>
+          
+          <td>Wraps</td>
+          <td>75</td>
+          <td>75</td>
+          <td class="squat">240</td>
+          <td class="bench">140</td>
+          <td class="deadlift">291</td>
+          <td>671</td>
+          <td>653.54</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>6</td>
+          
+          <td>
+            <a class="anchor" id="johnhaack" href="#"></a>
+            <a class="" href="/u/johnhaack">John Haack</a><a href="https://www.instagram.com/bilbo_swaggins181/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>30</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.7</td>
+          <td class="squat">362.5</td>
+          <td class="bench">250</td>
+          <td class="deadlift">395</td>
+          <td>1007.5</td>
+          <td>652.55</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>7</td>
+          
+          <td>
+            <a class="anchor" id="brittanybowles" href="#"></a>
+            <a class="" href="/u/brittanybowles">Brittany Bowles</a><a href="https://www.instagram.com/brittany_shack/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>34</td>
+          
+          <td>Wraps</td>
+          <td>60</td>
+          <td>59.7</td>
+          <td class="squat">227.5</td>
+          <td class="bench">132.5</td>
+          <td class="deadlift">217.5</td>
+          <td>577.5</td>
+          <td>642.22</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>8</td>
+          
+          <td>
+            <a class="anchor" id="jawongarrison" href="#"></a>
+            <a class="red" href="/u/jawongarrison">Jawon Garrison</a><a href="https://www.instagram.com/majin_avenger2.0/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>82.5</td>
+          <td class="squat">353</td>
+          <td class="bench">230</td>
+          <td class="deadlift">332.5</td>
+          <td>915.5</td>
+          <td>620.15</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>9</td>
+          
+          <td>
+            <a class="anchor" id="chadpenson" href="#"></a>
+            <a class="red_to_white" href="/u/chadpenson">Chad Penson</a><a href="https://www.instagram.com/kingpensonlifts/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>97</td>
+          <td class="squat">400</td>
+          <td class="bench">235</td>
+          <td class="deadlift">355</td>
+          <td>990</td>
+          <td>617.63</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>10</td>
+          
+          <td>
+            <a class="anchor" id="angelinabennett" href="#"></a>
+            <a class="" href="/u/angelinabennett">Angelina Bennett</a><a href="https://www.instagram.com/captain.angelina/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>30</td>
+          
+          <td>Wraps</td>
+          <td>56</td>
+          <td>55.6</td>
+          <td class="squat">202.5</td>
+          <td class="bench">122.5</td>
+          <td class="deadlift">205</td>
+          <td>530</td>
+          <td>617.26</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>11</td>
+          
+          <td>
+            <a class="anchor" id="fernandoarias" href="#"></a>
+            <a class="" href="/u/fernandoarias">Fernando Arias</a>
+          </td>
+          <td>M</td>
+          
+            <td>27</td>
+          
+          <td>Wraps</td>
+          <td>140</td>
+          <td>132</td>
+          <td class="squat">412.5</td>
+          <td class="bench">237.5</td>
+          <td class="deadlift">427.5</td>
+          <td>1077.5</td>
+          <td>600.59</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>12</td>
+          
+          <td>
+            <a class="anchor" id="phillipherndon" href="#"></a>
+            <a class="" href="/u/phillipherndon">Phillip Herndon</a><a href="https://www.instagram.com/phillip_herndon/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>119.5</td>
+          <td class="squat">432.5</td>
+          <td class="bench">220</td>
+          <td class="deadlift">382.5</td>
+          <td>1035</td>
+          <td>595.24</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>13</td>
+          
+          <td>
+            <a class="anchor" id="yelenaespinoza" href="#"></a>
+            <a class="" href="/u/yelenaespinoza">Yelena Espinoza</a><a href="https://www.instagram.com/yelenaespinozaa/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>27</td>
+          
+          <td>Raw</td>
+          <td>56</td>
+          <td>56</td>
+          <td class="squat">182.5</td>
+          <td class="bench">107.5</td>
+          <td class="deadlift">220</td>
+          <td>510</td>
+          <td>591.15</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>14</td>
+          
+          <td>
+            <a class="anchor" id="dannygrigsby" href="#"></a>
+            <a class="" href="/u/dannygrigsby">Danny Grigsby</a><a href="https://www.instagram.com/dan_grigs/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>29</td>
+          
+          <td>Raw</td>
+          <td>125</td>
+          <td>121.6</td>
+          <td class="squat">365</td>
+          <td class="bench">210</td>
+          <td class="deadlift">450</td>
+          <td>1025</td>
+          <td>586.10</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>15</td>
+          
+          <td>
+            <a class="anchor" id="drakestephens1" href="#"></a>
+            <a class="" href="/u/drakestephens1">Drake Stephens #1</a><a href="https://www.instagram.com/drake.stephens.25/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>33</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.8</td>
+          <td class="squat">312.5</td>
+          <td class="bench">235</td>
+          <td class="deadlift">357.5</td>
+          <td>905</td>
+          <td>585.83</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>16</td>
+          
+          <td>
+            <a class="anchor" id="lukenall" href="#"></a>
+            <a class="" href="/u/lukenall">Luke Nall</a><a href="https://www.instagram.com/lukenall56/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Raw</td>
+          <td>140+</td>
+          <td>155.3</td>
+          <td class="squat">432.5</td>
+          <td class="bench">277.5</td>
+          <td class="deadlift">380</td>
+          <td>1090</td>
+          <td>580.77</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>17</td>
+          
+          <td>
+            <a class="anchor" id="edwardblair" href="#"></a>
+            <a class="" href="/u/edwardblair">Edward Blair</a><a href="https://www.instagram.com/edward_blair_220/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>98</td>
+          <td class="squat">380</td>
+          <td class="bench">255</td>
+          <td class="deadlift">295</td>
+          <td>930</td>
+          <td>577.53</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>18</td>
+          
+          <td>
+            <a class="anchor" id="bryanduncan" href="#"></a>
+            <a class="" href="/u/bryanduncan">Bryan Duncan</a>
+          </td>
+          <td>M</td>
+          
+            <td>24</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>107.9</td>
+          <td class="squat">317.5</td>
+          <td class="bench">217.5</td>
+          <td class="deadlift">427.5</td>
+          <td>962.5</td>
+          <td>574.27</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>19</td>
+          
+          <td>
+            <a class="anchor" id="justinzottl" href="#"></a>
+            <a class="" href="/u/justinzottl">Justin Zottl</a>
+          </td>
+          <td>M</td>
+          
+            <td>30</td>
+          
+          <td>Wraps</td>
+          <td>140</td>
+          <td>137.9</td>
+          <td class="squat">432.5</td>
+          <td class="bench">242.5</td>
+          <td class="deadlift">367.5</td>
+          <td>1042.5</td>
+          <td>573.75</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>20</td>
+          
+          <td>
+            <a class="anchor" id="codywilson1" href="#"></a>
+            <a class="" href="/u/codywilson1">Cody Wilson #1</a><a href="https://www.instagram.com/cody.wilson/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>21</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>99.5</td>
+          <td class="squat">340</td>
+          <td class="bench">245</td>
+          <td class="deadlift">340</td>
+          <td>925</td>
+          <td>570.59</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>21</td>
+          
+          <td>
+            <a class="anchor" id="davidraymond" href="#"></a>
+            <a class="" href="/u/davidraymond">David Raymond</a>
+          </td>
+          <td>M</td>
+          
+            <td>32</td>
+          
+          <td>Wraps</td>
+          <td>75</td>
+          <td>74.4</td>
+          <td class="squat">315</td>
+          <td class="bench">170</td>
+          <td class="deadlift">305</td>
+          <td>790</td>
+          <td>569.69</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>22</td>
+          
+          <td>
+            <a class="anchor" id="amandasmith5" href="#"></a>
+            <a class="" href="/u/amandasmith5">Amanda Smith #5</a>
+          </td>
+          <td>F</td>
+          
+            <td>23</td>
+          
+          <td>Raw</td>
+          <td>75</td>
+          <td>73</td>
+          <td class="squat">227.5</td>
+          <td class="bench">120</td>
+          <td class="deadlift">227.5</td>
+          <td>575</td>
+          <td>568.19</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>23</td>
+          
+          <td>
+            <a class="anchor" id="nydirhayden" href="#"></a>
+            <a class="" href="/u/nydirhayden">Nydir Hayden</a><a href="https://www.instagram.com/only1prodigy_/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>27</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>81.8</td>
+          <td class="squat">350</td>
+          <td class="bench">190</td>
+          <td class="deadlift">292.5</td>
+          <td>832.5</td>
+          <td>566.67</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>24</td>
+          
+          <td>
+            <a class="anchor" id="erinwestby" href="#"></a>
+            <a class="" href="/u/erinwestby">Erin Westby</a>
+          </td>
+          <td>F</td>
+          
+            <td>30</td>
+          
+          <td>Raw</td>
+          <td>75</td>
+          <td>70.1</td>
+          <td class="squat">217.5</td>
+          <td class="bench">125</td>
+          <td class="deadlift">217.5</td>
+          <td>560</td>
+          <td>565.85</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>25</td>
+          
+          <td>
+            <a class="anchor" id="connorfinnegan" href="#"></a>
+            <a class="" href="/u/connorfinnegan">Connor Finnegan</a>
+          </td>
+          <td>M</td>
+          
+            <td>22</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.8</td>
+          <td class="squat">330</td>
+          <td class="bench">197.5</td>
+          <td class="deadlift">345</td>
+          <td>872.5</td>
+          <td>564.79</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>26</td>
+          
+          <td>
+            <a class="anchor" id="sarasobak" href="#"></a>
+            <a class="" href="/u/sarasobak">Sara Šobak</a><a href="https://www.instagram.com/inked_pagan/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>26</td>
+          
+          <td>Wraps</td>
+          <td>67.5</td>
+          <td>64</td>
+          <td class="squat">190</td>
+          <td class="bench">137.5</td>
+          <td class="deadlift">202.5</td>
+          <td>530</td>
+          <td>564.62</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>27</td>
+          
+          <td>
+            <a class="anchor" id="patrickmaguire1" href="#"></a>
+            <a class="" href="/u/patrickmaguire1">Patrick Maguire #1</a><a href="https://www.instagram.com/full_primal_power/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>27</td>
+          
+          <td>Wraps</td>
+          <td>140+</td>
+          <td>159.8</td>
+          <td class="squat">455</td>
+          <td class="bench">282.5</td>
+          <td class="deadlift">325</td>
+          <td>1062.5</td>
+          <td>561.88</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>28</td>
+          
+          <td>
+            <a class="anchor" id="joecoursey" href="#"></a>
+            <a class="" href="/u/joecoursey">Joe Coursey</a><a href="https://www.instagram.com/the_traveling_warrior/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>32</td>
+          
+          <td>Wraps</td>
+          <td>140</td>
+          <td>130.2</td>
+          <td class="squat">400</td>
+          <td class="bench">227.5</td>
+          <td class="deadlift">375</td>
+          <td>1002.5</td>
+          <td>561.08</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>29</td>
+          
+          <td>
+            <a class="anchor" id="antoniocarter" href="#"></a>
+            <a class="" href="/u/antoniocarter">Antonio Carter</a><a href="https://www.instagram.com/tcarter_220/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>34</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>96.6</td>
+          <td class="squat">325</td>
+          <td class="bench">230</td>
+          <td class="deadlift">337.5</td>
+          <td>892.5</td>
+          <td>557.85</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>30</td>
+          
+          <td>
+            <a class="anchor" id="jasonlegrand" href="#"></a>
+            <a class="neongreen" href="/u/jasonlegrand">Jason Legrand</a><a href="https://www.instagram.com/jaselegrand/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>30</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>109.5</td>
+          <td class="squat">365</td>
+          <td class="bench">205</td>
+          <td class="deadlift">370</td>
+          <td>940</td>
+          <td>557.69</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>31</td>
+          
+          <td>
+            <a class="anchor" id="barbaralee1" href="#"></a>
+            <a class="" href="/u/barbaralee1">Barbara Lee #1</a><a href="https://www.instagram.com/msbarbellbarbie/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>41</td>
+          
+          <td>Raw</td>
+          <td>67.5</td>
+          <td>66.2</td>
+          <td class="squat">197.5</td>
+          <td class="bench">105</td>
+          <td class="deadlift">230</td>
+          <td>532.5</td>
+          <td>556.00</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>32</td>
+          
+          <td>
+            <a class="anchor" id="mikeristi" href="#"></a>
+            <a class="" href="/u/mikeristi">Mike Risti</a><a href="https://www.instagram.com/m.risti.power/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>26</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>109.6</td>
+          <td class="squat">362.5</td>
+          <td class="bench">207.5</td>
+          <td class="deadlift">365</td>
+          <td>935</td>
+          <td>554.53</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>33</td>
+          
+          <td>
+            <a class="anchor" id="parkerbelle" href="#"></a>
+            <a class="" href="/u/parkerbelle">Parker Belle</a><a href="https://www.instagram.com/parker1999belle/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>24</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.5</td>
+          <td class="squat">292.5</td>
+          <td class="bench">215</td>
+          <td class="deadlift">345</td>
+          <td>852.5</td>
+          <td>552.78</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>34</td>
+          
+          <td>
+            <a class="anchor" id="suzannedavis" href="#"></a>
+            <a class="benchteal bold" href="/u/suzannedavis">Suzanne Davis</a><a href="https://www.instagram.com/suzanne_davis_ifbb_pro/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>52</td>
+          
+          <td>Wraps</td>
+          <td>67.5</td>
+          <td>66.2</td>
+          <td class="squat">205.5</td>
+          <td class="bench">112.5</td>
+          <td class="deadlift">210</td>
+          <td>528</td>
+          <td>551.31</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>35</td>
+          
+          <td>
+            <a class="anchor" id="justincherocci" href="#"></a>
+            <a class="" href="/u/justincherocci">Justin Cherocci</a><a href="https://www.instagram.com/jjcherocci/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>123.8</td>
+          <td class="squat">400</td>
+          <td class="bench">222.5</td>
+          <td class="deadlift">345</td>
+          <td>967.5</td>
+          <td>550.02</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>36</td>
+          
+          <td>
+            <a class="anchor" id="gabrielvega" href="#"></a>
+            <a class="" href="/u/gabrielvega">Gabriel Vega</a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>123.3</td>
+          <td class="squat">405</td>
+          <td class="bench">210</td>
+          <td class="deadlift">350</td>
+          <td>965</td>
+          <td>549.31</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>37</td>
+          
+          <td>
+            <a class="anchor" id="demerriusslocum" href="#"></a>
+            <a class="" href="/u/demerriusslocum">Demerrius Slocum</a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>99.9</td>
+          <td class="squat">327.5</td>
+          <td class="bench">227.5</td>
+          <td class="deadlift">335</td>
+          <td>890</td>
+          <td>548.05</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>38</td>
+          
+          <td>
+            <a class="anchor" id="saylorlavallii" href="#"></a>
+            <a class="" href="/u/saylorlavallii">Saylor Lavallii</a>
+          </td>
+          <td>M</td>
+          
+            <td>29</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>108.4</td>
+          <td class="squat">362.5</td>
+          <td class="bench">212.5</td>
+          <td class="deadlift">345</td>
+          <td>920</td>
+          <td>547.93</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>39</td>
+          
+          <td>
+            <a class="anchor" id="dawsonwindham1" href="#"></a>
+            <a class="" href="/u/dawsonwindham1">Dawson Windham #1</a><a href="https://www.instagram.com/dawsonwindham/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>25</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>108.2</td>
+          <td class="squat">327.5</td>
+          <td class="bench">225</td>
+          <td class="deadlift">365</td>
+          <td>917.5</td>
+          <td>546.83</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>40</td>
+          
+          <td>
+            <a class="anchor" id="patrickhorvath" href="#"></a>
+            <a class="comicsans" href="/u/patrickhorvath">Patrick Horvath</a><a href="https://www.instagram.com/patthiccy/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>22</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>105.3</td>
+          <td class="squat">315</td>
+          <td class="bench">197.5</td>
+          <td class="deadlift">395</td>
+          <td>907.5</td>
+          <td>546.68</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>41</td>
+          
+          <td>
+            <a class="anchor" id="alexdonald" href="#"></a>
+            <a class="" href="/u/alexdonald">Alex Donald</a><a href="https://www.instagram.com/alexdonald_198/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>33</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.2</td>
+          <td class="squat">222.5</td>
+          <td class="bench">125</td>
+          <td class="deadlift">260</td>
+          <td>607.5</td>
+          <td>543.75</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>42</td>
+          
+          <td>
+            <a class="anchor" id="lauravogelsang" href="#"></a>
+            <a class="" href="/u/lauravogelsang">Laura Vogelsang</a><a href="https://www.instagram.com/xlaurax23/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>32</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>94.6</td>
+          <td class="squat">252.5</td>
+          <td class="bench">137.5</td>
+          <td class="deadlift">232.5</td>
+          <td>622.5</td>
+          <td>543.22</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>43</td>
+          
+          <td>
+            <a class="anchor" id="brycekuznia" href="#"></a>
+            <a class="" href="/u/brycekuznia">Bryce Kuznia</a>
+          </td>
+          <td>M</td>
+          
+            <td>23</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>94.5</td>
+          <td class="squat">317.5</td>
+          <td class="bench">162.5</td>
+          <td class="deadlift">380</td>
+          <td>860</td>
+          <td>543.03</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>44</td>
+          
+          <td>
+            <a class="anchor" id="brittanytrahan" href="#"></a>
+            <a class="" href="/u/brittanytrahan">Brittany Trahan</a><a href="https://www.instagram.com/britt102484/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>39</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>80.8</td>
+          <td class="squat">237.5</td>
+          <td class="bench">107.5</td>
+          <td class="deadlift">232.5</td>
+          <td>577.5</td>
+          <td>541.47</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>45</td>
+          
+          <td>
+            <a class="anchor" id="henrycraig" href="#"></a>
+            <a class="" href="/u/henrycraig">Henry Craig</a><a href="https://www.instagram.com/huge_googley_bear/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>124</td>
+          <td class="squat">380</td>
+          <td class="bench">212.5</td>
+          <td class="deadlift">360</td>
+          <td>952.5</td>
+          <td>541.21</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>46</td>
+          
+          <td>
+            <a class="anchor" id="tenayatuteur" href="#"></a>
+            <a class="turquoise_to_magenta scroll_gradient" href="/u/tenayatuteur">Tenaya Tuteur</a><a href="https://www.instagram.com/laketenaya/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>34</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>96.5</td>
+          <td class="squat">235</td>
+          <td class="bench">147.5</td>
+          <td class="deadlift">242.5</td>
+          <td>625</td>
+          <td>540.96</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>47</td>
+          
+          <td>
+            <a class="anchor" id="lucianyork" href="#"></a>
+            <a class="" href="/u/lucianyork">Lucian York</a><a href="https://www.instagram.com/toobigformyshirt/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>99.3</td>
+          <td class="squat">335</td>
+          <td class="bench">197.5</td>
+          <td class="deadlift">342.5</td>
+          <td>875</td>
+          <td>540.23</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>48</td>
+          
+          <td>
+            <a class="anchor" id="catherinecroydon" href="#"></a>
+            <a class="" href="/u/catherinecroydon">Catherine Croydon</a><a href="https://www.instagram.com/catpowerlifter/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>32</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>90.7</td>
+          <td class="squat">230</td>
+          <td class="bench">160</td>
+          <td class="deadlift">215</td>
+          <td>605</td>
+          <td>537.54</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>49</td>
+          
+          <td>
+            <a class="anchor" id="chrisjonessr" href="#"></a>
+            <a class="" href="/u/chrisjonessr">Chris Jones Sr</a>
+          </td>
+          <td>M</td>
+          
+            <td>46</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>120.2</td>
+          <td class="squat">397.5</td>
+          <td class="bench">212.5</td>
+          <td class="deadlift">322.5</td>
+          <td>932.5</td>
+          <td>535.24</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>50</td>
+          
+          <td>
+            <a class="anchor" id="azariahpierce" href="#"></a>
+            <a class="" href="/u/azariahpierce">Azariah Pierce</a><a href="https://www.instagram.com/Z_thedemigod/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>108.3</td>
+          <td class="squat">317.5</td>
+          <td class="bench">210</td>
+          <td class="deadlift">367.5</td>
+          <td>895</td>
+          <td>533.23</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>51</td>
+          
+          <td>
+            <a class="anchor" id="danielcardona" href="#"></a>
+            <a class="" href="/u/danielcardona">Daniel Cardona</a>
+          </td>
+          <td>M</td>
+          
+            <td>24</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>99.3</td>
+          <td class="squat">320</td>
+          <td class="bench">210</td>
+          <td class="deadlift">330</td>
+          <td>860</td>
+          <td>530.96</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>52</td>
+          
+          <td>
+            <a class="anchor" id="rorypayne" href="#"></a>
+            <a class="" href="/u/rorypayne">Rory Payne</a><a href="https://www.instagram.com/powerlifting_pilot/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>98.4</td>
+          <td class="squat">320</td>
+          <td class="bench">210</td>
+          <td class="deadlift">320</td>
+          <td>850</td>
+          <td>526.90</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>53</td>
+          
+          <td>
+            <a class="anchor" id="houstonwoods" href="#"></a>
+            <a class="" href="/u/houstonwoods">Houston Woods</a><a href="https://www.instagram.com/houston.334/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>30</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>106.2</td>
+          <td class="squat">330</td>
+          <td class="bench">205</td>
+          <td class="deadlift">342.5</td>
+          <td>877.5</td>
+          <td>526.82</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>54</td>
+          
+          <td>
+            <a class="anchor" id="shanaesmithson" href="#"></a>
+            <a class="" href="/u/shanaesmithson">Shanae Smithson</a><a href="https://www.instagram.com/squatlike_nae/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>32</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>79</td>
+          <td class="squat">222.5</td>
+          <td class="bench">115</td>
+          <td class="deadlift">217.5</td>
+          <td>555</td>
+          <td>526.25</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>55</td>
+          
+          <td>
+            <a class="anchor" id="alexcharchuk" href="#"></a>
+            <a class="" href="/u/alexcharchuk">Alex Charchuk</a><a href="https://www.instagram.com/charchungus/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>104.9</td>
+          <td class="squat">310</td>
+          <td class="bench">192.5</td>
+          <td class="deadlift">367.5</td>
+          <td>870</td>
+          <td>524.90</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>56</td>
+          
+          <td>
+            <a class="anchor" id="brandoncintron" href="#"></a>
+            <a class="" href="/u/brandoncintron">Brandon Cintron</a><a href="https://www.instagram.com/small.bunyan/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>30</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>107.8</td>
+          <td class="squat">350</td>
+          <td class="bench">202.5</td>
+          <td class="deadlift">325.5</td>
+          <td>878</td>
+          <td>524.04</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>57</td>
+          
+          <td>
+            <a class="anchor" id="billybockrath" href="#"></a>
+            <a class="" href="/u/billybockrath">Billy Bockrath</a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>98.8</td>
+          <td class="squat">325</td>
+          <td class="bench">185</td>
+          <td class="deadlift">335</td>
+          <td>845</td>
+          <td>522.86</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>58</td>
+          
+          <td>
+            <a class="anchor" id="johnnykaufman" href="#"></a>
+            <a class="" href="/u/johnnykaufman">Johnny Kaufman</a>
+          </td>
+          <td>M</td>
+          
+            <td>23</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>99.7</td>
+          <td class="squat">300</td>
+          <td class="bench">182.5</td>
+          <td class="deadlift">365</td>
+          <td>847.5</td>
+          <td>522.33</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>59</td>
+          
+          <td>
+            <a class="anchor" id="mauricemoody" href="#"></a>
+            <a class="" href="/u/mauricemoody">Maurice Moody</a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Wraps</td>
+          <td>140</td>
+          <td>131.9</td>
+          <td class="squat">345</td>
+          <td class="bench">250</td>
+          <td class="deadlift">337.5</td>
+          <td>932.5</td>
+          <td>519.88</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>60</td>
+          
+          <td>
+            <a class="anchor" id="saraschiff" href="#"></a>
+            <a class="purple_to_green" href="/u/saraschiff">Sara Schiff</a><a href="https://www.instagram.com/saraeatsbacon/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>48</td>
+          
+          <td>Raw</td>
+          <td>125</td>
+          <td>118.5</td>
+          <td class="squat">220</td>
+          <td class="bench">145</td>
+          <td class="deadlift">280</td>
+          <td>645</td>
+          <td>519.39</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>61</td>
+          
+          <td>
+            <a class="anchor" id="ryanemmons" href="#"></a>
+            <a class="" href="/u/ryanemmons">Ryan Emmons</a><a href="https://www.instagram.com/ryan_ndsn/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>117.4</td>
+          <td class="squat">365</td>
+          <td class="bench">230</td>
+          <td class="deadlift">302.5</td>
+          <td>897.5</td>
+          <td>519.19</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>62</td>
+          
+          <td>
+            <a class="anchor" id="landripeden" href="#"></a>
+            <a class="" href="/u/landripeden">Landri Peden</a><a href="https://www.instagram.com/landri_liftsalot/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>38</td>
+          
+          <td>Raw</td>
+          <td>75</td>
+          <td>73.9</td>
+          <td class="squat">185</td>
+          <td class="bench">105</td>
+          <td class="deadlift">237.5</td>
+          <td>527.5</td>
+          <td>517.83</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>63</td>
+          
+          <td>
+            <a class="anchor" id="austinhutzenbiler" href="#"></a>
+            <a class="" href="/u/austinhutzenbiler">Austin Hutzenbiler</a>
+          </td>
+          <td>M</td>
+          
+            <td>26</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>79.2</td>
+          <td class="squat">307.5</td>
+          <td class="bench">145</td>
+          <td class="deadlift">292.5</td>
+          <td>745</td>
+          <td>516.78</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>64</td>
+          
+          <td>
+            <a class="anchor" id="nicolepotteiger" href="#"></a>
+            <a class="" href="/u/nicolepotteiger">Nicole Potteiger</a>
+          </td>
+          <td>F</td>
+          
+            <td>33</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.5</td>
+          <td class="squat">217.5</td>
+          <td class="bench">130</td>
+          <td class="deadlift">227.5</td>
+          <td>575</td>
+          <td>513.89</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>65</td>
+          
+          <td>
+            <a class="anchor" id="bradabbott1" href="#"></a>
+            <a class="" href="/u/bradabbott1">Brad Abbott #1</a><a href="https://www.instagram.com/brad.abbott.242/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>34</td>
+          
+          <td>Wraps</td>
+          <td>140</td>
+          <td>135.4</td>
+          <td class="squat">342.5</td>
+          <td class="bench">235</td>
+          <td class="deadlift">350</td>
+          <td>927.5</td>
+          <td>513.15</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>66</td>
+          
+          <td>
+            <a class="anchor" id="marcgaudet" href="#"></a>
+            <a class="" href="/u/marcgaudet">Marc Gaudet</a>
+          </td>
+          <td>M</td>
+          
+            <td>27</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>99.5</td>
+          <td class="squat">320</td>
+          <td class="bench">205</td>
+          <td class="deadlift">305</td>
+          <td>830</td>
+          <td>511.99</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>67</td>
+          
+          <td>
+            <a class="anchor" id="zacharyzeussmith" href="#"></a>
+            <a class="" href="/u/zacharyzeussmith">Zachary Zeus Smith</a><a href="https://www.instagram.com/thevoodooviking_zeus/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Raw</td>
+          <td>140</td>
+          <td>137.1</td>
+          <td class="squat">327.5</td>
+          <td class="bench">235</td>
+          <td class="deadlift">365</td>
+          <td>927.5</td>
+          <td>511.31</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>68</td>
+          
+          <td>
+            <a class="anchor" id="andrewfox1" href="#"></a>
+            <a class="" href="/u/andrewfox1">Andrew Fox #1</a><a href="https://www.instagram.com/alpha_fox31/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>35</td>
+          
+          <td>Raw</td>
+          <td>140</td>
+          <td>130.2</td>
+          <td class="squat">365</td>
+          <td class="bench">212.5</td>
+          <td class="deadlift">335</td>
+          <td>912.5</td>
+          <td>510.71</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>69</td>
+          
+          <td>
+            <a class="anchor" id="stevenruffin" href="#"></a>
+            <a class="" href="/u/stevenruffin">Steven Ruffin</a>
+          </td>
+          <td>M</td>
+          
+            <td>27</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>104.1</td>
+          <td class="squat">305</td>
+          <td class="bench">187.5</td>
+          <td class="deadlift">350</td>
+          <td>842.5</td>
+          <td>509.89</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>70</td>
+          
+          <td>
+            <a class="anchor" id="dakotaluzader" href="#"></a>
+            <a class="" href="/u/dakotaluzader">Dakota Luzader</a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>99.2</td>
+          <td class="squat">320</td>
+          <td class="bench">170</td>
+          <td class="deadlift">332.5</td>
+          <td>822.5</td>
+          <td>508.04</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>71</td>
+          
+          <td>
+            <a class="anchor" id="seandewey" href="#"></a>
+            <a class="red_to_blue bold" href="/u/seandewey">Sean Dewey</a><a href="https://www.instagram.com/sean.dewey.3/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>44</td>
+          
+          <td>Raw</td>
+          <td>125</td>
+          <td>122.3</td>
+          <td class="squat">330</td>
+          <td class="bench">227.5</td>
+          <td class="deadlift">330</td>
+          <td>887.5</td>
+          <td>506.53</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>72</td>
+          
+          <td>
+            <a class="anchor" id="taylorball2" href="#"></a>
+            <a class="" href="/u/taylorball2">Taylor Ball #2</a>
+          </td>
+          <td>F</td>
+          
+            <td>29</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>79.3</td>
+          <td class="squat">227.5</td>
+          <td class="bench">97.5</td>
+          <td class="deadlift">210</td>
+          <td>535</td>
+          <td>506.32</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>73</td>
+          
+          <td>
+            <a class="anchor" id="bradenmoss" href="#"></a>
+            <a class="" href="/u/bradenmoss">Braden Moss</a>
+          </td>
+          <td>M</td>
+          
+            <td>26</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>82.3</td>
+          <td class="squat">290</td>
+          <td class="bench">175</td>
+          <td class="deadlift">277.5</td>
+          <td>742.5</td>
+          <td>503.66</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>74</td>
+          
+          <td>
+            <a class="anchor" id="joejackson1" href="#"></a>
+            <a class="" href="/u/joejackson1">Joe Jackson #1</a><a href="https://www.instagram.com/delco_jesus/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Raw</td>
+          <td>140</td>
+          <td>139</td>
+          <td class="squat">375</td>
+          <td class="bench">210</td>
+          <td class="deadlift">330</td>
+          <td>915</td>
+          <td>502.45</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>75</td>
+          
+          <td>
+            <a class="anchor" id="walkerblazek" href="#"></a>
+            <a class="" href="/u/walkerblazek">Walker Blazek</a>
+          </td>
+          <td>M</td>
+          
+            <td>24</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>108.7</td>
+          <td class="squat">325</td>
+          <td class="bench">187.5</td>
+          <td class="deadlift">330</td>
+          <td>842.5</td>
+          <td>501.24</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>76</td>
+          
+          <td>
+            <a class="anchor" id="marissawilson1" href="#"></a>
+            <a class="" href="/u/marissawilson1">Marissa Wilson #1</a><a href="https://www.instagram.com/ms_phenomenalred/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>F</td>
+          
+            <td>32</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>101.2</td>
+          <td class="squat">240</td>
+          <td class="bench">135</td>
+          <td class="deadlift">215</td>
+          <td>590</td>
+          <td>501.16</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>77</td>
+          
+          <td>
+            <a class="anchor" id="jakedunn1" href="#"></a>
+            <a class="" href="/u/jakedunn1">Jake Dunn #1</a>
+          </td>
+          <td>M</td>
+          
+            <td>24</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>109.3</td>
+          <td class="squat">307.5</td>
+          <td class="bench">215</td>
+          <td class="deadlift">320</td>
+          <td>842.5</td>
+          <td>500.19</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>78</td>
+          
+          <td>
+            <a class="anchor" id="mckenzieselby" href="#"></a>
+            <a class="" href="/u/mckenzieselby">McKenzie Selby</a>
+          </td>
+          <td>M</td>
+          
+            <td>29</td>
+          
+          <td>Wraps</td>
+          <td>90</td>
+          <td>88.4</td>
+          <td class="squat">287.5</td>
+          <td class="bench">177.5</td>
+          <td class="deadlift">300</td>
+          <td>765</td>
+          <td>499.19</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>79</td>
+          
+          <td>
+            <a class="anchor" id="traviscalloway" href="#"></a>
+            <a class="" href="/u/traviscalloway">Travis Calloway</a><a href="https://www.instagram.com/teamcalloway_travisandlauren/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>37</td>
+          
+          <td>Raw</td>
+          <td>125</td>
+          <td>114.8</td>
+          <td class="squat">305</td>
+          <td class="bench">250</td>
+          <td class="deadlift">300</td>
+          <td>855</td>
+          <td>498.56</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>80</td>
+          
+          <td>
+            <a class="anchor" id="allisonwhorton" href="#"></a>
+            <a class="" href="/u/allisonwhorton">Allison Whorton</a>
+          </td>
+          <td>F</td>
+          
+            <td>28</td>
+          
+          <td>Raw</td>
+          <td>60</td>
+          <td>59.7</td>
+          <td class="squat">165</td>
+          <td class="bench">80</td>
+          <td class="deadlift">200</td>
+          <td>445</td>
+          <td>494.87</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>81</td>
+          
+          <td>
+            <a class="anchor" id="nataliecarr2" href="#"></a>
+            <a class="" href="/u/nataliecarr2">Natalie Carr #2</a>
+          </td>
+          <td>F</td>
+          
+            <td>31</td>
+          
+          <td>Wraps</td>
+          <td>56</td>
+          <td>54.3</td>
+          <td class="squat">165</td>
+          <td class="bench">77.5</td>
+          <td class="deadlift">175</td>
+          <td>417.5</td>
+          <td>494.02</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>82</td>
+          
+          <td>
+            <a class="anchor" id="aaronnance" href="#"></a>
+            <a class="" href="/u/aaronnance">Aaron Nance</a><a href="https://www.instagram.com/7he7empestKing/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>44</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>97.8</td>
+          <td class="squat">262.5</td>
+          <td class="bench">195</td>
+          <td class="deadlift">335</td>
+          <td>792.5</td>
+          <td>492.59</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>83</td>
+          
+          <td>
+            <a class="anchor" id="stephenpeszynski" href="#"></a>
+            <a class="" href="/u/stephenpeszynski">Stephen Peszynski</a>
+          </td>
+          <td>M</td>
+          
+            <td>32</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.6</td>
+          <td class="squat">250</td>
+          <td class="bench">182.5</td>
+          <td class="deadlift">320</td>
+          <td>752.5</td>
+          <td>487.66</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>84</td>
+          
+          <td>
+            <a class="anchor" id="danieldixon" href="#"></a>
+            <a class="" href="/u/danieldixon">Daniel Dixon</a>
+          </td>
+          <td>M</td>
+          
+            <td>29</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>93.5</td>
+          <td class="squat">292.5</td>
+          <td class="bench">182.5</td>
+          <td class="deadlift">287.5</td>
+          <td>762.5</td>
+          <td>483.90</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>85</td>
+          
+          <td>
+            <a class="anchor" id="natenorton" href="#"></a>
+            <a class="" href="/u/natenorton">Nate Norton</a><a href="https://www.instagram.com/mdrnvikingsrtength/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>98.6</td>
+          <td class="squat">292.5</td>
+          <td class="bench">170</td>
+          <td class="deadlift">295</td>
+          <td>757.5</td>
+          <td>469.14</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>86</td>
+          
+          <td>
+            <a class="anchor" id="lizstrain" href="#"></a>
+            <a class="" href="/u/lizstrain">Liz Strain</a>
+          </td>
+          <td>F</td>
+          
+            <td>42</td>
+          
+          <td>Raw</td>
+          <td>67.5</td>
+          <td>67.2</td>
+          <td class="squat">180.5</td>
+          <td class="bench">110</td>
+          <td class="deadlift">70</td>
+          <td>360.5</td>
+          <td>373.14</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="mikeschaeffer" href="#"></a>
+            <a class="" href="/u/mikeschaeffer">Mike Schaeffer</a>
+          </td>
+          <td>M</td>
+          
+            <td>29</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>99</td>
+          <td class="squat">322.5</td>
+          <td class="bench">187.5</td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="husameddinateyia" href="#"></a>
+            <a class="" href="/u/husameddinateyia">Husameddin Ateyia</a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Raw</td>
+          <td>110</td>
+          <td>109.4</td>
+          <td class="squat">365</td>
+          <td class="bench">232.5</td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="jordanwong" href="#"></a>
+            <a class="" href="/u/jordanwong">Jordan Wong</a><a href="https://www.instagram.com/wongstwong/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>32</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.6</td>
+          <td class="squat">330</td>
+          <td class="bench">165</td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="actoriz" href="#"></a>
+            <a class="" href="/u/actoriz">AC Toriz</a>
+          </td>
+          <td>M</td>
+          
+            <td>33</td>
+          
+          <td>Wraps</td>
+          <td>140+</td>
+          <td>160.9</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="coltonstewart1" href="#"></a>
+            <a class="" href="/u/coltonstewart1">Colton Stewart #1</a><a href="https://www.instagram.com/cstew4323/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>23</td>
+          
+          <td>Wraps</td>
+          <td>110</td>
+          <td>107.9</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="raymondphillips" href="#"></a>
+            <a class="" href="/u/raymondphillips">Raymond Phillips</a><a href="https://www.instagram.com/rayphillips1828/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Wraps</td>
+          <td>82.5</td>
+          <td>79.7</td>
+          <td class="squat"></td>
+          <td class="bench">152.5</td>
+          <td class="deadlift">295</td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="blakelehew" href="#"></a>
+            <a class="" href="/u/blakelehew">Blake Lehew</a><a href="https://www.instagram.com/deadliftingorangutan/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>90</td>
+          <td>86.5</td>
+          <td class="squat">355</td>
+          <td class="bench">225</td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="chrismiller1" href="#"></a>
+            <a class="" href="/u/chrismiller1">Chris Miller #1</a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Raw</td>
+          <td>140</td>
+          <td>136.5</td>
+          <td class="squat">335</td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="matthewsullivan1" href="#"></a>
+            <a class="" href="/u/matthewsullivan1">Matthew Sullivan #1</a>
+          </td>
+          <td>M</td>
+          
+            <td>28</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>99.4</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift">365</td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="armanahrabian" href="#"></a>
+            <a class="" href="/u/armanahrabian">Arman Ahrabian</a>
+          </td>
+          <td>M</td>
+          
+            <td>34</td>
+          
+          <td>Wraps</td>
+          <td>125</td>
+          <td>119.9</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="emersonknoebel" href="#"></a>
+            <a class="" href="/u/emersonknoebel">Emerson Knoebel</a>
+          </td>
+          <td>M</td>
+          
+            <td>26</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.3</td>
+          <td class="squat">337.5</td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>DQ</td>
+          
+          <td>
+            <a class="anchor" id="russellsteveyankee" href="#"></a>
+            <a class="" href="/u/russellsteveyankee">Russell Steve Yankee</a>
+          </td>
+          <td>M</td>
+          
+            <td>38</td>
+          
+          <td>Wraps</td>
+          <td>100</td>
+          <td>99.9</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      
+      
+      </tbody>
+    </table>
+  </div>
+
+  
+</body>
+</html>

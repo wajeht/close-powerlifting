@@ -2,7 +2,7 @@
 DC := docker compose -f docker-compose.dev.yml
 EXEC := $(DC) exec close-powerlifting
 
-.PHONY: help push test lint format up down shell deploy
+.PHONY: help push test lint format up down shell deploy update-fixtures
 
 help:
 	@echo "Usage: make [target]"
@@ -31,6 +31,9 @@ help:
 	@echo "  db-rollback Rollback last migration"
 	@echo "  db-seed     Run seeders"
 	@echo "  db-reset    Rollback + migrate + seed"
+	@echo ""
+	@echo "Fixtures:"
+	@echo "  update-fixtures  Update OpenPowerlifting test fixtures"
 	@echo ""
 	@echo "Deployment:"
 	@echo "  push        Test + lint + format + commit + push"
@@ -122,6 +125,11 @@ clean:
 	@docker system prune -a -f
 	@docker volume prune -f
 	@docker network prune -f
+
+# === Fixtures ===
+
+update-fixtures:
+	@npm run update:fixtures
 
 # === Misc ===
 

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="utf-8" />
+  
+  <meta name="theme-color" content="#272727">
+
+  
+  <title>2025 USAPL Israel Hanukkah Championship</title>
+  <meta name="description" content="The OpenPowerlifting project aims to create a permanent, accurate, convenient, accessible, open archive of the world&#x27;s powerlifting data.">
+
+  
+  <link rel="stylesheet" type="text/css" href="/static/css/style.9c18dbc57dac6704a9e3e9c6884f8870.css"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="OpenPowerlifting">
+
+  
+  <script type="text/javascript">const DISTRIBUTION="OPENPOWERLIFTING"</script>
+
+  
+  <script type="text/javascript">
+    const PAGE_KIND = "MEET";
+    const path_if_by_ah = "/m/usapl/ISR-2025-02/by-ah";
+    const path_if_by_division = "/m/usapl/ISR-2025-02/by-division";
+    const path_if_by_dots = "/m/usapl/ISR-2025-02";
+    const path_if_by_glossbrenner = "/m/usapl/ISR-2025-02/by-glossbrenner";
+    const path_if_by_goodlift = "/m/usapl/ISR-2025-02/by-goodlift";
+    const path_if_by_ipfpoints = "/m/usapl/ISR-2025-02/by-ipf-points";
+    const path_if_by_mcculloch = "/m/usapl/ISR-2025-02/by-mcculloch";
+    const path_if_by_nasa = "/m/usapl/ISR-2025-02/by-nasa";
+    const path_if_by_reshel = "/m/usapl/ISR-2025-02/by-reshel";
+    const path_if_by_schwartzmalone = "/m/usapl/ISR-2025-02/by-schwartz-malone";
+    const path_if_by_total = "/m/usapl/ISR-2025-02/by-total";
+    const path_if_by_wilks = "/m/usapl/ISR-2025-02/by-wilks";
+    const path_if_by_wilks2020 = "/m/usapl/ISR-2025-02/by-wilks2020";
+  </script>
+
+
+  
+  
+  
+  <script defer src="/static/scripts/main.4fa8beb3b43adfff1aedab1b2cbe09dd.js"></script>
+</head>
+<body>
+  
+  
+    
+  <div class="topbar">
+
+      <div id="header">
+  <a href="https://www.openpowerlifting.org"><img class="header-logo pad" src="/static/images/logo-compressed.e87731f9ce53411287c05e88356bf68e.svg" alt="OpenPowerlifting"/></a>
+  <a href="/" class="nav__link">Rankings</a>
+  <a href="/records" class="nav__link">Records</a>
+  <a href="/mlist" class="nav__link">Meets</a>
+  <a href="/status" class="nav__link">Status</a>
+  <a href="/faq" class="nav__link">FAQ</a>
+  <a href="https://openpowerlifting.gitlab.io/opl-csv/" class="nav__link">Data</a>
+  <a href="https://www.plsource.org" class="nav__link" rel="noopener" target="_blank">Apps</a>
+  <a href="https://openpowerlifting.bigcartel.com" class="nav__link" rel="noopener" target="_blank">Shop</a>
+  <a href="https://gitlab.com/openpowerlifting/opl-data/-/issues/new" class="nav__link" rel="noopener" target="_blank">Contact</a>
+  <a href="https://www.patreon.com/join/openpowerlifting" class="nav__link" rel="noopener" target="_blank">Support Us</a>
+  <a href="https://instagram.com/openpowerlifting/" class="nav__link" rel="noopener" target="_blank"><i class="iglogo-alt"></i></a>
+  <a href="javascript:void(0)" class="nav__link header-hamburger" onClick="document.getElementById('header').classList.toggle('responsive')">&#9776;</a>
+  <div id="header-right">
+    <select id="weightunits">
+  <option value="lbs" >lbs</option>
+  <option value="kg" selected>kg</option>
+</select>
+
+    <select id="langselect">
+  <option value="ar" >العربية</option>
+  <option value="cs" >Česky</option>
+  <option value="de" >Deutsch</option>
+  <option value="el" >Ελληνικά</option>
+  <option value="en" selected>English</option>
+  <option value="es" >Español</option>
+  <option value="eo" >Esperanto</option>
+  <option value="fr" >Français</option>
+  <option value="hr" >Hrvatski</option>
+  <option value="it" >Italiano</option>
+  <option value="lt" >Lietuvių</option>
+  <option value="hu" >Magyar</option>
+  <option value="nl" >Nederlands</option>
+  <option value="pl" >Polski</option>
+  <option value="pt" >Português</option>
+  <option value="ru" >Русский</option>
+  <option value="sk" >Slovenčina</option>
+  <option value="sl" >Slovenščina</option>
+  <option value="sr" >Srpski</option>
+  <option value="fi" >Suomi</option>
+  <option value="sv" >Svenska</option>
+  <option value="vi" >Tiếng Việt</option>
+  <option value="tr" >Türkçe</option>
+  <option value="uk" >Українська</option>
+  <option value="ko" >한국어</option>
+  <option value="ja" >日本語</option>
+  <option value="zh-Hant" >繁體中文</option>
+  <option value="zh-Hans" >简体中文</option>
+</select>
+
+  </div>
+</div>
+
+      
+  <div id="controls">
+    <div id="controls-left">
+      <select id="sortselect">
+        <optgroup label="Weight Sorts">
+          <option value="by-division" >By Division</option>
+          <option value="by-total" >By Total</option>
+        </optgroup>
+        <optgroup label="Point Sorts">
+          <option value="by-ah" >By AH (Haleczko)</option>
+          <option value="by-dots" selected>By Dots</option>
+          <option value="by-glossbrenner" >By Glossbrenner</option>
+          <option value="by-goodlift" >By GL Points</option>
+          <option value="by-ipf-points" >By IPF Points</option>
+          <option value="by-mcculloch" >By McCulloch</option>
+          <option value="by-nasa" >By NASA Points</option>
+          <option value="by-reshel" >By Reshel</option>
+          <option value="by-schwartz-malone" >By Schwartz&#x2F;Malone</option>
+          <option value="by-wilks" >By Wilks</option>
+          <option value="by-wilks2020" >By Wilks 2020</option>
+        </optgroup>
+      </select>
+    </div>
+    <div id="controls-right">
+      <button onclick="location.href='https://gitlab.com/openpowerlifting/opl-data/tree/main/meet-data/usapl&#x2F;ISR-2025-02'" type="button">Edit Meet</button>
+    </div>
+  </div>
+
+    
+  </div>
+
+    
+  <div class="mixed-content-with-controls">
+    <h1 id="meet">2025 USAPL Israel Hanukkah Championship</h1>
+    <p>2025-12-24, Israel
+      <a href="/api/meetcsv/usapl&#x2F;ISR-2025-02" style="float: right; margin-right: 20px;">
+        <button style="width: 120px">Download as CSV</button>
+      </a>
+    </p>
+
+    <table>
+      <thead><tr>
+        
+          <th>Rank</th>
+        
+        <th>Lifter</th>
+        <th>Sex</th>
+        
+          <th>Age</th>
+        
+        <th>Equip</th>
+        <th>Class</th>
+        <th>Weight</th>
+        <th>Squat</th>
+        <th>Bench</th>
+        <th>Deadlift</th>
+        <th>Total</th>
+        <th>Dots</th>
+      </tr></thead>
+      <tbody>
+      
+        
+      
+        <tr class="">
+          
+            <td>1</td>
+          
+          <td>
+            <a class="anchor" id="tzvirolnick" href="#"></a>
+            <a class="" href="/u/tzvirolnick">Tzvi Rolnick</a>
+          </td>
+          <td>M</td>
+          
+            <td>21~</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>91.3</td>
+          <td class="squat">277.5</td>
+          <td class="bench">150</td>
+          <td class="deadlift">280</td>
+          <td>707.5</td>
+          <td>454.09</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>2</td>
+          
+          <td>
+            <a class="anchor" id="meitalhitman" href="#"></a>
+            <a class="" href="/u/meitalhitman">Meital Hitman</a>
+          </td>
+          <td>M</td>
+          
+            <td>20~</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>97</td>
+          <td class="squat">250</td>
+          <td class="bench">170</td>
+          <td class="deadlift">242.5</td>
+          <td>662.5</td>
+          <td>413.31</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>3</td>
+          
+          <td>
+            <a class="anchor" id="yosefkedem" href="#"></a>
+            <a class="" href="/u/yosefkedem">Yosef Kedem</a>
+          </td>
+          <td>M</td>
+          
+            <td>19~</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>89.1</td>
+          <td class="squat">220</td>
+          <td class="bench">130</td>
+          <td class="deadlift">272.5</td>
+          <td>622.5</td>
+          <td>404.57</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>4</td>
+          
+          <td>
+            <a class="anchor" id="simhakats" href="#"></a>
+            <a class="" href="/u/simhakats">Simha Kats</a>
+          </td>
+          <td>M</td>
+          
+            <td>20~</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>76.7</td>
+          <td class="squat">200</td>
+          <td class="bench">125</td>
+          <td class="deadlift">235</td>
+          <td>560</td>
+          <td>396.12</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>5</td>
+          
+          <td>
+            <a class="anchor" id="yehudamankaff" href="#"></a>
+            <a class="" href="/u/yehudamankaff">Yehuda Mankaff</a>
+          </td>
+          <td>M</td>
+          
+            <td>21~</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>83.2</td>
+          <td class="squat">215</td>
+          <td class="bench">132.5</td>
+          <td class="deadlift">215</td>
+          <td>562.5</td>
+          <td>379.10</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>6</td>
+          
+          <td>
+            <a class="anchor" id="guyfurer" href="#"></a>
+            <a class="" href="/u/guyfurer">Guy Furer</a>
+          </td>
+          <td>M</td>
+          
+            <td>52~</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>98.8</td>
+          <td class="squat">190</td>
+          <td class="bench">135</td>
+          <td class="deadlift">242.5</td>
+          <td>567.5</td>
+          <td>351.07</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>7</td>
+          
+          <td>
+            <a class="anchor" id="natanyehezkelberger" href="#"></a>
+            <a class="" href="/u/natanyehezkelberger">Natan Yehezkel Berger</a>
+          </td>
+          <td>M</td>
+          
+            <td>17~</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>76</td>
+          <td class="squat">170</td>
+          <td class="bench">100</td>
+          <td class="deadlift">192.5</td>
+          <td>462.5</td>
+          <td>329.03</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>8</td>
+          
+          <td>
+            <a class="anchor" id="danfarber" href="#"></a>
+            <a class="" href="/u/danfarber">Dan Farber</a>
+          </td>
+          <td>M</td>
+          
+            <td>28~</td>
+          
+          <td>Raw</td>
+          <td>82.5</td>
+          <td>82</td>
+          <td class="squat">170</td>
+          <td class="bench">105</td>
+          <td class="deadlift">185</td>
+          <td>460</td>
+          <td>312.57</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>9</td>
+          
+          <td>
+            <a class="anchor" id="jeffreywasserstein" href="#"></a>
+            <a class="" href="/u/jeffreywasserstein">Jeffrey Wasserstein</a>
+          </td>
+          <td>M</td>
+          
+            <td>54</td>
+          
+          <td>Raw</td>
+          <td>100</td>
+          <td>92.4</td>
+          <td class="squat">160</td>
+          <td class="bench">100</td>
+          <td class="deadlift">190</td>
+          <td>450</td>
+          <td>287.13</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>10</td>
+          
+          <td>
+            <a class="anchor" id="nehorayazulay" href="#"></a>
+            <a class="" href="/u/nehorayazulay">Nehoray Azulay</a>
+          </td>
+          <td>M</td>
+          
+            <td>16~</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>84.7</td>
+          <td class="squat"></td>
+          <td class="bench"></td>
+          <td class="deadlift">200</td>
+          <td>200</td>
+          <td>133.51</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>11</td>
+          
+          <td>
+            <a class="anchor" id="shawncaplan" href="#"></a>
+            <a class="" href="/u/shawncaplan">Shawn Caplan</a>
+          </td>
+          <td>M</td>
+          
+            <td>18~</td>
+          
+          <td>Raw</td>
+          <td>75</td>
+          <td>70.4</td>
+          <td class="squat"></td>
+          <td class="bench">102.5</td>
+          <td class="deadlift"></td>
+          <td>102.5</td>
+          <td>76.69</td>
+        </tr>
+      
+        <tr class="">
+          
+            <td>12</td>
+          
+          <td>
+            <a class="anchor" id="eytanfein" href="#"></a>
+            <a class="" href="/u/eytanfein">Eytan Fein</a>
+          </td>
+          <td>M</td>
+          
+            <td>18~</td>
+          
+          <td>Raw</td>
+          <td>90</td>
+          <td>87</td>
+          <td class="squat"></td>
+          <td class="bench">105</td>
+          <td class="deadlift"></td>
+          <td>105</td>
+          <td>69.07</td>
+        </tr>
+      
+      
+      </tbody>
+    </table>
+  </div>
+
+  
+</body>
+</html>

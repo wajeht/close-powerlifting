@@ -1,0 +1,124 @@
+name: Update Fixtures
+
+on:
+  schedule:
+    # Run every Saturday at 12 PM UTC
+    - cron: "0 12 * * 6"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  update-fixtures:
+    name: Update OpenPowerlifting fixtures
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.verify-changed-files.outputs.changed }}
+
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update fixtures from OpenPowerlifting
+        run: npm run update:fixtures
+
+      - name: Format updated fixtures
+        run: npm run format
+
+      - name: Check for changes
+        id: verify-changed-files
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Files have been modified:"
+            git diff --name-only
+            echo "Diff summary:"
+            git diff --stat
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No files were modified."
+          fi
+
+      - name: Commit updated fixtures
+        if: steps.verify-changed-files.outputs.changed == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "chore: update OpenPowerlifting fixtures"
+          file_pattern: "src/routes/api/**/fixtures/*"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    needs: [update-fixtures]
+    name: Run tests with updated fixtures
+    runs-on: ubuntu-latest
+    if: needs.update-fixtures.outputs.changed == 'true'
+
+    strategy:
+      matrix:
+        node-version: [24.x]
+
+    env:
+      PORT: 80
+      ENV: "testing"
+      DOMAIN: "localhost"
+      FRONTEND_ORIGIN: "http://localhost:8080"
+      PASSWORD_SALT: 5
+      JWT_SECRET: "yeahhhhhhhhhhh"
+      ADMIN_EMAIL: "test@gmail.com"
+      ADMIN_NAME: "test"
+      COOKIE_EXPIRATION: 60000
+      COOKIE_PASSWORD: "cookie password"
+      COOKIE_NAME: "what is this cookie name"
+      SESSION_SECRET: "something someting"
+      SESSION_NAME: "something cool"
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/google/redirect"
+      API_URL: "https://www.openpowerlifting.org/api"
+      BASE_URL: "https://www.openpowerlifting.org/"
+      X_API_KEY: ""
+      EMAIL_HOST: "localhost"
+      EMAIL_PORT: 1025
+      EMAIL_AUTH_EMAIL: ""
+      EMAIL_AUTH_PASS: ""
+
+    services:
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Pull latest changes
+        run: git pull origin ${{ github.ref_name }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:ci
