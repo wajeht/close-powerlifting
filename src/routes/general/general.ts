@@ -7,9 +7,11 @@ import { config } from "../../config";
 import cache from "../../db/cache";
 import { getDb } from "../../db/db";
 import { isCronServiceStarted } from "../../utils/crons";
+import { getHostName } from "../../utils/helpers";
 import mail from "../../utils/mail";
 import contactHTML from "../../utils/templates/contact";
 import { validationMiddleware } from "../middleware";
+import * as HealthCheckService from "../api/health-check/health-check.service";
 import * as RankingsService from "../api/rankings/rankings.service";
 
 const router = express.Router();
@@ -117,11 +119,24 @@ router.get("/privacy", (req: Request, res: Response) => {
  * @tags general
  * @summary get status page
  */
-router.get("/status", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("general/general-status.html", {
-    path: "/status",
-  });
-});
+router.get(
+  "/status",
+  catchAsyncHandler(async (req: Request, res: Response) => {
+    const hostname = getHostName(req);
+    const apiStatuses = await HealthCheckService.getAPIStatus({
+      X_API_KEY: config.app.xApiKey,
+      url: hostname,
+    });
+
+    const allGood = apiStatuses.every((item: { status: boolean }) => item.status);
+
+    return res.status(StatusCodes.OK).render("general/general-status.html", {
+      path: "/status",
+      apiStatuses,
+      allGood,
+    });
+  }),
+);
 
 /**
  * GET /health-check
