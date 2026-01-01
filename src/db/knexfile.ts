@@ -5,7 +5,7 @@ import { config } from "../config";
 
 const isTestEnv = process.env.NODE_ENV === "testing" || config.app.env === "testing";
 
-const knexConfig: Knex.Config = {
+export const knexConfig: Knex.Config = {
   client: "better-sqlite3",
   connection: {
     filename: isTestEnv ? ":memory:" : path.resolve(__dirname, "sqlite", "db.sqlite"),
@@ -43,4 +43,4 @@ const knexConfig: Knex.Config = {
     : undefined,
 };
 
-export { knexConfig };
+export default knexConfig;
