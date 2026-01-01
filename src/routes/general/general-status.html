@@ -1,0 +1,108 @@
+<script type="importmap" defer>
+  { "imports": { "vue": "/js/vue.esm-browser.prod.js" } }
+</script>
+
+<script type="module">
+  import { createApp } from 'vue';
+
+  createApp({
+    data() {
+      return {
+        data: [],
+        loading: false,
+      };
+    },
+    async mounted() {
+      const temp = await this.getHealthCheck();
+      this.data = temp.data;
+    },
+    computed: {
+      allGood() {
+        return this.data.every((d) => d?.status === true);
+      },
+    },
+    methods: {
+      async getHealthCheck() {
+        try {
+          this.loading = true;
+          const res = await window.fetch('/api/health-check');
+          const data = await res.json();
+          this.loading = false;
+          return data;
+        } catch (e) {
+          this.loading = false;
+        }
+      },
+    },
+  }).mount('#status');
+</script>
+
+<div id="status" class="mx-auto max-w-5xl" v-cloak>
+  <!-- loading data -->
+  <div v-if="loading" class="cursor-progress">
+    <div class="flex animate-pulse flex-col gap-4">
+      <div class="rounded bg-green-500/20 p-4 text-neutral-300">
+        <div class="grid grid-cols-12 py-2">
+          <div class="col-span-4 h-2 bg-neutral-500"></div>
+        </div>
+      </div>
+      <div
+        class="flex flex-col gap-2 rounded bg-neutral-900 p-4"
+        v-for="i, idx in 12"
+        :key="`skeleton-key-${idx}`"
+      >
+        <!-- top -->
+        <div class="grid grid-cols-12 gap-4 py-2">
+          <div class="h-2 rounded bg-neutral-500"></div>
+          <div class="col-span-6 h-2 rounded bg-neutral-500"></div>
+        </div>
+
+        <!-- bottom -->
+        <div class="grid grid-cols-12 gap-4 py-2">
+          <div class="h-2 rounded bg-neutral-500"></div>
+          <div class="col-span-2 h-2 rounded bg-neutral-500"></div>
+          <div class="col-span-2 h-2 rounded bg-neutral-500"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- actual data -->
+  <div class="flex flex-col gap-4" v-if="!loading">
+    <!-- all good -->
+    <div v-if="allGood" class="rounded bg-green-500/20 p-4 text-neutral-300">
+      All systems operational!
+    </div>
+
+    <!-- not good -->
+    <div v-if="!allGood" class="rounded bg-yellow-500/20 p-4 text-neutral-300">
+      Some systems are not functional!
+    </div>
+
+    <div
+      class="flex flex-col gap-2 rounded bg-neutral-900 p-4"
+      v-for="d, idx in data"
+      :key="`data-key-${idx}`"
+    >
+      <!-- top -->
+      <div class="flex gap-4 text-neutral-400">
+        <div class="font-bold">{{ d.method }}</div>
+        <div class="overflow-scroll rounded bg-neutral-700 px-2 font-light">{{ d.url }}</div>
+      </div>
+
+      <!-- bottom -->
+      <div class="flex gap-1">
+        <span v-if="d.status === true">✅ Available</span>
+        <span v-if="d.status === false">❌ Not available</span>
+        <div>as of</div>
+        <div>{{d.date}}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  [v-cloak] {
+    display: none;
+  }
+</style>

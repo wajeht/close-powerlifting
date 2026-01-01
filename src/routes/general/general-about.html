@@ -1,0 +1,221 @@
+<script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.7.0/build/highlight.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('pre code').forEach((el) => {
+      hljs.highlightElement(el);
+    });
+  });
+</script>
+
+<div>
+  <div id="about" class="fade-in">
+    <div class="mx-auto flex max-w-5xl flex-col gap-4">
+      <!-- warn -->
+      <p class="rounded bg-red-500/20 p-4 text-neutral-300">
+        The primary purpose of this project is purely educational!
+      </p>
+
+      <!-- why -->
+      <h1>Why?</h1>
+
+      <!-- 1 -->
+      <p>
+        Within powerlifting world, there is
+        <a
+          class="font-bold hover:text-slate-200"
+          href="https://openpowerlifting.org/"
+          target="_blank"
+          >Open Powerlifting ↗️</a
+        >
+        project exists to create a permanent, accurate, convenient, accessible, open archive of the
+        world's powerlifting data.
+      </p>
+
+      <p>
+        They even mentioned not to scrape the website yet still provided bulk data for free of
+        download
+        <a
+          class="font-bold hover:text-slate-200"
+          href="https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html"
+          target="_blank"
+          >here ↗️</a
+        >.
+      </p>
+
+      <p>
+        <a class="font-bold hover:text-slate-200" href="/" target="_blank">Close Powerlifting ↗️</a>
+        only exists to create reverse API on top of
+        <a
+          class="font-bold hover:text-slate-200"
+          href="https://openpowerlifting.org/"
+          target="_blank"
+          >Open Powerlifting ↗️</a
+        >
+        project for us developers. The primary purpose of this project is purely educational!
+      </p>
+
+      <!-- how  -->
+      <h1>How?</h1>
+
+      <!-- 1 -->
+      <h2>Step 1</h2>
+      <p>
+        Register for api key
+        <a class="font-bold hover:text-slate-200" href="/register" target="_blank">here ↗️</a>. You
+        will have confirm your email address after registration and API key will sent to your email!
+      </p>
+
+      <!-- 2 -->
+      <h2>Step 2</h2>
+      <p>
+        Visit our
+        <a class="font-bold hover:text-slate-200" href="/docs/api/" target="_blank"
+          >API Documentation ↗️</a
+        >
+        page to reference all the available routes.
+      </p>
+
+      <!-- 3 -->
+      <h2>Step 3</h2>
+      <p>
+        Attach your api key via
+        <span class="rounded-sm bg-neutral-900 px-2 py-1">x-api-key</span> or
+        <span class="rounded-sm bg-neutral-900 px-2 py-1">bearer token</span>.
+      </p>
+      <pre
+        class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
+      ><code class="language-js">// auth through x-api-key
+const res = await window.fetch('/api/rankings', {
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': &#x3C;your api key here&#x3E;,
+  },
+});
+const data = await res.json();</code></pre>
+
+      <pre
+        class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
+      ><code class="language-js">// auth through bearer token
+const res = await window.fetch('/api/rankings', {
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer &#x3C;your api key here&#x3E;',
+  },
+});
+const data = await res.json();</code></pre>
+      Enjoy!
+
+      <p>
+        You will receive a quota of 500 API calls every month, and this limit will reset at the
+        beginning of each new month. If you need more than 500 calls, please request additional
+        resources via our
+        <a
+          class="font-bold hover:text-slate-200"
+          href="https://close-powerlifting.jaw.dev/contact"
+          target="_blank"
+          >contact page ↗️</a
+        >.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  #about h1 {
+    font-size: large;
+    color: #f8fafc;
+  }
+
+  #about h2 {
+    font-size: medium;
+    color: #bcbebf;
+  }
+
+  /* Base16 Atelier Cave Dark - Theme */
+  /* by Bram de Haan (http://atelierbram.github.io/syntax-highlighting/atelier-schemes/cave) */
+  /* Original Base16 color scheme by Chris Kempson (https://github.com/chriskempson/base16) */
+
+  /* Atelier-Cave Comment */
+  .hljs-comment,
+  .hljs-quote {
+    color: #7e7887;
+  }
+
+  /* Atelier-Cave Red */
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-attribute,
+  .hljs-regexp,
+  .hljs-link,
+  .hljs-tag,
+  .hljs-name,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: #be4678;
+  }
+
+  /* Atelier-Cave Orange */
+  .hljs-number,
+  .hljs-meta,
+  .hljs-built_in,
+  .hljs-builtin-name,
+  .hljs-literal,
+  .hljs-type,
+  .hljs-params {
+    color: #aa573c;
+  }
+
+  /* Atelier-Cave Green */
+  .hljs-string,
+  .hljs-symbol,
+  .hljs-bullet {
+    color: #2a9292;
+  }
+
+  /* Atelier-Cave Blue */
+  .hljs-title,
+  .hljs-section {
+    color: #576ddb;
+  }
+
+  /* Atelier-Cave Purple */
+  .hljs-keyword,
+  .hljs-selector-tag {
+    color: #955ae7;
+  }
+
+  .hljs-deletion,
+  .hljs-addition {
+    color: #19171c;
+    display: inline-block;
+    width: 100%;
+  }
+
+  .hljs-deletion {
+    background-color: #be4678;
+  }
+
+  .hljs-addition {
+    background-color: #2a9292;
+  }
+
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    background: transparent;
+    color: #8b8792;
+  }
+
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: bold;
+  }
+
+  code.hljs {
+    padding: 0 !important;
+  }
+</style>
