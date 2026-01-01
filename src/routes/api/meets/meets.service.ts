@@ -8,12 +8,12 @@ async function fetchMeetData(meet: string): Promise<MeetData> {
   const html = await fetchHtml(`/m/${meet}`);
   const doc = parseHtml(html);
 
-  const h1 = doc.querySelector("h1");
+  const h1 = doc.querySelector("h1#meet");
   const title = h1?.textContent?.trim() || "";
 
-  const h2 = doc.querySelector("h2");
-  const dateLocation = h2?.textContent?.trim() || "";
-  const [date, ...locationParts] = dateLocation.split(",").map((s) => s.trim());
+  const p = h1?.nextElementSibling;
+  const dateLocationText = p?.textContent?.trim().split("\n")[0] || "";
+  const [date, ...locationParts] = dateLocationText.split(",").map((s) => s.trim());
   const location = locationParts.join(", ");
 
   const table = doc.querySelector("table");
