@@ -64,6 +64,6 @@ export async function init() {
     logger.info("admin user exits");
     logger.info("skipping admin user attaching");
   } catch (e) {
-    logger.error(e);
+    logger.error(e as Error);
   }
 }
