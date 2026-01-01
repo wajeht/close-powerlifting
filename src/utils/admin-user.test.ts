@@ -1,9 +1,8 @@
-import { faker } from "@faker-js/faker";
 import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { config } from "../config";
 import * as UserRepository from "../db/repositories/user.repository";
-import { generateAPIKey, hashKey } from "../utils/helpers";
+import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
 import mail from "../utils/mail";
 import { init } from "./admin-user";
 import logger from "./logger";
@@ -12,15 +11,6 @@ vi.mock("../db/repositories/user.repository", async () => ({
   findByEmail: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
-}));
-
-vi.mock("@faker-js/faker", async () => ({
-  ...((await vi.importActual("@faker-js/faker")) as object),
-  faker: {
-    internet: {
-      password: vi.fn(),
-    },
-  },
 }));
 
 vi.mock("bcryptjs", async () => ({
@@ -33,6 +23,7 @@ vi.mock("bcryptjs", async () => ({
 vi.mock("./helpers", async () => ({
   ...((await vi.importActual("./helpers")) as object),
   generateAPIKey: vi.fn(),
+  generatePassword: vi.fn(),
   hashKey: vi.fn(),
 }));
 
@@ -44,7 +35,7 @@ describe("init", () => {
   it("should create a new admin user if one does not exist", async () => {
     (UserRepository.findByEmail as Mock).mockResolvedValueOnce(null);
 
-    (faker.internet.password as Mock).mockReturnValueOnce("password");
+    (generatePassword as Mock).mockReturnValueOnce("password");
 
     ((await hashKey) as Mock).mockResolvedValueOnce({ key: "token" });
 
@@ -64,7 +55,7 @@ describe("init", () => {
     await init();
 
     expect(UserRepository.findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
-    expect(faker.internet.password).toHaveBeenCalledWith({ length: 50 });
+    expect(generatePassword).toHaveBeenCalled();
     expect(UserRepository.create).toHaveBeenCalledWith({
       email: config.app.adminEmail,
       name: config.app.adminName,

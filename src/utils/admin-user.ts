@@ -1,9 +1,8 @@
-import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 
 import { config } from "../config";
 import * as UserRepository from "../db/repositories/user.repository";
-import { generateAPIKey, hashKey } from "../utils/helpers";
+import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
 import { updateUser } from "../routes/auth/auth.service";
 import logger from "./logger";
 import mail from "./mail";
@@ -17,7 +16,7 @@ export async function init() {
       logger.info("admin user does not exist");
       logger.info("attaching admin user");
 
-      const password = faker.internet.password({ length: 50 });
+      const password = generatePassword();
       const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
       const { key: token } = await hashKey();
 

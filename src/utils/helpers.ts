@@ -95,6 +95,10 @@ export async function generateAPIKey(userParams: UserParams & { admin?: boolean 
   }
 }
 
+export function generatePassword(length = 50): string {
+  return crypto.randomBytes(length).toString("base64").slice(0, length);
+}
+
 export function getGoogleOAuthURL() {
   const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 

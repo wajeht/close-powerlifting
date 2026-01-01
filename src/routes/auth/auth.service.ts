@@ -1,9 +1,8 @@
-import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 
 import { config } from "../../config";
 import * as UserRepository from "../../db/repositories/user.repository";
-import { generateAPIKey } from "../../utils/helpers";
+import { generateAPIKey, generatePassword } from "../../utils/helpers";
 import logger from "../../utils/logger";
 import mail from "../../utils/mail";
 import adminNewAPIKeyHTML from "../../utils/templates/admin-new-api-key";
@@ -47,7 +46,7 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
 
 export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   const { name, email } = userParams;
-  const password = faker.internet.password({ length: 50 });
+  const password = generatePassword();
   const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
 
   const { unhashedKey, hashedKey } = await generateAPIKey({ ...userParams, admin: true });
