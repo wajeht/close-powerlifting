@@ -3,7 +3,7 @@ import path from "path";
 
 import packageJson from "../package.json";
 
-dotenv.config({ path: path.resolve(path.join(process.cwd(), ".env")) });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 export type Env = "production" | "development" | "testing" | "local";
 
