@@ -1,29 +1,29 @@
 services:
-  app:
-    container_name: app
+  close-powerlifting:
+    container_name: close-powerlifting
     restart: unless-stopped
     build:
       context: ./
       dockerfile: ./Dockerfile.dev
     ports:
-      - "${PORT}:${PORT}"
+      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
-      - mailhog
+      - mailpit
     networks:
       - close-powerlifting-network
     environment:
       - CHOKIDAR_USEPOLLING=true
 
-  mailhog:
-    container_name: mailhog
+  mailpit:
+    container_name: mailpit
     restart: unless-stopped
-    image: mailhog/mailhog
+    image: axllent/mailpit
     ports:
-      - "1025:1025" # smtp server
-      - "8025:8025" # web ui
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - close-powerlifting-network
     healthcheck:

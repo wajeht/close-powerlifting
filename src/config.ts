@@ -9,17 +9,16 @@ export type Env = "production" | "development" | "testing" | "local";
 
 export const config = {
   app: {
-    port: parseInt(process.env.PORT || "80", 10),
-    env: (process.env.ENV || process.env.NODE_ENV || "development") as Env,
+    port: parseInt(process.env.APP_PORT || "80", 10),
+    env: (process.env.APP_ENV || process.env.NODE_ENV || "development") as Env,
     version: packageJson.version,
-    domain: process.env.DOMAIN || "localhost",
-    frontendOrigin: process.env.FRONTEND_ORIGIN || "http://localhost:8080",
+    domain: process.env.APP_DOMAIN || "localhost",
     apiUrl: process.env.API_URL || "https://www.openpowerlifting.org/api",
     baseUrl: process.env.BASE_URL || "https://www.openpowerlifting.org/",
-    jwtSecret: process.env.JWT_SECRET || "secret",
-    passwordSalt: process.env.PASSWORD_SALT || "5",
-    adminEmail: process.env.ADMIN_EMAIL || "",
-    adminName: process.env.ADMIN_NAME || "",
+    jwtSecret: process.env.APP_JWT_SECRET || "secret",
+    passwordSalt: process.env.APP_PASSWORD_SALT || "5",
+    adminEmail: process.env.APP_ADMIN_EMAIL || "",
+    adminName: process.env.APP_ADMIN_NAME || "",
     xApiKey: process.env.X_API_KEY || "",
     defaultApiCallLimit: 500,
   } as const,
@@ -33,8 +32,9 @@ export const config = {
     host: process.env.EMAIL_HOST || "localhost",
     port: parseInt(process.env.EMAIL_PORT || "1025", 10),
     secure: process.env.EMAIL_SECURE === "true",
-    user: process.env.EMAIL_AUTH_EMAIL || "",
-    password: process.env.EMAIL_AUTH_PASS || "",
+    user: process.env.EMAIL_USER || "",
+    password: process.env.EMAIL_PASSWORD || "",
+    from: process.env.EMAIL_FROM || "noreply@close-powerlifting.local",
   } as const,
 
   cookie: {
