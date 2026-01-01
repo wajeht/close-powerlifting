@@ -65,8 +65,21 @@ async function fetchUserProfile(username: string): Promise<UserProfile> {
     throw new Error(`User profile not found: ${username}`);
   }
 
-  const heading = mixedContent.querySelector("h1, h2");
-  const name = heading ? stripHtml(heading.innerHTML) : username;
+  // Extract name from span inside h1 (can be span.green or just span)
+  const h1 = mixedContent.querySelector("h1");
+  const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
+  const name = nameSpan?.textContent?.trim() || username;
+
+  // Extract sex from h1 text (e.g., "(M)" or "(F)")
+  const h1Text = h1?.textContent || "";
+  const sexMatch = h1Text.match(/\(([MF])\)/);
+  const sex = sexMatch ? sexMatch[1] : "";
+
+  // Extract instagram handle from link
+  const igLink = h1?.querySelector("a.instagram");
+  const igHref = igLink?.getAttribute("href") || "";
+  const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
+  const instagram = igMatch ? igMatch[1] : "";
 
   const tables = mixedContent.querySelectorAll("table");
   const personalBest = tables[0] ? tableToJson<PersonalBest>(tables[0]) : [];
@@ -75,6 +88,9 @@ async function fetchUserProfile(username: string): Promise<UserProfile> {
   return {
     name,
     username,
+    sex,
+    instagram,
+    instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
     personal_best: personalBest,
     competition_results: competitionResults,
   };

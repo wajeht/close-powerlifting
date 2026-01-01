@@ -104,6 +104,9 @@ export interface CompetitionResult {
 export interface UserProfile {
   name: string;
   username: string;
+  sex: string;
+  instagram: string;
+  instagram_url: string;
   personal_best: PersonalBest[];
   competition_results: CompetitionResult[];
 }

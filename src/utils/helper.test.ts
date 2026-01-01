@@ -1,7 +1,8 @@
 import { JSDOM } from "jsdom";
 import { beforeEach, describe, expect, test } from "vitest";
 
-import { buildPagination, generateAPIKey, hashKey, stripHTML, tableToJson } from "./helpers";
+import { generateAPIKey, hashKey } from "./helpers";
+import { tableToJson, stripHtml as stripHTML, buildPaginationQuery } from "./scraper";
 
 describe("tableToJson", () => {
   let table: any;
@@ -102,24 +103,24 @@ describe("tableToJson", () => {
   });
 });
 
-describe("buildPagination", () => {
+describe("buildPaginationQuery", () => {
   test("returns the correct pagination string", () => {
-    const pagination = buildPagination({ current_page: 2, per_page: 10 });
-    expect(pagination).toEqual("start=20&end=30&lang=en&units=lbs");
+    const pagination = buildPaginationQuery(2, 10);
+    expect(pagination).toEqual("start=10&end=20&lang=en&units=lbs");
   });
 
   test("handles the first page correctly", () => {
-    const pagination = buildPagination({ current_page: 1, per_page: 10 });
+    const pagination = buildPaginationQuery(1, 10);
     expect(pagination).toEqual("start=0&end=10&lang=en&units=lbs");
   });
 
   test("handles the last page correctly", () => {
-    const pagination = buildPagination({ current_page: 5, per_page: 10 });
-    expect(pagination).toEqual("start=50&end=60&lang=en&units=lbs");
+    const pagination = buildPaginationQuery(5, 10);
+    expect(pagination).toEqual("start=40&end=50&lang=en&units=lbs");
   });
 
   test("handles the first page with a different number of items per page correctly", () => {
-    const pagination = buildPagination({ current_page: 1, per_page: 5 });
+    const pagination = buildPaginationQuery(1, 5);
     expect(pagination).toEqual("start=0&end=5&lang=en&units=lbs");
   });
 });

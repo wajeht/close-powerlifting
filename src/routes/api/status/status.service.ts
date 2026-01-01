@@ -21,9 +21,21 @@ async function fetchStatus(): Promise<StatusData> {
     throw new Error("Could not find text-content element on status page");
   }
 
-  const h2 = textContent.querySelector("h2");
-  const serverVersion = h2 ? stripHtml(h2.innerHTML) : "";
+  // Extract server version commit hash from the link in the paragraph after "Server Version" h2
+  let serverVersion = "";
+  const h2s = textContent.querySelectorAll("h2");
+  for (const h2 of h2s) {
+    if (h2.textContent?.includes("Server Version")) {
+      const p = h2.nextElementSibling;
+      const link = p?.querySelector("a");
+      const href = link?.getAttribute("href") || "";
+      const match = href.match(/commits\/([a-f0-9]+)/);
+      serverVersion = match ? match[1] : "";
+      break;
+    }
+  }
 
+  // Extract meets info from paragraph containing "Tracking"
   const paragraphs = textContent.querySelectorAll("p");
   let meetsInfo = "";
   for (const p of paragraphs) {
@@ -34,6 +46,7 @@ async function fetchStatus(): Promise<StatusData> {
     }
   }
 
+  // Extract federations table
   const table = textContent.querySelector("table");
   const federations = tableToJson(table) as Federation[];
 
