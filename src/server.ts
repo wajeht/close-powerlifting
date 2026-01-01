@@ -2,13 +2,13 @@ import { AddressInfo } from "net";
 import { Server } from "http";
 
 import app from "./app";
-import { appConfig } from "./config/constants";
+import { config } from "./config";
 import * as db from "./db/db";
 import * as admin from "./utils/admin-user";
 import * as crons from "./utils/crons";
 import logger from "./utils/logger";
 
-const server: Server = app.listen(appConfig.port);
+const server: Server = app.listen(config.app.port);
 
 server.on("listening", async () => {
   const addr: string | AddressInfo | null = server.address();
@@ -32,7 +32,7 @@ server.on("error", (error: NodeJS.ErrnoException) => {
   }
 
   const bind: string =
-    typeof appConfig.port === "string" ? "Pipe " + appConfig.port : "Port " + appConfig.port;
+    typeof config.app.port === "string" ? "Pipe " + config.app.port : "Port " + config.app.port;
 
   switch (error.code) {
     case "EACCES":
