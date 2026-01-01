@@ -132,15 +132,15 @@ async function fetchFederation({ federation, year }: any) {
 
 export async function getFederation({
   federation,
-  cache = true,
+  cache: useCache = true,
   year,
 }: getFederationsParamType & getFederationsQueryType) {
   try {
-    if (cache === false) {
+    if (useCache === false) {
       const federations = await fetchFederation({ federation, year });
       return {
         data: federations,
-        cache,
+        cache: useCache,
       };
     }
 
@@ -162,7 +162,7 @@ export async function getFederation({
 
     return {
       data: federations,
-      cache,
+      cache: useCache,
     };
   } catch (error) {
     if (error instanceof AxiosError) {

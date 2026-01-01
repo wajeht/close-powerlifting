@@ -64,17 +64,17 @@ export async function fetchRankings(paginationQuery: string) {
 export async function getRankings({
   current_page = 1,
   per_page = 100,
-  cache = true,
+  cache: useCache = true,
 }: getRankingsType) {
   try {
     const paginationQuery = buildPagination({ current_page, per_page });
 
-    if (cache === false) {
+    if (useCache === false) {
       const rankings = await fetchRankings(paginationQuery);
       if (rankings === null) return null;
       return {
         data: rankings?.data,
-        cache,
+        cache: useCache,
         pagination: {
           items: rankings?.total_length,
           pages: Math.floor(rankings?.total_length / per_page),
@@ -99,7 +99,7 @@ export async function getRankings({
 
     return {
       data: rankings.data,
-      cache,
+      cache: useCache,
       pagination: {
         items: rankings?.total_length,
         pages: Math.floor(rankings?.total_length / per_page),
