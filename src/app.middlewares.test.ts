@@ -4,9 +4,9 @@ import { ZodError } from 'zod';
 import { ZodIssue, ZodIssueCode } from 'zod';
 
 import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from './app.middlewares';
+import cache from './db/cache';
 import { getHostName } from './utils/helpers';
 import * as utils from './utils/helpers';
-import redis from './utils/redis';
 
 describe('notFoundHandler', () => {
   let req: any;
