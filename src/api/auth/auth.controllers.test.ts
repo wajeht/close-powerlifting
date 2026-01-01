@@ -1,7 +1,7 @@
 import { describe, expect, Mock, test, vi } from "vitest";
 
+import * as UserRepository from "../../db/repositories/user.repository";
 import { hashKey } from "../../utils/helpers";
-import { User } from "../../views/views.models";
 import { getGoogle, postRegister } from "./auth.controllers";
 
 vi.mock("../../utils/helpers", () => ({
@@ -10,16 +10,18 @@ vi.mock("../../utils/helpers", () => ({
   getHostName: vi.fn(),
 }));
 
-vi.mock("../../views/views.models", async () => ({
-  User: {
-    findOne: vi.fn(),
-    create: vi.fn(),
-  },
+vi.mock("../../db/repositories/user.repository", async () => ({
+  findByEmail: vi.fn(),
+  create: vi.fn(),
 }));
 
 vi.mock("../api.errors", async () => ({
   UnauthorizedError: vi.fn(),
   ValidationError: vi.fn(),
+}));
+
+vi.mock("../../views/views.services", async () => ({
+  sendVerificationEmail: vi.fn(),
 }));
 
 describe("getGoogle", () => {
@@ -41,6 +43,7 @@ describe("postRegister", async () => {
         email: "jaw@jaw.com",
         name: "jaw",
       },
+      originalUrl: "/api/auth/register",
     } as any;
 
     const res = {
@@ -48,12 +51,19 @@ describe("postRegister", async () => {
       json: vi.fn(() => res),
     } as any;
 
-    (hashKey as Mock).mockReturnValue({ key: "mock-key" });
-
-    (User.create as Mock).mockReturnValue({ id: "mock-id" });
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce(null);
+    (hashKey as Mock).mockResolvedValueOnce({ key: "mock-key" });
+    (UserRepository.create as Mock).mockResolvedValueOnce({ id: 1, email: "jaw@jaw.com", name: "jaw" });
 
     await postRegister(req, res);
 
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith("jaw@jaw.com");
+    expect(hashKey).toHaveBeenCalled();
+    expect(UserRepository.create).toHaveBeenCalledWith({
+      email: "jaw@jaw.com",
+      name: "jaw",
+      verification_token: "mock-key",
+    });
     expect(res.status).toHaveBeenCalledWith(201);
   });
 });

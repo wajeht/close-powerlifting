@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 
 import { getRankings } from "../api/rankings/rankings.services";
 import { emailConfig } from "../config/constants";
-import { getHostName, hashKey } from "../utils/helpers";
+import * as UserRepository from "../db/repositories/user.repository";
 import mail from "../utils/mail";
 import {
   getAboutPage,
-  getContactPage, // getHealthCheckPage,
+  getContactPage,
   getHomePage,
   getPrivacyPage,
   getRegisterPage,
@@ -18,7 +18,6 @@ import {
   postContactPage,
   postRegisterPage,
 } from "./views.controllers";
-import { User } from "./views.models";
 import { sendWelcomeEmail } from "./views.services";
 
 vi.mock("../utils/mail", async () => ({
@@ -35,26 +34,17 @@ vi.mock("./views.services", async () => ({
 
 vi.mock("../utils/helpers", async () => ({
   ...((await import("../utils/helpers")) as object),
-  // hashKey: vi.fn(),
   getHostName: vi.fn(),
 }));
-
-// vi.mock('./views.services', async () => ({
-//   ...((await import('./views.services')) as object),
-//   sendWelcomeEmail: vi.fn(),
-// }));
 
 vi.mock("../api/rankings/rankings.services", async () => ({
   ...((await import("../api/rankings/rankings.services")) as object),
   getRankings: vi.fn(),
 }));
 
-vi.mock("./views.models", async () => ({
-  // ...((await import('./views.models')) as object),
-  User: {
-    findOne: vi.fn(),
-    create: vi.fn(),
-  },
+vi.mock("../db/repositories/user.repository", async () => ({
+  findByEmail: vi.fn(),
+  create: vi.fn(),
 }));
 
 beforeEach(() => {
@@ -119,19 +109,13 @@ describe("postRegisterPage", () => {
       redirect: vi.fn(),
     } as any;
 
-    (User.findOne as Mock).mockResolvedValueOnce({
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce({
       id: 1,
     });
 
-    (User.create as Mock).mockResolvedValueOnce({
+    (UserRepository.create as Mock).mockResolvedValueOnce({
       id: 1,
     });
-
-    // hashKey.mockResolvedValueOnce({ key: '' });
-
-    // sendVerificationEmail.mockResolvedValueOnce();
-
-    // getHostName.mockReturnValueOnce('localhost');
 
     await postRegisterPage(req, res);
 
@@ -244,10 +228,11 @@ describe("getVerifyEmailPage", () => {
       redirect: vi.fn(),
     } as any;
 
-    (User.findOne as Mock).mockResolvedValueOnce({ id: 1 });
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce(null);
 
     await getVerifyEmailPage(req, res);
 
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith("email");
     expect(res.redirect).toHaveBeenCalledWith("/register");
     expect(req.flash).toHaveBeenCalledWith(
       "error",
@@ -268,8 +253,7 @@ describe("getVerifyEmailPage", () => {
       redirect: vi.fn(),
     } as any;
 
-    const findOneMock = vi.spyOn(User, "findOne");
-    findOneMock.mockResolvedValueOnce({
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce({
       verified: true,
       id: 1,
       email: "email",
@@ -278,11 +262,7 @@ describe("getVerifyEmailPage", () => {
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({
-      email: {
-        $eq: "email",
-      },
-    });
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith("email");
     expect(res.redirect).toHaveBeenCalledWith("/register");
     expect(req.flash).toHaveBeenCalledWith(
       "error",
@@ -303,9 +283,8 @@ describe("getVerifyEmailPage", () => {
       redirect: vi.fn(),
     } as any;
 
-    const findOneMock = vi.spyOn(User, "findOne");
-    findOneMock.mockResolvedValueOnce({
-      verified: true,
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce({
+      verified: false,
       id: 1,
       email: "email",
       name: "name",
@@ -313,11 +292,7 @@ describe("getVerifyEmailPage", () => {
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({
-      email: {
-        $eq: "email",
-      },
-    });
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith("email");
     expect(res.redirect).toHaveBeenCalledWith("/register");
     expect(req.flash).toHaveBeenCalledWith(
       "error",
@@ -338,10 +313,8 @@ describe("getVerifyEmailPage", () => {
       },
     } as any;
 
-    const findOneMock = vi.spyOn(User, "findOne");
-
-    findOneMock.mockResolvedValueOnce({
-      userId: 1,
+    (UserRepository.findByEmail as Mock).mockResolvedValueOnce({
+      id: 1,
       verified: false,
       email: "email",
       name: "name",
@@ -349,20 +322,15 @@ describe("getVerifyEmailPage", () => {
     });
 
     (sendWelcomeEmail as Mock).mockResolvedValueOnce({
-      // userId: 1,
       email: "email",
       name: "name",
     });
 
     await getVerifyEmailPage(req, res);
-    expect(findOneMock).toHaveBeenCalledWith({
-      email: {
-        $eq: "email",
-      },
-    });
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith("email");
     expect(res.redirect).toHaveBeenCalledWith("/register");
     expect(sendWelcomeEmail).toHaveBeenCalledWith({
-      // userId: 1,
+      userId: "1",
       email: "email",
       name: "name",
     });
@@ -394,42 +362,6 @@ describe("getResetAPIKeyPage", () => {
     });
   });
 });
-
-// describe('getHealthCheckPage', () => {
-//   test('returns health check', async () => {
-//     const req = {
-//       flash: vi.fn(() => []),
-//       originalUrl: 'url',
-//       query: {
-//         cache: 'true',
-//       },
-//     } as any;
-//     const res = {
-//       status: vi.fn(() => res),
-//       json: vi.fn(),
-//     } as any;
-
-//     await getHealthCheckPage(req, res);
-
-//     expect(res.status).toHaveBeenCalledWith(200);
-
-//     expect(res.json).toHaveBeenCalledWith(
-//       expect.objectContaining({
-//         status: 'success',
-//         request_url: 'url',
-//         cache: 'true',
-//         message: 'ok',
-//         data: expect.arrayContaining([
-//           expect.objectContaining({
-//             method: expect.stringMatching(/^GET$/),
-//             status: expect.any(Boolean),
-//             url: expect.stringMatching(/^\/api\/rankings\/?/),
-//           }),
-//         ]),
-//       }),
-//     );
-//   });
-// });
 
 describe("postContactPage", () => {
   test("should be able to send a contact", async () => {
