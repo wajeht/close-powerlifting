@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import type { Knex } from "knex";
 
-class CustomMigrationSource implements Knex.MigrationSource<string> {
+export class CustomMigrationSource implements Knex.MigrationSource<string> {
   private migrationsDir: string;
 
   constructor(migrationsDir: string) {
@@ -32,5 +32,3 @@ class CustomMigrationSource implements Knex.MigrationSource<string> {
     return import(migrationPath);
   }
 }
-
-export { CustomMigrationSource };
