@@ -47,12 +47,17 @@ export async function init() {
 
       const verified = await updateUser(createdAdminUser.email, { key: hashedKey });
 
-      mail.sendMail({
-        from: `"Close Powerlifting" <${config.app.adminEmail}>`,
-        to: createdAdminUser.email,
-        subject: "API Key and Admin Password for Close Powerlifting",
-        html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
-      });
+      try {
+        await mail.sendMail({
+          from: `"Close Powerlifting" <${config.email.from}>`,
+          to: createdAdminUser.email,
+          subject: "API Key and Admin Password for Close Powerlifting",
+          html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
+        });
+        logger.info(`Admin welcome email sent to ${createdAdminUser.email}`);
+      } catch (error) {
+        logger.error(`Failed to send admin welcome email: ${error}`);
+      }
 
       logger.info(
         `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
