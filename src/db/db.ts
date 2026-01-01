@@ -14,7 +14,6 @@ export function getDb(): Knex {
 export async function init(): Promise<void> {
   try {
     db = getDb();
-    // Run migrations on startup
     await db.migrate.latest();
     logger.info("Database connection established and migrations applied!");
   } catch (error) {

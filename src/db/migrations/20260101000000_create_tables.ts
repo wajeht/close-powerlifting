@@ -1,7 +1,6 @@
 import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
-  // Users table
   if (!(await knex.schema.hasTable("users"))) {
     await knex.schema.createTable("users", (table) => {
       table.increments("id").primary();
@@ -20,14 +19,12 @@ export async function up(knex: Knex): Promise<void> {
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
 
-      // Indexes
       table.index("email");
       table.index("verification_token");
       table.index("verified");
     });
   }
 
-  // Cache table (replaces Redis)
   if (!(await knex.schema.hasTable("cache"))) {
     await knex.schema.createTable("cache", (table) => {
       table.string("key").primary();
@@ -36,7 +33,6 @@ export async function up(knex: Knex): Promise<void> {
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
 
-      // Index for cleanup queries
       table.index("expires_at");
     });
   }
