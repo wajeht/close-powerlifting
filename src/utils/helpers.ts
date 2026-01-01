@@ -4,7 +4,7 @@ import { Request } from "express";
 import jwt from "jsonwebtoken";
 
 import { oauthConfig, appConfig } from "../config/constants";
-import { UserParams } from "../views/views.services";
+import { UserParams } from "../routes/auth/auth.service";
 
 type buildPaginationType = {
   current_page: number;

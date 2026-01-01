@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { appConfig } from "../config/constants";
 import * as UserRepository from "../db/repositories/user.repository";
 import { generateAPIKey, hashKey } from "../utils/helpers";
-import { updateUser } from "../views/views.services";
+import { updateUser } from "../routes/auth/auth.service";
 import logger from "./logger";
 import mail from "./mail";
 import adminNewAPIKeyHTML from "./templates/admin-new-api-key";
