@@ -7,35 +7,35 @@ on:
 
 env:
   PORT: 80
-  ENV: 'testing'
-  DOMAIN: 'localhost'
-  FRONTEND_ORIGIN: 'http://localhost:8080'
+  ENV: "testing"
+  DOMAIN: "localhost"
+  FRONTEND_ORIGIN: "http://localhost:8080"
 
   PASSWORD_SALT: 5
-  JWT_SECRET: 'yeahhhhhhhhhhh'
+  JWT_SECRET: "yeahhhhhhhhhhh"
 
-  ADMIN_EMAIL: 'test@gmail.com'
-  ADMIN_NAME: 'test'
+  ADMIN_EMAIL: "test@gmail.com"
+  ADMIN_NAME: "test"
 
   COOKIE_EXPIRATION: 60000
-  COOKIE_PASSWORD: 'cookie password'
-  COOKIE_NAME: 'what is this cookie name'
+  COOKIE_PASSWORD: "cookie password"
+  COOKIE_NAME: "what is this cookie name"
 
-  SESSION_SECRET: 'something someting'
-  SESSION_NAME: 'something cool'
+  SESSION_SECRET: "something someting"
+  SESSION_NAME: "something cool"
 
-  GOOGLE_CLIENT_ID: ''
-  GOOGLE_CLIENT_SECRET: ''
-  GOOGLE_OAUTH_REDIRECT_URL: 'http://localhost:8080/api/auth/oauth/google/redirect'
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/google/redirect"
 
-  API_URL: 'https://www.openpowerlifting.org/api'
-  BASE_URL: 'https://www.openpowerlifting.org/'
-  X_API_KEY: ''
+  API_URL: "https://www.openpowerlifting.org/api"
+  BASE_URL: "https://www.openpowerlifting.org/"
+  X_API_KEY: ""
 
-  EMAIL_HOST: 'localhost'
+  EMAIL_HOST: "localhost"
   EMAIL_PORT: 1025
-  EMAIL_AUTH_EMAIL: ''
-  EMAIL_AUTH_PASS: ''
+  EMAIL_AUTH_EMAIL: ""
+  EMAIL_AUTH_PASS: ""
 
 jobs:
   format:
@@ -52,7 +52,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -74,7 +74,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -103,7 +103,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -148,7 +148,7 @@ jobs:
       - name: Deploy Image to Production
         uses: caprover/deploy-from-github@v1.1.2
         with:
-          server: '${{ secrets.CAPROVER_SERVER }}'
-          app: '${{ secrets.APP_NAME }}'
-          token: '${{ secrets.APP_TOKEN }}'
+          server: "${{ secrets.CAPROVER_SERVER }}"
+          app: "${{ secrets.APP_NAME }}"
+          token: "${{ secrets.APP_TOKEN }}"
           image: ${{ env.IMAGE_URL }}

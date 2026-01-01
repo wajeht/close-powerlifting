@@ -53,7 +53,11 @@ describe("postRegister", async () => {
 
     (UserRepository.findByEmail as Mock).mockResolvedValueOnce(null);
     (hashKey as Mock).mockResolvedValueOnce({ key: "mock-key" });
-    (UserRepository.create as Mock).mockResolvedValueOnce({ id: 1, email: "jaw@jaw.com", name: "jaw" });
+    (UserRepository.create as Mock).mockResolvedValueOnce({
+      id: 1,
+      email: "jaw@jaw.com",
+      name: "jaw",
+    });
 
     await postRegister(req, res);
 

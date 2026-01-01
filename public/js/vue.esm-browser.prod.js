@@ -994,12 +994,9 @@ function Sn(e, t) {
     ((t.__VUE_DEVTOOLS_HOOK_REPLAY__ = t.__VUE_DEVTOOLS_HOOK_REPLAY__ || []).push((e) => {
       Sn(e, t);
     }),
-      setTimeout(
-        () => {
-          _n || ((t.__VUE_DEVTOOLS_HOOK_REPLAY__ = null), (bn = []));
-        },
-        3e3,
-      ));
+      setTimeout(() => {
+        _n || ((t.__VUE_DEVTOOLS_HOOK_REPLAY__ = null), (bn = []));
+      }, 3e3));
   } else bn = [];
 }
 function xn(e, t, ...n) {
@@ -1205,12 +1202,9 @@ const In = (e) => e.__isSuspense,
             else {
               const { timeout: e, pendingId: t } = p;
               e > 0
-                ? setTimeout(
-                    () => {
-                      p.pendingId === t && p.fallback(d);
-                    },
-                    e,
-                  )
+                ? setTimeout(() => {
+                    p.pendingId === t && p.fallback(d);
+                  }, e)
                 : 0 === e && p.fallback(d);
             }
           })(e, t, n, o, r, i, l, c, a);
@@ -1750,22 +1744,16 @@ function fo(e) {
         f = Ft(!!r);
       return (
         r &&
-          setTimeout(
-            () => {
-              f.value = !1;
-            },
-            r,
-          ),
+          setTimeout(() => {
+            f.value = !1;
+          }, r),
         null != s &&
-          setTimeout(
-            () => {
-              if (!l.value && !u.value) {
-                const e = new Error(`Async component timed out after ${s}ms.`);
-                (t(e), (u.value = e));
-              }
-            },
-            s,
-          ),
+          setTimeout(() => {
+            if (!l.value && !u.value) {
+              const e = new Error(`Async component timed out after ${s}ms.`);
+              (t(e), (u.value = e));
+            }
+          }, s),
         p()
           .then(() => {
             ((l.value = !0), e.parent && mo(e.parent.vnode) && pn(e.parent.update));
@@ -1831,26 +1819,20 @@ const mo = (e) => e.type.__isKeepAlive,
         const s = e.component;
         (a(e, t, n, 0, l),
           c(s.vnode, e, t, n, s, l, o, e.slotScopeIds, r),
-          Or(
-            () => {
-              ((s.isDeactivated = !1), s.a && Y(s.a));
-              const t = e.props && e.props.onVnodeMounted;
-              t && vs(t, s.parent, e);
-            },
-            l,
-          ));
+          Or(() => {
+            ((s.isDeactivated = !1), s.a && Y(s.a));
+            const t = e.props && e.props.onVnodeMounted;
+            t && vs(t, s.parent, e);
+          }, l));
       }),
         (o.deactivate = (e) => {
           const t = e.component;
           (a(e, f, null, 1, l),
-            Or(
-              () => {
-                t.da && Y(t.da);
-                const n = e.props && e.props.onVnodeUnmounted;
-                (n && vs(n, t.parent, e), (t.isDeactivated = !0));
-              },
-              l,
-            ));
+            Or(() => {
+              t.da && Y(t.da);
+              const n = e.props && e.props.onVnodeUnmounted;
+              (n && vs(n, t.parent, e), (t.isDeactivated = !0));
+            }, l));
         }),
         Zn(
           () => [e.include, e.exclude],
@@ -1937,12 +1919,9 @@ function bo(e, t, n = bs) {
 }
 function So(e, t, n, o) {
   const r = ko(t, e, o, !0);
-  Ro(
-    () => {
-      w(o[t], r);
-    },
-    n,
-  );
+  Ro(() => {
+    w(o[t], r);
+  }, n);
 }
 function xo(e) {
   let t = e.shapeFlag;
@@ -2713,12 +2692,9 @@ function $r(e) {
           ((c = a && a.onVnodeBeforeMount) && vs(c, n, t),
           d && Io(t, null, n, "beforeMount"),
           ((c = a && a.onVnodeMounted) || d) &&
-            Dn(
-              () => {
-                (c && vs(c, n, t), d && Io(t, null, n, "mounted"));
-              },
-              r,
-            ),
+            Dn(() => {
+              (c && vs(c, n, t), d && Io(t, null, n, "mounted"));
+            }, r),
           16 & p && (!a || (!a.innerHTML && !a.textContent)))
         ) {
           let o = f(e.firstChild, t, e, n, r, s, i);
@@ -2885,12 +2861,9 @@ function Ar(e, t) {
       (_ && v.beforeEnter(f),
         n(f, t, o),
         ((d = m && m.onVnodeMounted) || _ || y) &&
-          Or(
-            () => {
-              (d && vs(d, i, e), _ && v.enter(f), y && Io(e, null, i, "mounted"));
-            },
-            l,
-          ));
+          Or(() => {
+            (d && vs(d, i, e), _ && v.enter(f), y && Io(e, null, i, "mounted"));
+          }, l));
     },
     C = (e, t, n, o, r) => {
       if ((n && f(e, n), o)) for (let s = 0; s < o.length; s++) f(e, o[s]);
@@ -2939,12 +2912,9 @@ function Ar(e, t) {
         1 & u && e.children !== t.children && a(c, t.children);
       } else l || null != p || $(c, t, d, h, n, o, s);
       ((m = h.onVnodeUpdated) || f) &&
-        Or(
-          () => {
-            (m && vs(m, n, t, e), f && Io(t, e, n, "updated"));
-          },
-          o,
-        );
+        Or(() => {
+          (m && vs(m, n, t, e), f && Io(t, e, n, "updated"));
+        }, o);
     },
     E = (e, t, n, o, r, s, i) => {
       for (let l = 0; l < t.length; l++) {
@@ -3435,12 +3405,9 @@ function Ar(e, t) {
           o && H(e));
       }
       ((h && (m = i && i.onVnodeUnmounted)) || d) &&
-        Or(
-          () => {
-            (m && vs(m, t, e), d && Io(e, null, t, "unmounted"));
-          },
-          n,
-        );
+        Or(() => {
+          (m && vs(m, t, e), d && Io(e, null, t, "unmounted"));
+        }, n);
     },
     H = (e) => {
       const { type: t, el: n, anchor: r, transition: s } = e;
@@ -3471,12 +3438,9 @@ function Ar(e, t) {
         r.stop(),
         s && ((s.active = !1), D(i, e, t, n)),
         l && Or(l, t),
-        Or(
-          () => {
-            e.isUnmounted = !0;
-          },
-          t,
-        ),
+        Or(() => {
+          e.isUnmounted = !0;
+        }, t),
         t &&
           t.pendingBranch &&
           !t.isUnmounted &&
@@ -4427,12 +4391,9 @@ function Ii(e, t, n, o) {
     f = (t) => {
       t.target === e && ++u >= c && p();
     };
-  (setTimeout(
-    () => {
-      u < c && p();
-    },
-    l + 1,
-  ),
+  (setTimeout(() => {
+    u < c && p();
+  }, l + 1),
     e.addEventListener(a, f));
 }
 function Bi(e, t) {
@@ -4508,7 +4469,7 @@ const Di = new WeakMap(),
               (Ai(n, t), (o.transform = o.webkitTransform = o.transitionDuration = ""));
               const r = (n._moveCb = (e) => {
                 (e && e.target !== n) ||
-                  (e && !e.propertyName.endsWith('transform')) ||
+                  (e && !e.propertyName.endsWith("transform")) ||
                   (n.removeEventListener("transitionend", r), (n._moveCb = null), Pi(n, t));
               });
               n.addEventListener("transitionend", r);

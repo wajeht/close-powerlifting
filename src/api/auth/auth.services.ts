@@ -72,4 +72,3 @@ export async function getGoogleUser({
     throw error;
   }
 }
-
