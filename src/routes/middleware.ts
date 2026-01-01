@@ -43,7 +43,8 @@ export function rateLimitMiddleware() {
 
 export function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render("general/general-not-found.html");
+  if (!isApiPrefix)
+    return res.status(StatusCodes.NOT_FOUND).render("general/general-not-found.html");
 
   return res.status(StatusCodes.NOT_FOUND).json({
     status: "fail",

@@ -22,7 +22,11 @@ const router = express.Router();
 router.get(
   "/",
   catchAsyncHandler(async (req: Request, res: Response) => {
-    const rankings = await RankingsService.getRankings({ current_page: 1, per_page: 5, cache: true });
+    const rankings = await RankingsService.getRankings({
+      current_page: 1,
+      per_page: 5,
+      cache: true,
+    });
 
     return res.status(StatusCodes.OK).render("general/general-home.html", {
       path: "/home",

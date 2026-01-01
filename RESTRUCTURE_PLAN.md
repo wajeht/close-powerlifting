@@ -150,6 +150,7 @@ src/
 ### Phase 1: Setup New Structure (No Breaking Changes)
 
 #### Step 1.1: Create routes directory structure
+
 - Create `src/routes/` folder
 - Create `src/routes/_layouts/` folder
 - Create `src/routes/_components/` folder
@@ -158,10 +159,12 @@ src/
 - Create `src/routes/api/` folder with subfolders
 
 #### Step 1.2: Move error classes
+
 - Move `src/api/api.errors.ts` → `src/error.ts`
 - Update all imports
 
 #### Step 1.3: Create unified middleware file
+
 - Create `src/routes/middleware.ts`
 - Combine `app.middlewares.ts` and `api.middlewares.ts` into one file
 - Keep original files temporarily for backwards compatibility
@@ -171,6 +174,7 @@ src/
 ### Phase 2: Migrate General/View Routes
 
 #### Step 2.1: Create general routes module
+
 - Create `src/routes/general/general.ts`
 - Move handlers from `views.controllers.ts`:
   - `getHomePage` → `GET /`
@@ -182,6 +186,7 @@ src/
   - `getStatusPage` → `GET /status`
 
 #### Step 2.2: Move and rename templates
+
 - `views/pages/home.html` → `routes/general/general-home.html`
 - `views/pages/about.html` → `routes/general/general-about.html`
 - `views/pages/contact.html` → `routes/general/general-contact.html`
@@ -193,10 +198,12 @@ src/
 - `views/pages/rate-limit.html` → `routes/general/general-rate-limit.html`
 
 #### Step 2.3: Move layouts and components
+
 - `views/layouts/` → `routes/_layouts/`
 - `views/components/` → `routes/_components/`
 
 #### Step 2.4: Create general tests
+
 - Create `src/routes/general/general.test.ts`
 - Migrate relevant tests from `views.controllers.test.ts`
 
@@ -205,6 +212,7 @@ src/
 ### Phase 3: Migrate Auth Routes
 
 #### Step 3.1: Create auth routes module
+
 - Create `src/routes/auth/auth.ts`
 - Combine view auth routes and API auth routes:
   - `GET /register` - Show registration page
@@ -219,11 +227,13 @@ src/
   - `GET /api/auth/oauth/google/redirect` - Google OAuth callback
 
 #### Step 3.2: Move auth templates
+
 - `views/pages/register.html` → `routes/auth/auth-register.html`
 - `views/pages/verify-email.html` → `routes/auth/auth-verify-email.html` (if exists)
 - `views/pages/reset-api-key.html` → `routes/auth/auth-reset-api-key.html`
 
 #### Step 3.3: Create auth tests
+
 - Create `src/routes/auth/auth.test.ts`
 - Migrate from `auth.controllers.test.ts`
 
@@ -232,10 +242,12 @@ src/
 ### Phase 4: Migrate API Routes
 
 #### Step 4.1: Create API router
+
 - Create `src/routes/api/api.ts`
 - This will mount all API sub-routes under `/api`
 
 #### Step 4.2: Migrate each API module
+
 For each module (rankings, federations, meets, records, status, users, health-check):
 
 1. Create new route file: `src/routes/api/[module]/[module].ts`
@@ -244,6 +256,7 @@ For each module (rankings, federations, meets, records, status, users, health-ch
 4. Create/move tests: `src/routes/api/[module]/[module].test.ts`
 
 #### Step 4.3: Simplify route handlers
+
 - Remove separate controllers files
 - Put route handlers directly in route files (like bang)
 - Use inline functions or named functions in same file
@@ -253,17 +266,20 @@ For each module (rankings, federations, meets, records, status, users, health-ch
 ### Phase 5: Update App Configuration
 
 #### Step 5.1: Update app.ts
+
 - Update view engine path: `app.set('views', './src/routes')`
 - Import new routes from `src/routes/routes.ts`
 - Remove old route imports
 
 #### Step 5.2: Create main routes.ts
+
 - Create `src/routes/routes.ts` that combines all routes:
   - Mount general routes at `/`
   - Mount auth routes at `/` and `/api/auth`
   - Mount API routes at `/api`
 
 #### Step 5.3: Update middleware references
+
 - Update all middleware imports to use `src/routes/middleware.ts`
 
 ---
@@ -271,15 +287,18 @@ For each module (rankings, federations, meets, records, status, users, health-ch
 ### Phase 6: Cleanup
 
 #### Step 6.1: Remove old files
+
 - Delete `src/api/` folder
 - Delete `src/views/` folder
 - Delete `src/app.middlewares.ts` (if fully migrated)
 
 #### Step 6.2: Update all imports
+
 - Search and replace all old import paths
 - Update test imports
 
 #### Step 6.3: Update test configuration
+
 - Update `vitest.config.mts` if needed
 - Move `test-setup.ts` to `src/tests/`
 
@@ -288,16 +307,19 @@ For each module (rankings, federations, meets, records, status, users, health-ch
 ### Phase 7: Code Style Updates
 
 #### Step 7.1: Adopt bang coding patterns
+
 - Use `ctx` pattern for dependency injection (optional, can do later)
 - Standardize error handling
 - Standardize response formats
 
 #### Step 7.2: Run linter and formatter
+
 - Run `npm run lint`
 - Run `npm run format`
 - Fix any issues
 
 #### Step 7.3: Run all tests
+
 - Run `npm run test`
 - Fix any failing tests
 - Add missing tests
@@ -308,49 +330,50 @@ For each module (rankings, federations, meets, records, status, users, health-ch
 
 ### Templates (HTML)
 
-| Old Path | New Path |
-|----------|----------|
-| `views/layouts/main.html` | `routes/_layouts/main.html` |
-| `views/components/footer.html` | `routes/_components/footer.html` |
-| `views/components/header.html` | `routes/_components/header.html` |
-| `views/components/flash-message.html` | `routes/_components/flash-message.html` |
-| `views/components/social-oauth.html` | `routes/_components/social-oauth.html` |
-| `views/pages/home.html` | `routes/general/general-home.html` |
-| `views/pages/about.html` | `routes/general/general-about.html` |
-| `views/pages/contact.html` | `routes/general/general-contact.html` |
-| `views/pages/terms.html` | `routes/general/general-terms.html` |
-| `views/pages/privacy.html` | `routes/general/general-privacy.html` |
-| `views/pages/status.html` | `routes/general/general-status.html` |
-| `views/pages/error.html` | `routes/general/general-error.html` |
-| `views/pages/not-found.html` | `routes/general/general-not-found.html` |
-| `views/pages/rate-limit.html` | `routes/general/general-rate-limit.html` |
-| `views/pages/register.html` | `routes/auth/auth-register.html` |
-| `views/pages/reset-api-key.html` | `routes/auth/auth-reset-api-key.html` |
+| Old Path                              | New Path                                 |
+| ------------------------------------- | ---------------------------------------- |
+| `views/layouts/main.html`             | `routes/_layouts/main.html`              |
+| `views/components/footer.html`        | `routes/_components/footer.html`         |
+| `views/components/header.html`        | `routes/_components/header.html`         |
+| `views/components/flash-message.html` | `routes/_components/flash-message.html`  |
+| `views/components/social-oauth.html`  | `routes/_components/social-oauth.html`   |
+| `views/pages/home.html`               | `routes/general/general-home.html`       |
+| `views/pages/about.html`              | `routes/general/general-about.html`      |
+| `views/pages/contact.html`            | `routes/general/general-contact.html`    |
+| `views/pages/terms.html`              | `routes/general/general-terms.html`      |
+| `views/pages/privacy.html`            | `routes/general/general-privacy.html`    |
+| `views/pages/status.html`             | `routes/general/general-status.html`     |
+| `views/pages/error.html`              | `routes/general/general-error.html`      |
+| `views/pages/not-found.html`          | `routes/general/general-not-found.html`  |
+| `views/pages/rate-limit.html`         | `routes/general/general-rate-limit.html` |
+| `views/pages/register.html`           | `routes/auth/auth-register.html`         |
+| `views/pages/reset-api-key.html`      | `routes/auth/auth-reset-api-key.html`    |
 
 ### TypeScript Files
 
-| Old Path | New Path |
-|----------|----------|
-| `api/api.errors.ts` | `error.ts` |
-| `api/api.middlewares.ts` | `routes/middleware.ts` |
-| `app.middlewares.ts` | `routes/middleware.ts` (merged) |
-| `views/views.routes.ts` | Split into `routes/general/general.ts` + `routes/auth/auth.ts` |
-| `views/views.controllers.ts` | Split into route files |
-| `views/views.services.ts` | `routes/auth/auth.service.ts` (auth parts) |
-| `api/auth/*` | `routes/auth/auth.ts` (merged with view auth) |
-| `api/rankings/*` | `routes/api/rankings/*` |
-| `api/federations/*` | `routes/api/federations/*` |
-| `api/meets/*` | `routes/api/meets/*` |
-| `api/records/*` | `routes/api/records/*` |
-| `api/status/*` | `routes/api/status/*` |
-| `api/users/*` | `routes/api/users/*` |
-| `api/health-check/*` | `routes/api/health-check/*` |
+| Old Path                     | New Path                                                       |
+| ---------------------------- | -------------------------------------------------------------- |
+| `api/api.errors.ts`          | `error.ts`                                                     |
+| `api/api.middlewares.ts`     | `routes/middleware.ts`                                         |
+| `app.middlewares.ts`         | `routes/middleware.ts` (merged)                                |
+| `views/views.routes.ts`      | Split into `routes/general/general.ts` + `routes/auth/auth.ts` |
+| `views/views.controllers.ts` | Split into route files                                         |
+| `views/views.services.ts`    | `routes/auth/auth.service.ts` (auth parts)                     |
+| `api/auth/*`                 | `routes/auth/auth.ts` (merged with view auth)                  |
+| `api/rankings/*`             | `routes/api/rankings/*`                                        |
+| `api/federations/*`          | `routes/api/federations/*`                                     |
+| `api/meets/*`                | `routes/api/meets/*`                                           |
+| `api/records/*`              | `routes/api/records/*`                                         |
+| `api/status/*`               | `routes/api/status/*`                                          |
+| `api/users/*`                | `routes/api/users/*`                                           |
+| `api/health-check/*`         | `routes/api/health-check/*`                                    |
 
 ---
 
 ## Key Patterns to Adopt
 
 ### 1. Route File Pattern
+
 ```typescript
 // src/routes/api/rankings/rankings.ts
 import express from "express";
@@ -368,6 +391,7 @@ export default router;
 ```
 
 ### 2. Service File Pattern
+
 ```typescript
 // src/routes/api/rankings/rankings.service.ts
 import cache from "../../../db/cache";
@@ -379,6 +403,7 @@ export async function getRankings(params: RankingsParams) {
 ```
 
 ### 3. Validation File Pattern
+
 ```typescript
 // src/routes/api/rankings/rankings.validation.ts
 import { z } from "zod";
@@ -392,6 +417,7 @@ export type GetRankingsParams = z.infer<typeof getRankingsValidation>;
 ```
 
 ### 4. Test File Pattern
+
 ```typescript
 // src/routes/api/rankings/rankings.test.ts
 import { describe, it, expect, beforeAll } from "vitest";
