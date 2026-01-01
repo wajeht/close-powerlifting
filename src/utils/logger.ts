@@ -34,7 +34,9 @@ function log(level: LogLevel, message: string, ...args: unknown[]): void {
   const timestamp = `[${formatTimestamp()}]`;
   const levelLabel = level.padStart(5);
   const formattedArgs = args.map(formatValue).join(" ");
-  const output = formattedArgs ? `${timestamp} ${levelLabel}: ${message} ${formattedArgs}` : `${timestamp} ${levelLabel}: ${message}`;
+  const output = formattedArgs
+    ? `${timestamp} ${levelLabel}: ${message} ${formattedArgs}`
+    : `${timestamp} ${levelLabel}: ${message}`;
 
   if (level === "ERROR") {
     console.error(output);

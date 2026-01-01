@@ -20,9 +20,7 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
       "/api/health-check?cache=false",
     ];
 
-    const promises = await Promise.allSettled(
-      routes.map((r) => fetchWithAuth(url, r, X_API_KEY)),
-    );
+    const promises = await Promise.allSettled(routes.map((r) => fetchWithAuth(url, r, X_API_KEY)));
 
     const data = promises.map((p, i) => {
       const fulfilled = p.status === "fulfilled";
