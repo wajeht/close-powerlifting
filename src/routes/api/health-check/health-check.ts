@@ -7,19 +7,16 @@ const router = express.Router();
  * @tags health-check
  * @summary get the health of open powerlifting api
  */
-router.get(
-  "/",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const data: any = [];
+router.get("/", async (req: Request, res: Response) => {
+  const data: any = [];
 
-    res.status(StatusCodes.OK).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "ok",
-      cache: req.query?.cache,
-      data,
-    });
-  }),
-);
+  res.status(200).json({
+    status: "success",
+    request_url: req.originalUrl,
+    message: "ok",
+    cache: req.query?.cache,
+    data,
+  });
+});
 
 export default router;

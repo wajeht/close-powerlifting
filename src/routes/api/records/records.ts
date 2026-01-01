@@ -17,21 +17,21 @@ const router = express.Router();
 router.get(
   "/",
   apiValidationMiddleware({ query: getRecordsValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
+  async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
     const records = await RecordsService.getRecords(req.query);
 
     if (!records) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
       cache: records?.cache,
       data: records?.data,
     });
-  }),
+  },
 );
 
 export default router;

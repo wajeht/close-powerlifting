@@ -22,7 +22,7 @@ const router = express.Router();
 router.get(
   "/",
   apiValidationMiddleware({ query: getUsersValidation }),
-  catchAsyncHandler(async (req: Request<GetUsersType, {}, {}>, res: Response) => {
+  async (req: Request<GetUsersType, {}, {}>, res: Response) => {
     if (req.query.search) {
       const searched = await UsersService.searchUser(req.query);
 
@@ -30,7 +30,7 @@ router.get(
 
       logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-      res.status(StatusCodes.OK).json({
+      res.status(200).json({
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
@@ -40,8 +40,8 @@ router.get(
       return;
     }
 
-    res.status(StatusCodes.PERMANENT_REDIRECT).redirect("/api/rankings");
-  }),
+    res.status(308).redirect("/api/rankings");
+  },
 );
 
 /**
@@ -53,20 +53,20 @@ router.get(
 router.get(
   "/:username",
   apiValidationMiddleware({ params: getUserValidation }),
-  catchAsyncHandler(async (req: Request<GetUserType, {}, {}>, res: Response) => {
+  async (req: Request<GetUserType, {}, {}>, res: Response) => {
     const user = await UsersService.getUser(req.params);
 
     if (!user) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
       data: user,
     });
-  }),
+  },
 );
 
 export default router;

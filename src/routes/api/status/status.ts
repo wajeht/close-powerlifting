@@ -16,19 +16,19 @@ const router = express.Router();
 router.get(
   "/",
   apiValidationMiddleware({ query: getStatusValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, GetStatusType>, res: Response) => {
+  async (req: Request<{}, {}, GetStatusType>, res: Response) => {
     const status = await StatusService.getStatus(req.query);
 
     logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
       cache: status.cache,
       data: status.data,
     });
-  }),
+  },
 );
 
 export default router;
