@@ -1,129 +1,114 @@
-import cache from "../../../db/cache";
-import { fetchApi } from "../../../utils/http";
-import { buildPagination } from "../../../utils/helpers";
-import { GetRankingsType, GetRankType } from "./rankings.validation";
+import {
+  fetchJson,
+  withCache,
+  buildPaginationQuery,
+  calculatePagination,
+} from "../../../utils/scraper";
+import type {
+  RankingRow,
+  RankingsApiResponse,
+  ApiResponse,
+  Pagination,
+} from "../../../types/api";
+import type { GetRankingsType, GetRankType } from "./rankings.validation";
 
-export async function fetchRankings(paginationQuery: string) {
-  try {
-    const rankings = await fetchApi("/rankings?" + paginationQuery);
+const CACHE_TTL = 300;
 
-    const data = rankings.rows.map((r: any) => {
-      return {
-        id: r[0],
-        rank: r[1],
-        full_name: r[2],
-        username: r[3],
-        user_profile: `/api/users/${r[3]}`,
-        instagram: r[4],
-        instagram_url: `https://www.instagram.com/${r[4]}`,
-        username_color: r[5],
-        country: r[6],
-        location: r[7],
-        fed: r[8],
-        federation_url: `/api/federations/${r[12].split("/")[0]}`,
-        date: r[9],
-        country_two: r[10],
-        state: r[11],
-        meet_code: r[12],
-        meet_url: `/api/meets/${r[12]}`,
-        sex: r[13],
-        equip: r[14],
-        age: parseInt(r[15]),
-        open: r[16],
-        body_weight: parseFloat(r[17]),
-        weight_class: parseFloat(r[18]),
-        squat: parseFloat(r[19]),
-        bench: parseFloat(r[20]),
-        deadlift: parseFloat(r[21]),
-        total: parseFloat(r[22]),
-        dots: parseFloat(r[23]),
-      };
-    });
+function transformRankingRow(row: (string | number)[]): RankingRow {
+  const username = String(row[3] || "");
+  const meetCode = String(row[12] || "");
+  const instagram = String(row[4] || "");
 
-    return {
-      data,
-      total_length: rankings?.total_length,
-    };
-  } catch {
-    return null;
-  }
+  return {
+    id: Number(row[0]) || 0,
+    rank: Number(row[1]) || 0,
+    full_name: String(row[2] || ""),
+    username,
+    user_profile: `/api/users/${username}`,
+    instagram,
+    instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
+    username_color: String(row[5] || ""),
+    country: String(row[6] || ""),
+    location: String(row[7] || ""),
+    fed: String(row[8] || ""),
+    federation_url: meetCode ? `/api/federations/${meetCode.split("/")[0]}` : "",
+    date: String(row[9] || ""),
+    country_two: String(row[10] || ""),
+    state: String(row[11] || ""),
+    meet_code: meetCode,
+    meet_url: meetCode ? `/api/meets/${meetCode}` : "",
+    sex: String(row[13] || ""),
+    equip: String(row[14] || ""),
+    age: parseInt(String(row[15]), 10) || 0,
+    open: String(row[16] || ""),
+    body_weight: parseFloat(String(row[17])) || 0,
+    weight_class: parseFloat(String(row[18])) || 0,
+    squat: parseFloat(String(row[19])) || 0,
+    bench: parseFloat(String(row[20])) || 0,
+    deadlift: parseFloat(String(row[21])) || 0,
+    total: parseFloat(String(row[22])) || 0,
+    dots: parseFloat(String(row[23])) || 0,
+  };
+}
+
+async function fetchRankingsData(
+  currentPage: number,
+  perPage: number,
+): Promise<{ rows: RankingRow[]; totalLength: number }> {
+  const query = buildPaginationQuery(currentPage, perPage);
+  const response = await fetchJson<RankingsApiResponse>(`/rankings?${query}`);
+
+  return {
+    rows: response.rows.map(transformRankingRow),
+    totalLength: response.total_length,
+  };
 }
 
 export async function getRankings({
   current_page = 1,
   per_page = 100,
   cache: useCache = true,
-}: GetRankingsType) {
-  try {
-    const paginationQuery = buildPagination({ current_page, per_page });
+}: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
+  const cacheKey = `rankings-${current_page}-${per_page}`;
 
-    if (useCache === false) {
-      const rankings = await fetchRankings(paginationQuery);
-      if (rankings === null) return null;
-      return {
-        data: rankings?.data,
-        cache: useCache,
-        pagination: {
-          items: rankings?.total_length,
-          pages: Math.floor(rankings?.total_length / per_page),
-          per_page,
-          current_page,
-          last_page: Math.floor(rankings?.total_length / per_page),
-          first_page: 1,
-          from: current_page * per_page,
-          to: current_page * per_page + per_page,
-        },
-      };
-    }
+  const result = await withCache<{ rows: RankingRow[]; totalLength: number }>(
+    { key: cacheKey, ttlSeconds: CACHE_TTL },
+    () => fetchRankingsData(current_page, per_page),
+    useCache,
+  );
 
-    const cachedRankings = await cache.get(`close-powerlifting-rankings`);
-    let rankings = cachedRankings ? JSON.parse(cachedRankings) : null;
-
-    if (rankings === null) {
-      rankings = await fetchRankings(paginationQuery);
-      if (rankings === null) return null;
-      await cache.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
-    }
-
-    return {
-      data: rankings.data,
-      cache: useCache,
-      pagination: {
-        items: rankings?.total_length,
-        pages: Math.floor(rankings?.total_length / per_page),
-        per_page,
-        current_page,
-        last_page: Math.floor(rankings?.total_length / per_page),
-        first_page: 1,
-        from: current_page * per_page,
-        to: current_page * per_page + per_page,
-      },
-    };
-  } catch (error) {
-    console.error(error);
-    throw error;
+  if (!result.data) {
+    return { data: null, cache: result.cache };
   }
+
+  return {
+    data: result.data.rows,
+    cache: result.cache,
+    pagination: calculatePagination(result.data.totalLength, current_page, per_page),
+  };
 }
 
-export async function getRank({ rank }: GetRankType) {
-  try {
-    const r = parseInt(rank) - 1;
-
-    const useCache = false;
-    let current_page = 1;
-    const per_page = 100;
-
-    if (r > per_page) {
-      current_page = Math.floor(r / per_page);
-    }
-
-    const rankings = await getRankings({ cache: useCache, current_page, per_page });
-
-    const index = r % per_page;
-
-    return rankings?.data.at(index);
-  } catch (error) {
-    console.error(error);
-    throw error;
+export async function getRank({ rank }: GetRankType): Promise<RankingRow | null> {
+  const rankNum = parseInt(rank, 10);
+  if (isNaN(rankNum) || rankNum < 1) {
+    return null;
   }
+
+  const perPage = 100;
+  const currentPage = Math.ceil(rankNum / perPage);
+  const indexInPage = (rankNum - 1) % perPage;
+
+  const result = await getRankings({
+    current_page: currentPage,
+    per_page: perPage,
+    cache: false,
+  });
+
+  if (!result.data || !result.data[indexInPage]) {
+    return null;
+  }
+
+  return result.data[indexInPage];
 }
+
+export { fetchRankingsData };

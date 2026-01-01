@@ -1,144 +1,80 @@
-import { JSDOM } from "jsdom";
+import {
+  fetchHtml,
+  parseHtml,
+  tableToJson,
+  withCache,
+  calculatePagination,
+} from "../../../utils/scraper";
+import type { Meet, ApiResponse, Pagination } from "../../../types/api";
+import type {
+  GetFederationsType,
+  GetFederationsParamType,
+  GetFederationsQueryType,
+} from "./federations.validation";
 
-import cache from "../../../db/cache";
-import { fetchHtml } from "../../../utils/http";
-import { tableToJson } from "../../../utils/helpers";
-import { GetFederationsParamType, GetFederationsQueryType } from "./federations.validation";
+const CACHE_TTL = 3600;
 
-async function fetchFederations({ current_page, per_page }: any) {
-  try {
-    const html = await fetchHtml("/mlist");
-    const dom = new JSDOM(html);
-    const elements = dom.window.document.getElementsByTagName("table")[0];
-    const table = tableToJson(elements);
+type FederationMeet = Meet;
 
-    let from;
-    let to;
-
-    if (current_page === 1) {
-      from = 1;
-      to = per_page;
-    } else {
-      from = current_page * per_page;
-      to = current_page * per_page + per_page;
-    }
-    const slicedTable = table.slice(from, to);
-
-    return {
-      data: slicedTable,
-      table,
-      from,
-      to,
-    };
-  } catch {
-    return null;
-  }
+async function fetchFederationsList(): Promise<FederationMeet[]> {
+  const html = await fetchHtml("/mlist");
+  const doc = parseHtml(html);
+  const table = doc.querySelector("table");
+  return tableToJson(table) as FederationMeet[];
 }
 
-export async function getFederations({ current_page = 1, per_page = 100, cache: useCache = true }) {
-  try {
-    if (useCache === false) {
-      const federations = await fetchFederations({ current_page, per_page });
+export async function getFederations({
+  current_page = 1,
+  per_page = 100,
+  cache: useCache = true,
+}: GetFederationsType): Promise<ApiResponse<FederationMeet[]> & { pagination?: Pagination }> {
+  const cacheKey = `federations-list`;
 
-      return {
-        data: federations?.data,
-        cache: true,
-        pagination: {
-          items: federations?.table.length,
-          pages: Math.floor(federations!.table.length / per_page),
-          per_page,
-          current_page,
-          last_page: Math.floor(federations!.table.length! / per_page),
-          first_page: 1,
-          from: federations?.from,
-          to: federations?.to,
-        },
-      };
-    }
+  const result = await withCache<FederationMeet[]>(
+    { key: cacheKey, ttlSeconds: CACHE_TTL },
+    fetchFederationsList,
+    useCache,
+  );
 
-    const cacheKey = `close-powerlifting-federations-${current_page}-${per_page}`;
-
-    const cachedFederations = await cache.get(cacheKey);
-    let federations = cachedFederations ? JSON.parse(cachedFederations) : null;
-
-    if (federations === null) {
-      federations = await fetchFederations({ current_page, per_page });
-      await cache.set(cacheKey, JSON.stringify(federations));
-    }
-
-    return {
-      data: federations?.data,
-      cache: true,
-      pagination: {
-        items: federations?.table.length,
-        pages: Math.floor(federations.table.length! / per_page),
-        per_page,
-        current_page,
-        last_page: Math.floor(federations.table.length! / per_page),
-        first_page: 1,
-        from: federations?.from,
-        to: federations?.to,
-      },
-    };
-  } catch {
-    return null;
+  if (!result.data) {
+    return result;
   }
+
+  const allData = result.data;
+  const startIndex = (current_page - 1) * per_page;
+  const endIndex = startIndex + per_page;
+  const paginatedData = allData.slice(startIndex, endIndex);
+
+  return {
+    data: paginatedData,
+    cache: result.cache,
+    pagination: calculatePagination(allData.length, current_page, per_page),
+  };
 }
 
-async function fetchFederation({ federation, year }: any) {
-  try {
-    let url = "";
-    if (year) {
-      url = `/mlist/${federation}/${year}`;
-    } else {
-      url = `/mlist/${federation}`;
-    }
-    const html = await fetchHtml(url);
-    const dom = new JSDOM(html);
-    const elements = dom.window.document.getElementsByTagName("table")[0];
-    const federations = tableToJson(elements);
-
-    return federations;
-  } catch {
-    return null;
-  }
+async function fetchFederationMeets(
+  federation: string,
+  year?: number,
+): Promise<FederationMeet[]> {
+  const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
+  const html = await fetchHtml(path);
+  const doc = parseHtml(html);
+  const table = doc.querySelector("table");
+  return tableToJson(table) as FederationMeet[];
 }
 
 export async function getFederation({
   federation,
-  cache: useCache = true,
   year,
-}: GetFederationsParamType & GetFederationsQueryType) {
-  try {
-    if (useCache === false) {
-      const federations = await fetchFederation({ federation, year });
-      return {
-        data: federations,
-        cache: useCache,
-      };
-    }
+  cache: useCache = true,
+}: GetFederationsParamType & GetFederationsQueryType): Promise<ApiResponse<FederationMeet[]>> {
+  const cacheKey = year
+    ? `federation-${federation}-${year}`
+    : `federation-${federation}`;
 
-    let cacheString = "";
-
-    if (year) {
-      cacheString = `close-powerlifting-federations-federation-${federation}-${year}`;
-    } else {
-      cacheString = `close-powerlifting-federations-federation-${federation}`;
-    }
-
-    const cachedFederations = await cache.get(cacheString);
-    let federations = cachedFederations ? JSON.parse(cachedFederations) : null;
-
-    if (federations === null) {
-      federations = await fetchFederation({ federation, year });
-      await cache.set(cacheString, JSON.stringify(federations));
-    }
-
-    return {
-      data: federations,
-      cache: useCache,
-    };
-  } catch {
-    return null;
-  }
+  return withCache<FederationMeet[]>(
+    { key: cacheKey, ttlSeconds: CACHE_TTL },
+    () => fetchFederationMeets(federation, year),
+    useCache,
+  );
 }

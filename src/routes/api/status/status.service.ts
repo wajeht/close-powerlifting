@@ -1,47 +1,55 @@
-import { JSDOM } from "jsdom";
+import {
+  fetchHtml,
+  parseHtml,
+  tableToJson,
+  stripHtml,
+  getElementByClass,
+  withCache,
+} from "../../../utils/scraper";
+import type { StatusData, Federation, ApiResponse } from "../../../types/api";
+import type { GetStatusType } from "./status.validation";
 
-import cache from "../../../db/cache";
-import { fetchHtml } from "../../../utils/http";
-import { stripHTML, tableToJson } from "../../../utils/helpers";
-import { GetStatusType } from "./status.validation";
+const CACHE_KEY = "status";
+const CACHE_TTL = 3600;
 
-export async function fetchStatus() {
-  try {
-    const html = await fetchHtml("/status");
-    const dom = new JSDOM(html);
-    const div = dom.window.document.getElementsByClassName("text-content") as any;
-    return {
-      server_version: stripHTML(div[0].children[2].innerHTML),
-      meets: div[0].childNodes[8].textContent?.toString(),
-      federations: tableToJson(div[0].children[5]),
-    };
-  } catch {
-    return null;
+async function fetchStatus(): Promise<StatusData> {
+  const html = await fetchHtml("/status");
+  const doc = parseHtml(html);
+
+  const textContent = getElementByClass(doc, "text-content");
+  if (!textContent) {
+    throw new Error("Could not find text-content element on status page");
   }
+
+  const h2 = textContent.querySelector("h2");
+  const serverVersion = h2 ? stripHtml(h2.innerHTML) : "";
+
+  const paragraphs = textContent.querySelectorAll("p");
+  let meetsInfo = "";
+  for (const p of paragraphs) {
+    const text = p.textContent || "";
+    if (text.includes("Tracking")) {
+      meetsInfo = text.trim();
+      break;
+    }
+  }
+
+  const table = textContent.querySelector("table");
+  const federations = tableToJson(table) as Federation[];
+
+  return {
+    server_version: serverVersion,
+    meets: meetsInfo,
+    federations,
+  };
 }
 
-export async function getStatus({ cache: useCache = true }: GetStatusType) {
-  try {
-    if (useCache === false) {
-      return {
-        data: await fetchStatus(),
-        cache: useCache,
-      };
-    }
-
-    const cachedData = await cache.get(`close-powerlifting-status`);
-    let data = cachedData ? JSON.parse(cachedData) : null;
-
-    if (data === null) {
-      data = await fetchStatus();
-      await cache.set(`close-powerlifting-status`, JSON.stringify(data));
-    }
-
-    return {
-      cache: useCache,
-      data,
-    };
-  } catch {
-    throw new Error(`Something went wrong while processing rankings data!`);
-  }
+export async function getStatus({
+  cache: useCache = true,
+}: GetStatusType): Promise<ApiResponse<StatusData>> {
+  return withCache<StatusData>(
+    { key: CACHE_KEY, ttlSeconds: CACHE_TTL },
+    fetchStatus,
+    useCache,
+  );
 }

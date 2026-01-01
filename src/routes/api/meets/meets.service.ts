@@ -1,41 +1,31 @@
-import { JSDOM } from "jsdom";
+import {
+  fetchHtml,
+  parseHtml,
+  tableToJson,
+  withCache,
+} from "../../../utils/scraper";
+import type { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 
-import cache from "../../../db/cache";
-import { fetchHtml } from "../../../utils/http";
-import { tableToJson } from "../../../utils/helpers";
-import { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
+const CACHE_TTL = 3600;
 
-async function fetchMeet({ meet }: GetMeetParamType) {
-  try {
-    const html = await fetchHtml(`/m/${meet}`);
-    const dom = new JSDOM(html);
-    const elements = dom.window.document.getElementsByTagName("table")[0];
-    const table = tableToJson(elements);
-    return table;
-  } catch {
-    return null;
-  }
+type MeetResult = Record<string, string>;
+
+async function fetchMeetData(meet: string): Promise<MeetResult[]> {
+  const html = await fetchHtml(`/m/${meet}`);
+  const doc = parseHtml(html);
+  const table = doc.querySelector("table");
+  return tableToJson(table) as MeetResult[];
 }
 
 export async function getMeet({
   meet,
   cache: useCache = true,
-}: GetMeetParamType & GetMeetQueryType) {
-  try {
-    if (useCache === false) {
-      return await fetchMeet({ meet });
-    }
+}: GetMeetParamType & GetMeetQueryType): Promise<MeetResult[] | null> {
+  const result = await withCache<MeetResult[]>(
+    { key: `meet-${meet}`, ttlSeconds: CACHE_TTL },
+    () => fetchMeetData(meet),
+    useCache,
+  );
 
-    const cachedData = await cache.get(`meet-${meet}`);
-    let cachedMeet = cachedData ? JSON.parse(cachedData) : null;
-
-    if (!cachedMeet) {
-      cachedMeet = await fetchMeet({ meet });
-      await cache.set(`meet-${meet}`, JSON.stringify(cachedMeet));
-    }
-
-    return cachedMeet;
-  } catch {
-    return null;
-  }
+  return result.data;
 }
