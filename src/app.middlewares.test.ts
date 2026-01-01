@@ -148,29 +148,29 @@ describe('handleHostname', () => {
     res = {};
     next = vi.fn();
 
-    redis.get = vi.fn();
-    redis.set = vi.fn();
+    cache.get = vi.fn();
+    cache.set = vi.fn();
 
     vi.spyOn(utils, 'getHostName').mockImplementation(vi.fn());
   });
 
-  test('sets hostname from redis if available', async () => {
-    const mockHostname = 'redis-hostname';
+  test('sets hostname from cache if available', async () => {
+    const mockHostname = 'cached-hostname';
 
-    (redis.get as Mock).mockResolvedValue(mockHostname);
+    (cache.get as Mock).mockResolvedValue(mockHostname);
 
     await hostNameMiddleware(req, res, next);
 
-    expect(redis.get).toHaveBeenCalledWith('hostname');
+    expect(cache.get).toHaveBeenCalledWith('hostname');
     expect(req.app.locals.hostname).toBe(mockHostname);
     expect(next).toHaveBeenCalled();
   });
 
-  test('sets hostname using getHostName if not available in redis', async () => {
+  test('sets hostname using getHostName if not available in cache', async () => {
     const mockHostname = 'new-hostname';
 
-    (redis.get as Mock).mockResolvedValue(null);
-    (redis.set as Mock).mockResolvedValue(null);
+    (cache.get as Mock).mockResolvedValue(null);
+    (cache.set as Mock).mockResolvedValue(null);
 
     (utils.getHostName as Mock).mockReturnValue(mockHostname); // use the mocked getHostName
 
@@ -178,8 +178,8 @@ describe('handleHostname', () => {
 
     await hostNameMiddleware(req, res, next);
 
-    expect(redis.get).toHaveBeenCalledWith('hostname');
-    expect(redis.set).toHaveBeenCalledWith('hostname', mockHostname);
+    expect(cache.get).toHaveBeenCalledWith('hostname');
+    expect(cache.set).toHaveBeenCalledWith('hostname', mockHostname);
     expect(getHostName).toHaveBeenCalledWith(req);
     expect(next).toHaveBeenCalled();
   });
