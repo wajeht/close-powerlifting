@@ -34,6 +34,9 @@ const knexConfig: Knex.Config = {
     tableName: "knex_migrations",
     migrationSource: new CustomMigrationSource(path.resolve(__dirname, "migrations")),
   },
+  seeds: {
+    directory: path.resolve(__dirname, "seeds"),
+  },
   debug: false,
   log: isTestEnv
     ? { warn: () => {}, error: () => {}, debug: () => {}, deprecate: () => {} }
