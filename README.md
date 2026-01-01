@@ -69,32 +69,11 @@ curl -H "x-api-key: YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankin
 
 Add `?cache=false` to bypass caching and get the latest data.
 
-## 🛠️ Development
+## 📑 Docs
 
-```bash
-# Clone repository
-git clone https://github.com/wajeht/close-powerlifting.git
-cd close-powerlifting
-
-# Setup environment
-cp .env.example .env
-
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Run tests
-npm run test
-```
-
-## 📑 Documentation
-
-- [Getting Started](./docs/getting-started.md)
-- [Contribution Guide](./docs/contribution.md)
-- [Code of Conduct](./docs/code-of-conduct.md)
+- See [DEVELOPMENT](./docs/getting-started.md) for `development` guide.
+- See [CONTRIBUTION](./docs/contribution.md) for `contribution` guide.
 
 ## 📜 License
 
-Distributed under the MIT License. See [LICENSE](./LICENSE) for more information.
+Distributed under the MIT License © [wajeht](https://github.com/wajeht). See [LICENSE](./LICENSE) for more information.
