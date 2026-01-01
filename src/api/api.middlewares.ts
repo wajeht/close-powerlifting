@@ -62,9 +62,9 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
     //! -------------------------------- BEARER TOKEN AUTHENTICATION  -----------------------------
     if (req.headers.authorization) {
       if (req.headers.authorization.split(" ").length != 2)
-        throw new UnauthorizedError("Must use bearer token authentication!"); // prettier-ignore
+        throw new UnauthorizedError("Must use bearer token authentication!");
       if (!req.headers.authorization.startsWith("Bearer"))
-        throw new UnauthorizedError("Must use bearer token authentication!"); // prettier-ignore
+        throw new UnauthorizedError("Must use bearer token authentication!");
       token = req.headers.authorization.split(" ")[1] as string;
     }
     //! -------------------------------- API TOKEN AUTHENTICATION --------------------------------

@@ -33,7 +33,6 @@
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     ".vscode",
-    "mongo-data",
     "public"
   ]
 }
