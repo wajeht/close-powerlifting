@@ -31,11 +31,6 @@ export const emailConfig = {
   auth_pass: process.env.EMAIL_AUTH_PASS as unknown as string,
 } as const;
 
-export const redisConfig = {
-  host: process.env.REDIS_HOST as unknown as string | 'redis',
-  port: process.env.REDIS_PORT as unknown as number | 6379,
-  password: process.env.REDIS_PASSWORD as unknown as string | 'password',
-} as const;
 
 export const cookieConfig = {
   expiration: process.env.COOKIE_EXPIRATION as unknown as number | 60000,
