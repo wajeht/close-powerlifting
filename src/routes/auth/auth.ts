@@ -1,6 +1,4 @@
 import express, { Request, Response } from "express";
-import catchAsyncHandler from "express-async-handler";
-import { StatusCodes } from "http-status-codes";
 import { z } from "zod";
 
 import { config } from "../../config";
@@ -120,7 +118,7 @@ async function getGoogleUser({
  * @summary get register page
  */
 router.get("/register", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("auth/auth-register.html", {
+  return res.status(200).render("auth/auth-register.html", {
     path: "/register",
     messages: req.flash(),
   });
@@ -134,7 +132,7 @@ router.get("/register", (req: Request, res: Response) => {
 router.post(
   "/register",
   validationMiddleware({ body: registerValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, RegisterType>, res: Response) => {
+  async (req: Request<{}, {}, RegisterType>, res: Response) => {
     const { email, name } = req.body;
 
     const found = await UserRepository.findByEmail(email);
@@ -163,7 +161,7 @@ router.post(
     req.flash("info", "Thank you for registering. Please check your email for confirmation!");
 
     return res.redirect("/register");
-  }),
+  },
 );
 
 /**
@@ -172,7 +170,7 @@ router.post(
  * @summary get reset api key page
  */
 router.get("/reset-api-key", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("auth/auth-reset-api-key.html", {
+  return res.status(200).render("auth/auth-reset-api-key.html", {
     path: "/reset-api-key",
     messages: req.flash(),
   });
@@ -186,7 +184,7 @@ router.get("/reset-api-key", (req: Request, res: Response) => {
 router.post(
   "/reset-api-key",
   validationMiddleware({ body: resetApiKeyValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
+  async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
     const { email } = req.body;
 
     const foundUser = await UserRepository.findByEmail(email);
@@ -218,7 +216,7 @@ router.post(
     req.flash("info", "If you have an account with us, we will send you a new api key!");
 
     res.redirect("/reset-api-key");
-  }),
+  },
 );
 
 /**
@@ -226,41 +224,38 @@ router.post(
  * @tags auth
  * @summary verify email address (from email link)
  */
-router.get(
-  "/verify-email",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const { token, email } = req.query as { token: string; email: string };
-    const foundUser = await UserRepository.findByEmail(email);
+router.get("/verify-email", async (req: Request, res: Response) => {
+  const { token, email } = req.query as { token: string; email: string };
+  const foundUser = await UserRepository.findByEmail(email);
 
-    if (!foundUser) {
-      req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/register");
-    }
-
-    if (foundUser.verification_token !== token) {
-      req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/register");
-    }
-
-    if (foundUser.verified === true) {
-      req.flash("error", "This e-mail has already been used for verification!");
-      return res.redirect("/register");
-    }
-
-    AuthService.sendWelcomeEmail({
-      name: foundUser.name,
-      email: foundUser.email,
-      userId: String(foundUser.id),
-    });
-
-    req.flash(
-      "success",
-      "Thank you for verifying your email address. We will send you an API key to your email very shortly!",
-    );
-
+  if (!foundUser) {
+    req.flash("error", "Something wrong while verifying your account!");
     return res.redirect("/register");
-  }),
-);
+  }
+
+  if (foundUser.verification_token !== token) {
+    req.flash("error", "Something wrong while verifying your account!");
+    return res.redirect("/register");
+  }
+
+  if (foundUser.verified === true) {
+    req.flash("error", "This e-mail has already been used for verification!");
+    return res.redirect("/register");
+  }
+
+  AuthService.sendWelcomeEmail({
+    name: foundUser.name,
+    email: foundUser.email,
+    userId: String(foundUser.id),
+  });
+
+  req.flash(
+    "success",
+    "Thank you for verifying your email address. We will send you an API key to your email very shortly!",
+  );
+
+  return res.redirect("/register");
+});
 
 // ============================================================================
 // OAUTH ROUTES
@@ -271,68 +266,62 @@ router.get(
  * @tags auth
  * @summary get google oauth url
  */
-router.get(
-  "/oauth/google",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    res.redirect(getGoogleOAuthURL());
-  }),
-);
+router.get("/oauth/google", async (req: Request, res: Response) => {
+  res.redirect(getGoogleOAuthURL());
+});
 
 /**
  * GET /api/auth/oauth/google/redirect
  * @tags auth
  * @summary google oauth callback
  */
-router.get(
-  "/oauth/google/redirect",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const code = req.query.code as string;
+router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
+  const code = req.query.code as string;
 
-    if (!code) {
-      throw new UnauthorizedError("Something went wrong while authenticating with Google");
-    }
+  if (!code) {
+    throw new UnauthorizedError("Something went wrong while authenticating with Google");
+  }
 
-    const { id_token, access_token } = await getGoogleOauthToken({ code });
+  const { id_token, access_token } = await getGoogleOauthToken({ code });
 
-    const googleUser = await getGoogleUser({
-      id_token,
-      access_token,
+  const googleUser = await getGoogleUser({
+    id_token,
+    access_token,
+  });
+
+  if (!googleUser.verified_email) {
+    throw new UnauthorizedError("Something went wrong while authenticating with Google");
+  }
+
+  const found = await UserRepository.findByEmail(googleUser.email);
+
+  if (!found) {
+    const createdUser = await UserRepository.create({
+      email: googleUser.email,
+      name: googleUser.name,
+      verification_token: access_token,
+      verified: true,
+      verified_at: new Date().toISOString(),
     });
 
-    if (!googleUser.verified_email) {
-      throw new UnauthorizedError("Something went wrong while authenticating with Google");
-    }
+    AuthService.sendWelcomeEmail({
+      name: createdUser.name,
+      email: createdUser.email,
+      userId: String(createdUser.id),
+    });
 
-    const found = await UserRepository.findByEmail(googleUser.email);
-
-    if (!found) {
-      const createdUser = await UserRepository.create({
-        email: googleUser.email,
-        name: googleUser.name,
-        verification_token: access_token,
-        verified: true,
-        verified_at: new Date().toISOString(),
-      });
-
-      AuthService.sendWelcomeEmail({
-        name: createdUser.name,
-        email: createdUser.email,
-        userId: String(createdUser.id),
-      });
-
-      req.flash("success", "We will send you an API key to your email very shortly!");
-
-      return res.redirect("/register");
-    }
-
-    req.flash(
-      "error",
-      "Email already exist, please click on 'Forgot api key?' to request a new one!",
-    );
+    req.flash("success", "We will send you an API key to your email very shortly!");
 
     return res.redirect("/register");
-  }),
-);
+  }
+
+  req.flash(
+    "error",
+    "Email already exist, please click on 'Forgot api key?' to request a new one!",
+  );
+
+  return res.redirect("/register");
+});
 
 // ============================================================================
 // API ROUTES (JSON responses)
@@ -346,7 +335,7 @@ router.get(
 router.post(
   "/api/register",
   apiValidationMiddleware({ body: registerValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, RegisterType>, res: Response) => {
+  async (req: Request<{}, {}, RegisterType>, res: Response) => {
     const { email, name } = req.body;
 
     const found = await UserRepository.findByEmail(email);
@@ -371,7 +360,7 @@ router.post(
       userId: String(createdUser.id),
     });
 
-    res.status(StatusCodes.CREATED).json({
+    res.status(201).json({
       status: "success",
       request_url: req.originalUrl,
       message:
@@ -383,7 +372,7 @@ router.post(
         },
       ],
     });
-  }),
+  },
 );
 
 /**
@@ -394,7 +383,7 @@ router.post(
 router.post(
   "/api/verify-email",
   apiValidationMiddleware({ body: verifyEmailValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
+  async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
     const { token, email } = req.body;
 
     const foundUser = await UserRepository.findByEmail(email);
@@ -417,7 +406,7 @@ router.post(
       userId: String(foundUser.id),
     });
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message:
@@ -429,7 +418,7 @@ router.post(
         },
       ],
     });
-  }),
+  },
 );
 
 /**
@@ -440,7 +429,7 @@ router.post(
 router.post(
   "/api/reset-api-key",
   apiValidationMiddleware({ body: resetApiKeyValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
+  async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
     const { email } = req.body;
 
     const foundUser = await UserRepository.findByEmail(email);
@@ -469,14 +458,14 @@ router.post(
       });
     }
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message:
         "If you have an account with us, we will send you a new api key to your email very shortly!",
       data: [],
     });
-  }),
+  },
 );
 
 export default router;
