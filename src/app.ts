@@ -9,17 +9,16 @@ import expressJSDocSwagger from "express-jsdoc-swagger";
 import helmet from "helmet";
 import path from "path";
 
-import apiRoutes from "./api/api";
+import { appConfig } from "./config/constants";
+import swaggerConfig from "./config/swagger.config";
 import {
-  appRateLimitMiddleware,
   errorMiddleware,
   hostNameMiddleware,
   notFoundMiddleware,
+  rateLimitMiddleware,
   sessionMiddleware,
-} from "./app.middlewares";
-import swaggerConfig from "./config/swagger.config";
-import viewsRoutes from "./views/views.routes";
-import { appConfig } from "./config/constants";
+} from "./routes/middleware";
+import routes from "./routes/routes";
 
 const app = express();
 
@@ -51,9 +50,9 @@ app.engine("html", ejs.renderFile);
 
 app.set("view engine", "html");
 
-app.set("views", path.resolve(path.join(process.cwd(), "src", "views", "pages")));
+app.set("views", path.resolve(path.join(process.cwd(), "src", "routes")));
 
-app.set("layout", path.resolve(path.join(process.cwd(), "src", "views", "layouts", "main.html")));
+app.set("layout", path.resolve(path.join(process.cwd(), "src", "routes", "_layouts", "main.html")));
 
 app.set("view cache", appConfig.env === "production");
 
@@ -61,11 +60,9 @@ app.use(expressLayouts);
 
 expressJSDocSwagger(app)(swaggerConfig);
 
-app.use(apiRoutes);
+app.use(rateLimitMiddleware());
 
-app.use(appRateLimitMiddleware());
-
-app.use(viewsRoutes);
+app.use(routes);
 
 app.use(notFoundMiddleware);
 
