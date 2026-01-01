@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
 module.exports = {
-  content: ["./src/views/**/*.{html,js}"],
+  content: ["./src/routes/**/*.{html,js}"],
   important: true,
   theme: {
     screens: {
@@ -10,10 +10,5 @@ module.exports = {
     },
     extend: {},
   },
-  plugins: [
-    {
-      tailwindcss: {},
-      autoprefixer: {},
-    },
-  ],
+  plugins: [],
 };
