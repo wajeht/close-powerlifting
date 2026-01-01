@@ -1,7 +1,9 @@
 import request from "supertest";
 import { describe, expect, test } from "vitest";
 
-import { app } from "./app";
+import { createApp } from "./app";
+
+const { app } = createApp();
 
 describe("server", () => {
   test("GET /health-check returns status ok", async () => {

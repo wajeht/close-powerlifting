@@ -1,88 +1,51 @@
-import { AddressInfo } from "net";
-import { Server } from "http";
-
-import { app } from "./app";
-import { config } from "./config";
-import { initDatabase, stopDatabase } from "./db/db";
-import { initAdminUser } from "./utils/admin-user";
-import { initCrons } from "./utils/crons";
 import { logger } from "./utils/logger";
+import { createServer, closeServer, ServerInfo } from "./app";
 
-const server: Server = app.listen(config.app.port);
-
-server.on("listening", async () => {
-  const addr: string | AddressInfo | null = server.address();
-  const bind: string =
-    typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
-
-  logger.info(`Server is listening on ${bind}`);
-
-  try {
-    await initDatabase();
-    await initCrons();
-    await initAdminUser();
-  } catch (error) {
-    logger.error((error as any).message);
-  }
-});
-
-server.on("error", (error: NodeJS.ErrnoException) => {
-  if (error.syscall !== "listen") {
-    throw error;
-  }
-
-  const bind: string =
-    typeof config.app.port === "string" ? "Pipe " + config.app.port : "Port " + config.app.port;
-
-  switch (error.code) {
-    case "EACCES":
-      logger.error(`${bind} requires elevated privileges`);
-      process.exit(1);
-    case "EADDRINUSE":
-      logger.error(`${bind} is already in use`);
-      process.exit(1);
-    default:
-      throw error;
-  }
-});
-
-function gracefulShutdown(signal: string): void {
+async function gracefulShutdown(signal: string, serverInfo: ServerInfo): Promise<void> {
   logger.info(`Received ${signal}, shutting down gracefully.`);
-
-  server.close(async () => {
-    logger.info("HTTP server closed.");
-
-    try {
-      await stopDatabase();
-      logger.info("Database connection closed.");
-    } catch (error) {
-      logger.error("Error closing database connection", error);
-    }
-
-    logger.info("All connections closed successfully.");
-    process.exit(0);
-  });
 
   setTimeout(() => {
     logger.error("Could not close connections in time, forcefully shutting down");
     process.exit(1);
-  }, 10000);
+  }, 10000).unref();
+
+  try {
+    await closeServer(serverInfo);
+    process.exit(0);
+  } catch (error) {
+    logger.error("Error during shutdown", error);
+    process.exit(1);
+  }
 }
 
-process.on("SIGINT", () => gracefulShutdown("SIGINT"));
-process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
-process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
-
-process.on("uncaughtException", async (error: Error, origin: string) => {
-  logger.error(`Uncaught Exception: ${origin}`, error);
-  gracefulShutdown("uncaughtException");
-});
-
-process.on("warning", (warning: Error) => {
+function handleWarning(warning: Error): void {
   logger.warn(`Process warning: ${warning.name} - ${warning.message}`);
-});
+}
 
-process.on("unhandledRejection", async (reason: unknown) => {
+function handleUncaughtException(error: Error, origin: string): void {
+  logger.error(`Uncaught Exception: ${origin}`, error);
+  process.exit(1);
+}
+
+function handleUnhandledRejection(reason: unknown): void {
   logger.error("Unhandled Rejection", reason);
-  gracefulShutdown("unhandledRejection");
+  process.exit(1);
+}
+
+async function main(): Promise<void> {
+  const serverInfo = createServer();
+  process.title = "close-powerlifting";
+
+  process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));
+  process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
+  process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
+
+  process.on("warning", handleWarning);
+  process.on("uncaughtException", handleUncaughtException);
+  process.on("unhandledRejection", handleUnhandledRejection);
+}
+
+main().catch((error: Error) => {
+  logger.error("Failed to start server", error);
+  process.exit(1);
 });

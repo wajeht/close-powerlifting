@@ -2,9 +2,11 @@ import compression from "compression";
 import flash from "connect-flash";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express from "express";
+import express, { Express } from "express";
 import helmet from "helmet";
 import path from "path";
+import { Server } from "http";
+import { AddressInfo } from "net";
 
 import { config } from "./config";
 import {
@@ -17,71 +19,138 @@ import {
 import { mainRouter } from "./routes/routes";
 import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
+import { initDatabase, stopDatabase } from "./db/db";
+import { initAdminUser } from "./utils/admin-user";
+import { initCrons } from "./utils/crons";
+import { logger } from "./utils/logger";
 
-const app = express();
+export interface ServerInfo {
+  app: Express;
+  server: Server;
+}
 
-app.disable("x-powered-by");
+export function createApp(): { app: Express } {
+  const app = express();
 
-app.use(hostNameMiddleware);
+  app
+    .disable("x-powered-by")
+    .set("trust proxy", 1)
+    .use(hostNameMiddleware)
+    .use(cookieParser())
+    .use(flash())
+    .use(sessionMiddleware())
+    .use(
+      cors({
+        credentials: true,
+        origin: config.app.env === "production" ? config.app.domain : true,
+      }),
+    )
+    .use(compression())
+    .use(express.json())
+    .use(express.urlencoded({ extended: true }))
+    .use(
+      helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'"],
+            fontSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            frameAncestors: ["'self'"],
+          },
+        },
+      }),
+    )
+    .use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }))
+    .engine("html", engine)
+    .set("view engine", "html")
+    .set("views", path.resolve(path.join(process.cwd(), "src", "routes")))
+    .set("view cache", config.app.env === "production")
+    .use(layoutMiddleware)
+    .use(rateLimitMiddleware())
+    .use(mainRouter);
 
-app.set("trust proxy", 1);
+  expressJSDocSwaggerHandler(app);
 
-app.use(cookieParser());
+  app.use(notFoundMiddleware).use(errorMiddleware);
 
-app.use(flash());
+  return { app };
+}
 
-app.use(sessionMiddleware());
+export function createServer(): ServerInfo {
+  const { app } = createApp();
 
-app.use(
-  cors({
-    credentials: true,
-    origin: config.app.env === "production" ? config.app.domain : true,
-  }),
-);
+  const server: Server = app.listen(config.app.port);
 
-app.use(compression());
+  server.on("listening", async () => {
+    const addr: string | AddressInfo | null = server.address();
+    const bind: string =
+      typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
 
-app.use(express.json());
+    logger.info(`Server is listening on ${bind}`);
 
-app.use(express.urlencoded({ extended: true }));
+    try {
+      await initDatabase();
+      await initCrons();
+      await initAdminUser();
+    } catch (error) {
+      logger.error((error as any).message);
+    }
+  });
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        frameAncestors: ["'self'"],
-      },
-    },
-  }),
-);
+  server.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.syscall !== "listen") {
+      throw error;
+    }
 
-app.use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }));
+    const bind: string =
+      typeof config.app.port === "string" ? "Pipe " + config.app.port : "Port " + config.app.port;
 
-app.engine("html", engine);
+    switch (error.code) {
+      case "EACCES":
+        logger.error(`${bind} requires elevated privileges`);
+        process.exit(1);
+      case "EADDRINUSE":
+        logger.error(`${bind} is already in use`);
+        process.exit(1);
+      default:
+        throw error;
+    }
+  });
 
-app.set("view engine", "html");
+  return { app, server };
+}
 
-app.set("views", path.resolve(path.join(process.cwd(), "src", "routes")));
+export async function closeServer({ server }: ServerInfo): Promise<void> {
+  logger.info("Shutting down server gracefully");
 
-app.set("view cache", config.app.env === "production");
+  try {
+    await stopDatabase();
+    logger.info("Database connection closed");
+  } catch (error) {
+    logger.error("Error closing database connection", error);
+  }
 
-app.use(layoutMiddleware);
+  await new Promise<void>((resolve, reject) => {
+    const shutdownTimeout = setTimeout(() => {
+      logger.error("Could not close connections in time, forcefully shutting down");
+      reject(new Error("Server close timeout"));
+    }, 10000);
 
-expressJSDocSwaggerHandler(app);
+    server.close((error) => {
+      clearTimeout(shutdownTimeout);
+      if (error) {
+        logger.error("Error closing HTTP server", error);
+        reject(error);
+      } else {
+        logger.info("HTTP server closed");
+        resolve();
+      }
+    });
+  });
 
-app.use(rateLimitMiddleware());
-
-app.use(mainRouter);
-
-app.use(notFoundMiddleware);
-
-app.use(errorMiddleware);
-
-export { app };
+  logger.info("Server shutdown complete");
+}
