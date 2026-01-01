@@ -20,7 +20,7 @@ router.get(
   async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
     const records = await RecordsService.getRecords(req.query);
 
-    if (!records) throw new NotFoundError("The resource cannot be found!");
+    if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 

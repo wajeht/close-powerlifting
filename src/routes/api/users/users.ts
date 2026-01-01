@@ -26,7 +26,7 @@ router.get(
     if (req.query.search) {
       const searched = await UsersService.searchUser(req.query);
 
-      if (!searched) throw new NotFoundError("The resource cannot be found!");
+      if (!searched?.data) throw new NotFoundError("The resource cannot be found!");
 
       logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
