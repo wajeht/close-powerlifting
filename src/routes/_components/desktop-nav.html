@@ -1,18 +1,8 @@
 <nav class="hidden sm:block">
-  <ul class="flex gap-5">
+  <ul class="flex items-center gap-6">
     <!-- docs -->
     <li>
       <a class="hover:text-slate-50" href="/docs/api" target="_blank">Docs</a>
-    </li>
-
-    <!-- status -->
-    <li>
-      <a
-        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
-        title="Status"
-        href="/status"
-        >Status</a
-      >
     </li>
 
     <!-- about -->
@@ -20,8 +10,16 @@
       <a
         class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %> hover:text-slate-50"
         href="/about"
-        title="About"
         >About</a
+      >
+    </li>
+
+    <!-- status -->
+    <li>
+      <a
+        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
+        href="/status"
+        >Status</a
       >
     </li>
 
@@ -30,7 +28,6 @@
       <a
         class="<%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %> hover:text-slate-50"
         href="/contact"
-        title="Contact"
         >Contact</a
       >
     </li>
@@ -38,10 +35,9 @@
     <!-- register -->
     <li>
       <a
-        class="rounded-sm bg-slate-50 px-3 py-2 font-normal text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+        class="rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
         href="/register"
-        title="Register"
-        >Register</a
+        >Get API Key</a
       >
     </li>
   </ul>
