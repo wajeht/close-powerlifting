@@ -1,4 +1,5 @@
 import { config } from "../config";
+import { NotFoundError } from "../error";
 
 const defaultHeaders = {
   Cookie: "units=lbs;",
@@ -12,6 +13,12 @@ export async function fetchApi(path: string): Promise<any> {
   const response = await fetch(`${config.app.apiUrl}${path}`, {
     headers: defaultHeaders,
   });
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new NotFoundError("The resource cannot be found!");
+    }
+    throw new Error(`API request failed with status ${response.status}`);
+  }
   return response.json();
 }
 
@@ -19,6 +26,12 @@ export async function fetchHtml(path: string): Promise<string> {
   const response = await fetch(`${config.app.baseUrl}${path}`, {
     headers: defaultHeaders,
   });
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new NotFoundError("The resource cannot be found!");
+    }
+    throw new Error(`HTML request failed with status ${response.status}`);
+  }
   return response.text();
 }
 
@@ -55,10 +68,19 @@ export async function postForm(url: string, body: string): Promise<any> {
     },
     body,
   });
+  if (!response.ok) {
+    throw new Error(`POST request failed with status ${response.status}`);
+  }
   return response.json();
 }
 
 export async function fetchJson(url: string, headers?: Record<string, string>): Promise<any> {
   const response = await fetch(url, { headers });
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new NotFoundError("The resource cannot be found!");
+    }
+    throw new Error(`JSON request failed with status ${response.status}`);
+  }
   return response.json();
 }
