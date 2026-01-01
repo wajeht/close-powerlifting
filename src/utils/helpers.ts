@@ -4,7 +4,7 @@ import { Request } from "express";
 import jwt from "jsonwebtoken";
 
 import { config } from "../config";
-import { UserParams } from "../routes/auth/auth.service";
+import type { UserParams } from "../types";
 
 export function getHostName(req: Request): string {
   if (config.app.env === "development") {

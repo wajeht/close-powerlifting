@@ -1,5 +1,5 @@
 import { fetchHtml, parseHtml, tableToJson, withCache } from "../../../utils/scraper";
-import type { RecordCategory, ApiResponse } from "../../../types/api";
+import type { RecordCategory, ApiResponse } from "../../../types";
 import type {
   GetRecordsType,
   GetFilteredRecordsParamType,

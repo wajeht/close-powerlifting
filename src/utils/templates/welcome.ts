@@ -1,9 +1,9 @@
-type WelcomeParams = {
+type WelcomeTextParams = {
   name: string;
   key: string;
 };
 
-export function createWelcomeText(params: WelcomeParams): string {
+export function createWelcomeText(params: WelcomeTextParams): string {
   return `Hi ${params.name},
 
 Thank you for verifying your email address. Below is your API key to access Close Powerlifting:

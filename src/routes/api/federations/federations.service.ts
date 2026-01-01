@@ -5,7 +5,7 @@ import {
   withCache,
   calculatePagination,
 } from "../../../utils/scraper";
-import type { Meet, ApiResponse, Pagination } from "../../../types/api";
+import type { Meet, ApiResponse, Pagination } from "../../../types";
 import type {
   GetFederationsType,
   GetFederationsParamType,

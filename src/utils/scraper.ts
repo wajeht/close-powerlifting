@@ -2,7 +2,12 @@ import { JSDOM } from "jsdom";
 import { cache } from "../db/cache";
 import { logger } from "./logger";
 import { config } from "../config";
-import type { CacheConfig, ApiResponse } from "../types/api";
+import type { ApiResponse } from "../types";
+
+type CacheConfig = {
+  key: string;
+  ttlSeconds?: number;
+};
 
 const DEFAULT_CACHE_TTL = 3600;
 

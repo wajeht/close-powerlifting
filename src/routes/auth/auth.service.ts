@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 
 import { config } from "../../config";
 import { update } from "../../db/repositories/user.repository";
+import type { UserParams } from "../../types";
 import { generateAPIKey, generatePassword } from "../../utils/helpers";
 import { logger } from "../../utils/logger";
 import { mail } from "../../utils/mail";
@@ -9,12 +10,6 @@ import { createAdminNewApiKeyText } from "../../utils/templates/admin-new-api-ke
 import { createNewApiKeyText } from "../../utils/templates/new-api-key";
 import { createVerifyEmailText } from "../../utils/templates/verify-email";
 import { createWelcomeText } from "../../utils/templates/welcome";
-
-export type UserParams = {
-  userId: string;
-  name: string;
-  email: string;
-};
 
 type VerificationEmailParams = {
   hostname: string;

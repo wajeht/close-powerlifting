@@ -1,5 +1,5 @@
 import { fetchHtml, parseHtml, tableToJson, withCache } from "../../../utils/scraper";
-import type { MeetData, MeetResult, ApiResponse } from "../../../types/api";
+import type { MeetData, MeetResult, ApiResponse } from "../../../types";
 import type { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 
 const CACHE_TTL = 3600;

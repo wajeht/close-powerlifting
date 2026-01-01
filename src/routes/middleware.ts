@@ -13,11 +13,11 @@ import { logger } from "../utils/logger";
 import { mail } from "../utils/mail";
 import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
 
-interface RequestValidators {
+type RequestValidators = {
   params?: AnyZodObject;
   body?: AnyZodObject;
   query?: AnyZodObject;
-}
+};
 
 export function rateLimitMiddleware() {
   return rateLimit({

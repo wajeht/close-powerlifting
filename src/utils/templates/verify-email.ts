@@ -1,11 +1,11 @@
-type VerifyEmailParams = {
+type VerifyEmailTextParams = {
   name: string;
   verification_token: string;
   hostname: string;
   email: string;
 };
 
-export function createVerifyEmailText(params: VerifyEmailParams): string {
+export function createVerifyEmailText(params: VerifyEmailTextParams): string {
   return `Hi ${params.name},
 
 We're happy you signed up for Close Powerlifting. To start exploring, please confirm your email address.

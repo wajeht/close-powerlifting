@@ -1,17 +1,6 @@
-export interface User {
-  id: string;
-  name: string;
-  password: string;
-  email: string;
-  api_call_count: number;
-  key: string;
-  admin: boolean;
-  deleted: boolean;
-  verification_token: string;
-  verified: boolean;
-  verified_at: Date;
-  created_at: Date;
-}
+// ============================================================================
+// Express Extensions
+// ============================================================================
 
 declare global {
   namespace Express {
@@ -19,4 +8,186 @@ declare global {
       user: Pick<User, "id" | "name" | "email">;
     }
   }
+}
+
+// ============================================================================
+// User Types
+// ============================================================================
+
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  password: string | null;
+  api_call_count: number;
+  api_key_version: number;
+  api_call_limit: number;
+  key: string | null;
+  admin: boolean;
+  deleted: boolean;
+  verification_token: string | null;
+  verified: boolean;
+  verified_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateUserInput = Pick<User, "name" | "email"> &
+  Partial<Omit<User, "id" | "name" | "email" | "created_at" | "updated_at">>;
+
+export type UpdateUserInput = Partial<Omit<User, "id" | "created_at">>;
+
+export type UserParams = {
+  userId: string;
+  name: string;
+  email: string;
+};
+
+// ============================================================================
+// API Response Types
+// ============================================================================
+
+export interface ApiResponse<T> {
+  data: T | null;
+  cache: boolean;
+  pagination?: Pagination;
+}
+
+export interface Pagination {
+  items: number;
+  pages: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  first_page: number;
+  from: number;
+  to: number;
+}
+
+// ============================================================================
+// Federation Types
+// ============================================================================
+
+export interface Federation extends Record<string, string> {
+  name: string;
+  meetsentered: string;
+  status: string;
+  newmeetdetection: string;
+  resultsformat: string;
+  easeofimport: string;
+  maintainers: string;
+}
+
+// ============================================================================
+// Status Types
+// ============================================================================
+
+export interface StatusData {
+  server_version: string;
+  meets: string;
+  federations: Federation[];
+}
+
+// ============================================================================
+// Meet Types
+// ============================================================================
+
+export interface Meet extends Record<string, string> {
+  federation: string;
+  date: string;
+  meetname: string;
+  location: string;
+}
+
+export interface MeetResult extends Record<string, string> {
+  rank: string;
+  lifter: string;
+  sex: string;
+  age: string;
+  equip: string;
+  class: string;
+  weight: string;
+  squat: string;
+  bench: string;
+  deadlift: string;
+  total: string;
+  dots: string;
+}
+
+export interface MeetData {
+  title: string;
+  date: string;
+  location: string;
+  results: MeetResult[];
+}
+
+// ============================================================================
+// Rankings Types
+// ============================================================================
+
+export interface RankingRow {
+  id: number;
+  rank: number;
+  full_name: string;
+  username: string;
+  user_profile: string;
+  instagram: string;
+  instagram_url: string;
+  username_color: string;
+  country: string;
+  location: string;
+  fed: string;
+  federation_url: string;
+  date: string;
+  country_two: string;
+  state: string;
+  meet_code: string;
+  meet_url: string;
+  sex: string;
+  equip: string;
+  age: number;
+  open: string;
+  body_weight: number;
+  weight_class: number;
+  squat: number;
+  bench: number;
+  deadlift: number;
+  total: number;
+  dots: number;
+}
+
+export interface RankingsApiResponse {
+  rows: (string | number)[][];
+  total_length: number;
+}
+
+// ============================================================================
+// User Profile Types
+// ============================================================================
+
+export interface PersonalBest {
+  [key: string]: string;
+}
+
+export interface CompetitionResult {
+  [key: string]: string;
+}
+
+export interface UserProfile {
+  name: string;
+  username: string;
+  sex: string;
+  instagram: string;
+  instagram_url: string;
+  personal_best: PersonalBest[];
+  competition_results: CompetitionResult[];
+}
+
+// ============================================================================
+// Records Types
+// ============================================================================
+
+export interface RecordCategory {
+  title: string;
+  records: Record<string, string>[];
 }

@@ -5,7 +5,7 @@ import {
   getElementByClass,
   withCache,
 } from "../../../utils/scraper";
-import type { StatusData, Federation, ApiResponse } from "../../../types/api";
+import type { StatusData, Federation, ApiResponse } from "../../../types";
 import type { GetStatusType } from "./status.validation";
 
 const CACHE_KEY = "status";

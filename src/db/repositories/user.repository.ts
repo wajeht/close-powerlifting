@@ -1,27 +1,5 @@
 import { getDb } from "../db";
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  password: string | null;
-  api_call_count: number;
-  api_key_version: number;
-  api_call_limit: number;
-  key: string | null;
-  admin: boolean;
-  deleted: boolean;
-  verification_token: string | null;
-  verified: boolean;
-  verified_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export type CreateUserInput = Pick<User, "name" | "email"> &
-  Partial<Omit<User, "id" | "name" | "email" | "created_at" | "updated_at">>;
-
-export type UpdateUserInput = Partial<Omit<User, "id" | "created_at">>;
+import type { User, CreateUserInput, UpdateUserInput } from "../../types";
 
 export async function findById(id: number): Promise<User | undefined> {
   const db = getDb();

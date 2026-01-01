@@ -1,9 +1,9 @@
-type NewApiKeyParams = {
+type NewApiKeyTextParams = {
   name: string;
   key: string;
 };
 
-export function createNewApiKeyText(params: NewApiKeyParams): string {
+export function createNewApiKeyText(params: NewApiKeyTextParams): string {
   return `Hi ${params.name},
 
 We've received a request to reset your API key. Here is your new API key to access Close Powerlifting:

@@ -4,7 +4,7 @@ import {
   buildPaginationQuery,
   calculatePagination,
 } from "../../../utils/scraper";
-import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types/api";
+import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types";
 import type {
   GetRankingsType,
   GetRankType,

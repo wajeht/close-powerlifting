@@ -1,10 +1,10 @@
-type AdminNewApiKeyParams = {
+type AdminNewApiKeyTextParams = {
   name: string;
   password: string;
   apiKey: string;
 };
 
-export function createAdminNewApiKeyText(params: AdminNewApiKeyParams): string {
+export function createAdminNewApiKeyText(params: AdminNewApiKeyTextParams): string {
   return `Hi ${params.name},
 
 Here are your credentials to access Close Powerlifting:

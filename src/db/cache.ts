@@ -1,13 +1,13 @@
 import { getDb } from "./db";
 import { logger } from "../utils/logger";
 
-interface CacheEntry {
+type CacheEntry = {
   key: string;
   value: string;
   expires_at: string | null;
   created_at: string;
   updated_at: string;
-}
+};
 
 /**
  * Get a value from the cache

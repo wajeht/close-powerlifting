@@ -13,7 +13,7 @@ import type {
   RankingRow,
   RankingsApiResponse,
   ApiResponse,
-} from "../../../types/api";
+} from "../../../types";
 import type { GetUserType, GetUsersType } from "./users.validation";
 
 const CACHE_TTL = 1800;
