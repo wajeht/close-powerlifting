@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { ZodIssue, ZodIssueCode } from "zod";
 
-import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from "./routes/middleware";
-import cache from "./db/cache";
-import { getHostName } from "./utils/helpers";
-import * as utils from "./utils/helpers";
+import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from "./middleware";
+import cache from "../db/cache";
+import { getHostName } from "../utils/helpers";
+import * as utils from "../utils/helpers";
 
 describe("notFoundHandler", () => {
   let req: any;
