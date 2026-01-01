@@ -24,8 +24,8 @@
     "format:check": "oxfmt --check .",
     "format": "oxfmt --write . > /dev/null",
     "format:verbose": "oxfmt --write .",
-    "lint:check": "oxlint .",
-    "lint": "oxlint --fix ."
+    "lint:check": "oxlint --ignore-pattern public .",
+    "lint": "oxlint --fix --ignore-pattern public ."
   },
   "dependencies": {
     "@faker-js/faker": "^9.0.0",

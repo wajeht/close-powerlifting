@@ -5,11 +5,7 @@ import { JSDOM } from "jsdom";
 import cache from "../../db/cache";
 import Axios from "../../utils/axios";
 import { tableToJson } from "../../utils/helpers";
-import {
-  getFederationsParamType,
-  getFederationsQueryType,
-  getFederationsType,
-} from "./federations.validations";
+import { getFederationsParamType, getFederationsQueryType } from "./federations.validations";
 
 const api = new Axios(true).instance();
 

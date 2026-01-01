@@ -82,7 +82,7 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
         name: decoded.name,
         email: decoded.email,
       };
-    } catch (error) {
+    } catch (_error) {
       throw new UnauthorizedError("Invalid signature!");
     }
 

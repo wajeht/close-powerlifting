@@ -2,7 +2,6 @@ import { StatusCodes } from "http-status-codes";
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 
 import { getRankings } from "../api/rankings/rankings.services";
-import { emailConfig } from "../config/constants";
 import * as UserRepository from "../db/repositories/user.repository";
 import mail from "../utils/mail";
 import {

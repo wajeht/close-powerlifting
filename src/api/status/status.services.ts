@@ -17,7 +17,7 @@ export async function fetchStatus() {
       meets: div[0].childNodes[8].textContent?.toString(),
       federations: tableToJson(div[0].children[5]),
     };
-  } catch (e) {
+  } catch (_e) {
     return null;
   }
 }
@@ -43,7 +43,7 @@ export async function getStatus({ cache: useCache = true }: getStatusType) {
       cache: useCache,
       data,
     };
-  } catch (e) {
+  } catch (_e) {
     throw new Error(`Something went wrong while processing rankings data!`);
   }
 }

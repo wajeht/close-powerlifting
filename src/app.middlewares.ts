@@ -21,7 +21,7 @@ interface RequestValidators {
   query?: AnyZodObject;
 }
 
-export function notFoundMiddleware(req: Request, res: Response, next: NextFunction) {
+export function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
   if (!isApiPrefix) return res.status(StatusCodes.NOT_FOUND).render("not-found.html");
 
@@ -55,7 +55,7 @@ export function appRateLimitMiddleware() {
   });
 }
 
-export function errorMiddleware(err: any, req: Request, res: Response, next: NextFunction) {
+export function errorMiddleware(err: any, req: Request, res: Response, _next: NextFunction) {
   let statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   let message =
     appConfig.env === "development"
