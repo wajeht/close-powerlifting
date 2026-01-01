@@ -1,4 +1,4 @@
-FROM node:22.16-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /usr/src/app
 
@@ -10,7 +10,7 @@ COPY ./ ./
 
 RUN npm run build
 
-FROM node:22.16-alpine
+FROM node:24-alpine
 
 RUN apk update && apk add --no-cache curl
 
