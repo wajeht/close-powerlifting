@@ -10,131 +10,130 @@
     </h1>
 
     <p
-      class="fade-in-heading animation-delay-2 mx-auto mt-5 max-w-3xl text-center text-lg text-neutral-600 dark:text-neutral-400"
+      class="fade-in-heading animation-delay-2 mx-auto mt-5 max-w-3xl text-center text-xl text-neutral-400"
     >
-      An intuitive API for the Open Powerlifting database.
+      REST API for the world's largest powerlifting database
     </p>
+
+    <!-- value props -->
+    <div
+      class="fade-in-heading animation-delay-2 mx-auto mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-neutral-500"
+    >
+      <span>Free to use</span>
+      <span class="hidden sm:inline">•</span>
+      <span>500 calls/month</span>
+      <span class="hidden sm:inline">•</span>
+      <span>JSON responses</span>
+      <span class="hidden sm:inline">•</span>
+      <span>Updated weekly</span>
+    </div>
 
     <div class="fade-in-heading animation-delay-3 mt-10 flex justify-center gap-3">
       <a
-        class="rounded-sm bg-slate-50 px-3 py-2 font-normal text-black outline outline-slate-50 hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+        class="rounded-sm bg-slate-50 px-4 py-2 font-medium text-black outline outline-slate-50 hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
         href="/register"
-        >Register</a
+        >Get API key</a
       >
 
       <a
-        class="rounded-sm px-3 py-2 text-slate-50 outline outline-slate-50 hover:bg-slate-50 hover:text-black"
-        href="/about"
-        >Learn more</a
+        class="rounded-sm px-4 py-2 text-slate-50 outline outline-slate-50 hover:bg-slate-50 hover:text-black"
+        href="/docs/api"
+        target="_blank"
+        >View docs</a
       >
     </div>
   </div>
 
-  <!-- features -->
-  <div class="fade-in animation-delay-4 mx-auto mt-20 max-w-5xl px-4">
-    <h2 class="mb-8 text-center text-2xl font-bold text-white">What you can access</h2>
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <!-- rankings -->
+  <!-- stats -->
+  <div class="fade-in animation-delay-4 mx-auto mt-20 max-w-4xl px-4">
+    <div class="grid gap-4 text-center sm:grid-cols-3">
       <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">Rankings</h3>
+        <div class="text-3xl font-bold text-white">3M+</div>
+        <div class="mt-1 text-sm text-neutral-400">Recorded lifts</div>
+      </div>
+      <div class="rounded-lg bg-neutral-900 p-6">
+        <div class="text-3xl font-bold text-white">1M+</div>
+        <div class="mt-1 text-sm text-neutral-400">Athletes</div>
+      </div>
+      <div class="rounded-lg bg-neutral-900 p-6">
+        <div class="text-3xl font-bold text-white">50K+</div>
+        <div class="mt-1 text-sm text-neutral-400">Competitions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- endpoints -->
+  <div class="fade-in animation-delay-5 mx-auto mt-20 max-w-5xl px-4">
+    <h2 class="mb-8 text-center text-2xl font-bold text-white">Flexible queries</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="rounded-lg bg-neutral-900 p-6">
+        <h3 class="mb-3 font-semibold text-white">/rankings</h3>
         <p class="text-sm text-neutral-400">
-          Query athlete rankings with filters for federation, weight class, equipment, and more.
+          Filter by federation, weight class, equipment, sex, and year. Sort by total, squat, bench,
+          or deadlift.
         </p>
       </div>
 
-      <!-- records -->
       <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">Records</h3>
+        <h3 class="mb-3 font-semibold text-white">/records</h3>
         <p class="text-sm text-neutral-400">
-          Access all-time records across federations, equipment types, and weight classes.
+          World and federation records. Filter by equipment type (raw, wraps, single-ply, multi-ply)
+          and sex.
         </p>
       </div>
 
-      <!-- meets -->
       <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">Meets</h3>
+        <h3 class="mb-3 font-semibold text-white">/meets</h3>
         <p class="text-sm text-neutral-400">
-          Browse competition data including results, dates, locations, and federation info.
+          Search competitions by federation, country, or date range. Includes full results for each
+          meet.
         </p>
       </div>
 
-      <!-- users -->
       <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">Athlete Profiles</h3>
+        <h3 class="mb-3 font-semibold text-white">/users/{'{'}name{'}'}</h3>
         <p class="text-sm text-neutral-400">
-          Look up individual lifters by name and view their complete competition history.
-        </p>
-      </div>
-
-      <!-- federations -->
-      <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">Federations</h3>
-        <p class="text-sm text-neutral-400">
-          Get information on powerlifting federations and their sanctioned meets.
-        </p>
-      </div>
-
-      <!-- status -->
-      <div class="rounded-lg bg-neutral-900 p-6">
-        <h3 class="mb-2 text-lg font-semibold text-white">API Status</h3>
-        <p class="text-sm text-neutral-400">
-          Check real-time API health and endpoint availability.
+          Complete athlete profiles with competition history, personal records, and progression over
+          time.
         </p>
       </div>
     </div>
   </div>
 
   <!-- code example -->
-  <div class="fade-in animation-delay-5 mx-auto mt-20 max-w-3xl px-4">
-    <h2 class="mb-8 text-center text-2xl font-bold text-white">Simple to use</h2>
+  <div class="fade-in animation-delay-6 mx-auto mt-20 max-w-3xl px-4">
+    <h2 class="mb-8 text-center text-2xl font-bold text-white">Simple integration</h2>
     <pre
       class="overflow-x-auto rounded-lg bg-neutral-900 p-6 text-sm"
-    ><code class="text-neutral-300"><span class="text-purple-400">const</span> response = <span class="text-purple-400">await</span> <span class="text-blue-400">fetch</span>(<span class="text-green-400">'/api/rankings?per_page=10'</span>, {
+    ><code class="text-neutral-300"><span class="text-neutral-500">// Get top 10 raw male lifters in the 83kg class</span>
+<span class="text-purple-400">const</span> res = <span class="text-purple-400">await</span> <span class="text-blue-400">fetch</span>(<span class="text-green-400">'/api/rankings?equipment=Raw&sex=M&weight_class=83'</span>, {
   headers: { <span class="text-green-400">'x-api-key'</span>: YOUR_API_KEY }
 });
 
-<span class="text-purple-400">const</span> { data } = <span class="text-purple-400">await</span> response.<span class="text-blue-400">json</span>();
-
-<span class="text-neutral-500">// Returns top ranked lifters with their stats</span>
-console.<span class="text-blue-400">log</span>(data);
+<span class="text-purple-400">const</span> { data } = <span class="text-purple-400">await</span> res.<span class="text-blue-400">json</span>();
+<span class="text-neutral-500">// [{ name: "John Haack", total: 907.5, squat: 303, bench: 220, deadlift: 384.5 }, ...]</span>
 </code></pre>
-    <p class="mt-4 text-center text-sm text-neutral-500">
-      Full documentation available at
-      <a class="text-neutral-300 hover:text-white" href="/docs/api" target="_blank">/docs/api</a>
-    </p>
-  </div>
-
-  <!-- stats -->
-  <div class="fade-in animation-delay-6 mx-auto mt-20 max-w-4xl px-4">
-    <h2 class="mb-8 text-center text-2xl font-bold text-white">Powered by Open Powerlifting</h2>
-    <div class="grid gap-4 text-center sm:grid-cols-3">
-      <div class="rounded-lg bg-neutral-900 p-6">
-        <div class="text-3xl font-bold text-white">3M+</div>
-        <div class="mt-1 text-sm text-neutral-400">Competition entries</div>
-      </div>
-      <div class="rounded-lg bg-neutral-900 p-6">
-        <div class="text-3xl font-bold text-white">1M+</div>
-        <div class="mt-1 text-sm text-neutral-400">Unique lifters</div>
-      </div>
-      <div class="rounded-lg bg-neutral-900 p-6">
-        <div class="text-3xl font-bold text-white">50K+</div>
-        <div class="mt-1 text-sm text-neutral-400">Meets tracked</div>
-      </div>
-    </div>
-    <p class="mt-4 text-center text-sm text-neutral-500">
-      Data sourced from
-      <a
-        class="text-neutral-300 hover:text-white"
-        href="https://openpowerlifting.org"
-        target="_blank"
-        >OpenPowerlifting.org</a
-      >
-    </p>
   </div>
 
   <!-- sample rankings -->
-  <div class="fade-in animation-delay-7 mt-20">
-    <h2 class="mb-4 text-center text-2xl font-bold text-white">Live rankings preview</h2>
+  <div class="fade-in animation-delay-6 mt-20">
+    <h2 class="mb-4 text-center text-2xl font-bold text-white">See it in action</h2>
     <%~ include('../_components/rankings-table.html', rankings) %>
+  </div>
+
+  <!-- final cta -->
+  <div class="fade-in animation-delay-7 mt-20 mb-20 text-center">
+    <p class="mb-4 text-neutral-400">Ready to start building?</p>
+    <a
+      class="inline-block rounded-sm bg-slate-50 px-6 py-3 font-medium text-black outline outline-slate-50 hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+      href="/register"
+      >Get your free API key</a
+    >
+    <p class="mt-6 text-sm text-neutral-500">
+      Data sourced from
+      <a class="text-neutral-400 hover:text-white" href="https://openpowerlifting.org" target="_blank"
+        >OpenPowerlifting.org</a
+      >
+    </p>
   </div>
 </div>
