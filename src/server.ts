@@ -56,7 +56,7 @@ function gracefulShutdown(signal: string): void {
       await db.stop();
       logger.info("Database connection closed.");
     } catch (error) {
-      logger.error({ err: error }, "Error closing database connection");
+      logger.error("Error closing database connection", error);
     }
 
     logger.info("All connections closed successfully.");
@@ -74,15 +74,15 @@ process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
 process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
 
 process.on("uncaughtException", async (error: Error, origin: string) => {
-  logger.error({ err: error, origin }, "Uncaught Exception");
+  logger.error(`Uncaught Exception: ${origin}`, error);
   gracefulShutdown("uncaughtException");
 });
 
 process.on("warning", (warning: Error) => {
-  logger.warn({ name: warning.name, message: warning.message }, "Process warning");
+  logger.warn(`Process warning: ${warning.name} - ${warning.message}`);
 });
 
-process.on("unhandledRejection", async (reason: unknown, promise: Promise<unknown>) => {
-  logger.error({ reason, promise }, "Unhandled Rejection");
+process.on("unhandledRejection", async (reason: unknown) => {
+  logger.error("Unhandled Rejection", reason);
   gracefulShutdown("unhandledRejection");
 });
