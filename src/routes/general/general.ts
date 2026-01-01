@@ -19,21 +19,18 @@ const router = express.Router();
  * @tags general
  * @summary get home page
  */
-router.get(
-  "/",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const rankings = await RankingsService.getRankings({
-      current_page: 1,
-      per_page: 5,
-      cache: true,
-    });
+router.get("/", async (req: Request, res: Response) => {
+  const rankings = await RankingsService.getRankings({
+    current_page: 1,
+    per_page: 5,
+    cache: true,
+  });
 
-    return res.status(StatusCodes.OK).render("general/general-home.html", {
-      path: "/home",
-      rankings,
-    });
-  }),
-);
+  return res.status(200).render("general/general-home.html", {
+    path: "/home",
+    rankings,
+  });
+});
 
 /**
  * GET /about
@@ -41,7 +38,7 @@ router.get(
  * @summary get about page
  */
 router.get("/about", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("general/general-about.html", {
+  return res.status(200).render("general/general-about.html", {
     path: "/about",
   });
 });
@@ -52,7 +49,7 @@ router.get("/about", (req: Request, res: Response) => {
  * @summary get contact page
  */
 router.get("/contact", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("general/general-contact.html", {
+  return res.status(200).render("general/general-contact.html", {
     path: "/contact",
     messages: req.flash(),
   });
@@ -74,7 +71,7 @@ router.post(
       message: z.string({ required_error: "message is required!" }),
     }),
   }),
-  catchAsyncHandler(async (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const { name, email, message } = req.body;
 
     mail.sendMail({
@@ -86,8 +83,8 @@ router.post(
 
     req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 
-    return res.status(StatusCodes.TEMPORARY_REDIRECT).redirect("/contact");
-  }),
+    return res.status(307).redirect("/contact");
+  },
 );
 
 /**
@@ -96,7 +93,7 @@ router.post(
  * @summary get terms page
  */
 router.get("/terms", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("general/general-terms.html", {
+  return res.status(200).render("general/general-terms.html", {
     path: "/terms",
   });
 });
@@ -107,7 +104,7 @@ router.get("/terms", (req: Request, res: Response) => {
  * @summary get privacy page
  */
 router.get("/privacy", (req: Request, res: Response) => {
-  return res.status(StatusCodes.OK).render("general/general-privacy.html", {
+  return res.status(200).render("general/general-privacy.html", {
     path: "/privacy",
   });
 });
@@ -117,24 +114,21 @@ router.get("/privacy", (req: Request, res: Response) => {
  * @tags general
  * @summary get status page
  */
-router.get(
-  "/status",
-  catchAsyncHandler(async (req: Request, res: Response) => {
-    const hostname = getHostName(req);
-    const apiStatuses = await HealthCheckService.getAPIStatus({
-      X_API_KEY: config.app.xApiKey,
-      url: hostname,
-    });
+router.get("/status", async (req: Request, res: Response) => {
+  const hostname = getHostName(req);
+  const apiStatuses = await HealthCheckService.getAPIStatus({
+    X_API_KEY: config.app.xApiKey,
+    url: hostname,
+  });
 
-    const allGood = apiStatuses.every((item: { status: boolean }) => item.status);
+  const allGood = apiStatuses.every((item: { status: boolean }) => item.status);
 
-    return res.status(StatusCodes.OK).render("general/general-status.html", {
-      path: "/status",
-      apiStatuses,
-      allGood,
-    });
-  }),
-);
+  return res.status(200).render("general/general-status.html", {
+    path: "/status",
+    apiStatuses,
+    allGood,
+  });
+});
 
 /**
  * GET /health-check
@@ -150,7 +144,7 @@ router.get("/health-check", (req: Request, res: Response) => {
     dbConnected = false;
   }
 
-  res.status(StatusCodes.OK).json({
+  res.status(200).json({
     status: "ok",
     uptime: process.uptime(),
     timestamp: Date.now(),
@@ -174,7 +168,7 @@ router.get("/healthz", (req: Request, res: Response) => {
     dbConnected = false;
   }
 
-  res.status(StatusCodes.OK).json({
+  res.status(200).json({
     status: "ok",
     uptime: process.uptime(),
     timestamp: Date.now(),
