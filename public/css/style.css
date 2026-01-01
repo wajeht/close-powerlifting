@@ -678,6 +678,10 @@ video {
   margin-bottom: 4rem !important;
 }
 
+.mt-2 {
+  margin-top: 0.5rem !important;
+}
+
 .block {
   display: block !important;
 }
@@ -766,6 +770,10 @@ video {
   max-width: 56rem !important;
 }
 
+.max-w-md {
+  max-width: 28rem !important;
+}
+
 .flex-1 {
   flex: 1 1 0% !important;
 }
@@ -802,6 +810,10 @@ video {
   flex-wrap: wrap !important;
 }
 
+.items-start {
+  align-items: flex-start !important;
+}
+
 .items-center {
   align-items: center !important;
 }
@@ -836,6 +848,10 @@ video {
 
 .gap-8 {
   gap: 2rem !important;
+}
+
+.gap-6 {
+  gap: 1.5rem !important;
 }
 
 .gap-x-6 {
@@ -1040,6 +1056,16 @@ video {
   padding-bottom: 0.125rem !important;
 }
 
+.px-5 {
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+
+.py-16 {
+  padding-top: 4rem !important;
+  padding-bottom: 4rem !important;
+}
+
 .pb-4 {
   padding-bottom: 1rem !important;
 }
@@ -1198,6 +1224,21 @@ video {
   color: rgb(192 132 252 / var(--tw-text-opacity, 1)) !important;
 }
 
+.placeholder-neutral-500::-moz-placeholder {
+  --tw-placeholder-opacity: 1 !important;
+  color: rgb(115 115 115 / var(--tw-placeholder-opacity, 1)) !important;
+}
+
+.placeholder-neutral-500::placeholder {
+  --tw-placeholder-opacity: 1 !important;
+  color: rgb(115 115 115 / var(--tw-placeholder-opacity, 1)) !important;
+}
+
+.outline-none {
+  outline: 2px solid transparent !important;
+  outline-offset: 2px !important;
+}
+
 .outline {
   outline-style: solid !important;
 }
@@ -1248,6 +1289,11 @@ html {
   background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1)) !important;
 }
 
+.hover\:bg-neutral-800:hover {
+  --tw-bg-opacity: 1 !important;
+  background-color: rgb(38 38 38 / var(--tw-bg-opacity, 1)) !important;
+}
+
 .hover\:text-black:hover {
   --tw-text-opacity: 1 !important;
   color: rgb(0 0 0 / var(--tw-text-opacity, 1)) !important;
@@ -1287,6 +1333,17 @@ html {
 
 .hover\:outline-slate-50:hover {
   outline-color: #f8fafc !important;
+}
+
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color) !important;
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color) !important;
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000) !important;
+}
+
+.focus\:ring-neutral-600:focus {
+  --tw-ring-opacity: 1 !important;
+  --tw-ring-color: rgb(82 82 82 / var(--tw-ring-opacity, 1)) !important;
 }
 
 .group[open] .group-open\:rotate-180 {

@@ -1,73 +1,66 @@
-<div class="fade-in mx-auto flex max-w-sm flex-col gap-4">
+<div class="fade-in mx-auto flex max-w-md flex-col gap-6">
+  <!-- header -->
+  <div>
+    <h1 class="text-2xl font-bold text-white">Get your API key</h1>
+    <p class="mt-2 text-sm text-neutral-400">
+      Create an account to get free access to the powerlifting database API.
+    </p>
+  </div>
+
   <!-- flash -->
   <%~ include('../_components/flash-message.html') %>
 
   <!-- form -->
-  <form action="/register" method="post" class="flex flex-col gap-4 rounded-md bg-neutral-900 p-7">
+  <form action="/register" method="post" class="flex flex-col gap-4 rounded-lg bg-neutral-900 p-6">
     <!-- name -->
-    <div class="flex flex-col gap-1">
-      <label for="name">Name</label>
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-neutral-300" for="name">Name</label>
       <input
-        class="rounded-sm bg-neutral-700 p-1 text-neutral-100"
+        class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
         type="text"
         name="name"
         id="name"
+        placeholder="Your name"
         required
       />
     </div>
 
     <!-- email -->
-    <div class="flex flex-col gap-1">
-      <label for="email">Email</label>
+    <div class="flex flex-col gap-2">
+      <label class="text-sm font-medium text-neutral-300" for="email">Email</label>
       <input
-        class="rounded-sm bg-neutral-700 p-1 text-neutral-100"
+        class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
         type="email"
         name="email"
         id="email"
+        placeholder="you@example.com"
         required
       />
     </div>
 
-    <!-- i agree  -->
-    <div class="flex flex-col gap-1">
-      <!-- checkbox -->
-      <div class="flex items-center gap-2">
-        <input
-          class="rounded-sm bg-neutral-700 text-neutral-100"
-          type="checkbox"
-          name="agree"
-          id="agree"
-          required
-        />
-        <label for="agree">I agree</label>
-      </div>
-
-      <!-- agree text -->
-      <p class="text-sm">
-        Registering signifies that you have read and agree to the
-        <a class="text-neutral-200 hover:underline" href="/terms">Terms of Service</a> and our
-        <a class="text-neutral-200 hover:underline" href="/privacy"> Privacy Policy</a>.
-      </p>
+    <!-- agree -->
+    <div class="flex items-start gap-3">
+      <input
+        class="mt-1 rounded bg-neutral-700"
+        type="checkbox"
+        name="agree"
+        id="agree"
+        required
+      />
+      <label for="agree" class="text-sm text-neutral-400">
+        I agree to the
+        <a class="text-neutral-300 hover:text-white" href="/terms">Terms of Service</a> and
+        <a class="text-neutral-300 hover:text-white" href="/privacy">Privacy Policy</a>
+      </label>
     </div>
 
-    <!-- buttons -->
-    <div class="flex flex-col gap-4">
-      <!-- register -->
-      <button
-        type="submit"
-        class="rounded-sm bg-slate-50 px-2 py-1 text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
-      >
-        Register
-      </button>
-
-      <!-- forgot -->
-      <a
-        class="rounded-sm px-2 py-1 text-center text-slate-50 outline outline-slate-50 hover:bg-slate-50 hover:text-black"
-        href="/reset-api-key"
-      >
-        Forgot API key?
-      </a>
-    </div>
+    <!-- register -->
+    <button
+      type="submit"
+      class="rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+    >
+      Create account
+    </button>
   </form>
 
   <!-- or -->
@@ -75,4 +68,10 @@
 
   <!-- social login -->
   <%~ include('../_components/social-oauth.html') %>
+
+  <!-- existing user -->
+  <p class="text-center text-sm text-neutral-500">
+    Already have an API key?
+    <a class="text-neutral-400 hover:text-white" href="/reset-api-key">Recover it here</a>
+  </p>
 </div>
