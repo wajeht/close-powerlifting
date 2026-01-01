@@ -138,7 +138,6 @@ authRouter.post(
       email,
       verification_token: token,
       hostname,
-      userId: String(createdUser.id),
     });
 
     req.flash("info", "Thank you for registering. Please check your email for confirmation!");
@@ -170,7 +169,6 @@ authRouter.post(
       logger.info(`User ${email} not verified, sending verification email`);
       await sendVerificationEmail({
         hostname: getHostName(req),
-        userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
         verification_token: foundUser.verification_token!,
@@ -307,7 +305,6 @@ authRouter.post(
       email,
       verification_token: token,
       hostname,
-      userId: String(createdUser.id),
     });
 
     res.status(201).json({
@@ -371,7 +368,6 @@ authRouter.post(
     if (foundUser && !foundUser.verified) {
       await sendVerificationEmail({
         hostname: getHostName(req),
-        userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
         verification_token: foundUser.verification_token!,
