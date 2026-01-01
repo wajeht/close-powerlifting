@@ -1,13 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { AnyZodObject } from 'zod';
 
 import { appConfig, emailConfig } from '../config/constants';
+import * as UserRepository from '../db/repositories/user.repository';
 import mail from '../utils/mail';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
-import { User } from '../views/views.models';
 import { APICallsExceededError, UnauthorizedError } from './api.errors';
-import rateLimit from 'express-rate-limit';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -92,26 +92,26 @@ export function authenticationMiddleware(req: Request, res: Response, next: Next
 
 export async function trackAPICallsMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
-    const id = req.user?.id as unknown as Uint8Array;
+    const id = req.user?.id as unknown as number;
     if (id) {
-      const user = await User.findOneAndUpdate(
-        { id },
-        { $inc: { api_call_count: 1 } },
-        { new: true },
-      );
+      const user = await UserRepository.incrementApiCallCount(id);
+
+      if (!user) {
+        return next();
+      }
 
       // exceeded api call limit
-      if (user?.api_call_count && user.api_call_count >= user.api_call_limit && !user.admin) {
+      if (user.api_call_count >= user.api_call_limit && !user.admin) {
         throw new APICallsExceededError('API Calls exceeded!');
       }
 
       // 50 %
-      if (user?.api_call_count && user.api_call_count === user.api_call_limit / 2 && !user.admin) {
+      if (user.api_call_count === Math.floor(user.api_call_limit / 2) && !user.admin) {
         mail.sendMail({
           from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
-          to: user.email as string,
+          to: user.email,
           subject: 'Reaching API Call Limit',
-          html: reachingApiLimitHTML({ name: user.name!, percent: 50 }),
+          html: reachingApiLimitHTML({ name: user.name, percent: 50 }),
         });
       }
     }

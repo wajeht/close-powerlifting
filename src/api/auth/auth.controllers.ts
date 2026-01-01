@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 
+import * as UserRepository from '../../db/repositories/user.repository';
 import { getGitHubOAuthURL, getGoogleOAuthURL, getHostName, hashKey } from '../../utils/helpers';
 import logger from '../../utils/logger';
-import { User } from '../../views/views.models';
 import {
   resetAPIKey,
   resetAdminAPIKey,
@@ -37,21 +37,21 @@ export async function getGoogleRedirect(req: Request, res: Response) {
     throw new UnauthorizedError('Something went wrong while authenticating with Google');
   }
 
-  const found = await User.findOne({ email: googleUser.email });
+  const found = await UserRepository.findByEmail(googleUser.email);
 
   if (!found) {
-    const createdUser = await User.create({
+    const createdUser = await UserRepository.create({
       email: googleUser.email,
       name: googleUser.name,
       verification_token: access_token,
       verified: true,
-      verified_at: new Date(),
+      verified_at: new Date().toISOString(),
     });
 
     sendWelcomeEmail({
-      name: createdUser.name!,
-      email: createdUser.email!,
-      userId: createdUser.id!,
+      name: createdUser.name,
+      email: createdUser.email,
+      userId: String(createdUser.id),
     });
 
     req.flash('success', 'We will send you an API key to your email very shortly!');
@@ -84,21 +84,21 @@ export async function getGithubRedirect(req: Request, res: Response) {
 
   const emails = await AuthServices.getGithubUserEmails({ access_token });
 
-  const found = await User.findOne({ email: emails[0]!.email });
+  const found = await UserRepository.findByEmail(emails[0]!.email);
 
   if (!found) {
-    const createdUser = await User.create({
+    const createdUser = await UserRepository.create({
       email: emails[0]!.email,
       name: githubUser.name,
       verification_token: access_token,
       verified: true,
-      verified_at: new Date(),
+      verified_at: new Date().toISOString(),
     });
 
     sendWelcomeEmail({
-      name: createdUser.name!,
-      email: createdUser.email!,
-      userId: createdUser.id!,
+      name: createdUser.name,
+      email: createdUser.email,
+      userId: String(createdUser.id),
     });
 
     req.flash('success', 'We will send you an API key to your email very shortly!');
@@ -117,7 +117,7 @@ export async function getGithubRedirect(req: Request, res: Response) {
 export async function postRegister(req: Request<{}, {}, postRegisterType>, res: Response) {
   const { email, name } = req.body;
 
-  const found = await User.findOne({ email });
+  const found = await UserRepository.findByEmail(email);
 
   if (found) {
     throw new ValidationError('email already exist');
@@ -125,7 +125,7 @@ export async function postRegister(req: Request<{}, {}, postRegisterType>, res: 
 
   const { key: token } = await hashKey();
 
-  const createdUser = await User.create({ email, name, verification_token: token });
+  const createdUser = await UserRepository.create({ email, name, verification_token: token });
 
   const hostname = getHostName(req);
 
@@ -136,7 +136,7 @@ export async function postRegister(req: Request<{}, {}, postRegisterType>, res: 
     email,
     verification_token: token,
     hostname,
-    userId: createdUser.id,
+    userId: String(createdUser.id),
   });
 
   res.status(StatusCodes.CREATED).json({
@@ -156,7 +156,7 @@ export async function postRegister(req: Request<{}, {}, postRegisterType>, res: 
 export async function postVerifyEmail(req: Request<{}, {}, postVerifyEmailType>, res: Response) {
   const { token, email } = req.body;
 
-  const foundUser = await User.findOne({ email });
+  const foundUser = await UserRepository.findByEmail(email);
 
   if (!foundUser) {
     throw new ValidationError('Something wrong while verifying your account!');
@@ -171,9 +171,9 @@ export async function postVerifyEmail(req: Request<{}, {}, postVerifyEmailType>,
   }
 
   const unhashedKey = await sendWelcomeEmail({
-    name: foundUser.name!,
-    email: foundUser.email!,
-    userId: foundUser.id!,
+    name: foundUser.name,
+    email: foundUser.email,
+    userId: String(foundUser.id),
   });
 
   res.status(StatusCodes.OK).json({
@@ -193,26 +193,26 @@ export async function postVerifyEmail(req: Request<{}, {}, postVerifyEmailType>,
 export async function postResetApiKey(req: Request<{}, {}, postResetApiKeyType>, res: Response) {
   const { email } = req.body;
 
-  const [foundUser] = await User.find({ email });
+  const foundUser = await UserRepository.findByEmail(email);
 
   if (foundUser && foundUser.verified === false) {
     sendVerificationEmail({
       hostname: getHostName(req),
-      userId: foundUser.id!,
-      name: foundUser.name!,
-      email: foundUser.email!,
+      userId: String(foundUser.id),
+      name: foundUser.name,
+      email: foundUser.email,
       verification_token: foundUser.verification_token!,
     });
   }
 
   if (foundUser && foundUser.verified === true && foundUser.admin === true) {
     resetAdminAPIKey({
-      userId: foundUser.id!,
-      name: foundUser.name!,
-      email: foundUser.email!,
+      userId: String(foundUser.id),
+      name: foundUser.name,
+      email: foundUser.email,
     });
   } else if (foundUser && foundUser.verified === true) {
-    resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
+    resetAPIKey({ userId: String(foundUser.id), name: foundUser.name, email: foundUser.email });
   }
 
   res.status(StatusCodes.OK).json({

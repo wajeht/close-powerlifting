@@ -1,16 +1,16 @@
 import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
-import mongoose from 'mongoose';
 
 import { getRankings } from '../api/rankings/rankings.services';
 import { emailConfig } from '../config/constants';
+import cache from '../db/cache';
+import { getDb } from '../db/db';
+import * as UserRepository from '../db/repositories/user.repository';
 import { isCronServiceStarted } from '../utils/crons';
 import { getHostName, hashKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
-import redis from '../utils/redis';
 import contactHTML from '../utils/templates/contact';
-import { User } from './views.models';
 import {
   resetAPIKey,
   resetAdminAPIKey,
@@ -40,7 +40,7 @@ export async function postRegisterPage(
 ) {
   const { email, name } = req.body;
 
-  const found = await User.findOne({ email });
+  const found = await UserRepository.findByEmail(email);
 
   if (found) {
     req.flash('error', 'Email already exist!');
@@ -49,7 +49,7 @@ export async function postRegisterPage(
 
   const { key: token } = await hashKey();
 
-  const createdUser = await User.create({ email, name, verification_token: token });
+  const createdUser = await UserRepository.create({ email, name, verification_token: token });
 
   const hostname = getHostName(req);
 
@@ -60,7 +60,7 @@ export async function postRegisterPage(
     email,
     verification_token: token,
     hostname,
-    userId: createdUser.id,
+    userId: String(createdUser.id),
   });
 
   req.flash('info', 'Thank you for registering. Please check your email for confirmation!');
@@ -81,26 +81,26 @@ export async function postResetAPIKeyPage(
 ) {
   const { email } = req.body;
 
-  const [foundUser] = await User.find({ email });
+  const foundUser = await UserRepository.findByEmail(email);
 
   if (foundUser && foundUser.verified === false) {
     sendVerificationEmail({
       hostname: getHostName(req),
-      userId: foundUser.id!,
-      name: foundUser.name!,
-      email: foundUser.email!,
+      userId: String(foundUser.id),
+      name: foundUser.name,
+      email: foundUser.email,
       verification_token: foundUser.verification_token!,
     });
   }
 
   if (foundUser && foundUser.verified === true && foundUser.admin === true) {
     resetAdminAPIKey({
-      userId: foundUser.id!,
-      name: foundUser.name!,
-      email: foundUser.email!,
+      userId: String(foundUser.id),
+      name: foundUser.name,
+      email: foundUser.email,
     });
   } else if (foundUser && foundUser.verified === true) {
-    resetAPIKey({ userId: foundUser.id!, name: foundUser.name!, email: foundUser.email! });
+    resetAPIKey({ userId: String(foundUser.id), name: foundUser.name, email: foundUser.email });
   }
 
   req.flash('info', 'If you have an account with us, we will send you a new api key!');
@@ -110,7 +110,7 @@ export async function postResetAPIKeyPage(
 
 export async function getVerifyEmailPage(req: Request, res: Response) {
   const { token, email } = req.query as { token: string; email: string };
-  const foundUser = await User.findOne({ email: { $eq: email } });
+  const foundUser = await UserRepository.findByEmail(email);
 
   if (!foundUser) {
     req.flash('error', 'Something wrong while verifying your account!');
@@ -127,7 +127,7 @@ export async function getVerifyEmailPage(req: Request, res: Response) {
     return res.redirect('/register');
   }
 
-  sendWelcomeEmail({ name: foundUser.name!, email: foundUser.email!, userId: foundUser.id! });
+  sendWelcomeEmail({ name: foundUser.name, email: foundUser.email, userId: String(foundUser.id) });
 
   req.flash(
     'success',
@@ -184,17 +184,20 @@ export function getStatusPage(req: Request, res: Response) {
 }
 
 export function getHealthCheck(req: Request, res: Response) {
-  // mongo
-  // 0: disconnected
-  // 1: connected
-  // 2: connecting
-  // 3: disconnecting
+  let dbConnected = false;
+  try {
+    getDb();
+    dbConnected = true;
+  } catch {
+    dbConnected = false;
+  }
+
   res.status(StatusCodes.OK).json({
     status: 'ok',
     uptime: process.uptime(),
     timestamp: Date.now(),
-    redis: redis.status === 'ready' ? 'connected' : 'disconnected',
-    mongo: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    database: dbConnected ? 'connected' : 'disconnected',
+    cache: cache.isReady() ? 'connected' : 'disconnected',
     crons: isCronServiceStarted() ? 'started' : 'stopped',
   });
 }

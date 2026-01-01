@@ -2,9 +2,9 @@ import { AxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import { JSDOM } from 'jsdom';
 
+import cache from '../../db/cache';
 import Axios from '../../utils/axios';
 import { tableToJson } from '../../utils/helpers';
-import redis from '../../utils/redis';
 import { getMeetParamType, getMeetQueryType } from './meets.validations';
 
 const api = new Axios(true).instance();

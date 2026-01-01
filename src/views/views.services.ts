@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 
 import { emailConfig, appConfig } from '../config/constants';
+import * as UserRepository from '../db/repositories/user.repository';
 import { generateAPIKey } from '../utils/helpers';
 import logger from '../utils/logger';
 import mail from '../utils/mail';
@@ -10,7 +11,6 @@ import adminNewAPIKeyHTML from '../utils/templates/admin-new-api-key';
 import newAPIKeyHTML from '../utils/templates/new-api-key';
 import verifyEmailHTML from '../utils/templates/verify-email';
 import welcomeHTML from '../utils/templates/welcome';
-import { User } from './views.models';
 
 export type UserParams = {
   userId: string;
@@ -27,7 +27,7 @@ type VerificationEmailPrams = {
 };
 
 export async function updateUser(email: string, updates: any): Promise<any> {
-  return await User.findOneAndUpdate({ email }, { $set: updates }, { returnOriginal: false });
+  return await UserRepository.update(email, updates);
 }
 
 export async function resetAPIKey(userParams: UserParams): Promise<void> {

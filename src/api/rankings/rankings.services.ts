@@ -1,9 +1,9 @@
 import { AxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 
+import cache from '../../db/cache';
 import Axios from '../../utils/axios';
 import { buildPagination } from '../../utils/helpers';
-import redis from '../../utils/redis';
 import { getRankType, getRankingsType } from './rankings.validations';
 
 const api = new Axios(false).instance();
@@ -88,12 +88,13 @@ export async function getRankings({
       };
     }
 
-    let rankings = JSON.parse((await redis.get(`close-powerlifting-rankings`)) as any);
+    const cachedRankings = await cache.get(`close-powerlifting-rankings`);
+    let rankings = cachedRankings ? JSON.parse(cachedRankings) : null;
 
     if (rankings === null) {
       rankings = await fetchRankings(paginationQuery);
       if (rankings === null) return null;
-      await redis.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
+      await cache.set(`close-powerlifting-rankings`, JSON.stringify(rankings));
     }
 
     return {

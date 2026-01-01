@@ -2,9 +2,9 @@ import { AxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
 import { JSDOM } from 'jsdom';
 
+import cache from '../../db/cache';
 import Axios from '../../utils/axios';
 import { tableToJson } from '../../utils/helpers';
-import redis from '../../utils/redis';
 import {
   getFederationsParamType,
   getFederationsQueryType,
@@ -72,11 +72,12 @@ export async function getFederations({ current_page = 1, per_page = 100, cache =
 
     const cacheKey = `close-powerlifting-federations-${current_page}-${per_page}`;
 
-    let federations = JSON.parse((await redis.get(cacheKey)) as any);
+    const cachedFederations = await cache.get(cacheKey);
+    let federations = cachedFederations ? JSON.parse(cachedFederations) : null;
 
     if (federations === null) {
       federations = await fetchFederations({ current_page, per_page });
-      await redis.set(cacheKey, JSON.stringify(federations));
+      await cache.set(cacheKey, JSON.stringify(federations));
     }
 
     return {
@@ -151,11 +152,12 @@ export async function getFederation({
       cacheString = `close-powerlifting-federations-federation-${federation}`;
     }
 
-    let federations = JSON.parse((await redis.get(cacheString)) as any);
+    const cachedFederations = await cache.get(cacheString);
+    let federations = cachedFederations ? JSON.parse(cachedFederations) : null;
 
     if (federations === null) {
       federations = await fetchFederation({ federation, year });
-      await redis.set(cacheString, JSON.stringify(federations));
+      await cache.set(cacheString, JSON.stringify(federations));
     }
 
     return {

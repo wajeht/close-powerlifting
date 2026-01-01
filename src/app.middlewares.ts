@@ -1,4 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import session from 'express-session';
 import { StatusCodes } from 'http-status-codes';
 import { AnyZodObject, ZodError } from 'zod';
 
@@ -9,11 +11,9 @@ import {
   ValidationError,
 } from './api/api.errors';
 import { appConfig, sessionConfig } from './config/constants';
+import cache from './db/cache';
 import { getHostName } from './utils/helpers';
 import logger from './utils/logger';
-import redis from './utils/redis';
-import rateLimit from 'express-rate-limit';
-import session from 'express-session';
 
 interface RequestValidators {
   params?: AnyZodObject;
@@ -132,11 +132,11 @@ export function validationMiddleware(validators: RequestValidators) {
 
 export async function hostNameMiddleware(req: Request, res: Response, next: NextFunction) {
   if (!req.app.locals.hostname) {
-    const hostname = await redis.get('hostname');
+    const hostname = await cache.get('hostname');
 
     if (hostname === null) {
-      await redis.set('hostname', getHostName(req));
-      req.app.locals.hostname = await redis.get('hostname');
+      await cache.set('hostname', getHostName(req));
+      req.app.locals.hostname = await cache.get('hostname');
     } else {
       req.app.locals.hostname = hostname;
     }
