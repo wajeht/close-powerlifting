@@ -55,6 +55,8 @@ const usersRouter = express.Router();
  * @description Search for athletes by name. Returns matching users with their profile URLs. If no search parameter is provided, redirects to /api/rankings.
  * @security BearerAuth
  * @param {string} search.query - Search term for user lookup (e.g., "haack", "john")
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {number} current_page.query - Page number (default 1)
  * @return {UserSearchResponse} 200 - Success response with matching users
  * @return {object} 308 - Redirect to /api/rankings if no search term provided
  * @return {object} 404 - No users found
@@ -82,6 +84,7 @@ usersRouter.get(
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
         data: searched?.data || [],
+        pagination: searched?.pagination,
       });
 
       return;

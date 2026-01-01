@@ -58,9 +58,9 @@ const federationsRouter = express.Router();
  * @summary Get all federations with optional pagination
  * @description Returns a paginated list of all powerlifting federations with their codes and lifter counts
  * @security BearerAuth
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {FederationsResponse} 200 - Success response with federations list
  * @example response - 200 - Success response
  * {
@@ -98,7 +98,7 @@ federationsRouter.get(
  * @security BearerAuth
  * @param {string} federation.path.required - Federation code (e.g., ipf, usapl, uspa, wrpf)
  * @param {number} year.query - Filter results by competition year (e.g., 2024)
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {object} 200 - Success response with federation results
  * @return {object} 404 - Federation not found
  * @example response - 200 - Success response

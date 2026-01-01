@@ -61,18 +61,18 @@ const rankingsRouter = express.Router();
  * @summary Get all rankings with optional pagination
  * @description Returns paginated list of all powerlifting rankings sorted by DOTS score
  * @security BearerAuth
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with rankings data
  * @example response - 200 - Success response
  * {
  *   "status": "success",
- *   "request_url": "/api/rankings?current_page=1&per_page=10",
+ *   "request_url": "/api/rankings?current_page=1&per_page=100",
  *   "message": "The resource was returned successfully!",
  *   "cache": true,
  *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}],
- *   "pagination": {"current_page": 1, "per_page": 10, "total": 3000000}
+ *   "pagination": {"current_page": 1, "per_page": 100, "total": 3000000}
  * }
  */
 rankingsRouter.get(
@@ -101,9 +101,9 @@ rankingsRouter.get(
  * @description Returns rankings filtered by equipment type (raw, wraps, single-ply, etc.)
  * @security BearerAuth
  * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(
@@ -144,9 +144,9 @@ rankingsRouter.get(
  * @security BearerAuth
  * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
  * @param {string} sex.path.required - Sex category - enum:men,women
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(
@@ -188,9 +188,9 @@ rankingsRouter.get(
  * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
  * @param {string} sex.path.required - Sex category - enum:men,women
  * @param {string} weight_class.path.required - Weight class in kg (e.g., 100, 140+)
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(
@@ -237,9 +237,9 @@ rankingsRouter.get(
  * @param {string} sex.path.required - Sex category - enum:men,women
  * @param {string} weight_class.path.required - Weight class in kg (e.g., 100, 140+)
  * @param {string} year.path.required - Competition year (e.g., 2024)
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(
@@ -288,9 +288,9 @@ rankingsRouter.get(
  * @param {string} weight_class.path.required - Weight class in kg (e.g., 100, 140+)
  * @param {string} year.path.required - Competition year (e.g., 2024)
  * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(
@@ -341,9 +341,9 @@ rankingsRouter.get(
  * @param {string} year.path.required - Competition year (e.g., 2024)
  * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
  * @param {string} sort.path.required - Sort order - enum:by-dots,by-wilks,by-glossbrenner,by-total,by-squat,by-bench,by-deadlift
- * @param {number} current_page.query - Page number - default: 1
- * @param {number} per_page.query - Items per page (max 100) - default: 100
- * @param {boolean} cache.query - Use cached data - default: true
+ * @param {number} current_page.query - Page number (default 1)
+ * @param {number} per_page.query - Results per page (max 500, default 100)
+ * @param {boolean} cache.query - Use cached data (default true)
  * @return {RankingsResponse} 200 - Success response with filtered rankings
  */
 rankingsRouter.get(

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { config } from "../../../config";
+
 const cacheTransform = z
   .string()
   .transform((val) => val === "true")
@@ -25,12 +27,12 @@ export const sortEnum = z.enum([
 ]);
 export const eventEnum = z.enum(["full-power", "push-pull", "squat", "bench", "deadlift"]);
 
-const MAX_PER_PAGE = 500;
+const { maxPerPage } = config.pagination;
 
 export const getRankingsValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
+    .transform((val) => Math.min(Number(val), maxPerPage))
     .optional(),
   current_page: z
     .string()
@@ -51,7 +53,7 @@ export const getFilteredRankingsParamValidation = z.object({
 export const getFilteredRankingsQueryValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
+    .transform((val) => Math.min(Number(val), maxPerPage))
     .optional(),
   current_page: z
     .string()

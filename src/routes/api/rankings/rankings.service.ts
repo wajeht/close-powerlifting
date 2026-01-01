@@ -4,6 +4,7 @@ import {
   buildPaginationQuery,
   calculatePagination,
 } from "../../../utils/scraper";
+import { config } from "../../../config";
 import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types";
 import type {
   GetRankingsType,
@@ -13,6 +14,7 @@ import type {
 } from "./rankings.validation";
 
 const CACHE_TTL = 300;
+const { defaultPerPage } = config.pagination;
 
 function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");
@@ -66,7 +68,7 @@ async function fetchRankingsData(
 
 export async function getRankings({
   current_page = 1,
-  per_page = 100,
+  per_page = defaultPerPage,
   cache: useCache = true,
 }: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
   const cacheKey = `rankings-${current_page}-${per_page}`;
@@ -94,7 +96,7 @@ export async function getRank({ rank }: GetRankType): Promise<RankingRow | null>
     return null;
   }
 
-  const perPage = 100;
+  const perPage = defaultPerPage;
   const currentPage = Math.ceil(rankNum / perPage);
   const indexInPage = (rankNum - 1) % perPage;
 
@@ -144,7 +146,7 @@ export async function getFilteredRankings(
   query: GetFilteredRankingsQueryType,
 ): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
   const currentPage = query.current_page ?? 1;
-  const perPage = query.per_page ?? 100;
+  const perPage = query.per_page ?? defaultPerPage;
   const useCache = query.cache ?? true;
 
   const filterPath = buildFilterPath(filters);

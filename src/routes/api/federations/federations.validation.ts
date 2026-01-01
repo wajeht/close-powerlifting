@@ -1,11 +1,13 @@
 import { z } from "zod";
 
-const MAX_PER_PAGE = 500;
+import { config } from "../../../config";
+
+const { maxPerPage } = config.pagination;
 
 export const getFederationsValidation = z.object({
   per_page: z
     .string()
-    .transform((val) => Math.min(Number(val), MAX_PER_PAGE))
+    .transform((val) => Math.min(Number(val), maxPerPage))
     .optional(),
   current_page: z
     .string()

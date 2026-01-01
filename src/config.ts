@@ -34,6 +34,11 @@ export const config = {
     defaultApiCallLimit: 500,
   } as const,
 
+  pagination: {
+    defaultPerPage: 100,
+    maxPerPage: 500,
+  } as const,
+
   session: {
     name: process.env.SESSION_NAME || "close-powerlifting",
     secret: requireEnv("SESSION_SECRET", isProduction ? undefined : "dev-session-secret-change-me"),

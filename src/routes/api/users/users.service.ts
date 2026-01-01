@@ -6,17 +6,18 @@ import {
   getElementByClass,
   withCache,
 } from "../../../utils/scraper";
+import { config } from "../../../config";
 import type {
   UserProfile,
   PersonalBest,
   CompetitionResult,
   RankingRow,
   RankingsApiResponse,
-  ApiResponse,
 } from "../../../types";
 import type { GetUserType, GetUsersType } from "./users.validation";
 
 const CACHE_TTL = 1800;
+const { defaultPerPage } = config.pagination;
 
 function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");
@@ -109,25 +110,46 @@ export async function getUser({ username }: GetUserType): Promise<UserProfile[] 
   return [result.data];
 }
 
-export async function searchUser({ search }: GetUsersType): Promise<ApiResponse<RankingRow[]>> {
+interface SearchPagination {
+  per_page: number;
+  current_page: number;
+}
+
+export async function searchUser({
+  search,
+  per_page = defaultPerPage,
+  current_page = 1,
+}: GetUsersType): Promise<{
+  data: RankingRow[] | null;
+  cache: boolean;
+  pagination?: SearchPagination;
+}> {
   if (!search) {
     return { data: null, cache: false };
   }
 
   try {
+    const offset = (current_page - 1) * per_page;
     const searchResult = await fetchJson<{ next_index: number }>(
-      `/search/rankings?q=${encodeURIComponent(search)}&start=0`,
+      `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
     );
 
     const startIndex = searchResult.next_index;
-    const endIndex = startIndex + 99;
+    const endIndex = startIndex + per_page - 1;
 
     const query = `start=${startIndex}&end=${endIndex}&lang=en&units=lbs`;
     const response = await fetchJson<RankingsApiResponse>(`/rankings?${query}`);
 
     const rows = response.rows.map(transformRankingRow);
 
-    return { data: rows, cache: false };
+    return {
+      data: rows,
+      cache: false,
+      pagination: {
+        per_page,
+        current_page,
+      },
+    };
   } catch {
     return { data: null, cache: false };
   }

@@ -5,6 +5,7 @@ import {
   withCache,
   calculatePagination,
 } from "../../../utils/scraper";
+import { config } from "../../../config";
 import type { Meet, ApiResponse, Pagination } from "../../../types";
 import type {
   GetFederationsType,
@@ -13,6 +14,7 @@ import type {
 } from "./federations.validation";
 
 const CACHE_TTL = 3600;
+const { defaultPerPage } = config.pagination;
 
 type FederationMeet = Meet;
 
@@ -25,7 +27,7 @@ async function fetchFederationsList(): Promise<FederationMeet[]> {
 
 export async function getFederations({
   current_page = 1,
-  per_page = 100,
+  per_page = defaultPerPage,
   cache: useCache = true,
 }: GetFederationsType): Promise<ApiResponse<FederationMeet[]> & { pagination?: Pagination }> {
   const cacheKey = `federations-list`;
