@@ -55,7 +55,7 @@ router.get(
   async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
     const federations = await FederationsService.getFederation({ ...req.params, ...req.query });
 
-    if (!federations) throw new NotFoundError("The resource cannot be found!");
+    if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
