@@ -1,53 +1,51 @@
-<footer id="footer" class="bg-neutral-900 p-5 text-sm font-light">
-  <div
-    class="mx-auto flex max-w-7xl max-xs:flex-col-reverse max-xs:items-center max-xs:gap-3 xs:flex-col-reverse xs:items-center xs:gap-3 sm:flex-row sm:justify-between"
-  >
-    <span>
-      © <span id="copyright"></span>. Made with ❤️ by
-      <a class="hover:text-slate-50" href="https://github.com/wajeht" target="_blank">@wajeht</a>
-    </span>
+<footer id="footer" class="border-t border-neutral-800 bg-neutral-900">
+  <div class="mx-auto max-w-7xl px-5 py-12">
+    <!-- top section -->
+    <div class="flex flex-col gap-8 sm:flex-row sm:justify-between">
+      <!-- brand -->
+      <div class="flex flex-col gap-3">
+        <a href="/" class="text-lg font-bold text-white hover:text-neutral-300">
+          Close Powerlifting
+        </a>
+        <p class="max-w-xs text-sm text-neutral-500">
+          Free REST API for the world's largest powerlifting database.
+        </p>
+      </div>
 
-    <nav class="text-xs font-light sm:text-sm">
-      <ul class="flex gap-5">
-        <!-- privacy -->
-        <li>
-          <a
-            class="<%= typeof path !== 'undefined' && path === '/privacy' ? 'text-slate-50' : '' %> hover:text-slate-50"
-            href="/privacy"
-            >Privacy</a
-          >
-        </li>
+      <!-- links -->
+      <div class="flex gap-12 text-sm">
+        <!-- api -->
+        <div class="flex flex-col gap-3">
+          <span class="font-medium text-neutral-300">API</span>
+          <a class="text-neutral-500 hover:text-white" href="/docs/api">Documentation</a>
+          <a class="text-neutral-500 hover:text-white" href="/status">Status</a>
+          <a class="text-neutral-500 hover:text-white" href="/register">Get API Key</a>
+        </div>
 
-        <!-- terms -->
-        <li>
-          <a
-            class="<%= typeof path !== 'undefined' && path === '/terms' ? 'text-slate-50' : '' %> hover:text-slate-50"
-            href="/terms"
-            >Terms</a
-          >
-        </li>
+        <!-- resources -->
+        <div class="flex flex-col gap-3">
+          <span class="font-medium text-neutral-300">Resources</span>
+          <a class="text-neutral-500 hover:text-white" href="/about">About</a>
+          <a class="text-neutral-500 hover:text-white" href="/contact">Contact</a>
+          <a class="text-neutral-500 hover:text-white" href="https://github.com/wajeht/close-powerlifting" target="_blank">GitHub</a>
+        </div>
 
-        <!-- github -->
-        <li>
-          <a
-            class="hover:text-slate-50"
-            href="https://github.com/wajeht/close-powerlifting"
-            target="_blank"
-            >Github</a
-          >
-        </li>
+        <!-- legal -->
+        <div class="flex flex-col gap-3">
+          <span class="font-medium text-neutral-300">Legal</span>
+          <a class="text-neutral-500 hover:text-white" href="/privacy">Privacy</a>
+          <a class="text-neutral-500 hover:text-white" href="/terms">Terms</a>
+        </div>
+      </div>
+    </div>
 
-        <!-- discord -->
-        <li>
-          <a
-            class="hover:text-slate-50"
-            href="https://discord.com/channels/988167900420534273/989628732895543296"
-            target="_blank"
-            >Discord</a
-          >
-        </li>
-      </ul>
-    </nav>
+    <!-- bottom section -->
+    <div class="mt-12 border-t border-neutral-800 pt-8 text-sm text-neutral-500">
+      <span>
+        © <span id="copyright"></span> Close Powerlifting. Made with ❤️ by
+        <a class="text-neutral-400 hover:text-white" href="https://github.com/wajeht" target="_blank">@wajeht</a>
+      </span>
+    </div>
   </div>
 </footer>
 
