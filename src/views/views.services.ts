@@ -1,4 +1,3 @@
-// @ts-expect-error - it's ok
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 
@@ -48,7 +47,7 @@ export async function resetAPIKey(userParams: UserParams): Promise<void> {
 
 export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
   const { name, email } = userParams;
-  const password = faker.internet.password(50);
+  const password = faker.internet.password({ length: 50 });
   const hashedPassword = await bcrypt.hash(password, parseInt(appConfig.password_salt));
 
   const { unhashedKey, hashedKey } = await generateAPIKey({ ...userParams, admin: true });

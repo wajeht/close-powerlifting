@@ -64,7 +64,7 @@ describe("init", () => {
     await init();
 
     expect(UserRepository.findByEmail).toHaveBeenCalledWith(appConfig.admin_email);
-    expect(faker.internet.password).toHaveBeenCalledWith(50);
+    expect(faker.internet.password).toHaveBeenCalledWith({ length: 50 });
     expect(UserRepository.create).toHaveBeenCalledWith({
       email: appConfig.admin_email,
       name: appConfig.admin_name,

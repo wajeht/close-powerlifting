@@ -1,4 +1,3 @@
-// @ts-expect-error - it's ok
 import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 
@@ -18,7 +17,7 @@ export async function init() {
       logger.info("admin user does not exist");
       logger.info("attaching admin user");
 
-      const password = faker.internet.password(50);
+      const password = faker.internet.password({ length: 50 });
       const hashedPassword = await bcrypt.hash(password, parseInt(appConfig.password_salt!));
       const { key: token } = await hashKey();
 
