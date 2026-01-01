@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 
-import { appConfig } from "../config/constants";
+import { config } from "../config";
 import * as UserRepository from "../db/repositories/user.repository";
 import { generateAPIKey, hashKey } from "../utils/helpers";
 import mail from "../utils/mail";
@@ -49,9 +49,9 @@ describe("init", () => {
     ((await hashKey) as Mock).mockResolvedValueOnce({ key: "token" });
 
     (UserRepository.create as Mock).mockResolvedValueOnce({
-      name: appConfig.admin_name,
+      name: config.app.adminName,
       id: 1,
-      email: appConfig.admin_email,
+      email: config.app.adminEmail,
     });
 
     ((await generateAPIKey) as Mock).mockResolvedValueOnce({
@@ -63,11 +63,11 @@ describe("init", () => {
 
     await init();
 
-    expect(UserRepository.findByEmail).toHaveBeenCalledWith(appConfig.admin_email);
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
     expect(faker.internet.password).toHaveBeenCalledWith({ length: 50 });
     expect(UserRepository.create).toHaveBeenCalledWith({
-      email: appConfig.admin_email,
-      name: appConfig.admin_name,
+      email: config.app.adminEmail,
+      name: config.app.adminName,
       admin: true,
       password: expect.any(String),
       verification_token: expect.any(String),
@@ -77,9 +77,9 @@ describe("init", () => {
 
     expect(generateAPIKey).toHaveBeenCalledWith({
       admin: true,
-      name: appConfig.admin_name,
+      name: config.app.adminName,
       userId: "1",
-      email: appConfig.admin_email,
+      email: config.app.adminEmail,
     });
   });
 
@@ -88,7 +88,7 @@ describe("init", () => {
 
     await init();
 
-    expect(UserRepository.findByEmail).toHaveBeenCalledWith(appConfig.admin_email);
+    expect(UserRepository.findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
     expect(UserRepository.create).not.toHaveBeenCalled();
   });
 
