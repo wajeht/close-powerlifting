@@ -22,12 +22,12 @@ const router = express.Router();
 router.get(
   "/",
   apiValidationMiddleware({ query: getRankingsValidation }),
-  catchAsyncHandler(async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
+  async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
     const rankings = await RankingsService.getRankings(req.query);
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
@@ -35,7 +35,7 @@ router.get(
       data: rankings?.data,
       pagination: rankings?.pagination,
     });
-  }),
+  },
 );
 
 /**
@@ -47,20 +47,20 @@ router.get(
 router.get(
   "/:rank",
   apiValidationMiddleware({ params: getRankValidation }),
-  catchAsyncHandler(async (req: Request<GetRankType, {}, {}>, res: Response) => {
+  async (req: Request<GetRankType, {}, {}>, res: Response) => {
     const rank = await RankingsService.getRank(req.params);
 
     if (!rank) throw new NotFoundError("The resource cannot be found!");
 
     logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    res.status(StatusCodes.OK).json({
+    res.status(200).json({
       status: "success",
       request_url: req.originalUrl,
       message: "The resource was returned successfully!",
       data: rank,
     });
-  }),
+  },
 );
 
 export default router;
