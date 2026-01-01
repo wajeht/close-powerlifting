@@ -19,6 +19,9 @@ const router = express.Router();
  * @summary search users or redirect to rankings
  * @security BearerAuth
  * @param {string} search.query - search term for user lookup
+ * @return {object} 200 - success response
+ * @return {object} 308 - redirect to rankings
+ * @return {object} 404 - not found
  */
 router.get(
   "/",
@@ -51,6 +54,8 @@ router.get(
  * @summary get specific user details
  * @security BearerAuth
  * @param {string} username.path.required - the username to look up
+ * @return {object} 200 - success response
+ * @return {object} 404 - not found
  */
 router.get(
   "/:username",

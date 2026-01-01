@@ -11,7 +11,6 @@ import * as AuthService from "./auth.service";
 
 const router = express.Router();
 
-// Validation schemas
 const registerValidation = z.object({
   email: z
     .string({ required_error: "email is required!" })
@@ -36,7 +35,6 @@ type RegisterType = z.infer<typeof registerValidation>;
 type VerifyEmailType = z.infer<typeof verifyEmailValidation>;
 type ResetApiKeyType = z.infer<typeof resetApiKeyValidation>;
 
-// Google OAuth types and helpers
 interface GoogleOauthToken {
   access_token: string;
   id_token: string;
@@ -108,15 +106,6 @@ async function getGoogleUser({
   }
 }
 
-// ============================================================================
-// VIEW ROUTES (HTML pages)
-// ============================================================================
-
-/**
- * GET /register
- * @tags auth
- * @summary get register page
- */
 router.get("/register", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-register.html", {
     path: "/register",
@@ -124,11 +113,6 @@ router.get("/register", (req: Request, res: Response) => {
   });
 });
 
-/**
- * POST /register
- * @tags auth
- * @summary post register page (form)
- */
 router.post(
   "/register",
   validationMiddleware({ body: registerValidation }),
@@ -164,11 +148,6 @@ router.post(
   },
 );
 
-/**
- * GET /reset-api-key
- * @tags auth
- * @summary get reset api key page
- */
 router.get("/reset-api-key", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-reset-api-key.html", {
     path: "/reset-api-key",
@@ -176,11 +155,6 @@ router.get("/reset-api-key", (req: Request, res: Response) => {
   });
 });
 
-/**
- * POST /reset-api-key
- * @tags auth
- * @summary post reset api key page (form)
- */
 router.post(
   "/reset-api-key",
   validationMiddleware({ body: resetApiKeyValidation }),
@@ -189,7 +163,9 @@ router.post(
 
     const foundUser = await UserRepository.findByEmail(email);
 
-    logger.info(`Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`);
+    logger.info(
+      `Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`,
+    );
 
     if (foundUser && !foundUser.verified) {
       logger.info(`User ${email} not verified, sending verification email`);
@@ -222,11 +198,6 @@ router.post(
   },
 );
 
-/**
- * GET /verify-email
- * @tags auth
- * @summary verify email address (from email link)
- */
 router.get("/verify-email", async (req: Request, res: Response) => {
   const { token, email } = req.query as { token: string; email: string };
   const foundUser = await UserRepository.findByEmail(email);
@@ -260,24 +231,10 @@ router.get("/verify-email", async (req: Request, res: Response) => {
   return res.redirect("/register");
 });
 
-// ============================================================================
-// OAUTH ROUTES
-// ============================================================================
-
-/**
- * GET /api/auth/oauth/google
- * @tags auth
- * @summary get google oauth url
- */
 router.get("/oauth/google", async (req: Request, res: Response) => {
   res.redirect(getGoogleOAuthURL());
 });
 
-/**
- * GET /api/auth/oauth/google/redirect
- * @tags auth
- * @summary google oauth callback
- */
 router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
   const code = req.query.code as string;
 
@@ -326,15 +283,6 @@ router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
   return res.redirect("/register");
 });
 
-// ============================================================================
-// API ROUTES (JSON responses)
-// ============================================================================
-
-/**
- * POST /api/auth/register
- * @tags auth
- * @summary register via API
- */
 router.post(
   "/api/register",
   apiValidationMiddleware({ body: registerValidation }),
@@ -378,11 +326,6 @@ router.post(
   },
 );
 
-/**
- * POST /api/auth/verify-email
- * @tags auth
- * @summary verify email via API
- */
 router.post(
   "/api/verify-email",
   apiValidationMiddleware({ body: verifyEmailValidation }),
@@ -424,11 +367,6 @@ router.post(
   },
 );
 
-/**
- * POST /api/auth/reset-api-key
- * @tags auth
- * @summary reset api key via API
- */
 router.post(
   "/api/reset-api-key",
   apiValidationMiddleware({ body: resetApiKeyValidation }),

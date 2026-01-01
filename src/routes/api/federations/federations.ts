@@ -23,6 +23,7 @@ const router = express.Router();
  * @param {number} current_page.query - page number (default: 1)
  * @param {number} per_page.query - items per page (default: 100)
  * @param {boolean} cache.query - use cached data (default: true)
+ * @return {object} 200 - success response
  */
 router.get(
   "/",
@@ -51,6 +52,8 @@ router.get(
  * @param {string} federation.path.required - the federation code (e.g., IPF, USAPL)
  * @param {number} year.query - filter by year
  * @param {boolean} cache.query - use cached data (default: true)
+ * @return {object} 200 - success response
+ * @return {object} 404 - not found
  */
 router.get(
   "/:federation",

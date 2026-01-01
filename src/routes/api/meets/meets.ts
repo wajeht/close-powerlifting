@@ -20,6 +20,8 @@ const router = express.Router();
  * @security BearerAuth
  * @param {string} meet.path.required - the meet code to look up
  * @param {boolean} cache.query - use cached data (default: true)
+ * @return {object} 200 - success response
+ * @return {object} 404 - not found
  */
 router.get(
   "/:meet",

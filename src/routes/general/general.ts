@@ -14,11 +14,6 @@ import * as RankingsService from "../api/rankings/rankings.service";
 
 const router = express.Router();
 
-/**
- * GET /
- * @tags general
- * @summary get home page
- */
 router.get("/", async (req: Request, res: Response) => {
   const rankings = await RankingsService.getRankings({
     current_page: 1,
@@ -32,22 +27,12 @@ router.get("/", async (req: Request, res: Response) => {
   });
 });
 
-/**
- * GET /about
- * @tags general
- * @summary get about page
- */
 router.get("/about", (req: Request, res: Response) => {
   return res.status(200).render("general/general-about.html", {
     path: "/about",
   });
 });
 
-/**
- * GET /contact
- * @tags general
- * @summary get contact page
- */
 router.get("/contact", (req: Request, res: Response) => {
   return res.status(200).render("general/general-contact.html", {
     path: "/contact",
@@ -55,11 +40,6 @@ router.get("/contact", (req: Request, res: Response) => {
   });
 });
 
-/**
- * POST /contact
- * @tags general
- * @summary post contact page
- */
 router.post(
   "/contact",
   validationMiddleware({
@@ -87,33 +67,18 @@ router.post(
   },
 );
 
-/**
- * GET /terms
- * @tags general
- * @summary get terms page
- */
 router.get("/terms", (req: Request, res: Response) => {
   return res.status(200).render("general/general-terms.html", {
     path: "/terms",
   });
 });
 
-/**
- * GET /privacy
- * @tags general
- * @summary get privacy page
- */
 router.get("/privacy", (req: Request, res: Response) => {
   return res.status(200).render("general/general-privacy.html", {
     path: "/privacy",
   });
 });
 
-/**
- * GET /status
- * @tags general
- * @summary get status page
- */
 router.get("/status", async (req: Request, res: Response) => {
   const hostname = getHostName(req);
   const apiStatuses = await HealthCheckService.getAPIStatus({
@@ -130,11 +95,6 @@ router.get("/status", async (req: Request, res: Response) => {
   });
 });
 
-/**
- * GET /health-check
- * @tags general
- * @summary get the health of close-powerlifting app
- */
 router.get("/health-check", (req: Request, res: Response) => {
   let dbConnected = false;
   try {
@@ -154,11 +114,6 @@ router.get("/health-check", (req: Request, res: Response) => {
   });
 });
 
-/**
- * GET /healthz
- * @tags general
- * @summary get the health of close-powerlifting app (for docker/k8s)
- */
 router.get("/healthz", (req: Request, res: Response) => {
   let dbConnected = false;
   try {

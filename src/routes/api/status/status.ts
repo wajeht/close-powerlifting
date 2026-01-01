@@ -12,6 +12,7 @@ const router = express.Router();
  * @tags status
  * @summary get openpowerlifting status
  * @param {boolean} cache.query - use cached data (default: true)
+ * @return {object} 200 - success response
  */
 router.get(
   "/",
