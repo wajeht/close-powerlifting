@@ -13,10 +13,10 @@
     "dev": "concurrently --kill-others --names \"EXPRESS,TAILWIND\" -c \"bgGreen.black,bgCyan.black\" \"npm run dev:api\" \"npm run dev:tailwind\"",
     "dev:only": "export APP_ENV=development && tsx watch --no-warnings --clear-screen=false ./src/server.ts",
     "dev:api": "export APP_ENV=development && npm run db:prepare:dev && exec tsx watch --no-warnings --clear-screen=false ./src/server.ts",
-    "dev:tailwind": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/style.css --watch",
+    "dev:tailwind": "npx @tailwindcss/cli -i ./public/css/tailwind.css -o ./public/css/style.css --watch",
     "build": "npm run build:tailwind && npm run build:server",
     "build:server": "rm -rf ./dist && tsc",
-    "build:tailwind": "npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
+    "build:tailwind": "npx @tailwindcss/cli -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
     "test:watch": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vitest",
@@ -38,7 +38,7 @@
     "update:fixtures": "tsx ./scripts/update-fixtures.ts"
   },
   "dependencies": {
-    "autoprefixer": "^10.4.20",
+    "@tailwindcss/cli": "^4.1.18",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.5.0",
     "compression": "^1.7.5",
@@ -59,7 +59,7 @@
     "knex": "^3.1.0",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.1.18",
     "zod": "^4.3.4"
   },
   "devDependencies": {
