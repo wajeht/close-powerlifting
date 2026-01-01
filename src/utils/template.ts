@@ -33,7 +33,11 @@ export function layoutMiddleware(
 ) {
   const originalRender = res.render.bind(res);
 
-  res.render = function (view: string, options?: object, callback?: (err: Error, html: string) => void) {
+  res.render = function (
+    view: string,
+    options?: object,
+    callback?: (err: Error, html: string) => void,
+  ) {
     const opts = options || {};
 
     originalRender(view, opts, (err: Error, html: string) => {
