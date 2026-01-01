@@ -17,23 +17,17 @@ import {
 const authRouter = express.Router();
 
 const registerValidation = z.object({
-  email: z
-    .string({ required_error: "email is required!" })
-    .email({ message: "must be a valid email address!" }),
-  name: z.string({ required_error: "name is required!" }),
+  email: z.email({ message: "must be a valid email address!" }),
+  name: z.string({ message: "name is required!" }),
 });
 
 const verifyEmailValidation = z.object({
-  email: z
-    .string({ required_error: "email is required!" })
-    .email({ message: "must be a valid email address!" }),
-  token: z.string({ required_error: "token is required!" }),
+  email: z.email({ message: "must be a valid email address!" }),
+  token: z.string({ message: "token is required!" }),
 });
 
 const resetApiKeyValidation = z.object({
-  email: z
-    .string({ required_error: "email is required!" })
-    .email({ message: "must be a valid email address!" }),
+  email: z.email({ message: "must be a valid email address!" }),
 });
 
 type RegisterType = z.infer<typeof registerValidation>;

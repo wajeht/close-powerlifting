@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { AnyZodObject, ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 import { config } from "../config";
 import { cache } from "../db/cache";
@@ -14,9 +14,9 @@ import { mail } from "../utils/mail";
 import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
 
 type RequestValidators = {
-  params?: AnyZodObject;
-  body?: AnyZodObject;
-  query?: AnyZodObject;
+  params?: z.ZodTypeAny;
+  body?: z.ZodTypeAny;
+  query?: z.ZodTypeAny;
 };
 
 export function rateLimitMiddleware() {
@@ -85,7 +85,7 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, _next
     request_url: req.originalUrl,
     cache: req.query?.cache,
     message,
-    errors: err instanceof ZodError ? err.errors : undefined,
+    errors: err instanceof ZodError ? err.issues : undefined,
     data: [],
   });
 }
@@ -94,7 +94,7 @@ export function validationMiddleware(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (validators.params) {
-        req.params = await validators.params.parseAsync(req.params);
+        req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
       }
       if (validators.body) {
         req.body = await validators.body.parseAsync(req.body);
@@ -117,7 +117,7 @@ export function apiValidationMiddleware(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (validators.params) {
-        req.params = await validators.params.parseAsync(req.params);
+        req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
       }
       if (validators.body) {
         req.body = await validators.body.parseAsync(req.body);

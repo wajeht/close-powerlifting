@@ -44,11 +44,9 @@ generalRouter.post(
   "/contact",
   validationMiddleware({
     body: z.object({
-      email: z
-        .string({ required_error: "email is required!" })
-        .email({ message: "must be valid email address!" }),
-      name: z.string({ required_error: "name is required!" }),
-      message: z.string({ required_error: "message is required!" }),
+      email: z.email({ message: "must be valid email address!" }),
+      name: z.string({ message: "name is required!" }),
+      message: z.string({ message: "message is required!" }),
     }),
   }),
   async (req: Request, res: Response) => {
