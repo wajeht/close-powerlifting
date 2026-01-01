@@ -115,7 +115,7 @@ export function validationMiddleware(validators: RequestValidators) {
         req.body = await validators.body.parseAsync(req.body);
       }
       if (validators.query) {
-        req.query = await validators.query.parseAsync(req.query);
+        await validators.query.parseAsync(req.query);
       }
       next();
     } catch (error) {
@@ -138,7 +138,7 @@ export function apiValidationMiddleware(validators: RequestValidators) {
         req.body = await validators.body.parseAsync(req.body);
       }
       if (validators.query) {
-        req.query = await validators.query.parseAsync(req.query);
+        await validators.query.parseAsync(req.query);
       }
       next();
     } catch (error) {
