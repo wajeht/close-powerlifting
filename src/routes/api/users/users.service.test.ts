@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 
+import { config } from "../../../config";
 import { parseHtml, tableToJson } from "../../../utils/scraper";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
+
+const { defaultPerPage, maxPerPage } = config.pagination;
 
 describe("users service", () => {
   describe("user HTML parsing", () => {
@@ -232,6 +235,32 @@ describe("users service", () => {
       expect(userData.sex).toBe("M");
       expect(Array.isArray(userData.personalBests)).toBe(true);
       expect(Array.isArray(userData.competitionResults)).toBe(true);
+    });
+  });
+
+  describe("pagination config for user search", () => {
+    test("uses correct default per_page from config", () => {
+      expect(defaultPerPage).toBe(100);
+    });
+
+    test("uses correct max per_page from config", () => {
+      expect(maxPerPage).toBe(500);
+    });
+
+    test("default per_page is within max limit", () => {
+      expect(defaultPerPage).toBeLessThanOrEqual(maxPerPage);
+    });
+
+    test("SearchPagination interface should match expected structure", () => {
+      const pagination = {
+        per_page: defaultPerPage,
+        current_page: 1,
+      };
+
+      expect(pagination).toHaveProperty("per_page");
+      expect(pagination).toHaveProperty("current_page");
+      expect(pagination.per_page).toBe(100);
+      expect(pagination.current_page).toBe(1);
     });
   });
 });

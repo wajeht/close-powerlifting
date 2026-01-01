@@ -1,8 +1,13 @@
 import { JSDOM } from "jsdom";
 import { beforeEach, describe, expect, test } from "vitest";
 
-import { generateAPIKey, hashKey } from "./helpers";
-import { tableToJson, stripHtml as stripHTML, buildPaginationQuery } from "./scraper";
+import { generateAPIKey, hashKey, timingSafeEqual } from "./helpers";
+import {
+  tableToJson,
+  stripHtml as stripHTML,
+  buildPaginationQuery,
+  calculatePagination,
+} from "./scraper";
 
 describe("tableToJson", () => {
   let table: any;
@@ -203,5 +208,126 @@ describe("generateAPIKey", () => {
       expect(unhashedKey).toBeDefined();
       expect(hashedKey).toBeDefined();
     });
+  });
+});
+
+describe("calculatePagination", () => {
+  test("calculates pagination for first page", () => {
+    const result = calculatePagination(100, 1, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 1,
+      last_page: 10,
+      first_page: 1,
+      from: 1,
+      to: 10,
+    });
+  });
+
+  test("calculates pagination for middle page", () => {
+    const result = calculatePagination(100, 5, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 5,
+      last_page: 10,
+      first_page: 1,
+      from: 41,
+      to: 50,
+    });
+  });
+
+  test("calculates pagination for last page", () => {
+    const result = calculatePagination(100, 10, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 10,
+      last_page: 10,
+      first_page: 1,
+      from: 91,
+      to: 100,
+    });
+  });
+
+  test("handles partial last page correctly", () => {
+    const result = calculatePagination(95, 10, 10);
+
+    expect(result).toEqual({
+      items: 95,
+      pages: 10,
+      per_page: 10,
+      current_page: 10,
+      last_page: 10,
+      first_page: 1,
+      from: 91,
+      to: 95,
+    });
+  });
+
+  test("handles single page correctly", () => {
+    const result = calculatePagination(5, 1, 10);
+
+    expect(result).toEqual({
+      items: 5,
+      pages: 1,
+      per_page: 10,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      from: 1,
+      to: 5,
+    });
+  });
+
+  test("handles large dataset with default per_page", () => {
+    const result = calculatePagination(3000000, 1, 100);
+
+    expect(result.items).toBe(3000000);
+    expect(result.pages).toBe(30000);
+    expect(result.per_page).toBe(100);
+    expect(result.from).toBe(1);
+    expect(result.to).toBe(100);
+  });
+});
+
+describe("timingSafeEqual", () => {
+  test("returns true for equal strings", () => {
+    expect(timingSafeEqual("test", "test")).toBe(true);
+  });
+
+  test("returns false for different strings of same length", () => {
+    expect(timingSafeEqual("test", "tset")).toBe(false);
+  });
+
+  test("returns false for strings of different length", () => {
+    expect(timingSafeEqual("test", "testing")).toBe(false);
+  });
+
+  test("returns true for empty strings", () => {
+    expect(timingSafeEqual("", "")).toBe(true);
+  });
+
+  test("returns false for empty vs non-empty", () => {
+    expect(timingSafeEqual("", "test")).toBe(false);
+  });
+
+  test("handles special characters", () => {
+    const token1 = "abc123!@#$%^&*()";
+    const token2 = "abc123!@#$%^&*()";
+    expect(timingSafeEqual(token1, token2)).toBe(true);
+  });
+
+  test("handles UUID-like tokens", () => {
+    const token1 = "550e8400-e29b-41d4-a716-446655440000";
+    const token2 = "550e8400-e29b-41d4-a716-446655440000";
+    expect(timingSafeEqual(token1, token2)).toBe(true);
   });
 });

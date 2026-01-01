@@ -1,7 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { parseHtml, tableToJson } from "../../../utils/scraper";
+import { config } from "../../../config";
+import { parseHtml, tableToJson, calculatePagination } from "../../../utils/scraper";
 import { mlistHtml, mlistUsaplHtml, mlistUsapl2024Html } from "./fixtures";
+
+const { defaultPerPage, maxPerPage } = config.pagination;
 
 describe("federations service", () => {
   describe("mlist HTML parsing", () => {
@@ -227,6 +230,62 @@ describe("federations service", () => {
         const defaultKeys = Object.keys(defaultData.meets[0]);
         const usaplKeys = Object.keys(usaplData.meets[0]);
         expect(defaultKeys.length).toBe(usaplKeys.length);
+      }
+    });
+  });
+
+  describe("pagination", () => {
+    function extractMeets(html: string) {
+      const doc = parseHtml(html);
+      const table = doc.querySelector("table");
+      return tableToJson<Record<string, string>>(table);
+    }
+
+    test("uses correct default per_page from config", () => {
+      expect(defaultPerPage).toBe(100);
+    });
+
+    test("uses correct max per_page from config", () => {
+      expect(maxPerPage).toBe(500);
+    });
+
+    test("calculatePagination works with federations data", () => {
+      const meets = extractMeets(mlistHtml);
+      const totalItems = meets.length;
+      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+
+      expect(pagination.items).toBe(totalItems);
+      expect(pagination.per_page).toBe(defaultPerPage);
+      expect(pagination.current_page).toBe(1);
+      expect(pagination.first_page).toBe(1);
+    });
+
+    test("pagination correctly slices data", () => {
+      const meets = extractMeets(mlistHtml);
+      const perPage = 10;
+      const currentPage = 1;
+
+      const startIndex = (currentPage - 1) * perPage;
+      const endIndex = startIndex + perPage;
+      const paginatedData = meets.slice(startIndex, endIndex);
+
+      expect(paginatedData.length).toBeLessThanOrEqual(perPage);
+    });
+
+    test("pagination page 2 returns different data", () => {
+      const meets = extractMeets(mlistHtml);
+      const perPage = 10;
+
+      const page1Start = 0;
+      const page1End = perPage;
+      const page2Start = perPage;
+      const page2End = perPage * 2;
+
+      const page1Data = meets.slice(page1Start, page1End);
+      const page2Data = meets.slice(page2Start, page2End);
+
+      if (meets.length > perPage) {
+        expect(page1Data).not.toEqual(page2Data);
       }
     });
   });

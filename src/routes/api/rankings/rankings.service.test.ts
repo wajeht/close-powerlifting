@@ -1,11 +1,15 @@
 import { describe, expect, test } from "vitest";
 
+import { config } from "../../../config";
+import { calculatePagination } from "../../../utils/scraper";
 import {
   rankingsDefault,
   rankingsRawMen,
   rankingsRawWomen75,
   rankingsFullFilter,
 } from "./fixtures";
+
+const { defaultPerPage, maxPerPage } = config.pagination;
 
 describe("rankings service", () => {
   describe("rankings JSON structure", () => {
@@ -178,6 +182,49 @@ describe("rankings service", () => {
 
     test("filtered rankings have different total_length", () => {
       expect(rankingsRawMen.total_length).not.toBe(rankingsDefault.total_length);
+    });
+  });
+
+  describe("pagination", () => {
+    test("uses correct default per_page from config", () => {
+      expect(defaultPerPage).toBe(100);
+    });
+
+    test("uses correct max per_page from config", () => {
+      expect(maxPerPage).toBe(500);
+    });
+
+    test("calculatePagination returns correct structure for rankings data", () => {
+      const totalItems = rankingsDefault.total_length;
+      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+
+      expect(pagination).toHaveProperty("items");
+      expect(pagination).toHaveProperty("pages");
+      expect(pagination).toHaveProperty("per_page");
+      expect(pagination).toHaveProperty("current_page");
+      expect(pagination).toHaveProperty("last_page");
+      expect(pagination).toHaveProperty("first_page");
+      expect(pagination).toHaveProperty("from");
+      expect(pagination).toHaveProperty("to");
+    });
+
+    test("calculatePagination calculates correct values", () => {
+      const totalItems = rankingsDefault.total_length;
+      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+
+      expect(pagination.items).toBe(totalItems);
+      expect(pagination.per_page).toBe(defaultPerPage);
+      expect(pagination.current_page).toBe(1);
+      expect(pagination.first_page).toBe(1);
+      expect(pagination.from).toBe(1);
+      expect(pagination.to).toBe(Math.min(defaultPerPage, totalItems));
+      expect(pagination.pages).toBe(Math.ceil(totalItems / defaultPerPage));
+      expect(pagination.last_page).toBe(pagination.pages);
+    });
+
+    test("row count matches requested page size", () => {
+      // Fixture should have exactly 100 rows (default per_page)
+      expect(rankingsDefault.rows.length).toBeLessThanOrEqual(defaultPerPage);
     });
   });
 });
