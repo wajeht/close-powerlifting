@@ -124,6 +124,30 @@ router.get("/status", (req: Request, res: Response) => {
 });
 
 /**
+ * GET /health-check
+ * @tags general
+ * @summary get the health of close-powerlifting app
+ */
+router.get("/health-check", (req: Request, res: Response) => {
+  let dbConnected = false;
+  try {
+    getDb();
+    dbConnected = true;
+  } catch {
+    dbConnected = false;
+  }
+
+  res.status(StatusCodes.OK).json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: Date.now(),
+    database: dbConnected ? "connected" : "disconnected",
+    cache: cache.isReady() ? "connected" : "disconnected",
+    crons: isCronServiceStarted() ? "started" : "stopped",
+  });
+});
+
+/**
  * GET /healthz
  * @tags general
  * @summary get the health of close-powerlifting app (for docker/k8s)

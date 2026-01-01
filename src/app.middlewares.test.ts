@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { ZodIssue, ZodIssueCode } from "zod";
 
-import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from "./app.middlewares";
+import { hostNameMiddleware, notFoundMiddleware, validationMiddleware } from "./routes/middleware";
 import cache from "./db/cache";
 import { getHostName } from "./utils/helpers";
 import * as utils from "./utils/helpers";
@@ -36,7 +36,7 @@ describe("notFoundHandler", () => {
     notFoundMiddleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(StatusCodes.NOT_FOUND);
-    expect(res.render).toHaveBeenCalledWith("not-found.html");
+    expect(res.render).toHaveBeenCalledWith("general/general-not-found.html");
     expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
