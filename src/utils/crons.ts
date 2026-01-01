@@ -2,29 +2,23 @@ import cron from 'node-cron';
 
 import { emailConfig } from '../config/constants';
 import { DEFAULT_API_CALL_LIMIT } from '../config/constants';
+import cache from '../db/cache';
+import * as UserRepository from '../db/repositories/user.repository';
 import logger from '../utils/logger';
 import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
-import { User } from '../views/views.models';
 import mail from './mail';
-import redis from './redis';
 import apiLimitResetHTML from './templates/api-limits-reset';
 
-function removeCaches() {
+async function removeCaches() {
   try {
     logger.info(`removeCaches() cron starts!`);
 
-    // @ts-ignore
-    redis.keys('*', function (err, keys) {
-      if (err) return null;
-      // @ts-ignore
-      keys.forEach((key: any) => {
-        if (key.match(/close-powerlifting.+/g)) {
-          logger.info(`deleted redis cache ${key}!`);
-          // @ts-ignore
-          redis.del(key);
-        }
-      });
-    });
+    // Delete all cache entries matching the pattern
+    const deleted = await cache.delPattern('close-powerlifting%');
+    logger.info(`deleted ${deleted} cache entries!`);
+
+    // Also clear expired cache entries
+    await cache.clearExpired();
 
     logger.info(`removeCaches() cron ends!`);
   } catch (err) {
@@ -40,25 +34,26 @@ async function resetApiCallCount() {
     const isStartOfMonth = today.getDate() === 1;
 
     if (isStartOfMonth) {
-      // users who has been verified only
-      const users = await User.find({ verified: true });
+      // Get users who have been verified, then reset counts
+      const users = await UserRepository.findVerified();
 
-      users.forEach((user) => {
-        user.api_call_count = 0;
-        user.save();
+      // Reset all api call counts at once
+      await UserRepository.resetAllApiCallCounts();
 
+      // Send emails to each user
+      for (const user of users) {
         mail.sendMail({
           from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
-          to: user.email!,
+          to: user.email,
           subject: 'API Call Limit Reset',
-          html: apiLimitResetHTML({ name: user.name! }),
+          html: apiLimitResetHTML({ name: user.name }),
         });
 
         logger.info(`resetApiCallCount() sent to user id ${user.id}`);
-      });
+      }
     }
 
-    logger.info(`resetApiCallCount() cron starts!`);
+    logger.info(`resetApiCallCount() cron ends!`);
   } catch (err) {
     logger.error(`resetApiCallCount() error: ${err}`);
   }
@@ -69,21 +64,19 @@ async function sendReachingApiLimitEmail() {
     logger.info(`sendReachingApiLimitEmail() cron starts!`);
 
     // 70 % of default api call limit and verified users only
-    const users = await User.find({
-      api_call_count: { $eq: DEFAULT_API_CALL_LIMIT * 0.7 },
-      verified: true,
-    });
+    const targetCount = Math.floor(DEFAULT_API_CALL_LIMIT * 0.7);
+    const users = await UserRepository.findByApiCallCount(targetCount);
 
-    users.forEach((user) => {
+    for (const user of users) {
       mail.sendMail({
         from: `"Close Powerlifting" <${emailConfig.auth_email}>`,
-        to: user.email!,
+        to: user.email,
         subject: 'Reaching API Limit',
-        html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
+        html: reachingApiLimitHTML({ name: user.name, percent: 70 }),
       });
 
       logger.info(`sendReachingApiLimitEmail() sent to user id ${user.id}`);
-    });
+    }
 
     logger.info(`sendReachingApiLimitEmail() cron ends!`);
   } catch (error) {

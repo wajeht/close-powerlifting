@@ -17,9 +17,6 @@ export const appConfig = {
   x_api_key: process.env.X_API_KEY as unknown as string,
 } as const;
 
-export const databaseConfig = {
-  mongodb_uri: process.env.MONGODB_URI as unknown as string,
-} as const;
 
 export const sessionConfig = {
   name: process.env.SESSION_NAME as unknown as string,

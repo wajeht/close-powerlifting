@@ -1,13 +1,12 @@
-import app from './app';
-import { appConfig } from './config/constants';
-import * as admin from './utils/admin-user';
-import * as crons from './utils/crons';
 import { AddressInfo } from 'net';
-import * as db from './utils/db';
 import { Server } from 'http';
 
+import app from './app';
+import { appConfig } from './config/constants';
+import * as db from './db/db';
+import * as admin from './utils/admin-user';
+import * as crons from './utils/crons';
 import logger from './utils/logger';
-import redis from './utils/redis';
 
 const server: Server = app.listen(appConfig.port);
 
@@ -56,17 +55,10 @@ function gracefulShutdown(signal: string): void {
     logger.info('HTTP server closed.');
 
     try {
-      redis.quit();
-      logger.info('Redis connection closed.');
+      await db.stop();
+      logger.info('Database connection closed.');
     } catch (error) {
-      logger.error('Error closing Redis connection:', error);
-    }
-
-    try {
-      db.stop();
-      logger.info('mongo connection closed.');
-    } catch (error) {
-      logger.error('Error closing mongo connection:', error);
+      logger.error('Error closing database connection:', error);
     }
 
     logger.info('All connections closed successfully.');

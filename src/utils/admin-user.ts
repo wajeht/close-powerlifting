@@ -3,8 +3,8 @@ import { faker } from '@faker-js/faker';
 import bcrypt from 'bcryptjs';
 
 import { appConfig } from '../config/constants';
+import * as UserRepository from '../db/repositories/user.repository';
 import { generateAPIKey, hashKey } from '../utils/helpers';
-import { User } from '../views/views.models';
 import { updateUser } from '../views/views.services';
 import logger from './logger';
 import mail from './mail';
@@ -12,7 +12,7 @@ import adminNewAPIKeyHTML from './templates/admin-new-api-key';
 
 export async function init() {
   try {
-    const found = await User.findOne({ email: appConfig.admin_email });
+    const found = await UserRepository.findByEmail(appConfig.admin_email);
 
     if (!found) {
       logger.info('admin user does not exist');
@@ -22,7 +22,7 @@ export async function init() {
       const hashedPassword = await bcrypt.hash(password, parseInt(appConfig.password_salt!));
       const { key: token } = await hashKey();
 
-      const createdAdminUser = await User.create({
+      const createdAdminUser = await UserRepository.create({
         email: appConfig.admin_email,
         name: appConfig.admin_name,
         admin: true,
@@ -41,17 +41,17 @@ export async function init() {
       logger.info(``);
 
       const { hashedKey, unhashedKey } = await generateAPIKey({
-        name: createdAdminUser.name!,
-        userId: createdAdminUser.id!,
-        email: createdAdminUser.email!,
+        name: createdAdminUser.name,
+        userId: String(createdAdminUser.id),
+        email: createdAdminUser.email,
         admin: true,
       });
 
-      const verified = await updateUser(createdAdminUser.email!, { key: hashedKey });
+      const verified = await updateUser(createdAdminUser.email, { key: hashedKey });
 
       mail.sendMail({
         from: `"Close Powerlifting" <${appConfig.admin_email}>`,
-        to: createdAdminUser.email!,
+        to: createdAdminUser.email,
         subject: 'API Key and Admin Password for Close Powerlifting',
         html: adminNewAPIKeyHTML({ name: verified.name, password, apiKey: unhashedKey }),
       });
