@@ -15,11 +15,12 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:ci": "vitest run --coverage.enabled --coverage.reporter='text-summary'",
-    "update:deps": " npx npm-check -u",
-    "format:check": "prettier --check .",
-    "format": "prettier --write .",
-    "lint:check": "eslint .",
-    "lint": "eslint --fix ."
+    "update:deps": "npx npm-check -u",
+    "format:check": "oxfmt --check .",
+    "format": "oxfmt --write . > /dev/null",
+    "format:verbose": "oxfmt --write .",
+    "lint:check": "oxlint .",
+    "lint": "oxlint --fix ."
   },
   "keywords": [
     "powerlifting"
