@@ -36,3 +36,8 @@ format:
 
 shell:
 	docker compose --file ./docker-compose.dev.yml exec app sh
+
+fix-git:
+	@git rm -r --cached . -f
+	@git add .
+	@git commit -m "Untrack files in .gitignore"

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
+import cache from '../../db/cache';
 import logger from '../../utils/logger';
-import redis from '../../utils/redis';
 
 export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
   const fetchStatus = async () => {
@@ -48,12 +48,14 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
 
   const cacheKey = `close-powerlifting-global-status-call-cache`;
 
-  let data = JSON.parse((await redis.get(cacheKey)) as any);
+  const cachedData = await cache.get(cacheKey);
+  let data = cachedData ? JSON.parse(cachedData) : null;
 
   if (data === null) {
     data = await fetchStatus();
 
-    await redis.set(cacheKey, JSON.stringify(data), 'EX', 60 * 60 * 24);
+    // Cache for 24 hours (86400 seconds)
+    await cache.set(cacheKey, JSON.stringify(data), 86400);
 
     logger.info('Global status cache was updated!');
   }
