@@ -1,32 +1,26 @@
-import cron from 'node-cron';
+import cron from "node-cron";
 
-import { EMAIL } from '../config/constants';
-import { DEFAULT_API_CALL_LIMIT } from '../utils/enums';
-import logger from '../utils/logger';
-import reachingApiLimitHTML from '../utils/templates/reaching-api-limit';
-import { User } from '../views/views.models';
-import mail from './mail';
-// @ts-ignore
-import redis from './redis';
-import apiLimitResetHTML from './templates/api-limits-reset';
+import { config } from "../config";
+import { cache } from "../db/cache";
+import {
+  findVerified,
+  findByApiCallCount,
+  resetAllApiCallCounts,
+} from "../db/repositories/user.repository";
+import { logger } from "../utils/logger";
+import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
+import { mail } from "./mail";
+import { createApiLimitResetText } from "./templates/api-limits-reset";
 
-function removeCaches() {
+async function removeCaches() {
   try {
-    logger.info(` **** removeCaches() cron starts! ****`);
+    logger.info(`removeCaches() cron starts!`);
 
-    // @ts-ignore
-    redis.keys('*', function (err, keys) {
-      if (err) return null;
-      keys.forEach((key: any) => {
-        if (key.match(/close-powerlifting.+/g)) {
-          logger.info(`deleted redis cache ${key}!`);
-          // @ts-ignore
-          redis.del(key);
-        }
-      });
-    });
+    const deleted = await cache.delPattern("close-powerlifting%");
+    logger.info(`deleted ${deleted} cache entries!`);
+    await cache.clearExpired();
 
-    logger.info(` **** removeCaches() cron ends! ****`);
+    logger.info(`removeCaches() cron ends!`);
   } catch (err) {
     logger.error(`removeCaches() error: ${err}`);
   }
@@ -34,31 +28,29 @@ function removeCaches() {
 
 async function resetApiCallCount() {
   try {
-    logger.info(` **** resetApiCallCount() cron starts! ****`);
+    logger.info(`resetApiCallCount() cron starts!`);
 
     const today = new Date();
     const isStartOfMonth = today.getDate() === 1;
 
     if (isStartOfMonth) {
-      // users who has been verified only
-      const users = await User.find({ verified: true });
+      const users = await findVerified();
 
-      users.forEach((user) => {
-        user.api_call_count = 0;
-        user.save();
+      await resetAllApiCallCounts();
 
+      for (const user of users) {
         mail.sendMail({
-          from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+          from: `"Close Powerlifting" <${config.email.user}>`,
           to: user.email,
-          subject: 'API Call Limit Reset',
-          html: apiLimitResetHTML({ name: user.name! }),
+          subject: "API Call Limit Reset",
+          text: createApiLimitResetText({ name: user.name }),
         });
 
-        logger.info(` **** resetApiCallCount() sent to user id ${user.id} ****`);
-      });
+        logger.info(`resetApiCallCount() sent to user id ${user.id}`);
+      }
     }
 
-    logger.info(` **** resetApiCallCount() cron starts! ****`);
+    logger.info(`resetApiCallCount() cron ends!`);
   } catch (err) {
     logger.error(`resetApiCallCount() error: ${err}`);
   }
@@ -66,26 +58,24 @@ async function resetApiCallCount() {
 
 async function sendReachingApiLimitEmail() {
   try {
-    logger.info(` **** sendReachingApiLimitEmail() cron starts! ****`);
+    logger.info(`sendReachingApiLimitEmail() cron starts!`);
 
     // 70 % of default api call limit and verified users only
-    const users = await User.find({
-      api_call_count: { $eq: DEFAULT_API_CALL_LIMIT * 0.7 },
-      verified: true,
-    });
+    const targetCount = Math.floor(config.app.defaultApiCallLimit * 0.7);
+    const users = await findByApiCallCount(targetCount);
 
-    users.forEach((user) => {
+    for (const user of users) {
       mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
+        from: `"Close Powerlifting" <${config.email.user}>`,
         to: user.email,
-        subject: 'Reaching API Limit',
-        html: reachingApiLimitHTML({ name: user.name!, percent: 70 }),
+        subject: "Reaching API Limit",
+        text: createReachingApiLimitText({ name: user.name, percent: 70 }),
       });
 
-      logger.info(` **** sendReachingApiLimitEmail() sent to user id ${user.id} ****`);
-    });
+      logger.info(`sendReachingApiLimitEmail() sent to user id ${user.id}`);
+    }
 
-    logger.info(` **** sendReachingApiLimitEmail() cron ends! ****`);
+    logger.info(`sendReachingApiLimitEmail() cron ends!`);
   } catch (error) {
     logger.error(`sendReachingApiLimitEmail() error: ${error}`);
   }
@@ -93,25 +83,25 @@ async function sendReachingApiLimitEmail() {
 
 let isCronStarted = false;
 
-export async function init() {
+export async function initCrons() {
   try {
-    logger.info(`**** cron services were started! ****`);
+    logger.info(`cron services were started!`);
 
     isCronStarted = true;
 
     // every week sunday at mid night
-    cron.schedule('0 0 * * 0', removeCaches).start();
+    cron.schedule("0 0 * * 0", removeCaches).start();
 
     // everyday at mid night
-    cron.schedule('0 0 * * *', sendReachingApiLimitEmail).start();
+    cron.schedule("0 0 * * *", sendReachingApiLimitEmail).start();
 
     // everyday at mid night
-    cron.schedule('0 0 * * *', resetApiCallCount).start();
+    cron.schedule("0 0 * * *", resetApiCallCount).start();
 
-    logger.info(`**** finished running all the cron services ****`);
+    logger.info(`finished running all the cron services`);
   } catch (err) {
     isCronStarted = false;
-    logger.error(`**** cron services error: ${err} ****`);
+    logger.error(`cron services error: ${err}`);
   }
 }
 

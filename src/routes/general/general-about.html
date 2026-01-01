@@ -1,0 +1,218 @@
+<div class="fade-in mx-auto max-w-5xl">
+  <!-- header -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-white">About</h1>
+    <p class="mt-2 text-sm text-neutral-400">
+      Learn how to get started with the Close Powerlifting API.
+    </p>
+  </div>
+
+  <div class="flex flex-col gap-8">
+    <!-- notice -->
+      <p class="rounded-lg bg-red-500/20 p-4 text-neutral-300">
+        This project is intended for educational purposes. Data is sourced from
+        <a class="font-medium text-neutral-200 hover:text-white" href="https://openpowerlifting.org" target="_blank"
+          >OpenPowerlifting.org</a
+        >, a community-driven archive of powerlifting competition results.
+      </p>
+
+      <!-- getting started -->
+      <div>
+        <h2 class="mb-4 text-xl font-semibold text-white">Getting started</h2>
+        <div class="flex flex-col gap-3">
+          <div class="flex gap-4 rounded-lg bg-neutral-900 p-4">
+            <div
+              class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-800 text-sm font-medium text-white"
+            >
+              1
+            </div>
+            <div>
+              <p class="font-medium text-neutral-300">Register for an API key</p>
+              <p class="mt-1 text-sm text-neutral-500">
+                <a class="text-neutral-400 hover:text-white" href="/register">Create an account</a>
+                and confirm your email. Your API key will be sent to you.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 rounded-lg bg-neutral-900 p-4">
+            <div
+              class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-800 text-sm font-medium text-white"
+            >
+              2
+            </div>
+            <div>
+              <p class="font-medium text-neutral-300">Read the documentation</p>
+              <p class="mt-1 text-sm text-neutral-500">
+                Check out our
+                <a class="text-neutral-400 hover:text-white" href="/docs/api" target="_blank"
+                  >API docs</a
+                >
+                to see available endpoints and query parameters.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex gap-4 rounded-lg bg-neutral-900 p-4">
+            <div
+              class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-neutral-800 text-sm font-medium text-white"
+            >
+              3
+            </div>
+            <div>
+              <p class="font-medium text-neutral-300">Make your first request</p>
+              <p class="mt-1 text-sm text-neutral-500">
+                Include your API key via
+                <span class="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs">x-api-key</span>
+                header or
+                <span class="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-xs"
+                  >Authorization: Bearer</span
+                >
+                token.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- faq -->
+      <div>
+        <h2 class="mb-4 text-xl font-semibold text-white">Frequently asked questions</h2>
+        <div class="flex flex-col gap-2">
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              Is Close Powerlifting free to use?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              Yes. Every account receives 500 free API calls per month. This resets at the beginning
+              of each month.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              How often is the data updated?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              Our database syncs with Open Powerlifting weekly. New competition results are typically
+              available within a few days of being added to their database.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              What if I need more than 500 API calls?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              Contact us through our <a class="text-neutral-300 hover:text-white" href="/contact">contact page</a> and let us know your use case. We're happy to
+              increase limits for legitimate projects.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              Can I use this for commercial projects?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              This project is primarily educational. For commercial use, please review Open
+              Powerlifting's data license and consider supporting their project directly.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              Where does the data come from?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              All data comes from
+              <a class="text-neutral-300 hover:text-white" href="https://openpowerlifting.org" target="_blank"
+                >OpenPowerlifting.org</a
+              >, a community-driven project that archives powerlifting competition results from
+              federations worldwide.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              I lost my API key. How do I get a new one?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              Visit the <a class="text-neutral-300 hover:text-white" href="/reset-api-key">reset API key</a> page and enter your email address. A new key will be
+              sent to you.
+            </div>
+          </details>
+
+          <details class="group rounded-lg bg-neutral-900">
+            <summary
+              class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300"
+            >
+              Is there a way to get real-time competition data?
+              <span class="transition-transform group-open:rotate-180">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-neutral-400">
+              No. Competition results are added to Open Powerlifting after meets conclude, and we sync
+              weekly. This API is best suited for historical data analysis, not live tracking.
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details summary::marker {
+    display: none;
+    content: '';
+  }
+</style>

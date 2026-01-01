@@ -1,3 +1,0 @@
-{
-  "ignore": ["./src/db.json", "./src/**/*.spec.ts", "./src/**/*.test.ts"]
-}

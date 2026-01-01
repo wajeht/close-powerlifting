@@ -1,29 +1,28 @@
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
+import bcrypt from "bcryptjs";
 
-import { ADMIN, EMAIL, PASSWORD_SALT } from '../config/constants';
-import { generateAPIKey, hashKey } from '../utils/helpers';
-import { User } from '../views/views.models';
-import { updateUser } from '../views/views.services';
-import logger from './logger';
-import mail from './mail';
-import adminNewAPIKeyHTML from './templates/admin-new-api-key';
+import { config } from "../config";
+import { findByEmail, create } from "../db/repositories/user.repository";
+import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
+import { updateUser } from "../routes/auth/auth.service";
+import { logger } from "./logger";
+import { mail } from "./mail";
+import { createAdminNewApiKeyText } from "./templates/admin-new-api-key";
 
-export async function init() {
+export async function initAdminUser() {
   try {
-    const found = await User.findOne({ email: ADMIN.EMAIL });
+    const found = await findByEmail(config.app.adminEmail);
 
     if (!found) {
-      logger.info('**** admin user does not exist ****');
-      logger.info('**** attaching admin user ****');
+      logger.info("admin user does not exist");
+      logger.info("attaching admin user");
 
-      const password = faker.internet.password(50);
-      const hashedPassword = await bcrypt.hash(password, parseInt(PASSWORD_SALT!));
+      const password = generatePassword();
+      const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
       const { key: token } = await hashKey();
 
-      const createdAdminUser = await User.create({
-        email: ADMIN.EMAIL,
-        name: ADMIN.NAME,
+      const createdAdminUser = await create({
+        email: config.app.adminEmail,
+        name: config.app.adminName,
         admin: true,
         password: hashedPassword,
         verification_token: token,
@@ -33,36 +32,43 @@ export async function init() {
 
       logger.info(``);
       logger.info(``);
-      logger.info(`**** admin user has been created with the following credentials! ****`);
-      logger.info(`**** email: ${ADMIN.EMAIL} ****`);
-      logger.info(`**** password: ${password} ****`);
+      logger.info(`admin user has been created.`);
+      logger.info(`email: ${config.app.adminEmail}`);
+      logger.info(`A temporary password has been generated and sent to the admin email.`);
       logger.info(``);
       logger.info(``);
 
       const { hashedKey, unhashedKey } = await generateAPIKey({
-        name: createdAdminUser.name!,
-        userId: createdAdminUser.id!,
-        email: createdAdminUser.email!,
+        name: createdAdminUser.name,
+        userId: String(createdAdminUser.id),
+        email: createdAdminUser.email,
         admin: true,
       });
 
-      const verified = await updateUser(createdAdminUser.email!, { key: hashedKey });
+      const verified = await updateUser(createdAdminUser.email, { key: hashedKey });
 
-      mail.sendMail({
-        from: `"Close Powerlifting" <${EMAIL.AUTH_EMAIL}>`,
-        to: createdAdminUser.email,
-        subject: 'API Key and Admin Password for Close Powerlifting',
-        html: adminNewAPIKeyHTML({ name: verified?.name!, password, apiKey: unhashedKey }),
-      });
+      try {
+        await mail.sendMail({
+          from: `"Close Powerlifting" <${config.email.from}>`,
+          to: createdAdminUser.email,
+          subject: "API Key and Admin Password for Close Powerlifting",
+          text: createAdminNewApiKeyText({ name: verified.name, password, apiKey: unhashedKey }),
+        });
+        logger.info(`Admin welcome email sent to ${createdAdminUser.email}`);
+      } catch (error) {
+        logger.error(`Failed to send admin welcome email: ${error}`);
+      }
 
-      logger.info(`**** admin user: ${ADMIN.EMAIL} - ${ADMIN.EMAIL} has been attached! ****`);
+      logger.info(
+        `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
+      );
 
       return;
     }
 
-    logger.info('**** admin user exits ****');
-    logger.info('**** skipping admin user attaching ****');
+    logger.info("admin user exits");
+    logger.info("skipping admin user attaching");
   } catch (e) {
-    logger.error(e);
+    logger.error(e as Error);
   }
 }

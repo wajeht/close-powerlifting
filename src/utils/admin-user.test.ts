@@ -1,137 +1,94 @@
-import { faker } from '@faker-js/faker';
-import bcrypt from 'bcryptjs';
-import { afterEach, describe, expect, it, test, vi } from 'vitest';
+import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 
-import { ADMIN, EMAIL, PASSWORD_SALT } from '../config/constants';
-import { generateAPIKey, hashKey, updateUser } from '../utils/helpers';
-import mail from '../utils/mail';
-import { User } from '../views/views.models';
-import { init } from './admin-user';
-import logger from './logger';
+import { config } from "../config";
+import { findByEmail, create } from "../db/repositories/user.repository";
+import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
+import { mail } from "../utils/mail";
+import { initAdminUser } from "./admin-user";
+import { logger } from "./logger";
 
-vi.mock('../views/views.models', async () => ({
-  ...((await vi.importActual('../views/views.models')) as object),
-  User: {
-    findOne: vi.fn(),
-    findOneAndUpdate: vi.fn(),
-    create: vi.fn(),
-  },
+vi.mock("../db/repositories/user.repository", async () => ({
+  findByEmail: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
 }));
 
-vi.mock('@faker-js/faker', async () => ({
-  ...((await vi.importActual('@faker-js/faker')) as object),
-  faker: {
-    internet: {
-      password: vi.fn(),
-    },
-  },
-}));
-
-vi.mock('bcryptjs', async () => ({
-  ...((await vi.importActual('bcryptjs')) as object),
+vi.mock("bcryptjs", async () => ({
+  ...((await vi.importActual("bcryptjs")) as object),
   bcrypt: {
     hash: vi.fn(),
   },
 }));
 
-vi.mock('./helpers', async () => ({
-  ...((await vi.importActual('./helpers')) as object),
+vi.mock("./helpers", async () => ({
+  ...((await vi.importActual("./helpers")) as object),
   generateAPIKey: vi.fn(),
+  generatePassword: vi.fn(),
   hashKey: vi.fn(),
-  updateUser: vi.fn(),
 }));
 
-// vi.mock('./logger', async () => ({
-//   ...((await import('./logger')) as object),
-//   info: vi.fn().mockImplementation((message: string) => console.log(message)),
-//   error: vi.fn().mockImplementation((message: string) => console.log(message)),
-// }));
-
-// vi.mock('../utils/mail');
-
-// vi.mock('./mail', async () => ({
-//   ...((await vi.importActual('./mail')) as object),
-//   mail: {
-//     sendMail: vi.fn(),
-//   },
-// }));
-
-describe('init', () => {
+describe("init", () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('should create a new admin user if one does not exist', async () => {
-    User.findOne.mockResolvedValueOnce(null);
+  it("should create a new admin user if one does not exist", async () => {
+    (findByEmail as Mock).mockResolvedValueOnce(null);
 
-    faker.internet.password.mockReturnValueOnce('password');
+    (generatePassword as Mock).mockReturnValueOnce("password");
 
-    // bcrypt.hash.mockResolvedValueOnce('hashedPassword');
+    ((await hashKey) as Mock).mockResolvedValueOnce({ key: "token" });
 
-    await hashKey.mockResolvedValueOnce({ key: 'token' });
-
-    User.create.mockResolvedValueOnce({
-      name: ADMIN.NAME,
-      id: 'adminId',
-      email: ADMIN.EMAIL,
+    (create as Mock).mockResolvedValueOnce({
+      name: config.app.adminName,
+      id: 1,
+      email: config.app.adminEmail,
     });
 
-    await generateAPIKey.mockResolvedValueOnce({
-      hashedKey: 'hashedKey',
-      unhashedKey: 'unhashedKey',
+    ((await generateAPIKey) as Mock).mockResolvedValueOnce({
+      hashedKey: "hashedKey",
+      unhashedKey: "unhashedKey",
     });
-
-    updateUser.mockResolvedValueOnce({ name: ADMIN.NAME });
 
     mail.sendMail = vi.fn().mockResolvedValue({});
 
-    await init();
+    await initAdminUser();
 
-    expect(User.findOne).toHaveBeenCalledWith({ email: ADMIN.EMAIL });
-    expect(faker.internet.password).toHaveBeenCalledWith(50);
-    // expect(bcrypt.hash).toHaveBeenCalledWith('password', parseInt(PASSWORD_SALT!));
-    expect(User.create).toHaveBeenCalledWith({
-      email: ADMIN.EMAIL,
-      name: ADMIN.NAME,
+    expect(findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
+    expect(generatePassword).toHaveBeenCalled();
+    expect(create).toHaveBeenCalledWith({
+      email: config.app.adminEmail,
+      name: config.app.adminName,
       admin: true,
       password: expect.any(String),
       verification_token: expect.any(String),
       verified: true,
-      verified_at: expect.any(String), // Difficult to test exact date time
+      verified_at: expect.any(String),
     });
 
     expect(generateAPIKey).toHaveBeenCalledWith({
       admin: true,
-      name: ADMIN.NAME,
-      userId: 'adminId',
-      email: ADMIN.EMAIL,
+      name: config.app.adminName,
+      userId: "1",
+      email: config.app.adminEmail,
     });
-
-    // expect(updateUser).toHaveBeenCalledWith(ADMIN.EMAIL, { key: 'hashedKey' });
-
-    // expect(mail.sendMail).toHaveBeenCalledWith({
-    //   from: expect.any(String),
-    //   to: expect.any(String),
-    //   subject: expect.any(String),
-    //   html: expect.any(String),
-    // });
   });
 
-  it('should not create a new admin user if one exists', async () => {
-    User.findOne.mockResolvedValueOnce({ id: 'existingAdminId' });
+  it("should not create a new admin user if one exists", async () => {
+    (findByEmail as Mock).mockResolvedValueOnce({ id: 1 });
 
-    await init();
+    await initAdminUser();
 
-    expect(User.findOne).toHaveBeenCalledWith({ email: ADMIN.EMAIL });
-    expect(User.create).not.toHaveBeenCalled();
+    expect(findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
+    expect(create).not.toHaveBeenCalled();
   });
 
-  it('should log an error if anything goes wrong', async () => {
-    User.findOne.mockRejectedValueOnce(new Error('Error message'));
-    const errorSpy = vi.spyOn(logger, 'error');
+  it("should log an error if anything goes wrong", async () => {
+    (findByEmail as Mock).mockRejectedValueOnce(new Error("Error message"));
+    const errorSpy = vi.spyOn(logger, "error");
 
-    await init();
+    await initAdminUser();
 
-    expect(errorSpy).toHaveBeenCalledWith(new Error('Error message'));
+    expect(errorSpy).toHaveBeenCalledWith(new Error("Error message"));
   });
 });

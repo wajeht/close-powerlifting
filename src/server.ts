@@ -1,48 +1,88 @@
-import app from './app';
-import { PORT } from './config/constants';
-import * as admin from './utils/admin-user';
-import * as crons from './utils/crons';
-import * as db from './utils/db';
-import logger from './utils/logger';
-// @ts-ignore
-import redis from './utils/redis';
+import { AddressInfo } from "net";
+import { Server } from "http";
 
-const server = app.listen(PORT, async () => {
+import { app } from "./app";
+import { config } from "./config";
+import { initDatabase, stopDatabase } from "./db/db";
+import { initAdminUser } from "./utils/admin-user";
+import { initCrons } from "./utils/crons";
+import { logger } from "./utils/logger";
+
+const server: Server = app.listen(config.app.port);
+
+server.on("listening", async () => {
+  const addr: string | AddressInfo | null = server.address();
+  const bind: string =
+    typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
+
+  logger.info(`Server is listening on ${bind}`);
+
   try {
-    await db.init();
-    await crons.init();
-    await admin.init();
-
-    logger.info(`**** app was started on http://localhost:${PORT} ****`);
+    await initDatabase();
+    await initCrons();
+    await initAdminUser();
   } catch (error) {
-    logger.error('**** An error occurred during server start ', error, ' ****');
-    process.exit(1);
+    logger.error((error as any).message);
   }
 });
 
-export async function gracefulShutdown() {
-  logger.info('**** Received kill signal, shutting down gracefully. ****');
-  server.close(async () => {
-    try {
-      // @ts-ignore
-      redis.disconnect();
-      await db.stop();
-      logger.info('**** Closed out remaining connections. ****');
-      process.exit();
-    } catch (err) {
-      logger.error('**** Error during shutdown ', err, ' ****');
+server.on("error", (error: NodeJS.ErrnoException) => {
+  if (error.syscall !== "listen") {
+    throw error;
+  }
+
+  const bind: string =
+    typeof config.app.port === "string" ? "Pipe " + config.app.port : "Port " + config.app.port;
+
+  switch (error.code) {
+    case "EACCES":
+      logger.error(`${bind} requires elevated privileges`);
       process.exit(1);
+    case "EADDRINUSE":
+      logger.error(`${bind} is already in use`);
+      process.exit(1);
+    default:
+      throw error;
+  }
+});
+
+function gracefulShutdown(signal: string): void {
+  logger.info(`Received ${signal}, shutting down gracefully.`);
+
+  server.close(async () => {
+    logger.info("HTTP server closed.");
+
+    try {
+      await stopDatabase();
+      logger.info("Database connection closed.");
+    } catch (error) {
+      logger.error("Error closing database connection", error);
     }
+
+    logger.info("All connections closed successfully.");
+    process.exit(0);
   });
 
   setTimeout(() => {
-    logger.error('**** Could not close connections in time, forcefully shutting down ****');
+    logger.error("Could not close connections in time, forcefully shutting down");
     process.exit(1);
-  }, 30 * 1000); // force shutdown after 30s
+  }, 10000);
 }
 
-process.on('SIGINT', gracefulShutdown);
-process.on('SIGTERM', gracefulShutdown);
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('**** Unhandled Rejection at: ', promise, ' reason: ', reason, ' ****');
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT"));
+
+process.on("uncaughtException", async (error: Error, origin: string) => {
+  logger.error(`Uncaught Exception: ${origin}`, error);
+  gracefulShutdown("uncaughtException");
+});
+
+process.on("warning", (warning: Error) => {
+  logger.warn(`Process warning: ${warning.name} - ${warning.message}`);
+});
+
+process.on("unhandledRejection", async (reason: unknown) => {
+  logger.error("Unhandled Rejection", reason);
+  gracefulShutdown("unhandledRejection");
 });

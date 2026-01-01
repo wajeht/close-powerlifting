@@ -1,97 +1,36 @@
-version: '3.9'
 services:
-  app:
-    container_name: app
+  close-powerlifting:
+    container_name: close-powerlifting
     restart: unless-stopped
+    init: true
     build:
       context: ./
       dockerfile: ./Dockerfile.dev
     ports:
-      - '80:80'
+      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./:/usr/src/app
       - /usr/src/app/node_modules
-    depends_on:
-      - mongodb
-      - redis
-      - mailhog
-      - redis-commander
-      - mongo-express
-    networks:
-      - close-powerlifting-network
-
-  redis:
-    container_name: redis
-    image: redis:alpine
-    ports:
-      - '6379:6379'
-    restart: unless-stopped
-    networks:
-      - close-powerlifting-network
-
-  mongodb:
-    container_name: mongodb
-    image: mongo:4
-    restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: username
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: close-powerlifting
-    volumes:
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-      - ./mongo-data:/data/db
-    ports:
-      - '27017:27017'
-    networks:
-      - close-powerlifting-network
-
-  redis-commander:
-    container_name: redis-commander
-    image: rediscommander/redis-commander:latest
-    restart: unless-stopped
+      CHOKIDAR_USEPOLLING: "true"
+      DOCKER_CONTAINER: "true"
     depends_on:
-      - redis
-    environment:
-      - REDIS_HOSTS=redis
-    ports:
-      - '8081:8081'
+      - mailpit
     networks:
       - close-powerlifting-network
 
-  mongo-express:
-    container_name: mongo-express
-    image: mongo-express
+  mailpit:
+    container_name: close-powerlifting-mailpit
     restart: unless-stopped
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
     environment:
-      - ME_CONFIG_MONGODB_SERVER=mongodb
-      - ME_CONFIG_MONGODB_PORT=27017
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=false
-      - ME_CONFIG_MONGODB_AUTH_DATABASE=close-powerlifting
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=username
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=password
-      - VCAP_APP_PORT=8086
-      # - ME_CONFIG_BASICAUTH_USERNAME=username # enable basic auth for ui
-      # - ME_CONFIG_BASICAUTH_PASSWORD=password
-    depends_on:
-      - mongodb
-    ports:
-      - '8086:8086'
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
     networks:
       - close-powerlifting-network
-
-  mailhog:
-    container_name: mailhot
-    restart: unless-stopped
-    image: mailhog/mailhog
-    ports:
-      - 1025:1025 # smtp server
-      - 8025:8025 # web ui
-    networks:
-      - close-powerlifting-network
-
-volumes:
-  mongo-data:
-    driver: local
 
 networks:
   close-powerlifting-network:

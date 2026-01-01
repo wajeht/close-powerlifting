@@ -1,0 +1,92 @@
+<div class="visible relative flex sm:hidden">
+  <!-- open -->
+  <button id="open-mobile-nav-button" onclick="toggle()">
+    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+
+  <!-- nav -->
+  <div id="mobile-nav" class="!absolute -right-5 -top-5 hidden h-screen w-screen bg-black">
+    <!-- close -->
+    <div class="absolute right-0 flex w-full justify-between p-5">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-50 hover:text-neutral-300">
+          <a href="/">Close Powerlifting</a>
+        </h1>
+      </div>
+
+      <button id="close-mobile-nav-button" onclick="toggle()">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="mx-5 mt-16 rounded bg-neutral-900 px-3 py-10">
+      <ul class="flex flex-col gap-5 text-center">
+        <!-- docs -->
+        <li>
+          <a class="hover:text-slate-50" href="/docs/api" target="_blank">Docs</a>
+        </li>
+
+        <!-- about -->
+        <li>
+          <a
+            class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %> hover:text-slate-50"
+            href="/about"
+            >About</a
+          >
+        </li>
+
+        <!-- status -->
+        <li>
+          <a
+            class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
+            href="/status"
+            >Status</a
+          >
+        </li>
+
+        <!-- contact -->
+        <li>
+          <a
+            class="<%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %> hover:text-slate-50"
+            href="/contact"
+            >Contact</a
+          >
+        </li>
+
+        <!-- register -->
+        <li>
+          <a
+            class="rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+            href="/register"
+            >Get API Key</a
+          >
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+
+<script>
+  let open = false;
+
+  function openMenu() {
+    if (open) {
+      document.getElementById('mobile-nav').classList.remove('hidden');
+      document.getElementById('main').hidden = true;
+      document.getElementById('footer').hidden = true;
+    } else {
+      document.getElementById('mobile-nav').classList.add('hidden');
+      document.getElementById('main').hidden = false;
+      document.getElementById('footer').hidden = false;
+    }
+  }
+
+  function toggle() {
+    open = !open;
+    openMenu();
+  }
+</script>

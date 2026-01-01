@@ -1,0 +1,4792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="utf-8" />
+  
+  <meta name="theme-color" content="#272727">
+
+  
+  <title>Status</title>
+  <meta name="description" content="The OpenPowerlifting project aims to create a permanent, accurate, convenient, accessible, open archive of the world&#x27;s powerlifting data.">
+
+  
+  <link rel="stylesheet" type="text/css" href="/static/css/style.9c18dbc57dac6704a9e3e9c6884f8870.css"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="OpenPowerlifting">
+
+  
+  <script type="text/javascript">const DISTRIBUTION="OPENPOWERLIFTING"</script>
+
+  
+  
+
+  
+  
+  
+  <script defer src="/static/scripts/main.4fa8beb3b43adfff1aedab1b2cbe09dd.js"></script>
+</head>
+<body>
+  
+  
+    
+  <div class="topbar">
+
+      <div id="header">
+  <a href="https://www.openpowerlifting.org"><img class="header-logo pad" src="/static/images/logo-compressed.e87731f9ce53411287c05e88356bf68e.svg" alt="OpenPowerlifting"/></a>
+  <a href="/" class="nav__link">Rankings</a>
+  <a href="/records" class="nav__link">Records</a>
+  <a href="/mlist" class="nav__link">Meets</a>
+  <a href="/status" class="nav__link">Status</a>
+  <a href="/faq" class="nav__link">FAQ</a>
+  <a href="https://openpowerlifting.gitlab.io/opl-csv/" class="nav__link">Data</a>
+  <a href="https://www.plsource.org" class="nav__link" rel="noopener" target="_blank">Apps</a>
+  <a href="https://openpowerlifting.bigcartel.com" class="nav__link" rel="noopener" target="_blank">Shop</a>
+  <a href="https://gitlab.com/openpowerlifting/opl-data/-/issues/new" class="nav__link" rel="noopener" target="_blank">Contact</a>
+  <a href="https://www.patreon.com/join/openpowerlifting" class="nav__link" rel="noopener" target="_blank">Support Us</a>
+  <a href="https://instagram.com/openpowerlifting/" class="nav__link" rel="noopener" target="_blank"><i class="iglogo-alt"></i></a>
+  <a href="javascript:void(0)" class="nav__link header-hamburger" onClick="document.getElementById('header').classList.toggle('responsive')">&#9776;</a>
+  <div id="header-right">
+    <select id="weightunits">
+  <option value="lbs" >lbs</option>
+  <option value="kg" selected>kg</option>
+</select>
+
+    <select id="langselect">
+  <option value="ar" >العربية</option>
+  <option value="cs" >Česky</option>
+  <option value="de" >Deutsch</option>
+  <option value="el" >Ελληνικά</option>
+  <option value="en" selected>English</option>
+  <option value="es" >Español</option>
+  <option value="eo" >Esperanto</option>
+  <option value="fr" >Français</option>
+  <option value="hr" >Hrvatski</option>
+  <option value="it" >Italiano</option>
+  <option value="lt" >Lietuvių</option>
+  <option value="hu" >Magyar</option>
+  <option value="nl" >Nederlands</option>
+  <option value="pl" >Polski</option>
+  <option value="pt" >Português</option>
+  <option value="ru" >Русский</option>
+  <option value="sk" >Slovenčina</option>
+  <option value="sl" >Slovenščina</option>
+  <option value="sr" >Srpski</option>
+  <option value="fi" >Suomi</option>
+  <option value="sv" >Svenska</option>
+  <option value="vi" >Tiếng Việt</option>
+  <option value="tr" >Türkçe</option>
+  <option value="uk" >Українська</option>
+  <option value="ko" >한국어</option>
+  <option value="ja" >日本語</option>
+  <option value="zh-Hant" >繁體中文</option>
+  <option value="zh-Hans" >简体中文</option>
+</select>
+
+  </div>
+</div>
+
+      
+    
+  </div>
+
+    
+<center>
+  <div class="text-content">
+    <h1>Status</h1>
+    <h2>Server Version</h2>
+        <p>The server is currently on revision <a href="https://gitlab.com/openpowerlifting/opl-data/-/commits/d6b6673f1b76b21897a829cc227c5c58312acdb7">d6b6673f</a>. The next server update will include <a href="https://gitlab.com/openpowerlifting/opl-data/-/commits/main">the changes in this activity stream</a>.</p>
+    <h2>Meets</h2>
+        Tracking 3742781 entries for 951822 lifters from 59227 meets.
+
+    <h2>Federations</h2>
+    <table>
+      <thead><tr>
+        <th>Name</th>
+        <th>Meets Entered</th>
+        <th>Status</th>
+	<th>New Meet Detection</th>
+	<th>Results Format</th>
+	<th>Ease of Import</th>
+        <th>Maintainers</th>
+      </tr></thead>
+      <tbody>
+      
+        <tr>
+          <td>365Strong<a href="https://instagram.com/365_strongwpf/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>129</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>AAP<a href="https://instagram.com/alianzaargentinapowerlifting_/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>61</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Structured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AAPLF</td>
+          <td>42</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AAU</td>
+          <td>235</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ABP</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ABS</td>
+          <td>43</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ACHIPO</td>
+          <td>16</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ACPA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ADAU</td>
+          <td>26</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ADFPA</td>
+          <td>352</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ADFPF</td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AEP</td>
+          <td>172</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Medium</td>
+          <td><a href="mailto:enno@openpowerlifting.org">enno@</a></td>
+        </tr>
+      
+        <tr>
+          <td>AFPF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AfricanPF</td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AIWBPA</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AmericanSA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AMP</td>
+          <td>430</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AmPU</td>
+          <td>16</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ANPPC</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>APA<a href="https://instagram.com/apawpa_official/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>441</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>APC</td>
+          <td>25</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>APF<a href="https://instagram.com/apf_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>1221</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>APLA<a href="https://instagram.com/australianpowerliftingalliance/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>120</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">Rosie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>APO</td>
+          <td>42</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>APParaguay</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>APPortugal</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>APU<a href="https://instagram.com/australianpowerliftingunion/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>196</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Medium</td>
+          <td><a href="mailto:issues@openpowerlifting.org">Rosie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>APUA</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ARPL<a href="https://instagram.com/powerlifting.apl/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AsianPF<a href="https://instagram.com/asian.powerlifting.federation/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>73</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AusDFPF</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AusPF</td>
+          <td>44</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>AusPL<a href="https://instagram.com/aplpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>205</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>AWF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BahamasPF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BAWLA</td>
+          <td>508</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>BB</td>
+          <td>11</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Difficult</td>
+          <td></td>
+        </tr>
+      
+        <tr>
+          <td>BDFPA</td>
+          <td>153</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>JPG Images</td>
+	  <td>Impossible</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BDFPF</td>
+          <td>32</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BelPF</td>
+          <td>51</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BP</td>
+          <td>129</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>BPA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BPC</td>
+          <td>33</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BPF</td>
+          <td>57</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BPO</td>
+          <td>54</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BPU<a href="https://instagram.com/british_powerlifting_union/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>216</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>BulgarianPF</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>BVDG</td>
+          <td>136</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>Magazines</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:romi@openpowerlifting.org">Romi@</a></td>
+        </tr>
+      
+        <tr>
+          <td>BVDK<a href="https://instagram.com/german_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>856</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:romi@openpowerlifting.org">Romi@</a></td>
+        </tr>
+      
+        <tr>
+          <td>Canada-UA</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CAPO<a href="https://instagram.com/capopowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>269</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>CAPO-NZ</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CAST</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CBLB<a href="https://instagram.com/powerliftingbrazil_ipf/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>60</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>HTML</td>
+	  <td>Medium</td>
+          <td><a href="mailto:victorbegha.dev@gmail.com">Victor Begha</a></td>
+        </tr>
+      
+        <tr>
+          <td>CBPL</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ChinaPA<a href="https://instagram.com/gpachina/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>44</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CHNPL</td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CNFA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ColPF</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CommonwealthPF</td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>CPA</td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CPC</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CPF</td>
+          <td>114</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>CPI</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CPL</td>
+          <td>66</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CPO</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CPU</td>
+          <td>1560</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>Database</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>Croatia-UA</td>
+          <td>8</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>JPG Images</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:alan.zgb@gmail.com">alan@</a></td>
+        </tr>
+      
+        <tr>
+          <td>CRPL</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CSST</td>
+          <td>701</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CTPA</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>CyprusPF</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Czechia-UA</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>DBKV</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>Magazines</td>
+	  <td>Medium</td>
+          <td><a href="mailto:romi@openpowerlifting.org">Romi@</a></td>
+        </tr>
+      
+        <tr>
+          <td>DFPFNL</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>DPL</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>DSF<a href="https://instagram.com/danskstyrkeloeftforbund/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>428</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>Database</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>EgyptPF<a href="https://instagram.com/egyptplfed/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>EJTL</td>
+          <td>59</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>EPC</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>England-UA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>EPA</td>
+          <td>859</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>EPF</td>
+          <td>313</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>ESDT</td>
+          <td>38</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FALPO</td>
+          <td>21</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FAPL</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FBPD</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FSFA</td>
+          <td>45</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FCA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FCLP</td>
+          <td>28</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FCP</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FCST</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FDNLP</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FECAPOLIF</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FECHIPO</td>
+          <td>20</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Fedepotencia</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FEFICULP</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FELIPOME</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FEMEPO</td>
+          <td>27</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FEPOA</td>
+          <td>16</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FESUPO</td>
+          <td>68</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FEVEPO</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FFForce<a href="https://instagram.com/ffforce__/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>1001</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FFHMFAC</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FHSAA</td>
+          <td>19</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FIAP</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Finland-UA</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FIPL</td>
+          <td>200</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FMPB</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FPO<a href="https://instagram.com/fpo.ry/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>76</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FPP</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FPPR</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FPR</td>
+          <td>1978</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FRPL</td>
+          <td>45</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>FULP</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GAPLF</td>
+          <td>33</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GDFPF</td>
+          <td>19</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Germany-UA</td>
+          <td>26</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GFP</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GlobalPU</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA</td>
+          <td>57</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA-Brazil</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA-COL</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA-CRO</td>
+          <td>6</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA-Finland</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPA-Russia</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC</td>
+          <td>68</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-AUS<a href="https://instagram.com/gpcaustralia/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>330</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>GPC-Brazil</td>
+          <td>37</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-CAN</td>
+          <td>25</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-France</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-GB<a href="https://instagram.com/gpc_gb/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>136</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>GPC-GUPU</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-IRL<a href="https://instagram.com/gpcireland/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>18</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-ISR</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-LAT</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-NZ<a href="https://instagram.com/gpcnewzealand/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>88</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-POL</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-Portugal</td>
+          <td>7</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>POSK</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-Scotland<a href="https://instagram.com/gpc.scotland/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>18</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:ramasson@hotmail.co.uk">Robby Masson</a></td>
+        </tr>
+      
+        <tr>
+          <td>GPC-UKR</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-USA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-RUS</td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPC-CRO</td>
+          <td>1</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPF</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPU</td>
+          <td>22</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GRAWA</td>
+          <td>56</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GPL</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>GSF-Belarus</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Hardcore</td>
+          <td>27</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HKPF</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HKWPA</td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HPC</td>
+          <td>18</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HPF</td>
+          <td>31</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HPLS<a href="https://instagram.com/hrvatskipowerliftingsavez/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>48</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:alan.zgb@gmail.com">alan@</a></td>
+        </tr>
+      
+        <tr>
+          <td>HPLS-UA</td>
+          <td>5</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>JPG Images</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:alan.zgb@gmail.com">alan@</a></td>
+        </tr>
+      
+        <tr>
+          <td>HPO</td>
+          <td>7</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>HTML</td>
+	  <td>Medium</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>HTPL</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Hunpower<a href="https://instagram.com/hunpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>114</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:laszlopota00@gmail.com">laszlo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>Hungary-UA</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IBSA</td>
+          <td>24</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>INTDFPA</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IDFPA</td>
+          <td>22</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IDFPF</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IHSPLA</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IKF</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ILPA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ILPF</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>INSA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPA</td>
+          <td>412</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPA-AZE</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPC</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPF<a href="https://instagram.com/theipf/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>281</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>IPF-China</td>
+          <td>38</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL<a href="https://instagram.com/iplpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>114</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL-China</td>
+          <td>40</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL-Italy</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL-NZ</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Structured)</td>
+	  <td>Medium</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL-Russia</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IPL-Spain</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UKIPL</td>
+          <td>21</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IranBBF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IraqPF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Ireland-UA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>IrishPF<a href="https://instagram.com/irishpowerliftingfederation/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>106</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IrishPO<a href="https://instagram.com/ipoaipowpc/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>49</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>IronBoy</td>
+          <td>126</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>IRP</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Italy-UA</td>
+          <td>21</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>JPA</td>
+          <td>254</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>KBGV</td>
+          <td>73</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:stefanie@openpowerlifting.org">stefanie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>KDKS<a href="https://instagram.com/kdkschweiz/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>34</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:rettigx+opl@gmail.com">laura@</a></td>
+        </tr>
+      
+        <tr>
+          <td>KNKF-SP<a href="https://instagram.com/powerliften/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>143</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:mbeelen@openpowerlifting.org">mbeelen@</a></td>
+        </tr>
+      
+        <tr>
+          <td>Korea-UA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>KPF</td>
+          <td>34</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>KRAFT</td>
+          <td>523</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>KPC<a href="https://instagram.com/kuwait.powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>5</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>KuwaitPL</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LebanonPF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LFPH</td>
+          <td>87</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:stefanie@openpowerlifting.org">stefanie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>LGBT</td>
+          <td>4</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LHSPLA</td>
+          <td>24</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LibyaPF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LJTF<a href="https://instagram.com/lithuanianpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>70</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LMP</td>
+          <td>64</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>LPF</td>
+          <td>20</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Madagascar-UA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Malaysia-UA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MaltaPA</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ManxPL</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MDFPA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MDFPF</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MHSAA</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MHSPLA</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MM</td>
+          <td>102</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MM-AUS</td>
+          <td>17</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>MAP</td>
+          <td>23</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MPA</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>MUPF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NAP</td>
+          <td>264</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NAPF</td>
+          <td>107</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NASA</td>
+          <td>482</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:boris@openpowerlifting.org">boris@</a></td>
+        </tr>
+      
+        <tr>
+          <td>NaturalPA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NauruPF</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Netherlands-UA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NextGenPF</td>
+          <td>29</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NIPF<a href="https://instagram.com/nipowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>74</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>NORCAL</td>
+          <td>19</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NordicPF</td>
+          <td>74</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NOVA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NPA</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NPAJ</td>
+          <td>17</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NPL</td>
+          <td>81</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NPB<a href="https://instagram.com/powerliften/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>121</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:mbeelen@openpowerlifting.org">mbeelen@</a></td>
+        </tr>
+      
+        <tr>
+          <td>NSF</td>
+          <td>3501</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NYFC</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NZAWLA</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NZPF<a href="https://instagram.com/newzealandpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>536</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:artem.rodygin@gmail.com">Artem Rodygin</a></td>
+        </tr>
+      
+        <tr>
+          <td>NZPU</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>NZ-UA</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>OceaniaPF</td>
+          <td>29</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Structured)</td>
+	  <td>Medium</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>OceaniaPO</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>OCWP</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ORPF</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Structured)</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:issues@openpowerlifting.org">Rosie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>OEVK</td>
+          <td>191</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:milena@openpowerlifting.org">milena@</a></td>
+        </tr>
+      
+        <tr>
+          <td>PA</td>
+          <td>1062</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>PAGermany</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PAP</td>
+          <td>28</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PFA</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PFBD</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PHPL</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PI</td>
+          <td>52</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLH</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLRD</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLSS</td>
+          <td>41</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLTRAW</td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLU</td>
+          <td>163</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PLZS</td>
+          <td>35</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PNGPF</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Poland-UA</td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PoliceAL</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Portugal-UA</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PRIDE</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ProRaw<a href="https://instagram.com/prorawpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>27</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>PRPA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PS<a href="https://instagram.com/powerliftingsingapore/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>25</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>PWFL</td>
+          <td>24</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>PZKFiTS</td>
+          <td>80</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>QatarPL<a href="https://instagram.com/qatarpowerliftingfederation/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>Qatar-UA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RAW</td>
+          <td>377</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RAW-CAN</td>
+          <td>72</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RAW-Iceland</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RawIronPL<a href="https://instagram.com/rawironpowerliftingleague/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>38</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RawPower</td>
+          <td>16</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RAW-UKR<a href="https://instagram.com/raw100power/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>64</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RAWU</td>
+          <td>53</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RDFPF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RhinoPC</td>
+          <td>49</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RPS<a href="https://instagram.com/rps_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>780</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>RPU</td>
+          <td>555</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>RUPC</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Russia-UA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SAAS</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SaudiUA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SAFKST</td>
+          <td>56</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SAFP</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SAPF</td>
+          <td>34</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SAST</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ScottishPL<a href="https://instagram.com/scottishpowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>132</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:ramasson@hotmail.co.uk">Robby Masson</a></td>
+        </tr>
+      
+        <tr>
+          <td>SCI</td>
+          <td>77</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SCT</td>
+          <td>12</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td></td>
+        </tr>
+      
+        <tr>
+          <td>SDFPF<a href="https://instagram.com/sdfpf/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>34</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SLP</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SLPF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SPA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SPF<a href="https://instagram.com/southernpowerliftingfederation/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>810</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>HTML</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>SADFPA</td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SPF-IRL</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SPSS</td>
+          <td>8</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SSA</td>
+          <td>18</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SSAU</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SSF</td>
+          <td>805</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SSSC<a href="https://instagram.com/ksa_strength/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>6</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>SVNL<a href="https://instagram.com/voimanostoliitto/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>1349</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>SwissPL<a href="https://instagram.com/swiss_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>62</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Structured)</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:rettigx+opl@gmail.com">laura@</a></td>
+        </tr>
+      
+        <tr>
+          <td>TAAP</td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>TaiwanUA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>ThaiPF<a href="https://instagram.com/thaipowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>THSPA</td>
+          <td>6026</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>Database</td>
+	  <td>Medium</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>THSWPA</td>
+          <td>4456</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>Database</td>
+	  <td>Medium</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>TPSSF</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>TTPF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Turkey-UA</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UAEPL<a href="https://instagram.com/powerliftinguae/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>32</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>XLS (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="https://www.instagram.com/mayedpowerlifting">Mayed Alredha</a></td>
+        </tr>
+      
+        <tr>
+          <td>UAE-UA</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UDFPF</td>
+          <td>50</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UgandaPA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UgandaPF</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UKPU</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UkrainePA</td>
+          <td>16</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UkrainePF</td>
+          <td>320</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UkrainePO</td>
+          <td>45</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UK-UA</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UnifiedSA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UPA<a href="https://instagram.com/upa_events_/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>269</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UPC<a href="https://instagram.com/powerliftingupc/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>110</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UPC-Germany</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>PDF (Unstructured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>UPL</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>URPF</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USABA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USABPA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USA-UA</td>
+          <td>351</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USAPL<a href="https://instagram.com/usapowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>5313</td>
+          <td>Since 2014</td>
+	  <td>Yes</td>
+	  <td>Database</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>USARawBP</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USMilAbroad</td>
+          <td>87</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USPS</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USPF</td>
+          <td>2611</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USPA<a href="https://instagram.com/uspapower/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>3746</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td>PDF (Structured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>USPC<a href="https://instagram.com/uspc.pl/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>204</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+        <tr>
+          <td>USSF</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USSports</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>USVIPF</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>VDFPA</td>
+          <td>52</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>VGPF</td>
+          <td>64</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:stefanie@openpowerlifting.org">stefanie@</a></td>
+        </tr>
+      
+        <tr>
+          <td>VietnamPA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Vietnam-UA</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>Vityaz</td>
+          <td>33</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>VPF</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WABDL</td>
+          <td>268</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WAIA</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WarriorPLF</td>
+          <td>27</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WBC</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WDFPF</td>
+          <td>121</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WelshPA<a href="https://instagram.com/welsh_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>36</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Unstructured)</td>
+	  <td></td>
+          <td><a href="mailto:jo@openpowerlifting.org">jo@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WP</td>
+          <td>28</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-China</td>
+          <td>88</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-India</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-Nauru</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-Niue</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-Lanka</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-USA</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPA</td>
+          <td>60</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPA-GEO</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPA-Poland</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPA-RUS</td>
+          <td>46</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPAU<a href="https://instagram.com/wpaukraine/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>89</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC</td>
+          <td>265</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Medium</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPCCP</td>
+          <td>42</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Egypt</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Finland<a href="https://instagram.com/wpcfinland/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>50</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPC-France</td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Germany</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Iceland</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-India</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Israel</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Italy</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>JPG Images</td>
+	  <td>Difficult</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPC-KAZ</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-KGZ</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Korea</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Latvia</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Moldova</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Poland</td>
+          <td>21</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPC-Portugal</td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WPC-RUS</td>
+          <td>585</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-SA<a href="https://instagram.com/wpc_powerlifting_cpt/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>41</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-SVK</td>
+          <td>25</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPC-UKR</td>
+          <td>52</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPF</td>
+          <td>42</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPFG</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPF-KRAWA</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPF-RUS</td>
+          <td>38</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPLeague</td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WP-NZ</td>
+          <td>38</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>JPG Images</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPO</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Argentina</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Belarus</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Brazil</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Georgia</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Ireland</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Kazakhstan</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Mexico</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Peru</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Russia</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPL-Ukraine</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPPO<a href="https://instagram.com/parapowerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>112</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPRO</td>
+          <td>11</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPSF</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPSF-Belarus<a href="https://instagram.com/wpro_wpsf_belarus/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPU</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WPUF</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WNPF<a href="https://instagram.com/wnpf_powerlifting/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>220</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF<a href="https://instagram.com/wrp_official/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>769</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Argentina</td>
+          <td>39</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-AUS<a href="https://instagram.com/wrpfaustralia/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>87</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:issues@openpowerlifting.org">James@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Belarus<a href="https://instagram.com/wrpf_belarus/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>14</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Bolivia</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Brazil</td>
+          <td>15</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Bulgaria</td>
+          <td>9</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-CAN</td>
+          <td>106</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Chile</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Colombia</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Costa</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-CRO</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>Database</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Ecuador</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-DE</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-HON</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-HUN</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Iceland</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-India</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Ireland<a href="https://instagram.com/wrpfireland/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-EIRE</td>
+          <td>10</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>XLS (Unstructured)</td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Italy</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-KAZ<a href="https://instagram.com/wrpfkazakhstan/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-LATAM</td>
+          <td>0</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Latvia</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Lithuania<a href="https://instagram.com/wrpf_lithuania/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-MEX</td>
+          <td>12</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-NIC</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Peru</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-POL</td>
+          <td>4</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Qatar</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Portugal</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Serbia</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Slovakia</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Slovenia<a href="https://instagram.com/wrpfslovenia/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Spain<a href="https://instagram.com/wrpfspain/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>27</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-SRB</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Sweden<a href="https://instagram.com/wrpf.sweden/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>7</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-UK<a href="https://instagram.com/wrpf_uk/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>44</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>OpenLifter</td>
+	  <td>Easy</td>
+          <td><a href="mailto:gem@openpowerlifting.org">gem@</a></td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-UAE</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Venezuela</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WRPF-Vietnam</td>
+          <td>5</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WSHSPL</td>
+          <td>1</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP<a href="https://instagram.com/wuapusa/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>46</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td>PDF (Structured)</td>
+	  <td>Difficult</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-AUT</td>
+          <td>10</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-CRO</td>
+          <td>4</td>
+          <td>Complete</td>
+	  <td>No</td>
+	  <td>Database</td>
+	  <td>Easy</td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-CZ</td>
+          <td>3</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-Germany</td>
+          <td>6</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-RUS</td>
+          <td>2</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-SVK</td>
+          <td>13</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>WUAP-USA<a href="https://instagram.com/wuapusa/" class="instagram" rel="noopener" target="_blank"><i class="iglogo"></i></a></td>
+          <td>20</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>XPC</td>
+          <td>65</td>
+          <td>Incomplete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>XPC-Poland</td>
+          <td>30</td>
+          <td>Incomplete</td>
+	  <td>No</td>
+	  <td></td>
+	  <td></td>
+          <td>None (<a href="mailto:updates@openpowerlifting.org">Apply</a>)</td>
+        </tr>
+      
+        <tr>
+          <td>XPS</td>
+          <td>59</td>
+          <td>Complete</td>
+	  <td>Yes</td>
+	  <td></td>
+	  <td></td>
+          <td><a href="mailto:sean@openpowerlifting.org">sean@</a></td>
+        </tr>
+      
+      </tbody>
+    </table>
+  </div>
+</center>
+
+  
+</body>
+</html>

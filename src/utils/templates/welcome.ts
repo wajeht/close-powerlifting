@@ -1,26 +1,20 @@
-type Param = {
+type WelcomeTextParams = {
   name: string;
   key: string;
 };
 
-export default function welcomeHTML(param: Param): string {
-  return `
-  <div>
-    <p>Hi ${param.name},</p>
-    <br>
+export function createWelcomeText(params: WelcomeTextParams): string {
+  return `Hi ${params.name},
 
-    <p>Thank you for verifying your email address. Below is your API key to access Close Powerlifting!</p>
+You're all set! Your email has been verified and your API key is ready:
 
-    <br>
-    <div style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">${param.key}</div>
-    <br>
+API Key: ${params.key}
 
-    <p>Note: This API key will expire after three months. Please make sure to renew your key before it expires to continue accessing Close Powerlifting.</p>
+Your key expires in 3 months. We'll send you a reminder before it does.
 
-    <br>
-    <p>Welcome to Close Powerlifting!</p>
-    <p>Let's make all kinds of gains. All kindszzzz!</p>
-    <br>
-  </div>
-  `;
+Check out our documentation to get started: https://close-powerlifting.com/docs
+
+Happy lifting!
+The Close Powerlifting Team
+`;
 }

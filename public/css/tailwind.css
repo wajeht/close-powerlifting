@@ -1,21 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" important;
 
-* {
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-  scrollbar-width: none; /* Firefox */
+@source "../../src/routes/**/*.html";
+
+@theme {
+  --breakpoint-xs: 475px;
 }
 
-*::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
-}
+@layer base {
+  * {
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+    scrollbar-width: none; /* Firefox */
+  }
 
-html {
-  overflow: scroll;
-  overflow-x: hidden;
-}
+  *::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
 
-::-webkit-scrollbar {
-  width: 0;
+  html {
+    overflow: scroll;
+    overflow-x: hidden;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+  }
 }

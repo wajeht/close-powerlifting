@@ -1,25 +1,22 @@
-type param = {
+type VerifyEmailTextParams = {
   name: string;
   verification_token: string;
   hostname: string;
   email: string;
 };
 
-export default function verifyEmailHTML(param: param): string {
-  return `
-    <div>
-      <p>Hi ${param.name},</p>
-      <br>
+export function createVerifyEmailText(params: VerifyEmailTextParams): string {
+  return `Hi ${params.name},
 
-      <p>We're happy you signed up for Close Powerlifting. To start exploring, please confirm your email address.</p>
+Thanks for signing up for Close Powerlifting! Please verify your email address to get started:
 
-      <br>
-        <a href="${param.hostname}/verify-email?token=${param.verification_token}&email=${param.email}" style="background: #171717; text-decoration: none; color: white; display:inline-block; padding: 5px;">Verify Now</a>
-      <br>
+${params.hostname}/verify-email?token=${params.verification_token}&email=${params.email}
 
-      <br>
-      <p>Welcome to the Close Powerlifting,</p>
-      <p>Let's make all kinds of gains. All kindszzzz.!</p>
-    </div>
-  `;
+Once verified, you'll receive your API key to access powerlifting data from around the world.
+
+If you didn't create this account, you can safely ignore this email.
+
+Cheers,
+The Close Powerlifting Team
+`;
 }

@@ -1,0 +1,55 @@
+<footer id="footer" class="border-t border-neutral-800 bg-neutral-900">
+  <div class="mx-auto max-w-7xl px-5 py-8">
+    <!-- top section -->
+    <div class="flex flex-col gap-6 sm:flex-row sm:justify-between">
+      <!-- brand -->
+      <div class="flex flex-col gap-2">
+        <a href="/" class="text-lg font-bold text-white hover:text-neutral-300">
+          Close Powerlifting
+        </a>
+        <p class="max-w-xs text-sm text-neutral-500">
+          Free REST API for the world's largest powerlifting database.
+        </p>
+      </div>
+
+      <!-- links -->
+      <div class="flex gap-8 text-sm">
+        <!-- api -->
+        <div class="flex flex-col gap-2">
+          <span class="font-medium text-neutral-300">API</span>
+          <a class="text-neutral-500 hover:text-white" href="/docs/api">Documentation</a>
+          <a class="text-neutral-500 hover:text-white" href="/status">Status</a>
+          <a class="text-neutral-500 hover:text-white" href="/register">Get API Key</a>
+        </div>
+
+        <!-- resources -->
+        <div class="flex flex-col gap-2">
+          <span class="font-medium text-neutral-300">Resources</span>
+          <a class="text-neutral-500 hover:text-white" href="/about">About</a>
+          <a class="text-neutral-500 hover:text-white" href="/contact">Contact</a>
+          <a class="text-neutral-500 hover:text-white" href="https://github.com/wajeht/close-powerlifting" target="_blank">GitHub</a>
+        </div>
+
+        <!-- legal -->
+        <div class="flex flex-col gap-2">
+          <span class="font-medium text-neutral-300">Legal</span>
+          <a class="text-neutral-500 hover:text-white" href="/privacy">Privacy</a>
+          <a class="text-neutral-500 hover:text-white" href="/terms">Terms</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- bottom section -->
+    <div class="mt-8 border-t border-neutral-800 pt-6 text-center text-sm text-neutral-500">
+      <span>
+        © <span id="copyright"></span> Close Powerlifting. Made with ❤️ by
+        <a class="text-neutral-400 hover:text-white" href="https://github.com/wajeht" target="_blank">@wajeht</a>
+      </span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const date = new Date().getFullYear();
+  document.getElementById('copyright').innerText = date;
+</script>

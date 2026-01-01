@@ -1,38 +1,139 @@
-deploy:
-	./deploy.sh
+# Docker compose shorthand
+DC := docker compose -f docker-compose.dev.yml
+EXEC := $(DC) exec close-powerlifting
+
+.PHONY: help push test lint format up down shell deploy update-fixtures
+
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Development:"
+	@echo "  up          Start dev server (fresh db)"
+	@echo "  up-d        Start dev server in background"
+	@echo "  down        Stop dev server"
+	@echo "  restart     Restart dev server"
+	@echo "  log         Follow container logs"
+	@echo "  shell       Open shell in container"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test        Run all tests"
+	@echo "  test-watch  Run tests in watch mode"
+	@echo "  test-coverage Run tests with coverage"
+	@echo ""
+	@echo "Code Quality:"
+	@echo "  lint        Run linter"
+	@echo "  format      Format code"
+	@echo "  typecheck   Run TypeScript type checking"
+	@echo "  check       Run lint + format + typecheck"
+	@echo ""
+	@echo "Database:"
+	@echo "  db-migrate  Run migrations"
+	@echo "  db-rollback Rollback last migration"
+	@echo "  db-seed     Run seeders"
+	@echo "  db-reset    Rollback + migrate + seed"
+	@echo ""
+	@echo "Fixtures:"
+	@echo "  update-fixtures  Update OpenPowerlifting test fixtures"
+	@echo ""
+	@echo "Deployment:"
+	@echo "  push        Test + lint + format + commit + push"
+	@echo "  deploy      Deploy to production"
+	@echo "  clean       Remove all containers and volumes"
+
+# === Development ===
 
 up:
-	docker compose --file ./docker-compose.dev.yml up
+	@rm -rf ./src/db/sqlite/*sqlite*
+	@$(DC) up
 
 up-d:
-	docker compose --file ./docker-compose.dev.yml up -d
-
-log:
-	docker compose --file ./docker-compose.dev.yml logs -f
+	@$(DC) up -d
 
 down:
-	docker compose --file ./docker-compose.dev.yml down
+	@$(DC) down
 
-clean:
-	docker compose --file ./docker-compose.dev.yml down --rmi all
+restart:
+	@$(DC) restart close-powerlifting
 
-wipe:
-	docker system prune -a --volumes
-
-test:
-	docker compose --file ./docker-compose.dev.yml exec app npm run test
-
-test-coverage:
-	docker compose --file ./docker-compose.dev.yml exec app npm run test:coverage
-
-test-ci:
-	docker compose --file ./docker-compose.dev.yml exec app npm run test:coverage
-
-lint:
-	docker compose --file ./docker-compose.dev.yml exec app npm run lint
-
-format:
-	docker compose --file ./docker-compose.dev.yml exec app npm run format
+log:
+	@$(DC) logs -f
 
 shell:
-	docker compose --file ./docker-compose.dev.yml exec app sh
+	@$(EXEC) sh
+
+# === Testing ===
+
+test:
+	@$(EXEC) npm run test
+
+test-watch:
+	@$(EXEC) npm run test -- --watch
+
+test-coverage:
+	@$(EXEC) npm run test:coverage
+
+# === Code Quality ===
+
+lint:
+	@$(EXEC) npm run lint
+
+format:
+	@$(EXEC) npm run format
+
+typecheck:
+	@$(EXEC) npx tsc --noEmit
+
+check:
+	@$(MAKE) lint
+	@$(MAKE) format
+	@$(MAKE) typecheck
+
+# === Database ===
+
+db-migrate:
+	@$(EXEC) npm run db:migrate:latest
+
+db-rollback:
+	@$(EXEC) npm run db:migrate:rollback
+
+db-seed:
+	@$(EXEC) npm run db:seed:run
+
+db-reset:
+	@$(MAKE) db-rollback
+	@$(MAKE) db-migrate
+	@$(MAKE) db-seed
+
+db-clean:
+	@trash ./src/db/sqlite/db.sqlite*
+
+# === Deployment ===
+
+push:
+	@$(MAKE) test
+	@$(MAKE) lint
+	@$(MAKE) format
+	@git add -A
+	@curl -s http://commit.jaw.dev/ | sh -s -- --no-verify
+	@git push --no-verify
+
+deploy:
+	@./scripts/deploy.sh
+
+clean:
+	@$(DC) down --rmi all --volumes --remove-orphans
+	@docker system prune -a -f
+	@docker volume prune -f
+	@docker network prune -f
+
+# === Fixtures ===
+
+update-fixtures:
+	@npm run update:fixtures
+
+# === Misc ===
+
+fix-git:
+	@git rm -r --cached . -f
+	@git add .
+	@git commit -m "Untrack files in .gitignore"

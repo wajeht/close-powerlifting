@@ -1,15 +1,12 @@
-type contact = {
+type ContactTextParams = {
   name: string;
   email: string;
   message: string;
 };
 
-export default function contactHTML(contact: contact): string {
-  return `
-    <div>
-      <p><span style="font-weight: bold;">Name:</span> ${contact.name}</p>
-      <p><span style="font-weight: bold;">Email:</span> ${contact.email}</p>
-      <p><span style="font-weight: bold;">Message:</span> ${contact.message}</p>
-    </div>
-  `;
+export function createContactText(params: ContactTextParams): string {
+  return `New message from ${params.name} <${params.email}>
+
+${params.message}
+`;
 }

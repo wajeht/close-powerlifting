@@ -1,16 +1,21 @@
-type param = { name: string; percent: number };
+type ReachingApiLimitTextParams = {
+  name: string;
+  percent: number;
+};
 
-export default function reachingApiLimitHTML(param: param): string {
-  return `
-  <div>
-    <p>Hi ${param.name},</p>
-    <br>
+export function createReachingApiLimitText(params: ReachingApiLimitTextParams): string {
+  return `Hi ${params.name},
 
-    <p>Your API calls are reaching ${param.percent}% of given limit. Please optimize your usage to avoid interruptions.</p>
+Heads up! You've used ${params.percent}% of your monthly API calls.
 
-    <br>
-    <p>Let us know if you need help</p>
-    <p>Let's make all kinds of gains. All kindszzzz.!</p>
-  </div>
-  `;
+A few tips to reduce usage:
+- Cache responses when possible
+- Use pagination to fetch smaller datasets
+- Batch your requests during off-peak hours
+
+Your limit resets at the start of each month. Need a higher limit? Reply to this email and let us know.
+
+Cheers,
+The Close Powerlifting Team
+`;
 }

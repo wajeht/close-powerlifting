@@ -87,9 +87,6 @@ dist
 # https://nextjs.org/blog/next-9-1#public-directory-support
 # public
 
-# vuepress build output
-.vuepress/dist
-
 # Serverless directories
 .serverless/
 
@@ -107,3 +104,25 @@ src/templates/tempCodeRunnerFile.js
 src/public/css/style.css
 mongo-volume
 mongo-data
+.vscode
+.claude
+
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+db.sqlite
+db.sqlite-shm
+db.sqlite-wal
+# Test database files
+src/db/sqlite/test-*.sqlite
+src/db/sqlite/test-*.sqlite-shm
+src/db/sqlite/test-*.sqlite-wal
+src/db/sqlite/test.sqlite
+src/db/sqlite/test.sqlite-shm
+src/db/sqlite/test.sqlite-wal
+NetrwTreeListing
+.cursorrules
+.vscode
+.claude
+opencode*

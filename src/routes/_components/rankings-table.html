@@ -1,0 +1,31 @@
+<div class="mx-auto mt-8 max-w-5xl overflow-x-scroll">
+  <table
+    class="table-fixed border border-neutral-900"
+    style="min-width: 80% !important; padding: 5px"
+  >
+    <thead class="bg-neutral-900">
+      <tr>
+        <% for (let key of Object.keys(rankings.data[0]) ) { %>
+        <!-- skip id -->
+        <% if (key !== 'id') { %>
+        <th class="px-4 py-2 text-left"><%= key %></th>
+        <% } %> <% } %>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (let i of rankings.data) { %>
+      <tr>
+        <% for (let j in i) { %>
+        <!-- skip id -->
+        <% if ( j !== 'id') { %>
+        <td class="whitespace-nowrap px-4 py-2 text-left">
+          <% if ( j === 'instagram_url') { %>
+          <a class="hover:text-slate-50" href="<%= i[j] %>" target="_blank"><%= i[j] %></a>
+          <% } else { %> <%= i[j] %> <% } %>
+        </td>
+        <% } %> <% } %>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>

@@ -1,17 +1,14 @@
-FROM node:alpine
+FROM node:24-alpine
 
-RUN apk --no-cache add curl
-
-ENV ENV development
+RUN apk --no-cache add curl python3 make g++
 
 WORKDIR /usr/src/app
 
-COPY ./package.json ./
-COPY ./package-lock.json ./
-
-COPY ./ ./
+COPY package.json package-lock.json ./
 
 RUN npm install
+
+COPY ./ ./
 
 EXPOSE 80
 
