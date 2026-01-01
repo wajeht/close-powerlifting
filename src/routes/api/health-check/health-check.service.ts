@@ -5,17 +5,36 @@ import { logger } from "../../../utils/logger";
 export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
   const fetchStatus = async () => {
     const routes = [
+      // Rankings
       "/api/rankings?cache=false",
       "/api/rankings/1?cache=false",
       "/api/rankings?current_page=1&per_page=100&cache=false",
+      "/api/rankings/filter/raw?cache=false",
+      "/api/rankings/filter/raw/men?cache=false",
+      "/api/rankings/filter/raw/men/100?cache=false",
+      "/api/rankings/filter/raw/men/100/2024?cache=false",
+      "/api/rankings/filter/raw/men/100/2024/full-power?cache=false",
+      "/api/rankings/filter/raw/men/100/2024/full-power/by-dots?cache=false",
+
+      // Federations
       "/api/federations?cache=false",
       "/api/federations?current_page=1&per_page=100&cache=false",
       "/api/federations/ipf?cache=false",
       "/api/federations/ipf?year=2020&cache=false",
+
+      // Meets
       "/api/meets/uspa/1969?cache=false",
+
+      // Records
       "/api/records?cache=false",
+      "/api/records/raw?cache=false",
+      "/api/records/raw/men?cache=false",
+
+      // Users
       "/api/users/johnhaack?cache=false",
       "/api/users?search=haack&cache=false",
+
+      // Public (no auth)
       "/api/status?cache=false",
       "/api/health-check?cache=false",
     ];
