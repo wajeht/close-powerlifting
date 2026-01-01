@@ -2,28 +2,42 @@
 
 [![Node.js CI](https://github.com/wajeht/close-powerlifting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wajeht/close-powerlifting/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC)
-[![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/allkindsofgains/gains)
+[![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/wajeht/close-powerlifting)
 
-an intuitive api for open-powerlifting database
+An intuitive REST API for the OpenPowerlifting database.
 
-# 📃 API endpoints
+## 📃 API Endpoints
 
-We have a few resources available for API calls. Resources with larger amounts of data are usually cached in memory and paginated for the first call. Pagination is included by default. You can pass in `?cache=false` at the end of a URL to get the latest/recent data.
+| Endpoint | Description |
+|----------|-------------|
+| `/api/rankings` | Global powerlifting rankings sorted by DOTS score |
+| `/api/federations` | Powerlifting federation data and meet results |
+| `/api/meets` | Individual competition/meet results with attempt data |
+| `/api/records` | All-time powerlifting records by equipment and weight class |
+| `/api/users` | Athlete profiles and competition history |
+| `/api/status` | Data source status and statistics (no auth required) |
+| `/api/health-check` | API health monitoring (no auth required) |
 
-- `/api/federations`
-- `/api/meets`
-- `/api/rankings`
-- `/api/records`
-- `/api/status`
-- `/api/users`
+Full API documentation available at [close-powerlifting.jaw.dev/docs/api](https://close-powerlifting.jaw.dev/docs/api)
 
-All end-points are available via `https://close-powerlifting.jaw.dev/docs/api/`.
+## 🔐 Authentication
 
-### Example call/response
+All endpoints except `/api/status` and `/api/health-check` require an API key:
 
 ```bash
-$ curl https://close-powerlifting.jaw.dev/api/rankings
-$ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1&cahe=false
+# Using x-api-key header
+curl -H "x-api-key: YOUR_API_KEY" https://close-powerlifting.jaw.dev/api/rankings
+
+# Using Bearer token
+curl -H "Authorization: Bearer YOUR_API_KEY" https://close-powerlifting.jaw.dev/api/rankings
+```
+
+Request an API key at [close-powerlifting.jaw.dev](https://close-powerlifting.jaw.dev)
+
+## 📦 Example Response
+
+```bash
+curl -H "x-api-key: YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1"
 ```
 
 ```json
@@ -34,15 +48,10 @@ $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page
   "cache": true,
   "data": [
     {
-      "id": 0,
       "rank": 1,
-      "full_name": "waj het",
-      "username": "wajeht",
-      "user_profile": "/api/users/wajeht"
-      // ...
-    },
-    {
-      // ...
+      "full_name": "John Haack",
+      "username": "johnhaack",
+      "user_profile": "/api/users/johnhaack"
     }
   ],
   "pagination": {
@@ -58,14 +67,34 @@ $ curl https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page
 }
 ```
 
-For more of API documentation, visit `https://close-powerlifting.jaw.dev` and request for `x-api-keys`.
+Add `?cache=false` to bypass caching and get the latest data.
 
-## 📑 Docs
+## 🛠️ Development
 
-- [Development guide](https://github.com/wajeht/close-powerlifting/blob/main/docs/getting-started.md)
-- [Contribution guide](https://github.com/wajeht/close-powerlifting/blob/main/docs/contribution.md)
-- [Code of Conduct](https://github.com/wajeht/close-powerlifting/blob/main/docs/code-of-conduct.md)
+```bash
+# Clone repository
+git clone https://github.com/wajeht/close-powerlifting.git
+cd close-powerlifting
+
+# Setup environment
+cp .env.example .env
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Run tests
+npm run test
+```
+
+## 📑 Documentation
+
+- [Getting Started](./docs/getting-started.md)
+- [Contribution Guide](./docs/contribution.md)
+- [Code of Conduct](./docs/code-of-conduct.md)
 
 ## 📜 License
 
-Distributed under the MIT License © [wajeht](https://github.com/wajeht). See [LICENSE](./LICENSE) for more information.
+Distributed under the MIT License. See [LICENSE](./LICENSE) for more information.
