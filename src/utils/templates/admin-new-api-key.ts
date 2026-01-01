@@ -7,12 +7,14 @@ type AdminNewApiKeyTextParams = {
 export function createAdminNewApiKeyText(params: AdminNewApiKeyTextParams): string {
   return `Hi ${params.name},
 
-Here are your credentials to access Close Powerlifting:
+Your admin credentials have been updated:
 
-Admin Password: ${params.password}
-
+Password: ${params.password}
 API Key: ${params.apiKey}
 
-- The Close Powerlifting Team
+Please change your password after logging in and store your API key securely.
+
+Cheers,
+The Close Powerlifting Team
 `;
 }

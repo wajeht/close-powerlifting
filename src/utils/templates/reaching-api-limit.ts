@@ -6,10 +6,16 @@ type ReachingApiLimitTextParams = {
 export function createReachingApiLimitText(params: ReachingApiLimitTextParams): string {
   return `Hi ${params.name},
 
-Your API calls are reaching ${params.percent}% of your limit. Please optimize your usage to avoid interruptions.
+Heads up! You've used ${params.percent}% of your monthly API calls.
 
-Let us know if you need help.
+A few tips to reduce usage:
+- Cache responses when possible
+- Use pagination to fetch smaller datasets
+- Batch your requests during off-peak hours
 
-- The Close Powerlifting Team
+Your limit resets at the start of each month. Need a higher limit? Reply to this email and let us know.
+
+Cheers,
+The Close Powerlifting Team
 `;
 }

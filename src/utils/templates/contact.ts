@@ -5,12 +5,8 @@ type ContactTextParams = {
 };
 
 export function createContactText(params: ContactTextParams): string {
-  return `New Contact Request
+  return `New message from ${params.name} <${params.email}>
 
-Name: ${params.name}
-Email: ${params.email}
-
-Message:
 ${params.message}
 `;
 }

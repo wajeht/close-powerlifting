@@ -8,12 +8,15 @@ type VerifyEmailTextParams = {
 export function createVerifyEmailText(params: VerifyEmailTextParams): string {
   return `Hi ${params.name},
 
-We're happy you signed up for Close Powerlifting. To start exploring, please confirm your email address.
+Thanks for signing up for Close Powerlifting! Please verify your email address to get started:
 
-Verify your email: ${params.hostname}/verify-email?token=${params.verification_token}&email=${params.email}
+${params.hostname}/verify-email?token=${params.verification_token}&email=${params.email}
 
-Welcome to Close Powerlifting!
+Once verified, you'll receive your API key to access powerlifting data from around the world.
 
-- The Close Powerlifting Team
+If you didn't create this account, you can safely ignore this email.
+
+Cheers,
+The Close Powerlifting Team
 `;
 }

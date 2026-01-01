@@ -6,14 +6,15 @@ type WelcomeTextParams = {
 export function createWelcomeText(params: WelcomeTextParams): string {
   return `Hi ${params.name},
 
-Thank you for verifying your email address. Below is your API key to access Close Powerlifting:
+You're all set! Your email has been verified and your API key is ready:
 
 API Key: ${params.key}
 
-Note: This API key will expire after three months. Please make sure to renew your key before it expires to continue accessing Close Powerlifting.
+Your key expires in 3 months. We'll send you a reminder before it does.
 
-Welcome to Close Powerlifting!
+Check out our documentation to get started: https://close-powerlifting.com/docs
 
-- The Close Powerlifting Team
+Happy lifting!
+The Close Powerlifting Team
 `;
 }

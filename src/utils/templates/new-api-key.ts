@@ -6,12 +6,15 @@ type NewApiKeyTextParams = {
 export function createNewApiKeyText(params: NewApiKeyTextParams): string {
   return `Hi ${params.name},
 
-We've received a request to reset your API key. Here is your new API key to access Close Powerlifting:
+Your API key has been reset. Here's your new key:
 
 API Key: ${params.key}
 
-Note: This API key will expire after three months. Please make sure to renew your key before it expires to continue accessing Close Powerlifting.
+Your previous key is now inactive. This new key expires in 3 months.
 
-- The Close Powerlifting Team
+If you didn't request this change, please contact us immediately.
+
+Cheers,
+The Close Powerlifting Team
 `;
 }
