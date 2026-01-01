@@ -1,7 +1,9 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
 
-const BASE_URL = "https://www.openpowerlifting.org";
+import { config } from "../src/config";
+import { logger } from "../src/utils/logger";
+
 const FIXTURES_BASE = join(__dirname, "../src/routes/api");
 
 interface FixtureConfig {
@@ -51,11 +53,12 @@ const fixtures: FixtureConfig[] = [
   { url: "/mlist/usapl/2024", path: "federations/fixtures/mlist-usapl-2024.html" },
 ];
 
-async function fetchFixture(config: FixtureConfig): Promise<void> {
-  const url = `${BASE_URL}${config.url}`;
-  const filePath = join(FIXTURES_BASE, config.path);
+async function fetchFixture(fixture: FixtureConfig): Promise<void> {
+  const baseUrl = config.app.baseUrl.replace(/\/$/, "");
+  const url = `${baseUrl}${fixture.url}`;
+  const filePath = join(FIXTURES_BASE, fixture.path);
 
-  console.log(`Fetching: ${url}`);
+  logger.info(`Fetching: ${url}`);
 
   const response = await fetch(url);
 
@@ -66,33 +69,38 @@ async function fetchFixture(config: FixtureConfig): Promise<void> {
   const content = await response.text();
   writeFileSync(filePath, content, "utf-8");
 
-  console.log(`  -> Saved to: ${config.path}`);
+  logger.info(`Saved to: ${fixture.path}`);
 }
 
 async function main(): Promise<void> {
-  console.log("Updating OpenPowerlifting fixtures...\n");
+  if (!config.app.baseUrl) {
+    logger.error("BASE_URL environment variable is required");
+    process.exit(1);
+  }
+
+  logger.info(`Updating fixtures from ${config.app.baseUrl}`);
 
   const results = await Promise.allSettled(fixtures.map(fetchFixture));
 
   const failed = results.filter((r) => r.status === "rejected");
   const succeeded = results.filter((r) => r.status === "fulfilled");
 
-  console.log(`\nResults: ${succeeded.length} succeeded, ${failed.length} failed`);
+  logger.info(`Results: ${succeeded.length} succeeded, ${failed.length} failed`);
 
   if (failed.length > 0) {
-    console.error("\nFailed fixtures:");
+    logger.error("Failed fixtures:");
     failed.forEach((r) => {
       if (r.status === "rejected") {
-        console.error(`  - ${r.reason}`);
+        logger.error(`  - ${r.reason}`);
       }
     });
     process.exit(1);
   }
 
-  console.log("\nAll fixtures updated successfully!");
+  logger.info("All fixtures updated successfully!");
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
+  logger.error("Fatal error:", error);
   process.exit(1);
 });

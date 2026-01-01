@@ -10,7 +10,7 @@ const statusRouter = express.Router();
 /**
  * GET /api/status
  * @tags status
- * @summary get openpowerlifting status
+ * @summary get data source status
  * @param {boolean} cache.query - use cached data (default: true)
  * @return {object} 200 - success response
  */
