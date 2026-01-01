@@ -1,3 +1,4 @@
+import path from "path";
 import { Application } from "express";
 import expressJSDocSwagger from "express-jsdoc-swagger";
 import type { Options } from "express-jsdoc-swagger";
@@ -31,8 +32,8 @@ const swaggerConfig = {
       scheme: "bearer",
     },
   },
-  baseDir: "./src",
-  filesPattern: ["**/routes/**/*.ts"],
+  baseDir: path.resolve(process.cwd(), "src"),
+  filesPattern: ["./**/*.ts"],
   swaggerUIPath: "/docs/api",
   exposeSwaggerUI: true,
   notRequiredAsNullable: false,
