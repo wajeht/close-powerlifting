@@ -16,12 +16,47 @@ import {
 const recordsRouter = express.Router();
 
 /**
+ * A record entry
+ * @typedef {object} RecordEntry
+ * @property {string} name - Athlete name
+ * @property {string} sex - M or F
+ * @property {string} equipment - Equipment type (Raw, Wraps, Single-ply, etc.)
+ * @property {string} weight_class_kg - Weight class
+ * @property {number} squat_kg - Squat record in kg
+ * @property {number} bench_kg - Bench record in kg
+ * @property {number} deadlift_kg - Deadlift record in kg
+ * @property {number} total_kg - Total record in kg
+ * @property {number} dots - DOTS score
+ * @property {string} federation - Federation code
+ * @property {string} date - Record date
+ */
+
+/**
+ * Records response
+ * @typedef {object} RecordsResponse
+ * @property {string} status - Response status
+ * @property {string} request_url - Request URL
+ * @property {string} message - Response message
+ * @property {boolean} cache - Whether data was cached
+ * @property {array<RecordEntry>} data - Array of record entries
+ */
+
+/**
  * GET /api/records
- * @tags records
- * @summary get all records
+ * @tags Records
+ * @summary Get all powerlifting records
+ * @description Returns all-time powerlifting records across all equipment types and weight classes
  * @security BearerAuth
- * @param {boolean} cache.query - use cached data (default: true)
- * @return {object} 200 - success response
+ * @param {boolean} cache.query - Use cached data - default: true
+ * @return {RecordsResponse} 200 - Success response with all records
+ * @example response - 200 - Success response
+ * {
+ *   "status": "success",
+ *   "request_url": "/api/records",
+ *   "message": "The resource was returned successfully!",
+ *   "cache": true,
+ *   "data": [{"name": "John Haack", "equipment": "Raw", "total_kg": 900}]
+ * }
  */
 recordsRouter.get(
   "/",
@@ -45,12 +80,14 @@ recordsRouter.get(
 
 /**
  * GET /api/records/{equipment}
- * @tags records
- * @summary get records filtered by equipment type
+ * @tags Records
+ * @summary Get records filtered by equipment type
+ * @description Returns powerlifting records for a specific equipment type
  * @security BearerAuth
- * @param {string} equipment.path - equipment type: raw, wraps, raw-wraps, single-ply, multi-ply, unlimited
- * @param {boolean} cache.query - use cached data (default: true)
- * @return {object} 200 - success response
+ * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
+ * @param {boolean} cache.query - Use cached data - default: true
+ * @return {RecordsResponse} 200 - Success response with filtered records
+ * @return {object} 404 - Records not found
  */
 recordsRouter.get(
   "/:equipment",
@@ -85,13 +122,15 @@ recordsRouter.get(
 
 /**
  * GET /api/records/{equipment}/{sex}
- * @tags records
- * @summary get records filtered by equipment and sex
+ * @tags Records
+ * @summary Get records filtered by equipment and sex
+ * @description Returns powerlifting records for a specific equipment type and sex category
  * @security BearerAuth
- * @param {string} equipment.path - equipment type: raw, wraps, raw-wraps, single-ply, multi-ply, unlimited
- * @param {string} sex.path - sex: men, women
- * @param {boolean} cache.query - use cached data (default: true)
- * @return {object} 200 - success response
+ * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
+ * @param {string} sex.path.required - Sex category - enum:men,women
+ * @param {boolean} cache.query - Use cached data - default: true
+ * @return {RecordsResponse} 200 - Success response with filtered records
+ * @return {object} 404 - Records not found
  */
 recordsRouter.get(
   "/:equipment/:sex",

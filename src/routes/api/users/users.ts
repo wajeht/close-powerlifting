@@ -14,14 +14,57 @@ import {
 const usersRouter = express.Router();
 
 /**
+ * User search result
+ * @typedef {object} UserSearchResult
+ * @property {string} name - Athlete name
+ * @property {string} url - Profile URL path
+ */
+
+/**
+ * User profile
+ * @typedef {object} UserProfile
+ * @property {string} name - Athlete name
+ * @property {string} sex - M or F
+ * @property {string} country - Country code
+ * @property {string} state - State/province (if applicable)
+ * @property {array<object>} competition_history - List of competition results
+ */
+
+/**
+ * User search response
+ * @typedef {object} UserSearchResponse
+ * @property {string} status - Response status
+ * @property {string} request_url - Request URL
+ * @property {string} message - Response message
+ * @property {array<UserSearchResult>} data - Array of matching users
+ */
+
+/**
+ * User profile response
+ * @typedef {object} UserProfileResponse
+ * @property {string} status - Response status
+ * @property {string} request_url - Request URL
+ * @property {string} message - Response message
+ * @property {UserProfile} data - User profile data
+ */
+
+/**
  * GET /api/users
- * @tags users
- * @summary search users or redirect to rankings
+ * @tags Users
+ * @summary Search users by name
+ * @description Search for athletes by name. Returns matching users with their profile URLs. If no search parameter is provided, redirects to /api/rankings.
  * @security BearerAuth
- * @param {string} search.query - search term for user lookup
- * @return {object} 200 - success response
- * @return {object} 308 - redirect to rankings
- * @return {object} 404 - not found
+ * @param {string} search.query - Search term for user lookup (e.g., "haack", "john")
+ * @return {UserSearchResponse} 200 - Success response with matching users
+ * @return {object} 308 - Redirect to /api/rankings if no search term provided
+ * @return {object} 404 - No users found
+ * @example response - 200 - Success response
+ * {
+ *   "status": "success",
+ *   "request_url": "/api/users?search=haack",
+ *   "message": "The resource was returned successfully!",
+ *   "data": [{"name": "John Haack", "url": "/api/users/johnhaack"}]
+ * }
  */
 usersRouter.get(
   "/",
@@ -50,12 +93,25 @@ usersRouter.get(
 
 /**
  * GET /api/users/{username}
- * @tags users
- * @summary get specific user details
+ * @tags Users
+ * @summary Get user profile by username
+ * @description Returns detailed profile for a specific athlete including personal info and full competition history
  * @security BearerAuth
- * @param {string} username.path.required - the username to look up
- * @return {object} 200 - success response
- * @return {object} 404 - not found
+ * @param {string} username.path.required - Username/athlete name slug (e.g., johnhaack,aborisov)
+ * @return {UserProfileResponse} 200 - Success response with user profile
+ * @return {object} 404 - User not found
+ * @example response - 200 - Success response
+ * {
+ *   "status": "success",
+ *   "request_url": "/api/users/johnhaack",
+ *   "message": "The resource was returned successfully!",
+ *   "data": {
+ *     "name": "John Haack",
+ *     "sex": "M",
+ *     "country": "USA",
+ *     "competition_history": [{"meet": "2024 USPA Nationals", "total_kg": 900}]
+ *   }
+ * }
  */
 usersRouter.get(
   "/:username",
