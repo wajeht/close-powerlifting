@@ -14,10 +14,12 @@ import {
 const router = express.Router();
 
 /**
- * GET /api/meets/:meet
+ * GET /api/meets/{meet}
  * @tags meets
  * @summary get specific meet details
  * @security BearerAuth
+ * @param {string} meet.path.required - the meet code to look up
+ * @param {boolean} cache.query - use cached data (default: true)
  */
 router.get(
   "/:meet",

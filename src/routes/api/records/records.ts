@@ -13,6 +13,8 @@ const router = express.Router();
  * @tags records
  * @summary get all records
  * @security BearerAuth
+ * @param {boolean} cache.query - use cached data (default: true)
+ * @return {object} 200 - success response
  */
 router.get(
   "/",

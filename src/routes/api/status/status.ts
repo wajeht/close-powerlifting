@@ -11,7 +11,7 @@ const router = express.Router();
  * GET /api/status
  * @tags status
  * @summary get openpowerlifting status
- * @security BearerAuth
+ * @param {boolean} cache.query - use cached data (default: true)
  */
 router.get(
   "/",

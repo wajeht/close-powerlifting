@@ -20,6 +20,9 @@ const router = express.Router();
  * @tags federations
  * @summary get all federations with optional pagination
  * @security BearerAuth
+ * @param {number} current_page.query - page number (default: 1)
+ * @param {number} per_page.query - items per page (default: 100)
+ * @param {boolean} cache.query - use cached data (default: true)
  */
 router.get(
   "/",
@@ -41,10 +44,13 @@ router.get(
 );
 
 /**
- * GET /api/federations/:federation
+ * GET /api/federations/{federation}
  * @tags federations
  * @summary get specific federation details
  * @security BearerAuth
+ * @param {string} federation.path.required - the federation code (e.g., IPF, USAPL)
+ * @param {number} year.query - filter by year
+ * @param {boolean} cache.query - use cached data (default: true)
  */
 router.get(
   "/:federation",

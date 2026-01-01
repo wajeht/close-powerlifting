@@ -18,6 +18,9 @@ const router = express.Router();
  * @tags rankings
  * @summary get all rankings with optional pagination
  * @security BearerAuth
+ * @param {number} current_page.query - page number (default: 1)
+ * @param {number} per_page.query - items per page (default: 100)
+ * @param {boolean} cache.query - use cached data (default: true)
  */
 router.get(
   "/",
@@ -39,10 +42,11 @@ router.get(
 );
 
 /**
- * GET /api/rankings/:rank
+ * GET /api/rankings/{rank}
  * @tags rankings
  * @summary get specific rank details
  * @security BearerAuth
+ * @param {string} rank.path.required - the rank number to look up
  */
 router.get(
   "/:rank",

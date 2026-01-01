@@ -18,6 +18,7 @@ const router = express.Router();
  * @tags users
  * @summary search users or redirect to rankings
  * @security BearerAuth
+ * @param {string} search.query - search term for user lookup
  */
 router.get(
   "/",
@@ -45,10 +46,11 @@ router.get(
 );
 
 /**
- * GET /api/users/:username
+ * GET /api/users/{username}
  * @tags users
  * @summary get specific user details
  * @security BearerAuth
+ * @param {string} username.path.required - the username to look up
  */
 router.get(
   "/:username",
