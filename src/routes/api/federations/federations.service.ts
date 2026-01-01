@@ -1,17 +1,13 @@
-import { AxiosError } from "axios";
-import { StatusCodes } from "http-status-codes";
 import { JSDOM } from "jsdom";
 
 import cache from "../../../db/cache";
-import Axios from "../../../utils/axios";
+import { fetchHtml } from "../../../utils/http";
 import { tableToJson } from "../../../utils/helpers";
 import { GetFederationsParamType, GetFederationsQueryType } from "./federations.validation";
 
-const api = new Axios(true).instance();
-
 async function fetchFederations({ current_page, per_page }: any) {
   try {
-    const html = await (await api.get("/mlist")).data;
+    const html = await fetchHtml("/mlist");
     const dom = new JSDOM(html);
     const elements = dom.window.document.getElementsByTagName("table")[0];
     const table = tableToJson(elements);
@@ -34,14 +30,8 @@ async function fetchFederations({ current_page, per_page }: any) {
       from,
       to,
     };
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }
 
@@ -90,14 +80,8 @@ export async function getFederations({ current_page = 1, per_page = 100, cache: 
         to: federations?.to,
       },
     };
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }
 
@@ -109,20 +93,14 @@ async function fetchFederation({ federation, year }: any) {
     } else {
       url = `/mlist/${federation}`;
     }
-    const html = await (await api.get(url)).data;
+    const html = await fetchHtml(url);
     const dom = new JSDOM(html);
     const elements = dom.window.document.getElementsByTagName("table")[0];
     const federations = tableToJson(elements);
 
     return federations;
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }
 
@@ -160,13 +138,7 @@ export async function getFederation({
       data: federations,
       cache: useCache,
     };
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }

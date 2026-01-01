@@ -1,17 +1,9 @@
-import axios from "axios";
-
 import cache from "../../../db/cache";
+import { fetchWithAuth } from "../../../utils/http";
 import logger from "../../../utils/logger";
 
 export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
   const fetchStatus = async () => {
-    const fetch = axios.create({
-      baseURL: url,
-      headers: {
-        authorization: `Bearer ${X_API_KEY}`,
-      },
-    });
-
     const routes = [
       "/api/rankings?cache=false",
       "/api/rankings/1?cache=false",
@@ -28,18 +20,19 @@ export async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url:
       "/api/health-check?cache=false",
     ];
 
-    const promises = await Promise.allSettled(routes.map((r) => fetch(r)));
+    const promises = await Promise.allSettled(
+      routes.map((r) => fetchWithAuth(url, r, X_API_KEY)),
+    );
 
-    const data = promises.map((p) => {
+    const data = promises.map((p, i) => {
       const fulfilled = p.status === "fulfilled";
-      const config = fulfilled ? p.value?.config : p.reason?.config;
-      const headers = fulfilled ? p.value?.headers : p.reason?.response?.headers;
+      const result = fulfilled ? p.value : null;
 
       return {
-        status: fulfilled,
-        method: config?.method?.toUpperCase(),
-        url: config?.url,
-        date: headers?.date,
+        status: fulfilled && result?.ok,
+        method: "GET",
+        url: routes[i],
+        date: result?.date || new Date().toISOString(),
       };
     });
 

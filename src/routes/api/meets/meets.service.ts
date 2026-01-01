@@ -1,29 +1,19 @@
-import { AxiosError } from "axios";
-import { StatusCodes } from "http-status-codes";
 import { JSDOM } from "jsdom";
 
 import cache from "../../../db/cache";
-import Axios from "../../../utils/axios";
+import { fetchHtml } from "../../../utils/http";
 import { tableToJson } from "../../../utils/helpers";
 import { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 
-const api = new Axios(true).instance();
-
 async function fetchMeet({ meet }: GetMeetParamType) {
   try {
-    const html = await (await api.get(`/m/${meet}`)).data;
+    const html = await fetchHtml(`/m/${meet}`);
     const dom = new JSDOM(html);
     const elements = dom.window.document.getElementsByTagName("table")[0];
     const table = tableToJson(elements);
     return table;
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }
 
@@ -45,13 +35,7 @@ export async function getMeet({
     }
 
     return cachedMeet;
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }

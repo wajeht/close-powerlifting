@@ -1,16 +1,11 @@
-import { AxiosError } from "axios";
-import { StatusCodes } from "http-status-codes";
-
 import cache from "../../../db/cache";
-import Axios from "../../../utils/axios";
+import { fetchApi } from "../../../utils/http";
 import { buildPagination } from "../../../utils/helpers";
 import { GetRankingsType, GetRankType } from "./rankings.validation";
 
-const api = new Axios(false).instance();
-
 export async function fetchRankings(paginationQuery: string) {
   try {
-    const rankings = await (await api.get("/rankings" + "?" + paginationQuery)).data;
+    const rankings = await fetchApi("/rankings?" + paginationQuery);
 
     const data = rankings.rows.map((r: any) => {
       return {
@@ -49,14 +44,8 @@ export async function fetchRankings(paginationQuery: string) {
       data,
       total_length: rankings?.total_length,
     };
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      if (error.response?.status === StatusCodes.NOT_FOUND) {
-        return null;
-      }
-    } else {
-      throw error;
-    }
+  } catch {
+    return null;
   }
 }
 

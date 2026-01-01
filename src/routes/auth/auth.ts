@@ -1,8 +1,6 @@
-import axios from "axios";
 import express, { Request, Response } from "express";
 import catchAsyncHandler from "express-async-handler";
 import { StatusCodes } from "http-status-codes";
-import qs from "qs";
 import { z } from "zod";
 
 import { config } from "../../config";
@@ -62,24 +60,26 @@ interface GoogleUserResult {
 }
 
 async function getGoogleOauthToken({ code }: { code: string }): Promise<GoogleOauthToken> {
-  const rootURl = "https://oauth2.googleapis.com/token";
+  const url = "https://oauth2.googleapis.com/token";
 
-  const options = {
+  const params = new URLSearchParams({
     code,
     client_id: config.oauth.google.clientId,
     client_secret: config.oauth.google.clientSecret,
     redirect_uri: config.oauth.google.redirectUrl,
     grant_type: "authorization_code",
-  };
+  });
 
   try {
-    const { data } = await axios.post<GoogleOauthToken>(rootURl, qs.stringify(options), {
+    const response = await fetch(url, {
+      method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
+      body: params.toString(),
     });
 
-    return data;
+    return response.json();
   } catch (error: any) {
     logger.error("Failed to fetch Google Oauth Tokens");
     throw error;
@@ -94,7 +94,7 @@ async function getGoogleUser({
   access_token: string;
 }): Promise<GoogleUserResult> {
   try {
-    const { data } = await axios.get<GoogleUserResult>(
+    const response = await fetch(
       `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${access_token}`,
       {
         headers: {
@@ -103,7 +103,7 @@ async function getGoogleUser({
       },
     );
 
-    return data;
+    return response.json();
   } catch (error: any) {
     logger.error("Failed to fetch Google User info");
     throw error;

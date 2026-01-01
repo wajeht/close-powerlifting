@@ -1,15 +1,13 @@
 import { JSDOM } from "jsdom";
 
 import cache from "../../../db/cache";
-import Axios from "../../../utils/axios";
+import { fetchHtml } from "../../../utils/http";
 import { stripHTML, tableToJson } from "../../../utils/helpers";
 import { GetStatusType } from "./status.validation";
 
-const api = new Axios(true).instance();
-
 export async function fetchStatus() {
   try {
-    const html = await (await api.get("/status")).data;
+    const html = await fetchHtml("/status");
     const dom = new JSDOM(html);
     const div = dom.window.document.getElementsByClassName("text-content") as any;
     return {
