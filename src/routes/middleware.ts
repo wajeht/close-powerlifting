@@ -8,10 +8,9 @@ import { config } from "../config";
 import { cache } from "../db/cache";
 import { incrementApiCallCount } from "../db/repositories/user.repository";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
+import { mailService } from "../mail";
 import { getHostName } from "../utils/helpers";
 import { logger } from "../utils/logger";
-import { mail } from "../utils/mail";
-import { createReachingApiLimitText } from "../utils/templates/reaching-api-limit";
 
 type RequestValidators = {
   params?: z.ZodTypeAny;
@@ -182,11 +181,10 @@ export async function trackAPICallsMiddleware(req: Request, res: Response, next:
       }
 
       if (user.api_call_count === Math.floor(user.api_call_limit / 2) && !user.admin) {
-        mail.sendMail({
-          from: `"Close Powerlifting" <${config.email.user}>`,
-          to: user.email,
-          subject: "Reaching API Call Limit",
-          text: createReachingApiLimitText({ name: user.name, percent: 50 }),
+        await mailService.sendReachingApiLimitEmail({
+          email: user.email,
+          name: user.name,
+          percent: 50,
         });
       }
     }

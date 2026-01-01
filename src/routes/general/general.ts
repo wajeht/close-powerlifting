@@ -5,9 +5,8 @@ import { config } from "../../config";
 import { cache } from "../../db/cache";
 import { getDb } from "../../db/db";
 import { cronService } from "../../crons";
+import { mailService } from "../../mail";
 import { getHostName } from "../../utils/helpers";
-import { mail } from "../../utils/mail";
-import { createContactText } from "../../utils/templates/contact";
 import { validationMiddleware } from "../middleware";
 import { getAPIStatus } from "../api/health-check/health-check.service";
 import { getRankings } from "../api/rankings/rankings.service";
@@ -52,12 +51,7 @@ generalRouter.post(
   async (req: Request, res: Response) => {
     const { name, email, message } = req.body;
 
-    mail.sendMail({
-      from: `"Close Powerlifting" <${config.email.user}>`,
-      to: config.email.user,
-      subject: `Contact Request from ${email}`,
-      text: createContactText({ name, email, message }),
-    });
+    await mailService.sendContactEmail({ name, email, message });
 
     req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 

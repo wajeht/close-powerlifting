@@ -8,9 +8,7 @@ import {
   resetAllApiCallCounts,
 } from "./db/repositories/user.repository";
 import { logger } from "./utils/logger";
-import { createReachingApiLimitText } from "./utils/templates/reaching-api-limit";
-import { createApiLimitResetText } from "./utils/templates/api-limits-reset";
-import { mail } from "./utils/mail";
+import { mailService } from "./mail";
 
 export interface CronService {
   start: () => void;
@@ -48,13 +46,7 @@ export function createCronService(): CronService {
       await resetAllApiCallCounts();
 
       for (const user of users) {
-        mail.sendMail({
-          from: `"Close Powerlifting" <${config.email.user}>`,
-          to: user.email,
-          subject: "API Call Limit Reset",
-          text: createApiLimitResetText({ name: user.name }),
-        });
-        logger.info(`resetApiCallCount email sent to user ${user.id}`);
+        await mailService.sendApiLimitResetEmail({ email: user.email, name: user.name });
       }
 
       logger.info("cron job completed: resetApiCallCount");
@@ -71,13 +63,11 @@ export function createCronService(): CronService {
       const users = await findByApiCallCount(targetCount);
 
       for (const user of users) {
-        mail.sendMail({
-          from: `"Close Powerlifting" <${config.email.user}>`,
-          to: user.email,
-          subject: "Reaching API Limit",
-          text: createReachingApiLimitText({ name: user.name, percent: 70 }),
+        await mailService.sendReachingApiLimitEmail({
+          email: user.email,
+          name: user.name,
+          percent: 70,
         });
-        logger.info(`reachingApiLimit email sent to user ${user.id}`);
       }
 
       logger.info("cron job completed: sendReachingApiLimitEmail");

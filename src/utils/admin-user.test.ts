@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 import { config } from "../config";
 import { findByEmail, create } from "../db/repositories/user.repository";
 import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
-import { mail } from "../utils/mail";
+import { mailService } from "../mail";
 import { initAdminUser } from "./admin-user";
 import { logger } from "./logger";
 
@@ -25,6 +25,12 @@ vi.mock("./helpers", async () => ({
   generateAPIKey: vi.fn(),
   generatePassword: vi.fn(),
   hashKey: vi.fn(),
+}));
+
+vi.mock("../mail", async () => ({
+  mailService: {
+    sendAdminCredentialsEmail: vi.fn(),
+  },
 }));
 
 describe("init", () => {
@@ -49,8 +55,6 @@ describe("init", () => {
       hashedKey: "hashedKey",
       unhashedKey: "unhashedKey",
     });
-
-    mail.sendMail = vi.fn().mockResolvedValue({});
 
     await initAdminUser();
 

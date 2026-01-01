@@ -5,8 +5,7 @@ import { findByEmail, create } from "../db/repositories/user.repository";
 import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
 import { updateUser } from "../routes/auth/auth.service";
 import { logger } from "./logger";
-import { mail } from "./mail";
-import { createAdminNewApiKeyText } from "./templates/admin-new-api-key";
+import { mailService } from "../mail";
 
 export async function initAdminUser() {
   try {
@@ -45,19 +44,14 @@ export async function initAdminUser() {
         admin: true,
       });
 
-      const verified = await updateUser(createdAdminUser.email, { key: hashedKey });
+      await updateUser(createdAdminUser.email, { key: hashedKey });
 
-      try {
-        await mail.sendMail({
-          from: `"Close Powerlifting" <${config.email.from}>`,
-          to: createdAdminUser.email,
-          subject: "API Key and Admin Password for Close Powerlifting",
-          text: createAdminNewApiKeyText({ name: verified.name, password, apiKey: unhashedKey }),
-        });
-        logger.info(`Admin welcome email sent to ${createdAdminUser.email}`);
-      } catch (error) {
-        logger.error(`Failed to send admin welcome email: ${error}`);
-      }
+      await mailService.sendAdminCredentialsEmail({
+        email: createdAdminUser.email,
+        name: createdAdminUser.name,
+        password,
+        apiKey: unhashedKey,
+      });
 
       logger.info(
         `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
