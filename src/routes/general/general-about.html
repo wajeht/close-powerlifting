@@ -13,7 +13,7 @@
     <div class="mx-auto flex max-w-5xl flex-col gap-4">
       <!-- warn -->
       <p class="rounded bg-red-500/20 p-4 text-neutral-300">
-        The primary purpose of this project is purely educational!
+        This project is intended for educational purposes only.
       </p>
 
       <!-- why -->
@@ -21,38 +21,37 @@
 
       <!-- 1 -->
       <p>
-        Within powerlifting world, there is
         <a
           class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.org/"
           target="_blank"
-          >Open Powerlifting ↗️</a
+          >Open Powerlifting</a
         >
-        project exists to create a permanent, accurate, convenient, accessible, open archive of the
-        world's powerlifting data.
+        is a community-driven project that maintains a permanent, accurate, and accessible archive
+        of the world's powerlifting data.
       </p>
 
       <p>
-        They even mentioned not to scrape the website yet still provided bulk data for free of
-        download
+        While they request that users avoid scraping their website, they generously provide bulk
+        data for free
         <a
           class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html"
           target="_blank"
-          >here ↗️</a
+          >here</a
         >.
       </p>
 
       <p>
-        <a class="font-bold hover:text-slate-200" href="/" target="_blank">Close Powerlifting ↗️</a>
-        only exists to create reverse API on top of
+        <a class="font-bold hover:text-slate-200" href="/">Close Powerlifting</a>
+        provides a reverse-engineered API on top of
         <a
           class="font-bold hover:text-slate-200"
           href="https://openpowerlifting.org/"
           target="_blank"
-          >Open Powerlifting ↗️</a
+          >Open Powerlifting</a
         >
-        project for us developers. The primary purpose of this project is purely educational!
+        for developers who want programmatic access to this data.
       </p>
 
       <!-- how  -->
@@ -61,9 +60,9 @@
       <!-- 1 -->
       <h2>Step 1</h2>
       <p>
-        Register for api key
-        <a class="font-bold hover:text-slate-200" href="/register" target="_blank">here ↗️</a>. You
-        will have confirm your email address after registration and API key will sent to your email!
+        <a class="font-bold hover:text-slate-200" href="/register">Register for an API key</a>.
+        After registration, you'll need to confirm your email address, and your API key will be sent
+        to you.
       </p>
 
       <!-- 2 -->
@@ -71,21 +70,21 @@
       <p>
         Visit our
         <a class="font-bold hover:text-slate-200" href="/docs/api/" target="_blank"
-          >API Documentation ↗️</a
+          >API documentation</a
         >
-        page to reference all the available routes.
+        to see all available endpoints.
       </p>
 
       <!-- 3 -->
       <h2>Step 3</h2>
       <p>
-        Attach your api key via
-        <span class="rounded-sm bg-neutral-900 px-2 py-1">x-api-key</span> or
+        Include your API key in requests using either the
+        <span class="rounded-sm bg-neutral-900 px-2 py-1">x-api-key</span> header or a
         <span class="rounded-sm bg-neutral-900 px-2 py-1">bearer token</span>.
       </p>
       <pre
         class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
-      ><code class="language-js">// auth through x-api-key
+      ><code class="language-js">// Using x-api-key header
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
@@ -96,7 +95,7 @@ const data = await res.json();</code></pre>
 
       <pre
         class="overflow-scroll rounded bg-neutral-900 p-4 text-sm"
-      ><code class="language-js">// auth through bearer token
+      ><code class="language-js">// Using bearer token
 const res = await window.fetch('/api/rankings', {
   headers: {
     'Content-Type': 'application/json',
@@ -104,18 +103,11 @@ const res = await window.fetch('/api/rankings', {
   },
 });
 const data = await res.json();</code></pre>
-      Enjoy!
 
       <p>
-        You will receive a quota of 500 API calls every month, and this limit will reset at the
-        beginning of each new month. If you need more than 500 calls, please request additional
-        resources via our
-        <a
-          class="font-bold hover:text-slate-200"
-          href="https://close-powerlifting.jaw.dev/contact"
-          target="_blank"
-          >contact page ↗️</a
-        >.
+        Each account receives a quota of 500 API calls per month. This limit resets at the beginning
+        of each month. If you need a higher limit, please reach out through our
+        <a class="font-bold hover:text-slate-200" href="/contact">contact page</a>.
       </p>
     </div>
   </div>

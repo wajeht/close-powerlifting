@@ -18,9 +18,9 @@
       </div>
       <div class="flex gap-1">
         <% if (item.status) { %>
-        <span>✅ Available</span>
+        <span class="text-green-400">Available</span>
         <% } else { %>
-        <span>❌ Not available</span>
+        <span class="text-red-400">Unavailable</span>
         <% } %>
         <div class="text-neutral-500">as of</div>
         <div class="text-neutral-400"><%= item.date %></div>
