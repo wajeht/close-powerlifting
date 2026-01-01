@@ -191,7 +191,7 @@ router.post(
 
     logger.info(`Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`);
 
-    if (foundUser && foundUser.verified === false) {
+    if (foundUser && !foundUser.verified) {
       logger.info(`User ${email} not verified, sending verification email`);
       await AuthService.sendVerificationEmail({
         hostname: getHostName(req),
@@ -200,14 +200,14 @@ router.post(
         email: foundUser.email,
         verification_token: foundUser.verification_token!,
       });
-    } else if (foundUser && foundUser.verified === true && foundUser.admin === true) {
+    } else if (foundUser && foundUser.verified && foundUser.admin) {
       logger.info(`User ${email} is admin, resetting admin API key`);
       await AuthService.resetAdminAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
       });
-    } else if (foundUser && foundUser.verified === true) {
+    } else if (foundUser && foundUser.verified) {
       logger.info(`User ${email} is verified, resetting API key`);
       await AuthService.resetAPIKey({
         userId: String(foundUser.id),
@@ -437,7 +437,7 @@ router.post(
 
     const foundUser = await UserRepository.findByEmail(email);
 
-    if (foundUser && foundUser.verified === false) {
+    if (foundUser && !foundUser.verified) {
       await AuthService.sendVerificationEmail({
         hostname: getHostName(req),
         userId: String(foundUser.id),
@@ -445,13 +445,13 @@ router.post(
         email: foundUser.email,
         verification_token: foundUser.verification_token!,
       });
-    } else if (foundUser && foundUser.verified === true && foundUser.admin === true) {
+    } else if (foundUser && foundUser.verified && foundUser.admin) {
       await AuthService.resetAdminAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
         email: foundUser.email,
       });
-    } else if (foundUser && foundUser.verified === true) {
+    } else if (foundUser && foundUser.verified) {
       await AuthService.resetAPIKey({
         userId: String(foundUser.id),
         name: foundUser.name,
