@@ -49,9 +49,9 @@ async function fetchFederations({ current_page, per_page }: any) {
   }
 }
 
-export async function getFederations({ current_page = 1, per_page = 100, cache = true }) {
+export async function getFederations({ current_page = 1, per_page = 100, cache: useCache = true }) {
   try {
-    if (cache === false) {
+    if (useCache === false) {
       const federations = await fetchFederations({ current_page, per_page });
 
       return {
