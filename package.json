@@ -1,7 +1,7 @@
 {
   "name": "close-powerlifting",
   "version": "0.0.1",
-  "description": "an intuitive api for open-powerlifting database",
+  "description": "An intuitive REST API for the OpenPowerlifting database",
   "keywords": [
     "powerlifting"
   ],
