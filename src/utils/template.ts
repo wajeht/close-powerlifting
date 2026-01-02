@@ -2,6 +2,7 @@ import { Eta } from "eta";
 import path from "path";
 
 import { config } from "../config";
+import { assetUtils } from "./assets";
 
 const viewsDir = path.join(process.cwd(), "src/routes");
 
@@ -26,6 +27,10 @@ export function engine(
   }
 }
 
+const isProd = config.app.env === "production";
+const assetVersions = isProd ? assetUtils.getAssetVersions() : null;
+const cssVersion = assetVersions?.style ?? String(Math.random()).slice(2, 10);
+
 export function layoutMiddleware(
   req: import("express").Request,
   res: import("express").Response,
@@ -38,7 +43,7 @@ export function layoutMiddleware(
     options?: object,
     callback?: (err: Error, html: string) => void,
   ) {
-    const opts = options || {};
+    const opts = { version: { style: cssVersion }, ...options };
 
     originalRender(view, opts, (err: Error, html: string) => {
       if (err) {
