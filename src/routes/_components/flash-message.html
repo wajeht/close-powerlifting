@@ -1,12 +1,7 @@
-<!-- prettier-ignore -->
 <% if (Object.keys(messages).length) { %>
-<!-- prettier-ignore -->
-<% for (const m in messages) { %>
-<div
-  class="<%= m === 'success' ? 'border-green-500/30 bg-green-500/10' : m === 'error' ? 'border-power/30 bg-power/10' : m === 'info' ? 'border-blue-500/30 bg-blue-500/10' : '' %> rounded-lg border px-6 py-4 text-neutral-300"
->
-  <%= messages[m] %>
-</div>
-<% } %>
-<!-- prettier-ignore -->
+  <% for (const m in messages) { %>
+  <div class="<%= m === 'success' ? 'border-green-500/30 bg-green-500/10' : m === 'error' ? 'border-power/30 bg-power/10' : m === 'info' ? 'border-blue-500/30 bg-blue-500/10' : '' %> rounded-lg border px-6 py-4 text-neutral-300" >
+    <%= messages[m] %>
+  </div>
+  <% } %>
 <% } %>
