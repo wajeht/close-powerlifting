@@ -93,7 +93,6 @@
     --container-xs: 20rem;
     --container-md: 28rem;
     --container-2xl: 42rem;
-    --container-4xl: 56rem;
     --container-5xl: 64rem;
     --container-7xl: 80rem;
     --text-xs: 0.75rem;
@@ -509,6 +508,9 @@
   .mb-10 {
     margin-bottom: calc(var(--spacing) * 10) !important;
   }
+  .mb-12 {
+    margin-bottom: calc(var(--spacing) * 12) !important;
+  }
   .contents {
     display: contents !important;
   }
@@ -539,6 +541,9 @@
   .h-10 {
     height: calc(var(--spacing) * 10) !important;
   }
+  .h-16 {
+    height: calc(var(--spacing) * 16) !important;
+  }
   .h-screen {
     height: 100vh !important;
   }
@@ -557,6 +562,9 @@
   .w-10 {
     width: calc(var(--spacing) * 10) !important;
   }
+  .w-16 {
+    width: calc(var(--spacing) * 16) !important;
+  }
   .w-full {
     width: 100% !important;
   }
@@ -565,9 +573,6 @@
   }
   .max-w-2xl {
     max-width: var(--container-2xl) !important;
-  }
-  .max-w-4xl {
-    max-width: var(--container-4xl) !important;
   }
   .max-w-5xl {
     max-width: var(--container-5xl) !important;
@@ -645,6 +650,9 @@
   .gap-8 {
     gap: calc(var(--spacing) * 8) !important;
   }
+  .gap-12 {
+    gap: calc(var(--spacing) * 12) !important;
+  }
   :where(.space-y-1 > :not(:last-child)) {
     --tw-space-y-reverse: 0 !important;
     margin-block-start: calc(calc(var(--spacing) * 1) * var(--tw-space-y-reverse)) !important;
@@ -657,6 +665,13 @@
     margin-block-start: calc(calc(var(--spacing) * 2) * var(--tw-space-y-reverse)) !important;
     margin-block-end: calc(
       calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse))
+    ) !important;
+  }
+  :where(.space-y-4 > :not(:last-child)) {
+    --tw-space-y-reverse: 0 !important;
+    margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse)) !important;
+    margin-block-end: calc(
+      calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse))
     ) !important;
   }
   .overflow-scroll {
@@ -686,6 +701,10 @@
   .border {
     border-style: var(--tw-border-style) !important;
     border-width: 1px !important;
+  }
+  .border-2 {
+    border-style: var(--tw-border-style) !important;
+    border-width: 2px !important;
   }
   .border-t {
     border-top-style: var(--tw-border-style) !important;
@@ -824,9 +843,6 @@
   .p-8 {
     padding: calc(var(--spacing) * 8) !important;
   }
-  .px-1\.5 {
-    padding-inline: calc(var(--spacing) * 1.5) !important;
-  }
   .px-2 {
     padding-inline: calc(var(--spacing) * 2) !important;
   }
@@ -844,9 +860,6 @@
   }
   .px-8 {
     padding-inline: calc(var(--spacing) * 8) !important;
-  }
-  .py-0\.5 {
-    padding-block: calc(var(--spacing) * 0.5) !important;
   }
   .py-2 {
     padding-block: calc(var(--spacing) * 2) !important;
@@ -871,9 +884,6 @@
   }
   .pt-6 {
     padding-top: calc(var(--spacing) * 6) !important;
-  }
-  .pb-4 {
-    padding-bottom: calc(var(--spacing) * 4) !important;
   }
   .text-center {
     text-align: center !important;
@@ -1196,6 +1206,10 @@
     }
     .sm\:justify-between {
       justify-content: space-between !important;
+    }
+    .sm\:text-4xl {
+      font-size: var(--text-4xl) !important;
+      line-height: var(--tw-leading, var(--text-4xl--line-height)) !important;
     }
     .sm\:text-5xl {
       font-size: var(--text-5xl) !important;
