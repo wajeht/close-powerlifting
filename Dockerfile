@@ -1,31 +1,59 @@
-FROM node:24-alpine AS build
+FROM node:24-slim AS build
 
 WORKDIR /usr/src/app
 
+# Copy only package files first for better layer caching
 COPY package*.json ./
 
-RUN npm ci
+# Install all dependencies including dev for build tools
+RUN npm ci --no-audit --no-fund
 
-COPY ./ ./
+# Copy only TypeScript config first (changes less frequently)
+COPY tsconfig*.json ./
 
-RUN npm run build
+# Copy source files
+COPY src ./src
+COPY public ./public
+COPY scripts ./scripts
 
-FROM node:24-alpine
+# Build with TypeScript and minify
+RUN npm run build:prod && \
+    rm -rf src/tests src/**/*.test.* && \
+    find dist -name "*.map" -delete && \
+    find src/routes -name "*.ts" -delete && \
+    find src/routes -name "*.js" -delete && \
+    rm -rf dist/scripts && \
+    rm -rf vitest.config.* && \
+    rm -rf src/routes/**/fixtures
 
-RUN apk update && apk add --no-cache curl
+FROM node:24-slim
 
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+# Combine RUN commands
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -g 1001 nodejs && \
+    useradd -r -u 1001 -g nodejs nodejs
 
 WORKDIR /usr/src/app
 
-COPY --chown=nodejs:nodejs --from=build /usr/src/app ./
+# Copy only production dependencies and built files
+COPY --chown=nodejs:nodejs package*.json ./
+RUN npm ci --only=production --no-audit --no-fund && \
+    npm cache clean --force
+
+# Copy built application
+COPY --chown=nodejs:nodejs --from=build /usr/src/app/dist ./dist
+COPY --chown=nodejs:nodejs --from=build /usr/src/app/public ./public
+COPY --chown=nodejs:nodejs --from=build /usr/src/app/src/routes ./src/routes
 
 USER nodejs
 
 EXPOSE 80
 
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD curl -f http://localhost:80/healthz || exit 1
+HEALTHCHECK --interval=30s --timeout=30s --start-period=120s --retries=3 CMD curl -f http://localhost:80/healthz || exit 1
 
 ENV APP_ENV production
 
-CMD ["node", "--no-warnings", "dist/src/server.js"]
+CMD ["node", "--no-warnings", "--max-old-space-size=512", "dist/src/server.js"]
