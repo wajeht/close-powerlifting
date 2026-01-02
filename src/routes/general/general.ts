@@ -20,21 +20,21 @@ generalRouter.get("/", async (req: Request, res: Response) => {
     cache: true,
   });
 
-  return res.status(200).render("general/general-home.html", {
+  return res.status(200).render("general/home.html", {
     path: "/",
     rankings,
   });
 });
 
 generalRouter.get("/about", (req: Request, res: Response) => {
-  return res.status(200).render("general/general-about.html", {
+  return res.status(200).render("general/about.html", {
     path: "/about",
     title: "About",
   });
 });
 
 generalRouter.get("/contact", (req: Request, res: Response) => {
-  return res.status(200).render("general/general-contact.html", {
+  return res.status(200).render("general/contact.html", {
     path: "/contact",
     title: "Contact",
     messages: req.flash(),
@@ -62,14 +62,14 @@ generalRouter.post(
 );
 
 generalRouter.get("/terms", (req: Request, res: Response) => {
-  return res.status(200).render("general/general-terms.html", {
+  return res.status(200).render("general/terms.html", {
     path: "/terms",
     title: "Terms of Service",
   });
 });
 
 generalRouter.get("/privacy", (req: Request, res: Response) => {
-  return res.status(200).render("general/general-privacy.html", {
+  return res.status(200).render("general/privacy.html", {
     path: "/privacy",
     title: "Privacy Policy",
   });
@@ -84,7 +84,7 @@ generalRouter.get("/status", async (req: Request, res: Response) => {
 
   const allGood = apiStatuses.every((item: { status: boolean }) => item.status);
 
-  return res.status(200).render("general/general-status.html", {
+  return res.status(200).render("general/status.html", {
     path: "/status",
     title: "Status",
     apiStatuses,
