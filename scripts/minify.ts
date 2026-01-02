@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
-import { build } from "esbuild";
+// import { build } from "esbuild";
 import { minify as minifyHtml } from "html-minifier-terser";
+import { minify as terserMinify } from "terser";
 
 const distDir = path.join(__dirname, "..", "dist");
 const viewsDir = path.join(__dirname, "..", "src", "routes");
@@ -23,33 +24,54 @@ function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
   return files;
 }
 
+// async function minifyJavaScript(): Promise<void> {
+//   const distJsFiles = getAllFiles(distDir, ".js");
+//   const publicJsFiles = getAllFiles(publicDir, ".js");
+//   const jsFiles = [...distJsFiles, ...publicJsFiles];
+
+//   console.log(`Minifying ${jsFiles.length} JavaScript files...`);
+
+//   for (const file of jsFiles) {
+//     const isBrowserFile = file.startsWith(publicDir);
+
+//     await build({
+//       entryPoints: [file],
+//       outfile: file,
+//       allowOverwrite: true,
+//       minify: true,
+//       minifyIdentifiers: !isBrowserFile,
+//       minifySyntax: !isBrowserFile,
+//       keepNames: true,
+//       sourcemap: false,
+//       target: isBrowserFile ? "es2020" : "node22",
+//       platform: isBrowserFile ? "browser" : "node",
+//       format: isBrowserFile ? "iife" : "cjs",
+//       logLevel: "error",
+//       legalComments: "inline", // 👈 keeps ALL comments
+//     });
+//   }
+
+//   console.log(`Minified ${jsFiles.length} JavaScript files`);
+// }
+
 async function minifyJavaScript(): Promise<void> {
   const distJsFiles = getAllFiles(distDir, ".js");
   const publicJsFiles = getAllFiles(publicDir, ".js");
   const jsFiles = [...distJsFiles, ...publicJsFiles];
 
-  console.log(`Minifying ${jsFiles.length} JavaScript files...`);
-
   for (const file of jsFiles) {
-    const isBrowserFile = file.startsWith(publicDir);
+    const code = fs.readFileSync(file, "utf8");
 
-    await build({
-      entryPoints: [file],
-      outfile: file,
-      allowOverwrite: true,
-      minify: true,
-      minifyIdentifiers: !isBrowserFile,
-      minifySyntax: !isBrowserFile,
-      keepNames: true,
-      sourcemap: false,
-      target: isBrowserFile ? "es2020" : "node22",
-      platform: isBrowserFile ? "browser" : "node",
-      format: isBrowserFile ? "iife" : "cjs",
-      logLevel: "error",
+    const out = await terserMinify(code, {
+      compress: true,
+      mangle: true,
+      format: {
+        comments: true,
+      },
     });
-  }
 
-  console.log(`Minified ${jsFiles.length} JavaScript files`);
+    fs.writeFileSync(file, out.code ?? code, "utf8");
+  }
 }
 
 async function minifyHtmlFiles(): Promise<void> {
