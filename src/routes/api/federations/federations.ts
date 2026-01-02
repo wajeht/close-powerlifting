@@ -14,6 +14,19 @@ import {
 } from "./federations.validation";
 
 /**
+ * Pagination info
+ * @typedef {object} Pagination
+ * @property {number} current_page - Current page number
+ * @property {number} per_page - Items per page
+ * @property {number} from - Starting item index
+ * @property {number} to - Ending item index
+ * @property {number} items - Total items
+ * @property {number} pages - Total pages
+ * @property {number} first_page - First page number
+ * @property {number} last_page - Last page number
+ */
+
+/**
  * A federation meet entry
  * @typedef {object} FederationMeet
  * @property {string} federation - Federation code (e.g., IPF, USAPL, USPA)

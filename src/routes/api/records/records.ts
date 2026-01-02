@@ -108,6 +108,14 @@ export function RecordsRouter() {
    * @return {RecordsResponse} 200 - Filtered records
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Records not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/records/raw",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   * }
    */
   router.get(
     "/:equipment",
@@ -153,6 +161,14 @@ export function RecordsRouter() {
    * @return {RecordsResponse} 200 - Filtered records
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Records not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/records/raw/men",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   * }
    */
   router.get(
     "/:equipment/:sex",
