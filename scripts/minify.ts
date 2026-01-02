@@ -4,7 +4,7 @@ import path from "path";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify as terserMinify } from "terser";
 
-const distDir = path.join(__dirname, "..", "dist");
+// const distDir = path.join(__dirname, "..", "dist");
 const viewsDir = path.join(__dirname, "..", "src", "routes");
 const publicDir = path.join(__dirname, "..", "public");
 
@@ -57,9 +57,9 @@ function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
 
 async function minifyJavaScript(): Promise<void> {
   // const distJsFiles = getAllFiles(distDir, ".js");
-  const distJsFiles = []; // TODO: figure out why it's stripping all comments even with legalComments: "inline"
   const publicJsFiles = getAllFiles(publicDir, ".js");
-  const jsFiles = [...distJsFiles, ...publicJsFiles];
+  // const jsFiles = [...distJsFiles, ...publicJsFiles];
+  const jsFiles = publicJsFiles;
 
   for (const file of jsFiles) {
     const code = fs.readFileSync(file, "utf8");
