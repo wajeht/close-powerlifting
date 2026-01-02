@@ -100,7 +100,7 @@ API Key: ${key}
 
 Your key expires in 3 months. We'll send you a reminder before it does.
 
-Check out our documentation to get started: https://close-powerlifting.com/docs
+Check out our documentation to get started: https://close-powerlifting.jaw.dev/docs/api
 
 Happy lifting!
 The Close Powerlifting Team`,

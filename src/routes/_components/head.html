@@ -31,6 +31,15 @@
   />
   <link rel="stylesheet" href="/css/style.css?v=<%= version.style %>" />
   <script src="/js/script.js?v=<%= version.script %>" defer></script>
+  <script type="speculationrules">
+    {
+        "prerender": [{
+            "source": "document",
+            "where": { "href_matches": "/*" },
+            "eagerness": "moderate"
+        }]
+    }
+    </script>
 </head>
 
 <style>
