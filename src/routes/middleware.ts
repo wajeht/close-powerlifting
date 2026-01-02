@@ -34,7 +34,7 @@ export function rateLimitMiddleware() {
           data: [],
         });
       }
-      return res.render("general/general-rate-limit.html");
+      return res.render("general/general-rate-limit.html", { title: "Rate Limited" });
     },
     skip: () => config.app.env !== "production",
   });
@@ -42,7 +42,7 @@ export function rateLimitMiddleware() {
 
 export function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix) return res.status(404).render("general/general-not-found.html");
+  if (!isApiPrefix) return res.status(404).render("general/general-not-found.html", { title: "Not Found" });
 
   return res.status(404).json({
     status: "fail",
@@ -72,6 +72,7 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, _next
 
   if (!isApiRoute && !isHealthcheck) {
     return res.status(statusCode).render("general/general-error.html", {
+      title: "Error",
       error: config.app.env === "development" && err instanceof Error ? err.stack : null,
     });
   }

@@ -34,7 +34,7 @@ describe("notFoundHandler", () => {
     notFoundMiddleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.render).toHaveBeenCalledWith("general/general-not-found.html");
+    expect(res.render).toHaveBeenCalledWith("general/general-not-found.html", { title: "Not Found" });
     expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });

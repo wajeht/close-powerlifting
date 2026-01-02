@@ -21,7 +21,7 @@ generalRouter.get("/", async (req: Request, res: Response) => {
   });
 
   return res.status(200).render("general/general-home.html", {
-    path: "/home",
+    path: "/",
     rankings,
   });
 });
@@ -29,12 +29,14 @@ generalRouter.get("/", async (req: Request, res: Response) => {
 generalRouter.get("/about", (req: Request, res: Response) => {
   return res.status(200).render("general/general-about.html", {
     path: "/about",
+    title: "About",
   });
 });
 
 generalRouter.get("/contact", (req: Request, res: Response) => {
   return res.status(200).render("general/general-contact.html", {
     path: "/contact",
+    title: "Contact",
     messages: req.flash(),
   });
 });
@@ -62,12 +64,14 @@ generalRouter.post(
 generalRouter.get("/terms", (req: Request, res: Response) => {
   return res.status(200).render("general/general-terms.html", {
     path: "/terms",
+    title: "Terms of Service",
   });
 });
 
 generalRouter.get("/privacy", (req: Request, res: Response) => {
   return res.status(200).render("general/general-privacy.html", {
     path: "/privacy",
+    title: "Privacy Policy",
   });
 });
 
@@ -82,6 +86,7 @@ generalRouter.get("/status", async (req: Request, res: Response) => {
 
   return res.status(200).render("general/general-status.html", {
     path: "/status",
+    title: "Status",
     apiStatuses,
     allGood,
   });

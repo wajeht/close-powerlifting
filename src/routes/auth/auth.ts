@@ -108,6 +108,7 @@ async function getGoogleUser({
 authRouter.get("/register", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-register.html", {
     path: "/register",
+    title: "Get API Key",
     messages: req.flash(),
   });
 });
@@ -149,6 +150,7 @@ authRouter.post(
 authRouter.get("/reset-api-key", (req: Request, res: Response) => {
   return res.status(200).render("auth/auth-reset-api-key.html", {
     path: "/reset-api-key",
+    title: "Reset API Key",
     messages: req.flash(),
   });
 });
