@@ -4,7 +4,6 @@ import { config } from "../../config";
 import { update } from "../../db/repositories/user.repository";
 import type { UserParams } from "../../types";
 import { generateAPIKey, generatePassword } from "../../utils/helpers";
-import { logger } from "../../utils/logger";
 import { mailService } from "../../mail";
 
 export async function updateUser(email: string, updates: any): Promise<any> {

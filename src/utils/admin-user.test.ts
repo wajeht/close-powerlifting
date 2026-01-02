@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 import { config } from "../config";
 import { findByEmail, create } from "../db/repositories/user.repository";
 import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
-import { mailService } from "../mail";
 import { initAdminUser } from "./admin-user";
 import { logger } from "./logger";
 
