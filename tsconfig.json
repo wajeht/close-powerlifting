@@ -33,6 +33,7 @@
     "**/*.test.js",
     "**/*.spec.ts",
     "src/tests/**/*",
+    "postcss.config.js",
     "dist",
     "coverage",
     "public",
