@@ -1,68 +1,80 @@
 import bcrypt from "bcryptjs";
 
 import { config } from "../config";
-import { findByEmail, create } from "../db/repositories/user.repository";
-import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
-import { updateUser } from "../routes/auth/auth.service";
-import { logger } from "./logger";
-import { mailService } from "../mail";
+import { User } from "../db/user";
+import { Helpers } from "../utils/helpers";
+import { AuthService } from "../routes/auth/auth.service";
+import { Logger } from "./logger";
+import { MailService } from "../mail";
 
-export async function initAdminUser() {
-  try {
-    const found = await findByEmail(config.app.adminEmail);
+export function AdminUser() {
+  const userRepository = User();
+  const helpers = Helpers();
+  const authService = AuthService();
+  const logger = Logger();
+  const mailService = MailService();
 
-    if (!found) {
-      logger.info("admin user does not exist");
-      logger.info("attaching admin user");
+  async function initAdminUser() {
+    try {
+      const found = await userRepository.findByEmail(config.app.adminEmail);
 
-      const password = generatePassword();
-      const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
-      const { key: token } = await hashKey();
+      if (!found) {
+        logger.info("admin user does not exist");
+        logger.info("attaching admin user");
 
-      const createdAdminUser = await create({
-        email: config.app.adminEmail,
-        name: config.app.adminName,
-        admin: true,
-        password: hashedPassword,
-        verification_token: token,
-        verified: true,
-        verified_at: new Date().toISOString(),
-      });
+        const password = helpers.generatePassword();
+        const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
+        const { key: token } = await helpers.hashKey();
 
-      logger.info(``);
-      logger.info(``);
-      logger.info(`admin user has been created.`);
-      logger.info(`email: ${config.app.adminEmail}`);
-      logger.info(`A temporary password has been generated and sent to the admin email.`);
-      logger.info(``);
-      logger.info(``);
+        const createdAdminUser = await userRepository.create({
+          email: config.app.adminEmail,
+          name: config.app.adminName,
+          admin: true,
+          password: hashedPassword,
+          verification_token: token,
+          verified: true,
+          verified_at: new Date().toISOString(),
+        });
 
-      const { hashedKey, unhashedKey } = await generateAPIKey({
-        name: createdAdminUser.name,
-        userId: String(createdAdminUser.id),
-        email: createdAdminUser.email,
-        admin: true,
-      });
+        logger.info(``);
+        logger.info(``);
+        logger.info(`admin user has been created.`);
+        logger.info(`email: ${config.app.adminEmail}`);
+        logger.info(`A temporary password has been generated and sent to the admin email.`);
+        logger.info(``);
+        logger.info(``);
 
-      await updateUser(createdAdminUser.email, { key: hashedKey });
+        const { hashedKey, unhashedKey } = await helpers.generateAPIKey({
+          name: createdAdminUser.name,
+          userId: String(createdAdminUser.id),
+          email: createdAdminUser.email,
+          admin: true,
+        });
 
-      await mailService.sendAdminCredentialsEmail({
-        email: createdAdminUser.email,
-        name: createdAdminUser.name,
-        password,
-        apiKey: unhashedKey,
-      });
+        await authService.updateUser(createdAdminUser.email, { key: hashedKey });
 
-      logger.info(
-        `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
-      );
+        await mailService.sendAdminCredentialsEmail({
+          email: createdAdminUser.email,
+          name: createdAdminUser.name,
+          password,
+          apiKey: unhashedKey,
+        });
 
-      return;
+        logger.info(
+          `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
+        );
+
+        return;
+      }
+
+      logger.info("admin user exits");
+      logger.info("skipping admin user attaching");
+    } catch (e) {
+      logger.error(e as Error);
     }
-
-    logger.info("admin user exits");
-    logger.info("skipping admin user attaching");
-  } catch (e) {
-    logger.error(e as Error);
   }
+
+  return {
+    initAdminUser,
+  };
 }

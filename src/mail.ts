@@ -1,9 +1,9 @@
 import nodemailer from "nodemailer";
 
 import { config } from "./config";
-import { logger } from "./utils/logger";
+import { Logger } from "./utils/logger";
 
-export interface MailService {
+export interface MailServiceType {
   sendVerificationEmail: (params: {
     hostname: string;
     email: string;
@@ -27,7 +27,9 @@ export interface MailService {
   }) => Promise<void>;
 }
 
-export function createMailService(): MailService {
+export function MailService(): MailServiceType {
+  const logger = Logger();
+
   const transporter = nodemailer.createTransport({
     host: config.email.host,
     port: config.email.port,
@@ -49,12 +51,21 @@ export function createMailService(): MailService {
     }
   }
 
-  return {
-    async sendVerificationEmail({ hostname, email, name, verification_token }) {
-      await send(
-        email,
-        "Account verification",
-        `Hi ${name},
+  async function sendVerificationEmail({
+    hostname,
+    email,
+    name,
+    verification_token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    verification_token: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "Account verification",
+      `Hi ${name},
 
 Thanks for signing up for Close Powerlifting! Please verify your email address to get started:
 
@@ -66,14 +77,22 @@ If you didn't create this account, you can safely ignore this email.
 
 Cheers,
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
 
-    async sendWelcomeEmail({ email, name, key }) {
-      await send(
-        email,
-        "API Key for Close Powerlifting",
-        `Hi ${name},
+  async function sendWelcomeEmail({
+    email,
+    name,
+    key,
+  }: {
+    email: string;
+    name: string;
+    key: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "API Key for Close Powerlifting",
+      `Hi ${name},
 
 You're all set! Your email has been verified and your API key is ready:
 
@@ -85,14 +104,22 @@ Check out our documentation to get started: https://close-powerlifting.com/docs
 
 Happy lifting!
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
 
-    async sendNewApiKeyEmail({ email, name, key }) {
-      await send(
-        email,
-        "New API key for Close Powerlifting",
-        `Hi ${name},
+  async function sendNewApiKeyEmail({
+    email,
+    name,
+    key,
+  }: {
+    email: string;
+    name: string;
+    key: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "New API key for Close Powerlifting",
+      `Hi ${name},
 
 Your API key has been reset. Here's your new key:
 
@@ -104,14 +131,24 @@ If you didn't request this change, please contact us immediately.
 
 Cheers,
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
 
-    async sendAdminCredentialsEmail({ email, name, password, apiKey }) {
-      await send(
-        email,
-        "API Key and Admin Password for Close Powerlifting",
-        `Hi ${name},
+  async function sendAdminCredentialsEmail({
+    email,
+    name,
+    password,
+    apiKey,
+  }: {
+    email: string;
+    name: string;
+    password: string;
+    apiKey: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "API Key and Admin Password for Close Powerlifting",
+      `Hi ${name},
 
 Your admin credentials have been updated:
 
@@ -122,24 +159,38 @@ Please change your password after logging in and store your API key securely.
 
 Cheers,
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
 
-    async sendContactEmail({ name, email, message }) {
-      await send(
-        config.email.user,
-        `Contact Request from ${email}`,
-        `New message from ${name} <${email}>
+  async function sendContactEmail({
+    name,
+    email,
+    message,
+  }: {
+    name: string;
+    email: string;
+    message: string;
+  }): Promise<void> {
+    await send(
+      config.email.user,
+      `Contact Request from ${email}`,
+      `New message from ${name} <${email}>
 
 ${message}`,
-      );
-    },
+    );
+  }
 
-    async sendApiLimitResetEmail({ email, name }) {
-      await send(
-        email,
-        "API Call Limit Reset",
-        `Hi ${name},
+  async function sendApiLimitResetEmail({
+    email,
+    name,
+  }: {
+    email: string;
+    name: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "API Call Limit Reset",
+      `Hi ${name},
 
 Good news! Your API limit has been reset and you're back to full capacity.
 
@@ -147,14 +198,22 @@ Thanks for using Close Powerlifting. Happy lifting!
 
 Cheers,
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
 
-    async sendReachingApiLimitEmail({ email, name, percent }) {
-      await send(
-        email,
-        "Reaching API Limit",
-        `Hi ${name},
+  async function sendReachingApiLimitEmail({
+    email,
+    name,
+    percent,
+  }: {
+    email: string;
+    name: string;
+    percent: number;
+  }): Promise<void> {
+    await send(
+      email,
+      "Reaching API Limit",
+      `Hi ${name},
 
 Heads up! You've used ${percent}% of your monthly API calls.
 
@@ -167,9 +226,16 @@ Your limit resets at the start of each month. Need a higher limit? Reply to this
 
 Cheers,
 The Close Powerlifting Team`,
-      );
-    },
+    );
+  }
+
+  return {
+    sendVerificationEmail,
+    sendWelcomeEmail,
+    sendNewApiKeyEmail,
+    sendAdminCredentialsEmail,
+    sendContactEmail,
+    sendApiLimitResetEmail,
+    sendReachingApiLimitEmail,
   };
 }
-
-export const mailService = createMailService();

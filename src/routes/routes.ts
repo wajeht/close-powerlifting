@@ -1,14 +1,16 @@
 import express from "express";
 
-import { apiRouter } from "./api/api";
-import { authRouter } from "./auth/auth";
-import { generalRouter } from "./general/general";
+import { ApiRouter } from "./api/api";
+import { AuthRouter } from "./auth/auth";
+import { GeneralRouter } from "./general/general";
 
-const mainRouter = express.Router();
+export function MainRouter() {
+  const router = express.Router();
 
-mainRouter.use("/", generalRouter);
-mainRouter.use("/", authRouter);
-mainRouter.use("/api/auth", authRouter);
-mainRouter.use("/api", apiRouter);
+  router.use("/", GeneralRouter());
+  router.use("/", AuthRouter());
+  router.use("/api/auth", AuthRouter());
+  router.use("/api", ApiRouter());
 
-export { mainRouter };
+  return router;
+}

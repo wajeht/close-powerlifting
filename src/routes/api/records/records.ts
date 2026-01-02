@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import { logger } from "../../../utils/logger";
-import { apiValidationMiddleware } from "../../middleware";
-import { getRecords, getFilteredRecords } from "./records.service";
+import { Logger } from "../../../utils/logger";
+import { Middleware } from "../../middleware";
+import { RecordsService } from "./records.service";
 import {
   getRecordsValidation,
   getFilteredRecordsParamValidation,
@@ -13,22 +13,21 @@ import {
   GetFilteredRecordsQueryType,
 } from "./records.validation";
 
-const recordsRouter = express.Router();
+/**
+ * Record entry
+ * @typedef {object} RecordEntry
+ * @property {string} lifter - Record holder name
+ * @property {string} weight_class - Weight class
+ * @property {string} lift - Lift amount
+ * @property {string} date - Date of record
+ * @property {string} meet - Meet where record was set
+ */
 
 /**
- * A record entry
- * @typedef {object} RecordEntry
- * @property {string} name - Athlete name
- * @property {string} sex - M or F
- * @property {string} equipment - Equipment type (Raw, Wraps, Single-ply, etc.)
- * @property {string} weight_class_kg - Weight class
- * @property {number} squat_kg - Squat record in kg
- * @property {number} bench_kg - Bench record in kg
- * @property {number} deadlift_kg - Deadlift record in kg
- * @property {number} total_kg - Total record in kg
- * @property {number} dots - DOTS score
- * @property {string} federation - Federation code
- * @property {string} date - Record date
+ * Record category
+ * @typedef {object} RecordCategory
+ * @property {string} title - Category title (e.g., "Men's Raw Squat")
+ * @property {array<RecordEntry>} records - Records in this category
  */
 
 /**
@@ -38,124 +37,148 @@ const recordsRouter = express.Router();
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
  * @property {boolean} cache - Whether data was cached
- * @property {array<RecordEntry>} data - Array of record entries
+ * @property {array<RecordCategory>} data - Record categories
  */
 
 /**
- * GET /api/records
- * @tags Records
- * @summary Get all powerlifting records
- * @description Returns all-time powerlifting records across all equipment types and weight classes
- * @security BearerAuth
- * @param {boolean} cache.query - Use cached data - default: true
- * @return {RecordsResponse} 200 - Success response with all records
- * @example response - 200 - Success response
- * {
- *   "status": "success",
- *   "request_url": "/api/records",
- *   "message": "The resource was returned successfully!",
- *   "cache": true,
- *   "data": [{"name": "John Haack", "equipment": "Raw", "total_kg": 900}]
- * }
+ * Error response
+ * @typedef {object} ErrorResponse
+ * @property {string} status - Response status (fail)
+ * @property {string} request_url - Request URL
+ * @property {string} message - Error message
+ * @property {array} data - Empty array
  */
-recordsRouter.get(
-  "/",
-  apiValidationMiddleware({ query: getRecordsValidation }),
-  async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
-    const records = await getRecords(req.query);
 
-    if (!records?.data) throw new NotFoundError("The resource cannot be found!");
+export function RecordsRouter() {
+  const middleware = Middleware();
+  const logger = Logger();
+  const recordsService = RecordsService();
 
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+  const router = express.Router();
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      cache: records?.cache,
-      data: records?.data,
-    });
-  },
-);
+  /**
+   * GET /api/records
+   * @tags Records
+   * @summary Get all powerlifting records
+   * @description Returns all-time powerlifting records organized by category
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {RecordsResponse} 200 - All records by category
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Records not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/records",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   * }
+   */
+  router.get(
+    "/",
+    middleware.apiValidationMiddleware({ query: getRecordsValidation }),
+    async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
+      const records = await recordsService.getRecords(req.query);
 
-/**
- * GET /api/records/{equipment}
- * @tags Records
- * @summary Get records filtered by equipment type
- * @description Returns powerlifting records for a specific equipment type
- * @security BearerAuth
- * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
- * @param {boolean} cache.query - Use cached data - default: true
- * @return {RecordsResponse} 200 - Success response with filtered records
- * @return {object} 404 - Records not found
- */
-recordsRouter.get(
-  "/:equipment",
-  apiValidationMiddleware({
-    params: getFilteredRecordsParamValidation.pick({ equipment: true }),
-    query: getFilteredRecordsQueryValidation,
-  }),
-  async (
-    req: Request<
-      Pick<GetFilteredRecordsParamType, "equipment">,
-      {},
-      {},
-      GetFilteredRecordsQueryType
-    >,
-    res: Response,
-  ) => {
-    const records = await getFilteredRecords(req.params, req.query);
+      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-    if (!records?.data) throw new NotFoundError("The resource cannot be found!");
+      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        cache: records?.cache,
+        data: records?.data,
+      });
+    },
+  );
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      cache: records?.cache,
-      data: records?.data,
-    });
-  },
-);
+  /**
+   * GET /api/records/{equipment}
+   * @tags Records
+   * @summary Get records filtered by equipment
+   * @description Returns records filtered by equipment category
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {RecordsResponse} 200 - Filtered records
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Records not found
+   */
+  router.get(
+    "/:equipment",
+    middleware.apiValidationMiddleware({
+      params: getFilteredRecordsParamValidation.pick({ equipment: true }),
+      query: getFilteredRecordsQueryValidation,
+    }),
+    async (
+      req: Request<
+        Pick<GetFilteredRecordsParamType, "equipment">,
+        {},
+        {},
+        GetFilteredRecordsQueryType
+      >,
+      res: Response,
+    ) => {
+      const records = await recordsService.getFilteredRecords(req.params, req.query);
 
-/**
- * GET /api/records/{equipment}/{sex}
- * @tags Records
- * @summary Get records filtered by equipment and sex
- * @description Returns powerlifting records for a specific equipment type and sex category
- * @security BearerAuth
- * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
- * @param {string} sex.path.required - Sex category - enum:men,women
- * @param {boolean} cache.query - Use cached data - default: true
- * @return {RecordsResponse} 200 - Success response with filtered records
- * @return {object} 404 - Records not found
- */
-recordsRouter.get(
-  "/:equipment/:sex",
-  apiValidationMiddleware({
-    params: getFilteredRecordsParamValidation,
-    query: getFilteredRecordsQueryValidation,
-  }),
-  async (
-    req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
-    res: Response,
-  ) => {
-    const records = await getFilteredRecords(req.params, req.query);
+      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-    if (!records?.data) throw new NotFoundError("The resource cannot be found!");
+      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        cache: records?.cache,
+        data: records?.data,
+      });
+    },
+  );
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      cache: records?.cache,
-      data: records?.data,
-    });
-  },
-);
+  /**
+   * GET /api/records/{equipment}/{sex}
+   * @tags Records
+   * @summary Get records filtered by equipment and sex
+   * @description Returns records filtered by equipment category and sex
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} sex.path.required - Sex - enum:men,women
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {RecordsResponse} 200 - Filtered records
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Records not found
+   */
+  router.get(
+    "/:equipment/:sex",
+    middleware.apiValidationMiddleware({
+      params: getFilteredRecordsParamValidation,
+      query: getFilteredRecordsQueryValidation,
+    }),
+    async (
+      req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
+      res: Response,
+    ) => {
+      const records = await recordsService.getFilteredRecords(req.params, req.query);
 
-export { recordsRouter };
+      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
+
+      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        cache: records?.cache,
+        data: records?.data,
+      });
+    },
+  );
+
+  return router;
+}

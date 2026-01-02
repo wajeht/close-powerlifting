@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 
 import { config } from "../../../config";
-import { calculatePagination } from "../../../utils/scraper";
+import { Scraper } from "../../../utils/scraper";
+
+const scraper = Scraper();
 import {
   rankingsDefault,
   rankingsRawMen,
@@ -196,7 +198,7 @@ describe("rankings service", () => {
 
     test("calculatePagination returns correct structure for rankings data", () => {
       const totalItems = rankingsDefault.total_length;
-      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+      const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
 
       expect(pagination).toHaveProperty("items");
       expect(pagination).toHaveProperty("pages");
@@ -210,7 +212,7 @@ describe("rankings service", () => {
 
     test("calculatePagination calculates correct values", () => {
       const totalItems = rankingsDefault.total_length;
-      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+      const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
 
       expect(pagination.items).toBe(totalItems);
       expect(pagination.per_page).toBe(defaultPerPage);

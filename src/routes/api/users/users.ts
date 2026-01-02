@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import { logger } from "../../../utils/logger";
-import { apiValidationMiddleware } from "../../middleware";
-import { getUser, searchUser } from "./users.service";
+import { Logger } from "../../../utils/logger";
+import { Middleware } from "../../middleware";
+import { UsersService } from "./users.service";
 import {
   getUserValidation,
   getUsersValidation,
@@ -11,23 +11,54 @@ import {
   GetUsersType,
 } from "./users.validation";
 
-const usersRouter = express.Router();
+/**
+ * Personal best record
+ * @typedef {object} PersonalBest
+ * @property {string} equipment - Equipment used
+ * @property {string} squat - Best squat
+ * @property {string} bench - Best bench
+ * @property {string} deadlift - Best deadlift
+ * @property {string} total - Best total
+ * @property {string} dots - Best DOTS score
+ */
 
 /**
- * User search result
- * @typedef {object} UserSearchResult
- * @property {string} name - Athlete name
- * @property {string} url - Profile URL path
+ * Competition result
+ * @typedef {object} CompetitionResult
+ * @property {string} place - Placement
+ * @property {string} federation - Federation
+ * @property {string} date - Competition date
+ * @property {string} meetname - Meet name
+ * @property {string} equipment - Equipment
+ * @property {string} age - Age at competition
+ * @property {string} weight_class - Weight class
+ * @property {string} bodyweight - Body weight
+ * @property {string} squat - Squat result
+ * @property {string} bench - Bench result
+ * @property {string} deadlift - Deadlift result
+ * @property {string} total - Total
+ * @property {string} dots - DOTS score
  */
 
 /**
  * User profile
  * @typedef {object} UserProfile
- * @property {string} name - Athlete name
+ * @property {string} name - Athlete's full name
+ * @property {string} username - Username/slug
  * @property {string} sex - M or F
- * @property {string} country - Country code
- * @property {string} state - State/province (if applicable)
- * @property {array<object>} competition_history - List of competition results
+ * @property {string} instagram - Instagram handle
+ * @property {string} instagram_url - Instagram profile URL
+ * @property {array<PersonalBest>} personal_best - Personal best records
+ * @property {array<CompetitionResult>} competition_results - Competition history
+ */
+
+/**
+ * User response
+ * @typedef {object} UserResponse
+ * @property {string} status - Response status
+ * @property {string} request_url - Request URL
+ * @property {string} message - Response message
+ * @property {UserProfile} data - User profile data
  */
 
 /**
@@ -36,46 +67,102 @@ const usersRouter = express.Router();
  * @property {string} status - Response status
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
- * @property {array<UserSearchResult>} data - Array of matching users
+ * @property {array<object>} data - Search results
+ * @property {Pagination} pagination - Pagination info
  */
 
 /**
- * User profile response
- * @typedef {object} UserProfileResponse
- * @property {string} status - Response status
+ * Error response
+ * @typedef {object} ErrorResponse
+ * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
- * @property {string} message - Response message
- * @property {UserProfile} data - User profile data
+ * @property {string} message - Error message
+ * @property {array} data - Empty array
  */
 
-/**
- * GET /api/users
- * @tags Users
- * @summary Search users by name
- * @description Search for athletes by name. Returns matching users with their profile URLs. If no search parameter is provided, redirects to /api/rankings.
- * @security BearerAuth
- * @param {string} search.query - Search term for user lookup (e.g., "haack", "john")
- * @param {number} per_page.query - Results per page (max 500, default 100)
- * @param {number} current_page.query - Page number (default 1)
- * @return {UserSearchResponse} 200 - Success response with matching users
- * @return {object} 308 - Redirect to /api/rankings if no search term provided
- * @return {object} 404 - No users found
- * @example response - 200 - Success response
- * {
- *   "status": "success",
- *   "request_url": "/api/users?search=haack",
- *   "message": "The resource was returned successfully!",
- *   "data": [{"name": "John Haack", "url": "/api/users/johnhaack"}]
- * }
- */
-usersRouter.get(
-  "/",
-  apiValidationMiddleware({ query: getUsersValidation }),
-  async (req: Request<GetUsersType, {}, {}>, res: Response) => {
-    if (req.query.search) {
-      const searched = await searchUser(req.query);
+export function UsersRouter() {
+  const middleware = Middleware();
+  const logger = Logger();
+  const usersService = UsersService();
 
-      if (!searched?.data) throw new NotFoundError("The resource cannot be found!");
+  const router = express.Router();
+
+  /**
+   * GET /api/users
+   * @tags Users
+   * @summary Search for athletes or redirect to rankings
+   * @description Searches for athletes by name. If no search query is provided, redirects to rankings endpoint.
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {string} search.query - Search query for athlete name
+   * @param {number} current_page.query - Page number (default 1)
+   * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {UserSearchResponse} 200 - Search results
+   * @return {object} 308 - Redirect to rankings (if no search query)
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - No results found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/users?search=haack",
+   *   "message": "The resource was returned successfully!",
+   *   "data": [{"name": "John Haack", "username": "johnhaack"}]
+   * }
+   */
+  router.get(
+    "/",
+    middleware.apiValidationMiddleware({ query: getUsersValidation }),
+    async (req: Request<GetUsersType, {}, {}>, res: Response) => {
+      if (req.query.search) {
+        const searched = await usersService.searchUser(req.query);
+
+        if (!searched?.data) throw new NotFoundError("The resource cannot be found!");
+
+        logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+        res.status(200).json({
+          status: "success",
+          request_url: req.originalUrl,
+          message: "The resource was returned successfully!",
+          data: searched?.data || [],
+          pagination: searched?.pagination,
+        });
+
+        return;
+      }
+
+      res.status(308).redirect("/api/rankings");
+    },
+  );
+
+  /**
+   * GET /api/users/{username}
+   * @tags Users
+   * @summary Get athlete profile by username
+   * @description Returns detailed athlete profile including personal bests and competition history
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {string} username.path.required - Athlete's username/slug
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {UserResponse} 200 - Athlete profile
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Athlete not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/users/johnhaack",
+   *   "message": "The resource was returned successfully!",
+   *   "data": {"name": "John Haack", "personal_best": []}
+   * }
+   */
+  router.get(
+    "/:username",
+    middleware.apiValidationMiddleware({ params: getUserValidation }),
+    async (req: Request<GetUserType, {}, {}>, res: Response) => {
+      const user = await usersService.getUser(req.params);
+
+      if (!user) throw new NotFoundError("The resource cannot be found!");
 
       logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
@@ -83,56 +170,10 @@ usersRouter.get(
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        data: searched?.data || [],
-        pagination: searched?.pagination,
+        data: user,
       });
+    },
+  );
 
-      return;
-    }
-
-    res.status(308).redirect("/api/rankings");
-  },
-);
-
-/**
- * GET /api/users/{username}
- * @tags Users
- * @summary Get user profile by username
- * @description Returns detailed profile for a specific athlete including personal info and full competition history
- * @security BearerAuth
- * @param {string} username.path.required - Username/athlete name slug (e.g., johnhaack,aborisov)
- * @return {UserProfileResponse} 200 - Success response with user profile
- * @return {object} 404 - User not found
- * @example response - 200 - Success response
- * {
- *   "status": "success",
- *   "request_url": "/api/users/johnhaack",
- *   "message": "The resource was returned successfully!",
- *   "data": {
- *     "name": "John Haack",
- *     "sex": "M",
- *     "country": "USA",
- *     "competition_history": [{"meet": "2024 USPA Nationals", "total_kg": 900}]
- *   }
- * }
- */
-usersRouter.get(
-  "/:username",
-  apiValidationMiddleware({ params: getUserValidation }),
-  async (req: Request<GetUserType, {}, {}>, res: Response) => {
-    const user = await getUser(req.params);
-
-    if (!user) throw new NotFoundError("The resource cannot be found!");
-
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      data: user,
-    });
-  },
-);
-
-export { usersRouter };
+  return router;
+}

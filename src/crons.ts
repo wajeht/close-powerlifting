@@ -1,14 +1,10 @@
 import cron, { ScheduledTask } from "node-cron";
 
 import { config } from "./config";
-import { cache } from "./db/cache";
-import {
-  findVerified,
-  findByApiCallCount,
-  resetAllApiCallCounts,
-} from "./db/repositories/user.repository";
-import { logger } from "./utils/logger";
-import { mailService } from "./mail";
+import { Cache } from "./db/cache";
+import { User } from "./db/user";
+import { Logger } from "./utils/logger";
+import { MailService } from "./mail";
 
 export interface CronService {
   start: () => void;
@@ -16,7 +12,12 @@ export interface CronService {
   getStatus: () => { isRunning: boolean; jobCount: number };
 }
 
-export function createCronService(): CronService {
+export function CronService(): CronService {
+  const cache = Cache();
+  const userRepository = User();
+  const logger = Logger();
+  const mailService = MailService();
+
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
 
@@ -42,8 +43,8 @@ export function createCronService(): CronService {
         return;
       }
 
-      const users = await findVerified();
-      await resetAllApiCallCounts();
+      const users = await userRepository.findVerified();
+      await userRepository.resetAllApiCallCounts();
 
       for (const user of users) {
         await mailService.sendApiLimitResetEmail({ email: user.email, name: user.name });
@@ -60,7 +61,7 @@ export function createCronService(): CronService {
       logger.info("cron job started: sendReachingApiLimitEmail");
 
       const targetCount = Math.floor(config.app.defaultApiCallLimit * 0.7);
-      const users = await findByApiCallCount(targetCount);
+      const users = await userRepository.findByApiCallCount(targetCount);
 
       for (const user of users) {
         await mailService.sendReachingApiLimitEmail({
@@ -98,5 +99,3 @@ export function createCronService(): CronService {
 
   return { start, stop, getStatus };
 }
-
-export const cronService = createCronService();

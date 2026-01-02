@@ -1,11 +1,14 @@
 import { describe, expect, test } from "vitest";
 
-import { parseHtml } from "../../../utils/scraper";
-import { parseStatusHtml } from "./status.service";
+import { Scraper } from "../../../utils/scraper";
+import { StatusService } from "./status.service";
 import { statusHtml } from "./fixtures";
 
-const statusDoc = parseHtml(statusHtml);
-const statusData = parseStatusHtml(statusDoc);
+const scraper = Scraper();
+const statusService = StatusService();
+
+const statusDoc = scraper.parseHtml(statusHtml);
+const statusData = statusService.parseStatusHtml(statusDoc);
 
 describe("status service", () => {
   describe("parseStatusHtml", () => {

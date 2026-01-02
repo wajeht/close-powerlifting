@@ -2,7 +2,9 @@ import { writeFileSync } from "fs";
 import { join } from "path";
 
 import { config } from "../src/config";
-import { logger } from "../src/utils/logger";
+import { Logger } from "../src/utils/logger";
+
+const logger = Logger();
 
 const FIXTURES_BASE = join(__dirname, "../src/routes/api");
 

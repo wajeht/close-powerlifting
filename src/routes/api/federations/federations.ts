@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
 import { NotFoundError } from "../../../error";
-import { logger } from "../../../utils/logger";
-import { apiValidationMiddleware } from "../../middleware";
-import { getFederations, getFederation } from "./federations.service";
+import { Logger } from "../../../utils/logger";
+import { Middleware } from "../../middleware";
+import { FederationsService } from "./federations.service";
 import {
   getFederationsValidation,
   getFederationsParamValidation,
@@ -13,32 +13,13 @@ import {
   GetFederationsQueryType,
 } from "./federations.validation";
 
-const federationsRouter = express.Router();
-
 /**
- * A federation entry
- * @typedef {object} FederationEntry
+ * A federation meet entry
+ * @typedef {object} FederationMeet
  * @property {string} federation - Federation code (e.g., IPF, USAPL, USPA)
- * @property {string} name - Full federation name
- * @property {string} country - Country code
- * @property {number} lifter_count - Number of lifters in federation
- */
-
-/**
- * Federation meet result
- * @typedef {object} FederationMeetResult
- * @property {string} name - Athlete name
- * @property {string} sex - M or F
- * @property {string} equipment - Equipment type
- * @property {number} bodyweight_kg - Bodyweight in kg
- * @property {string} weight_class_kg - Weight class
- * @property {number} squat_kg - Best squat in kg
- * @property {number} bench_kg - Best bench in kg
- * @property {number} deadlift_kg - Best deadlift in kg
- * @property {number} total_kg - Total in kg
- * @property {number} dots - DOTS score
- * @property {string} date - Competition date
- * @property {string} meet_name - Meet name
+ * @property {string} date - Meet date
+ * @property {string} meetname - Competition name
+ * @property {string} location - Meet location
  */
 
 /**
@@ -48,89 +29,110 @@ const federationsRouter = express.Router();
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
  * @property {boolean} cache - Whether data was cached
- * @property {array<FederationEntry>} data - Array of federation entries
+ * @property {array<FederationMeet>} data - Array of federation meets
  * @property {Pagination} pagination - Pagination info
  */
 
 /**
- * GET /api/federations
- * @tags Federations
- * @summary Get all federations with optional pagination
- * @description Returns a paginated list of all powerlifting federations with their codes and lifter counts
- * @security BearerAuth
- * @param {number} current_page.query - Page number (default 1)
- * @param {number} per_page.query - Results per page (max 500, default 100)
- * @param {boolean} cache.query - Use cached data (default true)
- * @return {FederationsResponse} 200 - Success response with federations list
- * @example response - 200 - Success response
- * {
- *   "status": "success",
- *   "request_url": "/api/federations",
- *   "message": "The resource was returned successfully!",
- *   "cache": true,
- *   "data": [{"federation": "IPF", "name": "International Powerlifting Federation"}]
- * }
+ * Error response
+ * @typedef {object} ErrorResponse
+ * @property {string} status - Response status (fail)
+ * @property {string} request_url - Request URL
+ * @property {string} message - Error message
+ * @property {array} data - Empty array
  */
-federationsRouter.get(
-  "/",
-  apiValidationMiddleware({ query: getFederationsValidation }),
-  async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
-    const federations = await getFederations(req.query);
 
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+export function FederationsRouter() {
+  const middleware = Middleware();
+  const logger = Logger();
+  const federationsService = FederationsService();
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      cache: federations?.cache,
-      data: federations?.data,
-      pagination: federations?.pagination,
-    });
-  },
-);
+  const router = express.Router();
 
-/**
- * GET /api/federations/{federation}
- * @tags Federations
- * @summary Get results for a specific federation
- * @description Returns meet results for a specific federation, optionally filtered by year
- * @security BearerAuth
- * @param {string} federation.path.required - Federation code (e.g., ipf, usapl, uspa, wrpf)
- * @param {number} year.query - Filter results by competition year (e.g., 2024)
- * @param {boolean} cache.query - Use cached data (default true)
- * @return {object} 200 - Success response with federation results
- * @return {object} 404 - Federation not found
- * @example response - 200 - Success response
- * {
- *   "status": "success",
- *   "request_url": "/api/federations/ipf",
- *   "message": "The resource was returned successfully!",
- *   "cache": true,
- *   "data": [{"name": "John Haack", "total_kg": 900, "dots": 617.45}]
- * }
- */
-federationsRouter.get(
-  "/:federation",
-  apiValidationMiddleware({
-    params: getFederationsParamValidation,
-    query: getFederationsQueryValidation,
-  }),
-  async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
-    const federations = await getFederation({ ...req.params, ...req.query });
+  /**
+   * GET /api/federations
+   * @tags Federations
+   * @summary Get all federations with optional pagination
+   * @description Returns a paginated list of all powerlifting federations with their meets
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {number} current_page.query - Page number (default 1)
+   * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {FederationsResponse} 200 - Success response with federations list
+   * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/federations",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"federation": "IPF", "meetname": "World Championships"}]
+   * }
+   */
+  router.get(
+    "/",
+    middleware.apiValidationMiddleware({ query: getFederationsValidation }),
+    async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
+      const federations = await federationsService.getFederations(req.query);
 
-    if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
+      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
-    logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        cache: federations?.cache,
+        data: federations?.data,
+        pagination: federations?.pagination,
+      });
+    },
+  );
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "The resource was returned successfully!",
-      cache: federations?.cache,
-      data: federations?.data,
-    });
-  },
-);
+  /**
+   * GET /api/federations/{federation}
+   * @tags Federations
+   * @summary Get meets for a specific federation
+   * @description Returns meet results for a specific federation, optionally filtered by year
+   * @security BearerAuth
+   * @security ApiKeyAuth
+   * @param {string} federation.path.required - Federation code (e.g., ipf, usapl, uspa, wrpf)
+   * @param {number} year.query - Filter results by competition year (e.g., 2024)
+   * @param {boolean} cache.query - Use cached data (default true)
+   * @return {FederationsResponse} 200 - Success response with federation results
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Federation not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/federations/ipf",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"meetname": "World Championships", "date": "2024-06-15"}]
+   * }
+   */
+  router.get(
+    "/:federation",
+    middleware.apiValidationMiddleware({
+      params: getFederationsParamValidation,
+      query: getFederationsQueryValidation,
+    }),
+    async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
+      const federations = await federationsService.getFederation({ ...req.params, ...req.query });
 
-export { federationsRouter };
+      if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
+
+      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        cache: federations?.cache,
+        data: federations?.data,
+      });
+    },
+  );
+
+  return router;
+}

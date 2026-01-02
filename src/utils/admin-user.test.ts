@@ -1,36 +1,62 @@
 import { afterEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { config } from "../config";
-import { findByEmail, create } from "../db/repositories/user.repository";
-import { generateAPIKey, generatePassword, hashKey } from "../utils/helpers";
-import { initAdminUser } from "./admin-user";
-import { logger } from "./logger";
 
-vi.mock("../db/repositories/user.repository", async () => ({
-  findByEmail: vi.fn(),
-  create: vi.fn(),
-  update: vi.fn(),
+// Create mock functions at module level
+const mockFindByEmail = vi.fn();
+const mockCreate = vi.fn();
+const mockUpdate = vi.fn();
+const mockGenerateAPIKey = vi.fn();
+const mockGeneratePassword = vi.fn();
+const mockHashKey = vi.fn();
+const mockLoggerError = vi.fn();
+const mockLoggerInfo = vi.fn();
+
+vi.mock("../db/user", () => ({
+  User: () => ({
+    findByEmail: mockFindByEmail,
+    create: mockCreate,
+    update: mockUpdate,
+  }),
 }));
 
 vi.mock("bcryptjs", async () => ({
   ...((await vi.importActual("bcryptjs")) as object),
-  bcrypt: {
-    hash: vi.fn(),
-  },
+  hash: vi.fn().mockResolvedValue("hashedPassword"),
 }));
 
-vi.mock("./helpers", async () => ({
-  ...((await vi.importActual("./helpers")) as object),
-  generateAPIKey: vi.fn(),
-  generatePassword: vi.fn(),
-  hashKey: vi.fn(),
+vi.mock("./helpers", () => ({
+  Helpers: () => ({
+    generateAPIKey: mockGenerateAPIKey,
+    generatePassword: mockGeneratePassword,
+    hashKey: mockHashKey,
+  }),
 }));
 
-vi.mock("../mail", async () => ({
-  mailService: {
-    sendAdminCredentialsEmail: vi.fn(),
-  },
+vi.mock("./logger", () => ({
+  Logger: () => ({
+    info: mockLoggerInfo,
+    error: mockLoggerError,
+    warn: vi.fn(),
+    debug: vi.fn(),
+  }),
 }));
+
+vi.mock("../routes/auth/auth.service", () => ({
+  AuthService: () => ({
+    updateUser: vi.fn().mockResolvedValue({}),
+  }),
+}));
+
+vi.mock("../mail", () => ({
+  MailService: () => ({
+    sendAdminCredentialsEmail: vi.fn().mockResolvedValue({}),
+  }),
+}));
+
+import { AdminUser } from "./admin-user";
+
+const adminUser = AdminUser();
 
 describe("init", () => {
   afterEach(() => {
@@ -38,28 +64,24 @@ describe("init", () => {
   });
 
   it("should create a new admin user if one does not exist", async () => {
-    (findByEmail as Mock).mockResolvedValueOnce(null);
-
-    (generatePassword as Mock).mockReturnValueOnce("password");
-
-    ((await hashKey) as Mock).mockResolvedValueOnce({ key: "token" });
-
-    (create as Mock).mockResolvedValueOnce({
+    mockFindByEmail.mockResolvedValueOnce(null);
+    mockGeneratePassword.mockReturnValueOnce("password");
+    mockHashKey.mockResolvedValueOnce({ key: "token" });
+    mockCreate.mockResolvedValueOnce({
       name: config.app.adminName,
       id: 1,
       email: config.app.adminEmail,
     });
-
-    ((await generateAPIKey) as Mock).mockResolvedValueOnce({
+    mockGenerateAPIKey.mockResolvedValueOnce({
       hashedKey: "hashedKey",
       unhashedKey: "unhashedKey",
     });
 
-    await initAdminUser();
+    await adminUser.initAdminUser();
 
-    expect(findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
-    expect(generatePassword).toHaveBeenCalled();
-    expect(create).toHaveBeenCalledWith({
+    expect(mockFindByEmail).toHaveBeenCalledWith(config.app.adminEmail);
+    expect(mockGeneratePassword).toHaveBeenCalled();
+    expect(mockCreate).toHaveBeenCalledWith({
       email: config.app.adminEmail,
       name: config.app.adminName,
       admin: true,
@@ -69,7 +91,7 @@ describe("init", () => {
       verified_at: expect.any(String),
     });
 
-    expect(generateAPIKey).toHaveBeenCalledWith({
+    expect(mockGenerateAPIKey).toHaveBeenCalledWith({
       admin: true,
       name: config.app.adminName,
       userId: "1",
@@ -78,20 +100,19 @@ describe("init", () => {
   });
 
   it("should not create a new admin user if one exists", async () => {
-    (findByEmail as Mock).mockResolvedValueOnce({ id: 1 });
+    mockFindByEmail.mockResolvedValueOnce({ id: 1 });
 
-    await initAdminUser();
+    await adminUser.initAdminUser();
 
-    expect(findByEmail).toHaveBeenCalledWith(config.app.adminEmail);
-    expect(create).not.toHaveBeenCalled();
+    expect(mockFindByEmail).toHaveBeenCalledWith(config.app.adminEmail);
+    expect(mockCreate).not.toHaveBeenCalled();
   });
 
   it("should log an error if anything goes wrong", async () => {
-    (findByEmail as Mock).mockRejectedValueOnce(new Error("Error message"));
-    const errorSpy = vi.spyOn(logger, "error");
+    mockFindByEmail.mockRejectedValueOnce(new Error("Error message"));
 
-    await initAdminUser();
+    await adminUser.initAdminUser();
 
-    expect(errorSpy).toHaveBeenCalledWith(new Error("Error message"));
+    expect(mockLoggerError).toHaveBeenCalledWith(new Error("Error message"));
   });
 });

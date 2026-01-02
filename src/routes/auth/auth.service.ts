@@ -1,83 +1,97 @@
 import bcrypt from "bcryptjs";
 
 import { config } from "../../config";
-import { update } from "../../db/repositories/user.repository";
+import { User } from "../../db/user";
 import type { UserParams } from "../../types";
-import { generateAPIKey, generatePassword } from "../../utils/helpers";
-import { mailService } from "../../mail";
+import { Helpers } from "../../utils/helpers";
+import { MailService } from "../../mail";
 
-export async function updateUser(email: string, updates: any): Promise<any> {
-  return await update(email, updates);
-}
+export function AuthService() {
+  const userRepository = User();
+  const helpers = Helpers();
+  const mailService = MailService();
 
-export async function resetAPIKey(userParams: UserParams): Promise<void> {
-  const { email } = userParams;
-  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
+  async function updateUser(email: string, updates: any): Promise<any> {
+    return await userRepository.update(email, updates);
+  }
 
-  const verified = await updateUser(email, { key: hashedKey });
+  async function resetAPIKey(userParams: UserParams): Promise<void> {
+    const { email } = userParams;
+    const { unhashedKey, hashedKey } = await helpers.generateAPIKey(userParams);
 
-  await mailService.sendNewApiKeyEmail({
-    email,
-    name: verified!.name!,
-    key: unhashedKey,
-  });
-}
+    const verified = await updateUser(email, { key: hashedKey });
 
-export async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
-  const { name, email } = userParams;
-  const password = generatePassword();
-  const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
+    await mailService.sendNewApiKeyEmail({
+      email,
+      name: verified!.name!,
+      key: unhashedKey,
+    });
+  }
 
-  const { unhashedKey, hashedKey } = await generateAPIKey({ ...userParams, admin: true });
+  async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
+    const { name, email } = userParams;
+    const password = helpers.generatePassword();
+    const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
 
-  await updateUser(email, {
-    key: hashedKey,
-    password: hashedPassword,
-  });
+    const { unhashedKey, hashedKey } = await helpers.generateAPIKey({ ...userParams, admin: true });
 
-  await mailService.sendAdminCredentialsEmail({
-    email,
-    name,
-    password,
-    apiKey: unhashedKey,
-  });
-}
+    await updateUser(email, {
+      key: hashedKey,
+      password: hashedPassword,
+    });
 
-export async function sendVerificationEmail({
-  hostname,
-  email,
-  name,
-  verification_token,
-}: {
-  hostname: string;
-  email: string;
-  name: string;
-  verification_token: string;
-}) {
-  await mailService.sendVerificationEmail({
+    await mailService.sendAdminCredentialsEmail({
+      email,
+      name,
+      password,
+      apiKey: unhashedKey,
+    });
+  }
+
+  async function sendVerificationEmail({
     hostname,
     email,
     name,
     verification_token,
-  });
-}
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    verification_token: string;
+  }) {
+    await mailService.sendVerificationEmail({
+      hostname,
+      email,
+      name,
+      verification_token,
+    });
+  }
 
-export async function sendWelcomeEmail(userParams: UserParams) {
-  const { email } = userParams;
+  async function sendWelcomeEmail(userParams: UserParams) {
+    const { email } = userParams;
 
-  const { unhashedKey, hashedKey } = await generateAPIKey(userParams);
+    const { unhashedKey, hashedKey } = await helpers.generateAPIKey(userParams);
 
-  const verified = await updateUser(email, {
-    key: hashedKey,
-    verified: true,
-    verified_at: new Date().toISOString(),
-  });
+    const verified = await updateUser(email, {
+      key: hashedKey,
+      verified: true,
+      verified_at: new Date().toISOString(),
+    });
 
-  await mailService.sendWelcomeEmail({
-    email,
-    name: verified!.name!,
-    key: unhashedKey,
-  });
+    await mailService.sendWelcomeEmail({
+      email,
+      name: verified!.name!,
+      key: unhashedKey,
+    });
 
-  return unhashedKey;
+    return unhashedKey;
+  }
+
+  return {
+    updateUser,
+    resetAPIKey,
+    resetAdminAPIKey,
+    sendVerificationEmail,
+    sendWelcomeEmail,
+  };
 }

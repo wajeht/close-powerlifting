@@ -1,16 +1,19 @@
 import { describe, expect, test } from "vitest";
 
-import { parseHtml } from "../../../utils/scraper";
-import { parseRecordsHtml } from "./records.service";
+import { Scraper } from "../../../utils/scraper";
+import { RecordsService } from "./records.service";
 import { recordsDefaultHtml, recordsRawHtml, recordsRawMenHtml } from "./fixtures";
 
-const defaultDoc = parseHtml(recordsDefaultHtml);
-const rawDoc = parseHtml(recordsRawHtml);
-const rawMenDoc = parseHtml(recordsRawMenHtml);
+const scraper = Scraper();
+const recordsService = RecordsService();
 
-const defaultCategories = parseRecordsHtml(defaultDoc);
-const rawCategories = parseRecordsHtml(rawDoc);
-const rawMenCategories = parseRecordsHtml(rawMenDoc);
+const defaultDoc = scraper.parseHtml(recordsDefaultHtml);
+const rawDoc = scraper.parseHtml(recordsRawHtml);
+const rawMenDoc = scraper.parseHtml(recordsRawMenHtml);
+
+const defaultCategories = recordsService.parseRecordsHtml(defaultDoc);
+const rawCategories = recordsService.parseRecordsHtml(rawDoc);
+const rawMenCategories = recordsService.parseRecordsHtml(rawMenDoc);
 
 describe("records service", () => {
   describe("parseRecordsHtml", () => {

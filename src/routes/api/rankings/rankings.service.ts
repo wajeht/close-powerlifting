@@ -1,9 +1,4 @@
-import {
-  fetchJson,
-  withCache,
-  buildPaginationQuery,
-  calculatePagination,
-} from "../../../utils/scraper";
+import { Scraper } from "../../../utils/scraper";
 import { config } from "../../../config";
 import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types";
 import type {
@@ -53,120 +48,131 @@ function transformRankingRow(row: (string | number)[]): RankingRow {
   };
 }
 
-async function fetchRankingsData(
-  currentPage: number,
-  perPage: number,
-): Promise<{ rows: RankingRow[]; totalLength: number }> {
-  const query = buildPaginationQuery(currentPage, perPage);
-  const response = await fetchJson<RankingsApiResponse>(`/rankings?${query}`);
+export function RankingsService() {
+  const scraper = Scraper();
 
-  return {
-    rows: response.rows.map(transformRankingRow),
-    totalLength: response.total_length,
-  };
-}
+  async function fetchRankingsData(
+    currentPage: number,
+    perPage: number,
+  ): Promise<{ rows: RankingRow[]; totalLength: number }> {
+    const query = scraper.buildPaginationQuery(currentPage, perPage);
+    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
 
-export async function getRankings({
-  current_page = 1,
-  per_page = defaultPerPage,
-  cache: useCache = true,
-}: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
-  const cacheKey = `rankings-${current_page}-${per_page}`;
+    return {
+      rows: response.rows.map(transformRankingRow),
+      totalLength: response.total_length,
+    };
+  }
 
-  const result = await withCache<{ rows: RankingRow[]; totalLength: number }>(
-    { key: cacheKey, ttlSeconds: CACHE_TTL },
-    () => fetchRankingsData(current_page, per_page),
-    useCache,
-  );
+  async function getRankings({
+    current_page = 1,
+    per_page = defaultPerPage,
+    cache: useCache = true,
+  }: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
+    const cacheKey = `rankings-${current_page}-${per_page}`;
 
-  if (!result.data) {
-    return { data: null, cache: result.cache };
+    const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
+      { key: cacheKey, ttlSeconds: CACHE_TTL },
+      () => fetchRankingsData(current_page, per_page),
+      useCache,
+    );
+
+    if (!result.data) {
+      return { data: null, cache: result.cache };
+    }
+
+    return {
+      data: result.data.rows,
+      cache: result.cache,
+      pagination: scraper.calculatePagination(result.data.totalLength, current_page, per_page),
+    };
+  }
+
+  async function getRank({ rank }: GetRankType): Promise<RankingRow | null> {
+    const rankNum = parseInt(rank, 10);
+    if (isNaN(rankNum) || rankNum < 1) {
+      return null;
+    }
+
+    const perPage = defaultPerPage;
+    const currentPage = Math.ceil(rankNum / perPage);
+    const indexInPage = (rankNum - 1) % perPage;
+
+    const result = await getRankings({
+      current_page: currentPage,
+      per_page: perPage,
+      cache: false,
+    });
+
+    if (!result.data || !result.data[indexInPage]) {
+      return null;
+    }
+
+    return result.data[indexInPage];
+  }
+
+  function buildFilterPath(filters: GetFilteredRankingsParamType): string {
+    const parts: string[] = [];
+    if (filters.equipment) parts.push(filters.equipment);
+    if (filters.sex) parts.push(filters.sex);
+    if (filters.weight_class) parts.push(filters.weight_class);
+    if (filters.year) parts.push(filters.year);
+    if (filters.event) parts.push(filters.event);
+    if (filters.sort) parts.push(filters.sort);
+    return parts.length > 0 ? `/${parts.join("/")}` : "";
+  }
+
+  async function fetchFilteredRankingsData(
+    filters: GetFilteredRankingsParamType,
+    currentPage: number,
+    perPage: number,
+  ): Promise<{ rows: RankingRow[]; totalLength: number }> {
+    const filterPath = buildFilterPath(filters);
+    const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
+    const end = start + perPage;
+    const query = `start=${start}&end=${end}&lang=en&units=lbs`;
+    const response = await scraper.fetchJson<RankingsApiResponse>(
+      `/rankings${filterPath}?${query}`,
+    );
+
+    return {
+      rows: response.rows.map(transformRankingRow),
+      totalLength: response.total_length,
+    };
+  }
+
+  async function getFilteredRankings(
+    filters: GetFilteredRankingsParamType,
+    query: GetFilteredRankingsQueryType,
+  ): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
+    const currentPage = query.current_page ?? 1;
+    const perPage = query.per_page ?? defaultPerPage;
+    const useCache = query.cache ?? true;
+
+    const filterPath = buildFilterPath(filters);
+    const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
+
+    const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
+      { key: cacheKey, ttlSeconds: CACHE_TTL },
+      () => fetchFilteredRankingsData(filters, currentPage, perPage),
+      useCache,
+    );
+
+    if (!result.data) {
+      return { data: null, cache: result.cache };
+    }
+
+    return {
+      data: result.data.rows,
+      cache: result.cache,
+      pagination: scraper.calculatePagination(result.data.totalLength, currentPage, perPage),
+    };
   }
 
   return {
-    data: result.data.rows,
-    cache: result.cache,
-    pagination: calculatePagination(result.data.totalLength, current_page, per_page),
+    getRankings,
+    getRank,
+    getFilteredRankings,
+    fetchRankingsData,
   };
 }
-
-export async function getRank({ rank }: GetRankType): Promise<RankingRow | null> {
-  const rankNum = parseInt(rank, 10);
-  if (isNaN(rankNum) || rankNum < 1) {
-    return null;
-  }
-
-  const perPage = defaultPerPage;
-  const currentPage = Math.ceil(rankNum / perPage);
-  const indexInPage = (rankNum - 1) % perPage;
-
-  const result = await getRankings({
-    current_page: currentPage,
-    per_page: perPage,
-    cache: false,
-  });
-
-  if (!result.data || !result.data[indexInPage]) {
-    return null;
-  }
-
-  return result.data[indexInPage];
-}
-
-function buildFilterPath(filters: GetFilteredRankingsParamType): string {
-  const parts: string[] = [];
-  if (filters.equipment) parts.push(filters.equipment);
-  if (filters.sex) parts.push(filters.sex);
-  if (filters.weight_class) parts.push(filters.weight_class);
-  if (filters.year) parts.push(filters.year);
-  if (filters.event) parts.push(filters.event);
-  if (filters.sort) parts.push(filters.sort);
-  return parts.length > 0 ? `/${parts.join("/")}` : "";
-}
-
-async function fetchFilteredRankingsData(
-  filters: GetFilteredRankingsParamType,
-  currentPage: number,
-  perPage: number,
-): Promise<{ rows: RankingRow[]; totalLength: number }> {
-  const filterPath = buildFilterPath(filters);
-  const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
-  const end = start + perPage;
-  const query = `start=${start}&end=${end}&lang=en&units=lbs`;
-  const response = await fetchJson<RankingsApiResponse>(`/rankings${filterPath}?${query}`);
-
-  return {
-    rows: response.rows.map(transformRankingRow),
-    totalLength: response.total_length,
-  };
-}
-
-export async function getFilteredRankings(
-  filters: GetFilteredRankingsParamType,
-  query: GetFilteredRankingsQueryType,
-): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
-  const currentPage = query.current_page ?? 1;
-  const perPage = query.per_page ?? defaultPerPage;
-  const useCache = query.cache ?? true;
-
-  const filterPath = buildFilterPath(filters);
-  const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
-
-  const result = await withCache<{ rows: RankingRow[]; totalLength: number }>(
-    { key: cacheKey, ttlSeconds: CACHE_TTL },
-    () => fetchFilteredRankingsData(filters, currentPage, perPage),
-    useCache,
-  );
-
-  if (!result.data) {
-    return { data: null, cache: result.cache };
-  }
-
-  return {
-    data: result.data.rows,
-    cache: result.cache,
-    pagination: calculatePagination(result.data.totalLength, currentPage, perPage),
-  };
-}
-
-export { fetchRankingsData };

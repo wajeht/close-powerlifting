@@ -1,17 +1,19 @@
 import { describe, expect, test } from "vitest";
 
 import { config } from "../../../config";
-import { parseHtml } from "../../../utils/scraper";
-import { parseUserProfileHtml } from "./users.service";
+import { Scraper } from "../../../utils/scraper";
+import { UsersService } from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
 
+const scraper = Scraper();
+const usersService = UsersService();
 const { defaultPerPage, maxPerPage } = config.pagination;
 
-const kristyDoc = parseHtml(userKristyHawkinsHtml);
-const johnDoc = parseHtml(userJohnHaackHtml);
+const kristyDoc = scraper.parseHtml(userKristyHawkinsHtml);
+const johnDoc = scraper.parseHtml(userJohnHaackHtml);
 
-const kristyProfile = parseUserProfileHtml(kristyDoc, "kristyhawkins");
-const johnProfile = parseUserProfileHtml(johnDoc, "johnhaack");
+const kristyProfile = usersService.parseUserProfileHtml(kristyDoc, "kristyhawkins");
+const johnProfile = usersService.parseUserProfileHtml(johnDoc, "johnhaack");
 
 describe("users service", () => {
   describe("parseUserProfileHtml", () => {

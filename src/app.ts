@@ -9,20 +9,14 @@ import { Server } from "http";
 import { AddressInfo } from "net";
 
 import { config } from "./config";
-import {
-  errorMiddleware,
-  hostNameMiddleware,
-  notFoundMiddleware,
-  rateLimitMiddleware,
-  sessionMiddleware,
-} from "./routes/middleware";
-import { mainRouter } from "./routes/routes";
+import { Middleware } from "./routes/middleware";
+import { MainRouter } from "./routes/routes";
 import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
-import { initDatabase, stopDatabase } from "./db/db";
-import { initAdminUser } from "./utils/admin-user";
-import { cronService } from "./crons";
-import { logger } from "./utils/logger";
+import { Database } from "./db/db";
+import { AdminUser } from "./utils/admin-user";
+import { CronService } from "./crons";
+import { Logger } from "./utils/logger";
 
 export interface ServerInfo {
   app: Express;
@@ -30,15 +24,17 @@ export interface ServerInfo {
 }
 
 export function createApp(): { app: Express } {
+  const middleware = Middleware();
+
   const app = express();
 
   app
     .disable("x-powered-by")
     .set("trust proxy", 1)
-    .use(hostNameMiddleware)
+    .use(middleware.hostNameMiddleware)
     .use(cookieParser())
     .use(flash())
-    .use(sessionMiddleware())
+    .use(middleware.sessionMiddleware())
     .use(
       cors({
         credentials: true,
@@ -70,17 +66,22 @@ export function createApp(): { app: Express } {
     .set("views", path.resolve(path.join(process.cwd(), "src", "routes")))
     .set("view cache", config.app.env === "production")
     .use(layoutMiddleware)
-    .use(rateLimitMiddleware())
-    .use(mainRouter);
+    .use(middleware.rateLimitMiddleware())
+    .use(MainRouter());
 
   expressJSDocSwaggerHandler(app);
 
-  app.use(notFoundMiddleware).use(errorMiddleware);
+  app.use(middleware.notFoundMiddleware).use(middleware.errorMiddleware);
 
   return { app };
 }
 
 export function createServer(): ServerInfo {
+  const database = Database();
+  const cronService = CronService();
+  const adminUser = AdminUser();
+  const logger = Logger();
+
   const { app } = createApp();
 
   const server: Server = app.listen(config.app.port);
@@ -93,9 +94,9 @@ export function createServer(): ServerInfo {
     logger.info(`Server is listening on ${bind}`);
 
     try {
-      await initDatabase();
+      await database.init();
       cronService.start();
-      await initAdminUser();
+      await adminUser.initAdminUser();
     } catch (error) {
       logger.error((error as any).message);
     }
@@ -125,12 +126,16 @@ export function createServer(): ServerInfo {
 }
 
 export async function closeServer({ server }: ServerInfo): Promise<void> {
+  const database = Database();
+  const cronService = CronService();
+  const logger = Logger();
+
   logger.info("Shutting down server gracefully");
 
   cronService.stop();
 
   try {
-    await stopDatabase();
+    await database.stop();
     logger.info("Database connection closed");
   } catch (error) {
     logger.error("Error closing database connection", error);

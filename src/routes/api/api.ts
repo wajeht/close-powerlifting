@@ -1,23 +1,52 @@
 import express from "express";
 
-import { authenticationMiddleware, trackAPICallsMiddleware } from "../middleware";
-import { federationsRouter } from "./federations/federations";
-import { healthCheckRouter } from "./health-check/health-check";
-import { meetsRouter } from "./meets/meets";
-import { rankingsRouter } from "./rankings/rankings";
-import { recordsRouter } from "./records/records";
-import { statusRouter } from "./status/status";
-import { usersRouter } from "./users/users";
+import { Middleware } from "../middleware";
+import { FederationsRouter } from "./federations/federations";
+import { HealthCheckRouter } from "./health-check/health-check";
+import { MeetsRouter } from "./meets/meets";
+import { RankingsRouter } from "./rankings/rankings";
+import { RecordsRouter } from "./records/records";
+import { StatusRouter } from "./status/status";
+import { UsersRouter } from "./users/users";
 
-const apiRouter = express.Router();
+export function ApiRouter() {
+  const middleware = Middleware();
 
-apiRouter.use("/rankings", authenticationMiddleware, trackAPICallsMiddleware, rankingsRouter);
-apiRouter.use("/federations", authenticationMiddleware, trackAPICallsMiddleware, federationsRouter);
-apiRouter.use("/meets", authenticationMiddleware, trackAPICallsMiddleware, meetsRouter);
-apiRouter.use("/records", authenticationMiddleware, trackAPICallsMiddleware, recordsRouter);
-apiRouter.use("/users", authenticationMiddleware, trackAPICallsMiddleware, usersRouter);
+  const router = express.Router();
 
-apiRouter.use("/status", statusRouter);
-apiRouter.use("/health-check", healthCheckRouter);
+  router.use(
+    "/rankings",
+    middleware.authenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    RankingsRouter(),
+  );
+  router.use(
+    "/federations",
+    middleware.authenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    FederationsRouter(),
+  );
+  router.use(
+    "/meets",
+    middleware.authenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    MeetsRouter(),
+  );
+  router.use(
+    "/records",
+    middleware.authenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    RecordsRouter(),
+  );
+  router.use(
+    "/users",
+    middleware.authenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    UsersRouter(),
+  );
 
-export { apiRouter };
+  router.use("/status", StatusRouter());
+  router.use("/health-check", HealthCheckRouter());
+
+  return router;
+}

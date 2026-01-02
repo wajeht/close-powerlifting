@@ -1,19 +1,21 @@
 import { describe, expect, test } from "vitest";
 
 import { config } from "../../../config";
-import { parseHtml, calculatePagination } from "../../../utils/scraper";
-import { parseFederationMeetsHtml } from "./federations.service";
+import { Scraper } from "../../../utils/scraper";
+import { FederationsService } from "./federations.service";
 import { mlistHtml, mlistUsaplHtml, mlistUsapl2024Html } from "./fixtures";
 
+const scraper = Scraper();
+const federationsService = FederationsService();
 const { defaultPerPage, maxPerPage } = config.pagination;
 
-const mlistDoc = parseHtml(mlistHtml);
-const mlistUsaplDoc = parseHtml(mlistUsaplHtml);
-const mlistUsapl2024Doc = parseHtml(mlistUsapl2024Html);
+const mlistDoc = scraper.parseHtml(mlistHtml);
+const mlistUsaplDoc = scraper.parseHtml(mlistUsaplHtml);
+const mlistUsapl2024Doc = scraper.parseHtml(mlistUsapl2024Html);
 
-const mlistMeets = parseFederationMeetsHtml(mlistDoc);
-const mlistUsaplMeets = parseFederationMeetsHtml(mlistUsaplDoc);
-const mlistUsapl2024Meets = parseFederationMeetsHtml(mlistUsapl2024Doc);
+const mlistMeets = federationsService.parseFederationMeetsHtml(mlistDoc);
+const mlistUsaplMeets = federationsService.parseFederationMeetsHtml(mlistUsaplDoc);
+const mlistUsapl2024Meets = federationsService.parseFederationMeetsHtml(mlistUsapl2024Doc);
 
 function getField(row: Record<string, string>, fieldName: string): string {
   const key = Object.keys(row).find((k) => k.toLowerCase() === fieldName.toLowerCase());
@@ -125,7 +127,7 @@ describe("federations service", () => {
 
     test("calculatePagination works with federations data", () => {
       const totalItems = mlistMeets.length;
-      const pagination = calculatePagination(totalItems, 1, defaultPerPage);
+      const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
 
       expect(pagination.items).toBe(totalItems);
       expect(pagination.per_page).toBe(defaultPerPage);

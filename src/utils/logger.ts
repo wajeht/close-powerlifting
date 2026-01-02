@@ -55,18 +55,36 @@ function log(level: Exclude<LogLevel, "SILENT">, message: string, ...args: unkno
   }
 }
 
-export const logger = {
-  debug: (message: string, ...args: unknown[]) => log("DEBUG", message, ...args),
-  info: (message: string, ...args: unknown[]) => log("INFO", message, ...args),
-  warn: (message: string, ...args: unknown[]) => log("WARN", message, ...args),
-  error: (message: string | Error, ...args: unknown[]) => {
+export function Logger() {
+  function debug(message: string, ...args: unknown[]) {
+    log("DEBUG", message, ...args);
+  }
+
+  function info(message: string, ...args: unknown[]) {
+    log("INFO", message, ...args);
+  }
+
+  function warn(message: string, ...args: unknown[]) {
+    log("WARN", message, ...args);
+  }
+
+  function error(message: string | Error, ...args: unknown[]) {
     if (message instanceof Error) {
       log("ERROR", message.message, ...args);
     } else {
       log("ERROR", message, ...args);
     }
-  },
-  setLevel: (level: LogLevel) => {
+  }
+
+  function setLevel(level: LogLevel) {
     globalLevel = level;
-  },
-};
+  }
+
+  return {
+    debug,
+    info,
+    warn,
+    error,
+    setLevel,
+  };
+}

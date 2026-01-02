@@ -1,31 +1,43 @@
 import knex, { Knex } from "knex";
 import { knexConfig } from "./knexfile";
-import { logger } from "../utils/logger";
+import { Logger } from "../utils/logger";
 
-let db: Knex;
+let _db: Knex | null = null;
 
-export function getDb(): Knex {
-  if (!db) {
-    db = knex(knexConfig);
+function _createKnexInstance(): Knex {
+  if (_db) {
+    return _db;
   }
-  return db;
+  _db = knex(knexConfig);
+  return _db;
 }
 
-export async function initDatabase(): Promise<void> {
-  try {
-    db = getDb();
-    await db.migrate.latest();
-    logger.info("Database connection established and migrations applied!");
-  } catch (error) {
-    logger.error("Database initialization failed!");
-    console.error(error);
-    throw error;
-  }
-}
+export function Database() {
+  const db = _createKnexInstance();
+  const logger = Logger();
 
-export async function stopDatabase(): Promise<void> {
-  if (db) {
-    await db.destroy();
-    logger.info("Database connection closed!");
+  async function init(): Promise<void> {
+    try {
+      await db.migrate.latest();
+      logger.info("Database connection established and migrations applied!");
+    } catch (error) {
+      logger.error("Database initialization failed!");
+      console.error(error);
+      throw error;
+    }
   }
+
+  async function stop(): Promise<void> {
+    if (_db) {
+      await _db.destroy();
+      _db = null;
+      logger.info("Database connection closed!");
+    }
+  }
+
+  return {
+    instance: db,
+    init,
+    stop,
+  };
 }

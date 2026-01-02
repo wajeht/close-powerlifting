@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { parseHtml } from "../../../utils/scraper";
-import { parseMeetHtml } from "./meets.service";
+import { Scraper } from "../../../utils/scraper";
+import { MeetsService } from "./meets.service";
 import {
   meetRps2548Html,
   meetUsaplIsr2025Html,
@@ -9,15 +9,18 @@ import {
   meetUspa1969Html,
 } from "./fixtures";
 
-const rpsDoc = parseHtml(meetRps2548Html);
-const usaplDoc = parseHtml(meetUsaplIsr2025Html);
-const wrpfDoc = parseHtml(meetWrpfUsa23e1Html);
-const uspaDoc = parseHtml(meetUspa1969Html);
+const scraper = Scraper();
+const meetsService = MeetsService();
 
-const rpsMeet = parseMeetHtml(rpsDoc);
-const usaplMeet = parseMeetHtml(usaplDoc);
-const wrpfMeet = parseMeetHtml(wrpfDoc);
-const uspaMeet = parseMeetHtml(uspaDoc);
+const rpsDoc = scraper.parseHtml(meetRps2548Html);
+const usaplDoc = scraper.parseHtml(meetUsaplIsr2025Html);
+const wrpfDoc = scraper.parseHtml(meetWrpfUsa23e1Html);
+const uspaDoc = scraper.parseHtml(meetUspa1969Html);
+
+const rpsMeet = meetsService.parseMeetHtml(rpsDoc);
+const usaplMeet = meetsService.parseMeetHtml(usaplDoc);
+const wrpfMeet = meetsService.parseMeetHtml(wrpfDoc);
+const uspaMeet = meetsService.parseMeetHtml(uspaDoc);
 
 describe("meets service", () => {
   describe("parseMeetHtml", () => {
