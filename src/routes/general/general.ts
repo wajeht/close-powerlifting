@@ -4,7 +4,7 @@ import { z } from "zod";
 import { config } from "../../config";
 import { Cache } from "../../db/cache";
 import { Database } from "../../db/db";
-import { Cron } from "../../crons";
+import { Cron } from "../../cron";
 import { Mail } from "../../mail";
 import { Helpers } from "../../utils/helpers";
 import { Middleware } from "../middleware";

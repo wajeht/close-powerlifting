@@ -15,7 +15,7 @@ import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
 import { Database } from "./db/db";
 import { AdminUser } from "./utils/admin-user";
-import { Cron } from "./crons";
+import { Cron } from "./cron";
 import { Logger } from "./utils/logger";
 
 export interface ServerInfo {
