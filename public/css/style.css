@@ -542,9 +542,6 @@
   .hidden {
     display: none !important;
   }
-  .inline {
-    display: inline !important;
-  }
   .inline-block {
     display: inline-block !important;
   }

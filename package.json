@@ -78,7 +78,6 @@
     "@types/nodemailer": "^7.0.4",
     "@types/supertest": "^6.0.2",
     "@vitest/coverage-v8": "^4.0.16",
-    "esbuild": "^0.27.2",
     "html-minifier-terser": "^7.2.0",
     "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",

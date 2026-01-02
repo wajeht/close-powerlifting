@@ -1,12 +1,10 @@
 import fs from "fs";
 import path from "path";
-// import { build } from "esbuild";
 import { minify as minifyHtml } from "html-minifier-terser";
-// import { minify as terserMinify } from "terser";
+import { minify as terserMinify } from "terser";
 
-// const distDir = path.join(__dirname, "..", "dist");
+const distDir = path.join(__dirname, "..", "dist");
 const viewsDir = path.join(__dirname, "..", "src", "routes");
-// const publicDir = path.join(__dirname, "..", "public");
 
 function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -24,57 +22,27 @@ function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
   return files;
 }
 
-// // Note: figure out why it's stripping all comments even with legalComments: "inline"
-// async function minifyJavaScript(): Promise<void> {
-//   const distJsFiles = getAllFiles(distDir, ".js");
-//   const publicJsFiles = getAllFiles(publicDir, ".js");
-//   const jsFiles = [...distJsFiles, ...publicJsFiles];
+async function minifyJavaScript(): Promise<void> {
+  const jsFiles = getAllFiles(distDir, ".js");
 
-//   console.log(`Minifying ${jsFiles.length} JavaScript files...`);
+  console.log(`Minifying ${jsFiles.length} JavaScript files...`);
 
-//   for (const file of jsFiles) {
-//     const isBrowserFile = file.startsWith(publicDir);
+  for (const file of jsFiles) {
+    const code = fs.readFileSync(file, "utf8");
 
-//     await build({
-//       entryPoints: [file],
-//       outfile: file,
-//       allowOverwrite: true,
-//       minify: true,
-//       minifyIdentifiers: !isBrowserFile,
-//       minifySyntax: !isBrowserFile,
-//       keepNames: true,
-//       sourcemap: false,
-//       target: isBrowserFile ? "es2020" : "node22",
-//       platform: isBrowserFile ? "browser" : "node",
-//       format: isBrowserFile ? "iife" : "cjs",
-//       logLevel: "error",
-//       legalComments: "inline", // 👈 keeps ALL comments
-//     });
-//   }
+    const out = await terserMinify(code, {
+      compress: true,
+      mangle: true,
+      format: {
+        comments: true,
+      },
+    });
 
-//   console.log(`Minified ${jsFiles.length} JavaScript files`);
-// }
+    fs.writeFileSync(file, out.code ?? code, "utf8");
+  }
 
-// async function minifyJavaScript(): Promise<void> {
-//   // const distJsFiles = getAllFiles(distDir, ".js");
-//   const publicJsFiles = getAllFiles(publicDir, ".js");
-//   // const jsFiles = [...distJsFiles, ...publicJsFiles];
-//   const jsFiles = publicJsFiles;
-
-//   for (const file of jsFiles) {
-//     const code = fs.readFileSync(file, "utf8");
-
-//     const out = await terserMinify(code, {
-//       compress: true,
-//       mangle: true,
-//       format: {
-//         comments: true,
-//       },
-//     });
-
-//     fs.writeFileSync(file, out.code ?? code, "utf8");
-//   }
-// }
+  console.log(`Minified ${jsFiles.length} JavaScript files`);
+}
 
 async function minifyHtmlFiles(): Promise<void> {
   const htmlFiles = getAllFiles(viewsDir, ".html");
@@ -115,9 +83,7 @@ async function minifyHtmlFiles(): Promise<void> {
 async function minifyAll(): Promise<void> {
   console.log("Starting minification...\n");
 
-  // JS minification disabled for now - only doing CSS and HTML
-  // await Promise.all([minifyJavaScript(), minifyHtmlFiles()]);
-  await minifyHtmlFiles();
+  await Promise.all([minifyJavaScript(), minifyHtmlFiles()]);
 
   console.log("\nMinification complete!");
 }
