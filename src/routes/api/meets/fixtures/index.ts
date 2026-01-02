@@ -12,3 +12,4 @@ export const meetWrpfUsa23e1Html = readFileSync(
   join(fixturesDir, "meet-wrpf-usa-23e1.html"),
   "utf-8",
 );
+export const meetUspa1969Html = readFileSync(join(fixturesDir, "meet-uspa-1969.html"), "utf-8");

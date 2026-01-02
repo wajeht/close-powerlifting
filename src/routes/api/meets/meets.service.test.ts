@@ -2,15 +2,22 @@ import { describe, expect, test } from "vitest";
 
 import { parseHtml } from "../../../utils/scraper";
 import { parseMeetHtml } from "./meets.service";
-import { meetRps2548Html, meetUsaplIsr2025Html, meetWrpfUsa23e1Html } from "./fixtures";
+import {
+  meetRps2548Html,
+  meetUsaplIsr2025Html,
+  meetWrpfUsa23e1Html,
+  meetUspa1969Html,
+} from "./fixtures";
 
 const rpsDoc = parseHtml(meetRps2548Html);
 const usaplDoc = parseHtml(meetUsaplIsr2025Html);
 const wrpfDoc = parseHtml(meetWrpfUsa23e1Html);
+const uspaDoc = parseHtml(meetUspa1969Html);
 
 const rpsMeet = parseMeetHtml(rpsDoc);
 const usaplMeet = parseMeetHtml(usaplDoc);
 const wrpfMeet = parseMeetHtml(wrpfDoc);
+const uspaMeet = parseMeetHtml(uspaDoc);
 
 describe("meets service", () => {
   describe("parseMeetHtml", () => {
@@ -36,6 +43,14 @@ describe("meets service", () => {
       expect(wrpfMeet.results).toBeDefined();
     });
 
+    test("parses USPA meet HTML correctly", () => {
+      expect(uspaMeet).toBeDefined();
+      expect(uspaMeet.title).toBeDefined();
+      expect(uspaMeet.date).toBeDefined();
+      expect(uspaMeet.location).toBeDefined();
+      expect(uspaMeet.results).toBeDefined();
+    });
+
     test("extracts title from RPS meet", () => {
       expect(rpsMeet.title.length).toBeGreaterThan(0);
       expect(rpsMeet.title).toContain("RPS");
@@ -50,6 +65,11 @@ describe("meets service", () => {
       expect(wrpfMeet.title.length).toBeGreaterThan(0);
     });
 
+    test("extracts title from USPA meet", () => {
+      expect(uspaMeet.title.length).toBeGreaterThan(0);
+      expect(uspaMeet.title.toLowerCase()).toContain("uspa");
+    });
+
     test("extracts date in correct format from RPS meet", () => {
       expect(rpsMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
@@ -58,8 +78,16 @@ describe("meets service", () => {
       expect(usaplMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
 
+    test("extracts date in correct format from USPA meet", () => {
+      expect(uspaMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
     test("extracts location from USAPL meet", () => {
       expect(usaplMeet.location.length).toBeGreaterThan(0);
+    });
+
+    test("extracts location from USPA meet", () => {
+      expect(uspaMeet.location.length).toBeGreaterThan(0);
     });
 
     test("extracts results from RPS meet", () => {
@@ -75,6 +103,11 @@ describe("meets service", () => {
     test("extracts results from WRPF meet", () => {
       expect(Array.isArray(wrpfMeet.results)).toBe(true);
       expect(wrpfMeet.results.length).toBeGreaterThan(0);
+    });
+
+    test("extracts results from USPA meet", () => {
+      expect(Array.isArray(uspaMeet.results)).toBe(true);
+      expect(uspaMeet.results.length).toBeGreaterThan(0);
     });
 
     test("results have expected fields", () => {

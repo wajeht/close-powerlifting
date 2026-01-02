@@ -39,6 +39,7 @@ const fixtures: FixtureConfig[] = [
   { url: "/m/rps/2548", path: "meets/fixtures/meet-rps-2548.html" },
   { url: "/m/usapl/ISR-2025-02", path: "meets/fixtures/meet-usapl-isr-2025-02.html" },
   { url: "/m/wrpf-usa/23e1", path: "meets/fixtures/meet-wrpf-usa-23e1.html" },
+  { url: "/m/uspa/1969", path: "meets/fixtures/meet-uspa-1969.html" },
 
   // Users (HTML)
   { url: "/u/kristyhawkins", path: "users/fixtures/user-kristyhawkins.html" },

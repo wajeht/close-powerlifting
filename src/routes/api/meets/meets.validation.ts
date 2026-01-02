@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 export const getMeetParamValidation = z.object({
-  meet: z.string(),
+  meet: z.union([z.string(), z.array(z.string())]).transform((val) => {
+    return Array.isArray(val) ? val.join("/") : val;
+  }),
 });
 
 export const getMeetQueryValidation = z.object({

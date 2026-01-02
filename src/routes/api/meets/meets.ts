@@ -78,13 +78,15 @@ const meetsRouter = express.Router();
  *   "message": "The resource was returned successfully!",
  *   "cache": true,
  *   "data": {
- *     "metadata": {"title": "2024 USPA Nationals", "date": "2024-07-15", "federation": "USPA"},
- *     "results": [{"name": "John Haack", "total_kg": 900, "place": 1}]
+ *     "title": "2021 USPA Top of Texas Trifecta",
+ *     "date": "2021-01-30",
+ *     "location": "USA-TX, Amarillo",
+ *     "results": [{"rank": "1", "lifter": "Alex Maher", "total": "1471.6", "dots": "478.88"}]
  *   }
  * }
  */
 meetsRouter.get(
-  "/:meet",
+  "/*meet",
   apiValidationMiddleware({
     params: getMeetParamValidation,
     query: getMeetQueryValidation,
