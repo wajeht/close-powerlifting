@@ -1,21 +1,20 @@
-<div>
-  <div class="mx-auto flex max-w-2xl flex-col gap-4 text-center">
-    <h1>500</h1>
-    <span
-      >The server encountered an internal error or misconfiguration and was unable to complete your
-      request.</span
-    >
+<div class="fade-in mx-auto max-w-md text-center">
+  <div class="flex flex-col gap-4">
+    <h1 class="text-6xl font-bold text-white"><%= statusCode %></h1>
+    <p class="text-xl text-neutral-400"><%= heading %></p>
+    <p class="text-sm text-neutral-500"><%= message %></p>
 
-    <!-- prettier-ignore- -->
-    <% if (error) { %>
-    <!-- prettier-ignore- -->
-    <pre class="overflow-scroll bg-neutral-900 p-4 text-left">
-      <!-- prettier-ignore- -->
-          <%=  error %>
-      <!-- prettier-ignore- -->
-        </pre>
-    <!-- prettier-ignore- -->
+    <% if (typeof error !== 'undefined' && error) { %>
+    <pre class="mt-4 overflow-scroll rounded-lg bg-neutral-900 p-4 text-left text-xs text-neutral-400"><%= error %></pre>
     <% } %>
-    <!-- prettier-ignore- -->
+
+    <div class="mt-4">
+      <a
+        href="/"
+        class="inline-block rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+      >
+        Back to home
+      </a>
+    </div>
   </div>
 </div>

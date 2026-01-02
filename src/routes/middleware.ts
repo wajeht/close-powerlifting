@@ -42,7 +42,14 @@ export function rateLimitMiddleware() {
 
 export function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
   const isApiPrefix = req.url.match(/\/api\//g);
-  if (!isApiPrefix) return res.status(404).render("general/not-found.html", { title: "Not Found" });
+  if (!isApiPrefix) {
+    return res.status(404).render("general/error.html", {
+      title: "Not Found",
+      statusCode: 404,
+      heading: "Page not found",
+      message: "The page you're looking for doesn't exist or has been moved.",
+    });
+  }
 
   return res.status(404).json({
     status: "fail",
@@ -71,9 +78,13 @@ export function errorMiddleware(err: unknown, req: Request, res: Response, _next
   const isHealthcheck = req.originalUrl === "/health-check";
 
   if (!isApiRoute && !isHealthcheck) {
+    const showStack = config.app.env === "development" && statusCode >= 500 && err instanceof Error;
     return res.status(statusCode).render("general/error.html", {
       title: "Error",
-      error: config.app.env === "development" && err instanceof Error ? err.stack : null,
+      statusCode,
+      heading: "Something went wrong",
+      message: "The server encountered an error and was unable to complete your request.",
+      error: showStack ? err.stack : null,
     });
   }
 

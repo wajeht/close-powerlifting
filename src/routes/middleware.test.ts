@@ -34,7 +34,12 @@ describe("notFoundHandler", () => {
     notFoundMiddleware(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.render).toHaveBeenCalledWith("general/not-found.html", { title: "Not Found" });
+    expect(res.render).toHaveBeenCalledWith("general/error.html", {
+      title: "Not Found",
+      statusCode: 404,
+      heading: "Page not found",
+      message: "The page you're looking for doesn't exist or has been moved.",
+    });
     expect(res.json).not.toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
   });
