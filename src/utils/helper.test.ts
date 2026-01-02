@@ -2,12 +2,7 @@ import { JSDOM } from "jsdom";
 import { beforeEach, describe, expect, test } from "vitest";
 
 import { generateAPIKey, hashKey, timingSafeEqual } from "./helpers";
-import {
-  tableToJson,
-  stripHtml,
-  buildPaginationQuery,
-  calculatePagination,
-} from "./scraper";
+import { tableToJson, stripHtml, buildPaginationQuery, calculatePagination } from "./scraper";
 
 describe("tableToJson", () => {
   let table: any;
