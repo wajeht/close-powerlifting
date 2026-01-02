@@ -27,7 +27,7 @@ import {
  * Record category
  * @typedef {object} RecordCategory
  * @property {string} title - Category title (e.g., "Men's Raw Squat")
- * @property {array<RecordEntry>} records - Records in this category
+ * @property {RecordEntry[]} records - Records in this category
  */
 
 /**
@@ -37,7 +37,7 @@ import {
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
  * @property {boolean} cache - Whether data was cached
- * @property {array<RecordCategory>} data - Record categories
+ * @property {RecordCategory[]} data - Record categories
  */
 
 /**

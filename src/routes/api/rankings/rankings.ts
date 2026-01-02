@@ -51,7 +51,7 @@ import {
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
  * @property {boolean} cache - Whether data was cached
- * @property {array<RankingEntry>} data - Array of ranking entries
+ * @property {RankingEntry[]} data - Array of ranking entries
  * @property {Pagination} pagination - Pagination info
  */
 

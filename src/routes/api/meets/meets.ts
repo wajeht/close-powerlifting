@@ -34,7 +34,7 @@ import {
  * @property {string} title - Meet title
  * @property {string} date - Meet date (YYYY-MM-DD)
  * @property {string} location - Meet location
- * @property {array<MeetResult>} results - Meet results
+ * @property {MeetResult[]} results - Meet results
  */
 
 /**

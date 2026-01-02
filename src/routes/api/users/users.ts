@@ -61,8 +61,8 @@ import {
  * @property {string} sex - M or F
  * @property {string} instagram - Instagram handle
  * @property {string} instagram_url - Instagram profile URL
- * @property {array<PersonalBest>} personal_best - Personal best records
- * @property {array<CompetitionResult>} competition_results - Competition history
+ * @property {PersonalBest[]} personal_best - Personal best records
+ * @property {CompetitionResult[]} competition_results - Competition history
  */
 
 /**
@@ -80,7 +80,7 @@ import {
  * @property {string} status - Response status
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
- * @property {array<object>} data - Search results
+ * @property {object[]} data - Search results
  * @property {Pagination} pagination - Pagination info
  */
 

@@ -42,7 +42,7 @@ import {
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
  * @property {boolean} cache - Whether data was cached
- * @property {array<FederationMeet>} data - Array of federation meets
+ * @property {FederationMeet[]} data - Array of federation meets
  * @property {Pagination} pagination - Pagination info
  */
 

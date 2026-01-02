@@ -22,7 +22,7 @@ import { getStatusValidation, GetStatusType } from "./status.validation";
  * @typedef {object} StatusData
  * @property {string} server_version - Server version commit hash
  * @property {string} meets - Total meets tracked
- * @property {array<FederationStatus>} federations - Federation status list
+ * @property {FederationStatus[]} federations - Federation status list
  */
 
 /**
