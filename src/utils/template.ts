@@ -29,7 +29,11 @@ export function engine(
 
 const isProd = config.app.env === "production";
 const assetVersions = isProd ? assetUtils.getAssetVersions() : null;
-const cssVersion = assetVersions?.style ?? String(Math.random()).slice(2, 10);
+const randomVersion = () => String(Math.random()).slice(2, 10);
+const version = {
+  style: assetVersions?.style ?? randomVersion(),
+  script: assetVersions?.script ?? randomVersion(),
+};
 
 export function layoutMiddleware(
   req: import("express").Request,
@@ -43,7 +47,7 @@ export function layoutMiddleware(
     options?: object,
     callback?: (err: Error, html: string) => void,
   ) {
-    const opts = { version: { style: cssVersion }, ...options };
+    const opts = { version, ...options };
 
     originalRender(view, opts, (err: Error, html: string) => {
       if (err) {

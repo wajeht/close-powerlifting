@@ -4,6 +4,7 @@ import path from "node:path";
 
 export type AssetVersions = {
   style: string;
+  script: string;
 };
 
 export function createAssetUtils() {
@@ -28,6 +29,7 @@ export function createAssetUtils() {
 
     cachedVersions = {
       style: computeFileHash("css/style.css"),
+      script: computeFileHash("js/script.js"),
     };
     return cachedVersions;
   }
