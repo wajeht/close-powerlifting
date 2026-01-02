@@ -56,7 +56,8 @@ function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
 // }
 
 async function minifyJavaScript(): Promise<void> {
-  const distJsFiles = getAllFiles(distDir, ".js");
+  // const distJsFiles = getAllFiles(distDir, ".js");
+  const distJsFiles = []; // TODO: figure out why it's stripping all comments even with legalComments: "inline"
   const publicJsFiles = getAllFiles(publicDir, ".js");
   const jsFiles = [...distJsFiles, ...publicJsFiles];
 
