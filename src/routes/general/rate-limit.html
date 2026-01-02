@@ -9,8 +9,14 @@
 
   <style>
     * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       background-color: #000000;
-      color: #737373;
+      color: #a3a3a3;
       font-family:
         ui-sans-serif,
         system-ui,
@@ -21,38 +27,62 @@
         'Helvetica Neue',
         Arial,
         'Noto Sans',
-        sans-serif,
-        'Apple Color Emoji',
-        'Segoe UI Emoji',
-        'Segoe UI Symbol',
-        'Noto Color Emoji';
+        sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     main {
       display: flex;
-      gap: 10px;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
+      text-align: center;
+      padding: 2rem;
     }
 
-    h1 {
+    .error-code {
+      font-size: 4rem;
+      font-weight: bold;
+      color: #dc2626;
+      line-height: 1;
+    }
+
+    .error-message {
+      margin-top: 1rem;
+      font-size: 1.125rem;
+      color: #ffffff;
+    }
+
+    .error-detail {
+      margin-top: 0.5rem;
       font-size: 0.875rem;
-      line-height: 1.25rem;
+      color: #737373;
+    }
+
+    .back-link {
+      margin-top: 1.5rem;
+      display: inline-block;
+      background-color: #dc2626;
+      color: #ffffff;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+
+    .back-link:hover {
+      background-color: #b91c1c;
     }
   </style>
   <body>
     <main>
-      <pre>
-/^ ^\
-/ 0 0 \
-V\ Y /V
-    / - \
-    |    \
-    || (__V
-</pre
-      >
-      <h1>429 - Too many requests, please try again later.</h1>
+      <div class="error-code">429</div>
+      <p class="error-message">Too Many Requests</p>
+      <p class="error-detail">You've exceeded the rate limit. Please try again later.</p>
+      <a href="/" class="back-link">Back to home</a>
     </main>
   </body>
 </html>

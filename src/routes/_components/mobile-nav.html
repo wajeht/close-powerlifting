@@ -12,7 +12,7 @@
   <div class="fixed inset-0 z-[100] hidden h-screen w-screen bg-black peer-checked:block">
     <!-- header with close button -->
     <div class="flex w-full items-center justify-between p-5">
-      <h1 class="text-2xl font-extrabold text-slate-50 hover:text-neutral-300">
+      <h1 class="text-2xl font-extrabold text-white hover:text-neutral-300">
         <a href="/">Close Powerlifting</a>
       </h1>
 
@@ -23,35 +23,21 @@
       </label>
     </div>
 
-    <nav class="mx-5 rounded bg-neutral-900 px-3 py-10">
+    <nav class="mx-5 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-8">
       <ul class="flex flex-col gap-5 text-center">
         <li>
-          <a class="hover:text-slate-50" href="/docs/api" target="_blank">Docs</a>
+          <a class="text-neutral-400 hover:text-white" href="/docs/api" target="_blank">Docs</a>
         </li>
         <li>
           <a
-            class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %> hover:text-slate-50"
+            class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
             href="/about"
             >About</a
           >
         </li>
-        <li>
+        <li class="pt-2">
           <a
-            class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
-            href="/status"
-            >Status</a
-          >
-        </li>
-        <li>
-          <a
-            class="<%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %> hover:text-slate-50"
-            href="/contact"
-            >Contact</a
-          >
-        </li>
-        <li>
-          <a
-            class="rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+            class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"
             href="/register"
             >Get API Key</a
           >

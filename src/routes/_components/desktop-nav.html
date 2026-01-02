@@ -2,40 +2,22 @@
   <ul class="flex items-center gap-6">
     <!-- docs -->
     <li>
-      <a class="hover:text-slate-50" href="/docs/api" target="_blank">Docs</a>
+      <a class="text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank">Docs</a>
     </li>
 
     <!-- about -->
     <li>
       <a
-        class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-slate-50' : '' %> hover:text-slate-50"
+        class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
         href="/about"
         >About</a
-      >
-    </li>
-
-    <!-- status -->
-    <li>
-      <a
-        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-slate-50' : '' %> hover:text-slate-50"
-        href="/status"
-        >Status</a
-      >
-    </li>
-
-    <!-- contact -->
-    <li>
-      <a
-        class="<%= typeof path !== 'undefined' && path === '/contact' ? 'text-slate-50' : '' %> hover:text-slate-50"
-        href="/contact"
-        >Contact</a
       >
     </li>
 
     <!-- register -->
     <li>
       <a
-        class="rounded-md bg-slate-50 px-4 py-2 font-medium text-black hover:bg-black hover:text-slate-50 hover:outline hover:outline-slate-50"
+        class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"
         href="/register"
         >Get API Key</a
       >

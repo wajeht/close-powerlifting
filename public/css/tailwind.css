@@ -4,6 +4,9 @@
 
 @theme {
   --breakpoint-xs: 475px;
+  --color-power: #dc2626;
+  --color-power-dark: #b91c1c;
+  --color-power-glow: #dc262640;
 }
 
 @layer base {

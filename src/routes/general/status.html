@@ -9,26 +9,26 @@
 
   <div class="flex flex-col gap-4">
     <% if (allGood) { %>
-    <div class="fade-in animation-delay-2 rounded bg-green-500/20 p-4 text-neutral-300">
+    <div class="fade-in animation-delay-2 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-neutral-300">
       All systems operational!
     </div>
     <% } else { %>
-    <div class="fade-in animation-delay-2 rounded bg-yellow-500/20 p-4 text-neutral-300">
+    <div class="fade-in animation-delay-2 rounded-lg border border-power/30 bg-power/10 p-4 text-neutral-300">
       Some systems are not functional!
     </div>
     <% } %>
 
     <% apiStatuses.forEach(function(item, index) { %>
-    <div class="fade-in animation-delay-3 flex flex-col gap-2 rounded bg-neutral-900 p-4">
+    <div class="fade-in animation-delay-3 flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/30">
       <div class="flex gap-4 text-neutral-400">
-        <div class="font-bold"><%= item.method %></div>
-        <div class="overflow-scroll rounded bg-neutral-700 px-2 font-light"><%= item.url %></div>
+        <div class="font-bold text-white"><%= item.method %></div>
+        <div class="overflow-scroll rounded bg-neutral-800 px-2 font-mono text-sm"><%= item.url %></div>
       </div>
-      <div class="flex gap-1">
+      <div class="flex gap-1 text-sm">
         <% if (item.status) { %>
         <span class="text-green-400">Available</span>
         <% } else { %>
-        <span class="text-red-400">Unavailable</span>
+        <span class="text-power">Unavailable</span>
         <% } %>
         <div class="text-neutral-500">as of</div>
         <div class="text-neutral-400"><%= item.date %></div>
