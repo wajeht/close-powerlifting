@@ -17,8 +17,7 @@ const levelStyles: Record<Exclude<LogLevel, "SILENT">, Parameters<typeof styleTe
   ERROR: "red",
 };
 
-const isTest = process.env.NODE_ENV === "testing" || process.env.APP_ENV === "testing";
-let globalLevel: LogLevel = isTest ? "SILENT" : "INFO";
+let globalLevel: LogLevel = "INFO";
 
 function formatTimestamp(): string {
   return new Date().toISOString().slice(0, 19).replace("T", " ");

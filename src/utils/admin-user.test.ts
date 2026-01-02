@@ -1,51 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { config } from "../config";
-
-const mockFindByEmail = vi.fn();
-const mockCreate = vi.fn();
-const mockUpdate = vi.fn();
-const mockGenerateAPIKey = vi.fn();
-const mockGeneratePassword = vi.fn();
-const mockHashKey = vi.fn();
-const mockLoggerError = vi.fn();
-const mockLoggerInfo = vi.fn();
-
-vi.mock("../db/user", () => ({
-  User: () => ({
-    findByEmail: mockFindByEmail,
-    create: mockCreate,
-    update: mockUpdate,
-  }),
-}));
-
-vi.mock("bcryptjs", async () => ({
-  ...((await vi.importActual("bcryptjs")) as object),
-  hash: vi.fn().mockResolvedValue("hashedPassword"),
-}));
-
-vi.mock("./helpers", () => ({
-  Helpers: () => ({
-    generateAPIKey: mockGenerateAPIKey,
-    generatePassword: mockGeneratePassword,
-    hashKey: mockHashKey,
-  }),
-}));
-
-vi.mock("./logger", () => ({
-  Logger: () => ({
-    info: mockLoggerInfo,
-    error: mockLoggerError,
-    warn: vi.fn(),
-    debug: vi.fn(),
-  }),
-}));
-
-vi.mock("../routes/auth/auth.service", () => ({
-  AuthService: () => ({
-    updateUser: vi.fn().mockResolvedValue({}),
-  }),
-}));
+import { db } from "../tests/test-setup";
 
 vi.mock("../mail", () => ({
   Mail: () => ({
@@ -55,63 +11,58 @@ vi.mock("../mail", () => ({
 
 import { AdminUser } from "./admin-user";
 
-const adminUser = AdminUser();
-
-describe("init", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
+describe("AdminUser", () => {
+  beforeEach(async () => {
+    await db("users").del();
   });
 
-  it("should create a new admin user if one does not exist", async () => {
-    mockFindByEmail.mockResolvedValueOnce(null);
-    mockGeneratePassword.mockReturnValueOnce("password");
-    mockHashKey.mockResolvedValueOnce({ key: "token" });
-    mockCreate.mockResolvedValueOnce({
-      name: config.app.adminName,
-      id: 1,
-      email: config.app.adminEmail,
-    });
-    mockGenerateAPIKey.mockResolvedValueOnce({
-      hashedKey: "hashedKey",
-      unhashedKey: "unhashedKey",
-    });
-
-    await adminUser.initAdminUser();
-
-    expect(mockFindByEmail).toHaveBeenCalledWith(config.app.adminEmail);
-    expect(mockGeneratePassword).toHaveBeenCalled();
-    expect(mockCreate).toHaveBeenCalledWith({
-      email: config.app.adminEmail,
-      name: config.app.adminName,
-      admin: true,
-      password: expect.any(String),
-      verification_token: expect.any(String),
-      verified: true,
-      verified_at: expect.any(String),
-    });
-
-    expect(mockGenerateAPIKey).toHaveBeenCalledWith({
-      admin: true,
-      name: config.app.adminName,
-      userId: "1",
-      email: config.app.adminEmail,
-    });
+  afterEach(async () => {
+    await db("users").del();
   });
 
-  it("should not create a new admin user if one exists", async () => {
-    mockFindByEmail.mockResolvedValueOnce({ id: 1 });
+  describe("initAdminUser", () => {
+    it("should create a new admin user if one does not exist", async () => {
+      const adminUser = AdminUser();
 
-    await adminUser.initAdminUser();
+      await adminUser.initAdminUser();
 
-    expect(mockFindByEmail).toHaveBeenCalledWith(config.app.adminEmail);
-    expect(mockCreate).not.toHaveBeenCalled();
-  });
+      const user = await db("users").where({ email: config.app.adminEmail }).first();
 
-  it("should log an error if anything goes wrong", async () => {
-    mockFindByEmail.mockRejectedValueOnce(new Error("Error message"));
+      expect(user).toBeDefined();
+      expect(user.email).toBe(config.app.adminEmail);
+      expect(user.name).toBe(config.app.adminName);
+      expect(user.admin).toBe(1); // SQLite stores booleans as 1/0
+      expect(user.verified).toBe(1);
+      expect(user.password).toBeDefined();
+      expect(user.key).toBeDefined();
+    });
 
-    await adminUser.initAdminUser();
+    it("should not create a new admin user if one already exists", async () => {
+      await db("users").insert({
+        email: config.app.adminEmail,
+        name: config.app.adminName,
+        admin: true,
+        verified: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-    expect(mockLoggerError).toHaveBeenCalledWith(new Error("Error message"));
+      const adminUser = AdminUser();
+      await adminUser.initAdminUser();
+
+      const users = await db("users").where({ email: config.app.adminEmail });
+      expect(users).toHaveLength(1);
+    });
+
+    it("should handle errors gracefully", async () => {
+      const originalEmail = config.app.adminEmail;
+      (config.app as any).adminEmail = null;
+
+      const adminUser = AdminUser();
+
+      await expect(adminUser.initAdminUser()).resolves.not.toThrow();
+
+      (config.app as any).adminEmail = originalEmail;
+    });
   });
 });

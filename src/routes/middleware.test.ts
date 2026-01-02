@@ -1,31 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ZodError } from "zod";
-import { ZodIssue, ZodIssueCode } from "zod";
+import { ZodError, ZodIssue, ZodIssueCode } from "zod";
 
-// Mock Cache before importing Middleware
-const mockCacheGet = vi.fn();
-const mockCacheSet = vi.fn();
-
-vi.mock("../db/cache", () => ({
-  Cache: () => ({
-    get: mockCacheGet,
-    set: mockCacheSet,
-  }),
-}));
-
-// Mock Helpers before importing Middleware
-const mockGetHostName = vi.fn();
-
-vi.mock("../utils/helpers", async () => {
-  const actual = (await vi.importActual("../utils/helpers")) as any;
-  return {
-    Helpers: () => ({
-      ...actual.Helpers(),
-      getHostName: mockGetHostName,
-    }),
-  };
-});
-
+import { config } from "../config";
+import { db } from "../tests/test-setup";
 import { Middleware } from "./middleware";
 
 const middleware = Middleware();
@@ -53,7 +30,7 @@ describe("notFoundHandler", () => {
     next = vi.fn();
   });
 
-  test('renders "not-found.html" if the URL does not start with "/api/"', () => {
+  test('renders error page if the URL does not start with "/api/"', () => {
     req.url = "/some-url";
     middleware.notFoundMiddleware(req, res, next);
 
@@ -128,9 +105,10 @@ describe("validate", () => {
   test("catches ZodError and flashes the error message, then redirects", async () => {
     const errorMessage = "Zod validation error";
 
-    // @ts-ignore
     const issue: ZodIssue = {
       code: ZodIssueCode.invalid_type,
+      expected: "string",
+      received: "undefined",
       path: [],
       message: errorMessage,
     };
@@ -164,14 +142,14 @@ describe("handleHostname", () => {
   let res: any;
   let next: any;
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+  beforeEach(async () => {
+    await db("cache").del();
 
     req = {
       app: {
         locals: {},
       },
-      get: vi.fn(),
+      get: vi.fn().mockReturnValue("localhost:3000"),
       protocol: "http",
     };
     res = {};
@@ -179,31 +157,27 @@ describe("handleHostname", () => {
   });
 
   test("sets hostname from cache if available", async () => {
-    const mockHostname = "cached-hostname";
-
-    mockCacheGet.mockResolvedValue(mockHostname);
+    await db("cache").insert({
+      key: "hostname",
+      value: "http://cached-hostname.com",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
 
     await middleware.hostNameMiddleware(req, res, next);
 
-    expect(mockCacheGet).toHaveBeenCalledWith("hostname");
-    expect(req.app.locals.hostname).toBe(mockHostname);
+    expect(req.app.locals.hostname).toBe("http://cached-hostname.com");
     expect(next).toHaveBeenCalled();
   });
 
-  test("sets hostname using getHostName if not available in cache", async () => {
-    const mockHostname = "new-hostname";
-
-    mockCacheGet.mockResolvedValue(null);
-    mockCacheSet.mockResolvedValue(null);
-    mockGetHostName.mockReturnValue(mockHostname);
-
-    req.get.mockReturnValue("localhost");
-
+  test("sets hostname using config domain if not in cache", async () => {
     await middleware.hostNameMiddleware(req, res, next);
 
-    expect(mockCacheGet).toHaveBeenCalledWith("hostname");
-    expect(mockCacheSet).toHaveBeenCalledWith("hostname", mockHostname);
-    expect(mockGetHostName).toHaveBeenCalledWith(req);
+    expect(req.app.locals.hostname).toBe(config.app.domain);
     expect(next).toHaveBeenCalled();
+
+    const cached = await db("cache").where({ key: "hostname" }).first();
+    expect(cached).toBeDefined();
+    expect(cached.value).toBe(config.app.domain);
   });
 });
