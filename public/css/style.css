@@ -6,6 +6,9 @@
     :before,
     :after,
     ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
       --tw-rotate-x: initial;
       --tw-rotate-y: initial;
       --tw-rotate-z: initial;
@@ -123,6 +126,7 @@
     --radius-md: 0.375rem;
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
+    --radius-2xl: 1rem;
     --blur-sm: 8px;
     --default-transition-duration: 0.15s;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -394,6 +398,12 @@
 }
 @layer components;
 @layer utilities {
+  .pointer-events-none {
+    pointer-events: none !important;
+  }
+  .absolute {
+    position: absolute !important;
+  }
   .fixed {
     position: fixed !important;
   }
@@ -406,8 +416,17 @@
   .inset-0 {
     inset: calc(var(--spacing) * 0) !important;
   }
+  .-top-40 {
+    top: calc(var(--spacing) * -40) !important;
+  }
   .top-0 {
     top: calc(var(--spacing) * 0) !important;
+  }
+  .left-1\/2 {
+    left: 50% !important;
+  }
+  .-z-10 {
+    z-index: calc(10 * -1) !important;
   }
   .z-50 {
     z-index: 50 !important;
@@ -544,6 +563,12 @@
   .h-16 {
     height: calc(var(--spacing) * 16) !important;
   }
+  .h-\[900px\] {
+    height: 900px !important;
+  }
+  .h-full {
+    height: 100% !important;
+  }
   .h-screen {
     height: 100vh !important;
   }
@@ -600,6 +625,10 @@
   }
   .table-fixed {
     table-layout: fixed !important;
+  }
+  .-translate-x-1\/2 {
+    --tw-translate-x: calc(calc(1/2 * 100%) * -1) !important;
+    translate: var(--tw-translate-x) var(--tw-translate-y) !important;
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,)
@@ -674,6 +703,9 @@
       calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse))
     ) !important;
   }
+  .overflow-hidden {
+    overflow: hidden !important;
+  }
   .overflow-scroll {
     overflow: scroll !important;
   }
@@ -685,6 +717,9 @@
   }
   .rounded {
     border-radius: 0.25rem !important;
+  }
+  .rounded-2xl {
+    border-radius: var(--radius-2xl) !important;
   }
   .rounded-full {
     border-radius: 3.40282e38px !important;
@@ -810,6 +845,19 @@
     --tw-gradient-position: to bottom in oklab !important;
     background-image: linear-gradient(var(--tw-gradient-stops)) !important;
   }
+  .bg-gradient-to-t {
+    --tw-gradient-position: to top in oklab !important;
+    background-image: linear-gradient(var(--tw-gradient-stops)) !important;
+  }
+  .from-black {
+    --tw-gradient-from: var(--color-black) !important;
+    --tw-gradient-stops: var(
+      --tw-gradient-via-stops,
+      var(--tw-gradient-position),
+      var(--tw-gradient-from) var(--tw-gradient-from-position),
+      var(--tw-gradient-to) var(--tw-gradient-to-position)
+    ) !important;
+  }
   .from-neutral-900 {
     --tw-gradient-from: var(--color-neutral-900) !important;
     --tw-gradient-stops: var(
@@ -819,6 +867,38 @@
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     ) !important;
   }
+  .from-transparent {
+    --tw-gradient-from: transparent !important;
+    --tw-gradient-stops: var(
+      --tw-gradient-via-stops,
+      var(--tw-gradient-position),
+      var(--tw-gradient-from) var(--tw-gradient-from-position),
+      var(--tw-gradient-to) var(--tw-gradient-to-position)
+    ) !important;
+  }
+  .via-black\/80 {
+    --tw-gradient-via: #000c !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .via-black\/80 {
+      --tw-gradient-via: color-mix(in oklab, var(--color-black) 80%, transparent) !important;
+    }
+  }
+  .via-black\/80 {
+    --tw-gradient-via-stops:
+      var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position),
+      var(--tw-gradient-via) var(--tw-gradient-via-position),
+      var(--tw-gradient-to) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-via-stops) !important;
+  }
+  .via-transparent {
+    --tw-gradient-via: transparent !important;
+    --tw-gradient-via-stops:
+      var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position),
+      var(--tw-gradient-via) var(--tw-gradient-via-position),
+      var(--tw-gradient-to) var(--tw-gradient-to-position) !important;
+    --tw-gradient-stops: var(--tw-gradient-via-stops) !important;
+  }
   .to-black {
     --tw-gradient-to: var(--color-black) !important;
     --tw-gradient-stops: var(
@@ -827,6 +907,32 @@
       var(--tw-gradient-from) var(--tw-gradient-from-position),
       var(--tw-gradient-to) var(--tw-gradient-to-position)
     ) !important;
+  }
+  .to-black\/60 {
+    --tw-gradient-to: #0009 !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .to-black\/60 {
+      --tw-gradient-to: color-mix(in oklab, var(--color-black) 60%, transparent) !important;
+    }
+  }
+  .to-black\/60 {
+    --tw-gradient-stops: var(
+      --tw-gradient-via-stops,
+      var(--tw-gradient-position),
+      var(--tw-gradient-from) var(--tw-gradient-from-position),
+      var(--tw-gradient-to) var(--tw-gradient-to-position)
+    ) !important;
+  }
+  .\[mask-image\:radial-gradient\(ellipse_at_center\,black_45\%\,transparent_80\%\)\] {
+    -webkit-mask-image: radial-gradient(#000 45%, #0000 80%) !important;
+    mask-image: radial-gradient(#000 45%, #0000 80%) !important;
+  }
+  .object-cover {
+    object-fit: cover !important;
+  }
+  .object-top {
+    object-position: top !important;
   }
   .p-2 {
     padding: calc(var(--spacing) * 2) !important;
@@ -1006,6 +1112,12 @@
   }
   .placeholder-neutral-500::placeholder {
     color: var(--color-neutral-500) !important;
+  }
+  .opacity-10 {
+    opacity: 0.1 !important;
+  }
+  .opacity-15 {
+    opacity: 0.15 !important;
   }
   .shadow-lg {
     --tw-shadow:
@@ -1225,6 +1337,21 @@
       line-height: var(--tw-leading, var(--text-6xl--line-height)) !important;
     }
   }
+}
+@property --tw-translate-x {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-y {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
+}
+@property --tw-translate-z {
+  syntax: "*";
+  inherits: false;
+  initial-value: 0;
 }
 @property --tw-rotate-x {
   syntax: "*";
