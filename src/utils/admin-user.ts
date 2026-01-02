@@ -5,14 +5,14 @@ import { User } from "../db/user";
 import { Helpers } from "../utils/helpers";
 import { AuthService } from "../routes/auth/auth.service";
 import { Logger } from "./logger";
-import { MailService } from "../mail";
+import { Mail } from "../mail";
 
 export function AdminUser() {
   const userRepository = User();
   const helpers = Helpers();
   const authService = AuthService();
   const logger = Logger();
-  const mailService = MailService();
+  const mail = Mail();
 
   async function initAdminUser() {
     try {
@@ -53,7 +53,7 @@ export function AdminUser() {
 
         await authService.updateUser(createdAdminUser.email, { key: hashedKey });
 
-        await mailService.sendAdminCredentialsEmail({
+        await mail.sendAdminCredentialsEmail({
           email: createdAdminUser.email,
           name: createdAdminUser.name,
           password,

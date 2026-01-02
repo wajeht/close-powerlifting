@@ -4,8 +4,8 @@ import { z } from "zod";
 import { config } from "../../config";
 import { Cache } from "../../db/cache";
 import { Database } from "../../db/db";
-import { CronService } from "../../crons";
-import { MailService } from "../../mail";
+import { Cron } from "../../crons";
+import { Mail } from "../../mail";
 import { Helpers } from "../../utils/helpers";
 import { Middleware } from "../middleware";
 import { HealthCheckService } from "../api/health-check/health-check.service";
@@ -13,8 +13,8 @@ import { RankingsService } from "../api/rankings/rankings.service";
 
 export function GeneralRouter() {
   const cache = Cache();
-  const cronService = CronService();
-  const mailService = MailService();
+  const cron = Cron();
+  const mail = Mail();
   const helpers = Helpers();
   const middleware = Middleware();
   const healthCheckService = HealthCheckService();
@@ -62,7 +62,7 @@ export function GeneralRouter() {
     async (req: Request, res: Response) => {
       const { name, email, message } = req.body;
 
-      await mailService.sendContactEmail({ name, email, message });
+      await mail.sendContactEmail({ name, email, message });
 
       req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 
@@ -116,7 +116,7 @@ export function GeneralRouter() {
       timestamp: Date.now(),
       database: dbConnected ? "connected" : "disconnected",
       cache: cache.isReady() ? "connected" : "disconnected",
-      crons: cronService.getStatus().isRunning ? "started" : "stopped",
+      crons: cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 
@@ -135,7 +135,7 @@ export function GeneralRouter() {
       timestamp: Date.now(),
       database: dbConnected ? "connected" : "disconnected",
       cache: cache.isReady() ? "connected" : "disconnected",
-      crons: cronService.getStatus().isRunning ? "started" : "stopped",
+      crons: cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 

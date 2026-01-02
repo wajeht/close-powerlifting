@@ -4,19 +4,19 @@ import { config } from "./config";
 import { Cache } from "./db/cache";
 import { User } from "./db/user";
 import { Logger } from "./utils/logger";
-import { MailService } from "./mail";
+import { Mail } from "./mail";
 
-export interface CronService {
+export interface CronType {
   start: () => void;
   stop: () => void;
   getStatus: () => { isRunning: boolean; jobCount: number };
 }
 
-export function CronService(): CronService {
+export function Cron(): CronType {
   const cache = Cache();
   const userRepository = User();
   const logger = Logger();
-  const mailService = MailService();
+  const mail = Mail();
 
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
@@ -47,7 +47,7 @@ export function CronService(): CronService {
       await userRepository.resetAllApiCallCounts();
 
       for (const user of users) {
-        await mailService.sendApiLimitResetEmail({ email: user.email, name: user.name });
+        await mail.sendApiLimitResetEmail({ email: user.email, name: user.name });
       }
 
       logger.info("cron job completed: resetApiCallCount");
@@ -64,7 +64,7 @@ export function CronService(): CronService {
       const users = await userRepository.findByApiCallCount(targetCount);
 
       for (const user of users) {
-        await mailService.sendReachingApiLimitEmail({
+        await mail.sendReachingApiLimitEmail({
           email: user.email,
           name: user.name,
           percent: 70,

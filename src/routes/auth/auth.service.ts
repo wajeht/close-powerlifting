@@ -4,12 +4,12 @@ import { config } from "../../config";
 import { User } from "../../db/user";
 import type { UserParams } from "../../types";
 import { Helpers } from "../../utils/helpers";
-import { MailService } from "../../mail";
+import { Mail } from "../../mail";
 
 export function AuthService() {
   const userRepository = User();
   const helpers = Helpers();
-  const mailService = MailService();
+  const mail = Mail();
 
   async function updateUser(email: string, updates: any): Promise<any> {
     return await userRepository.update(email, updates);
@@ -21,7 +21,7 @@ export function AuthService() {
 
     const verified = await updateUser(email, { key: hashedKey });
 
-    await mailService.sendNewApiKeyEmail({
+    await mail.sendNewApiKeyEmail({
       email,
       name: verified!.name!,
       key: unhashedKey,
@@ -40,7 +40,7 @@ export function AuthService() {
       password: hashedPassword,
     });
 
-    await mailService.sendAdminCredentialsEmail({
+    await mail.sendAdminCredentialsEmail({
       email,
       name,
       password,
@@ -59,7 +59,7 @@ export function AuthService() {
     name: string;
     verification_token: string;
   }) {
-    await mailService.sendVerificationEmail({
+    await mail.sendVerificationEmail({
       hostname,
       email,
       name,
@@ -78,7 +78,7 @@ export function AuthService() {
       verified_at: new Date().toISOString(),
     });
 
-    await mailService.sendWelcomeEmail({
+    await mail.sendWelcomeEmail({
       email,
       name: verified!.name!,
       key: unhashedKey,

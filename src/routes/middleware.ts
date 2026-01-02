@@ -8,7 +8,7 @@ import { config } from "../config";
 import { Cache } from "../db/cache";
 import { User } from "../db/user";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
-import { MailService } from "../mail";
+import { Mail } from "../mail";
 import { Helpers } from "../utils/helpers";
 import { Logger } from "../utils/logger";
 
@@ -21,7 +21,7 @@ type RequestValidators = {
 export function Middleware() {
   const cache = Cache();
   const userRepository = User();
-  const mailService = MailService();
+  const mail = Mail();
   const helpers = Helpers();
   const logger = Logger();
 
@@ -202,7 +202,7 @@ export function Middleware() {
         }
 
         if (user.api_call_count === Math.floor(user.api_call_limit / 2) && !user.admin) {
-          await mailService.sendReachingApiLimitEmail({
+          await mail.sendReachingApiLimitEmail({
             email: user.email,
             name: user.name,
             percent: 50,

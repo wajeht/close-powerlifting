@@ -15,7 +15,7 @@ import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
 import { Database } from "./db/db";
 import { AdminUser } from "./utils/admin-user";
-import { CronService } from "./crons";
+import { Cron } from "./crons";
 import { Logger } from "./utils/logger";
 
 export interface ServerInfo {
@@ -78,7 +78,7 @@ export function createApp(): { app: Express } {
 
 export function createServer(): ServerInfo {
   const database = Database();
-  const cronService = CronService();
+  const cron = Cron();
   const adminUser = AdminUser();
   const logger = Logger();
 
@@ -95,7 +95,7 @@ export function createServer(): ServerInfo {
 
     try {
       await database.init();
-      cronService.start();
+      cron.start();
       await adminUser.initAdminUser();
     } catch (error) {
       logger.error((error as any).message);
@@ -127,12 +127,12 @@ export function createServer(): ServerInfo {
 
 export async function closeServer({ server }: ServerInfo): Promise<void> {
   const database = Database();
-  const cronService = CronService();
+  const cron = Cron();
   const logger = Logger();
 
   logger.info("Shutting down server gracefully");
 
-  cronService.stop();
+  cron.stop();
 
   try {
     await database.stop();

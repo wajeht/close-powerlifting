@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { config } from "../config";
 
-// Create mock functions at module level
 const mockFindByEmail = vi.fn();
 const mockCreate = vi.fn();
 const mockUpdate = vi.fn();
@@ -49,7 +48,7 @@ vi.mock("../routes/auth/auth.service", () => ({
 }));
 
 vi.mock("../mail", () => ({
-  MailService: () => ({
+  Mail: () => ({
     sendAdminCredentialsEmail: vi.fn().mockResolvedValue({}),
   }),
 }));

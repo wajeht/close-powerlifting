@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 import { config } from "./config";
 import { Logger } from "./utils/logger";
 
-export interface MailServiceType {
+export interface MailType {
   sendVerificationEmail: (params: {
     hostname: string;
     email: string;
@@ -27,7 +27,7 @@ export interface MailServiceType {
   }) => Promise<void>;
 }
 
-export function MailService(): MailServiceType {
+export function Mail(): MailType {
   const logger = Logger();
 
   const transporter = nodemailer.createTransport({
