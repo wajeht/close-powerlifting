@@ -1,6 +1,6 @@
-<div class="fade-in mx-auto max-w-5xl">
+<div class="mx-auto max-w-5xl">
   <!-- header -->
-  <div class="mb-6">
+  <div class="fade-in-heading mb-6">
     <h1 class="text-2xl font-bold text-white">Status</h1>
     <p class="mt-2 text-sm text-neutral-400">
       Current operational status of all API endpoints.
@@ -9,17 +9,17 @@
 
   <div class="flex flex-col gap-4">
     <% if (allGood) { %>
-    <div class="rounded bg-green-500/20 p-4 text-neutral-300">
+    <div class="fade-in animation-delay-2 rounded bg-green-500/20 p-4 text-neutral-300">
       All systems operational!
     </div>
     <% } else { %>
-    <div class="rounded bg-yellow-500/20 p-4 text-neutral-300">
+    <div class="fade-in animation-delay-2 rounded bg-yellow-500/20 p-4 text-neutral-300">
       Some systems are not functional!
     </div>
     <% } %>
 
-    <% apiStatuses.forEach(function(item) { %>
-    <div class="flex flex-col gap-2 rounded bg-neutral-900 p-4">
+    <% apiStatuses.forEach(function(item, index) { %>
+    <div class="fade-in animation-delay-3 flex flex-col gap-2 rounded bg-neutral-900 p-4">
       <div class="flex gap-4 text-neutral-400">
         <div class="font-bold"><%= item.method %></div>
         <div class="overflow-scroll rounded bg-neutral-700 px-2 font-light"><%= item.url %></div>

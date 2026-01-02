@@ -1,6 +1,6 @@
-<div class="fade-in mx-auto flex max-w-md flex-col gap-6">
+<div class="mx-auto flex max-w-md flex-col gap-6">
   <!-- header -->
-  <div>
+  <div class="fade-in-heading">
     <h1 class="text-2xl font-bold text-white">Reset API key</h1>
     <p class="mt-2 text-sm text-neutral-400">
       Enter your email address and we'll send you a new API key.
@@ -8,10 +8,12 @@
   </div>
 
   <!-- flash -->
-  <%~ include('../_components/flash-message.html') %>
+  <div class="fade-in animation-delay-2">
+    <%~ include('../_components/flash-message.html') %>
+  </div>
 
   <!-- form -->
-  <form action="/reset-api-key" method="post" class="flex flex-col gap-4 rounded-lg bg-neutral-900 p-6">
+  <form action="/reset-api-key" method="post" class="fade-in animation-delay-3 flex flex-col gap-4 rounded-lg bg-neutral-900 p-6">
     <!-- email -->
     <div class="flex flex-col gap-2">
       <label class="text-sm font-medium text-neutral-300" for="email">Email</label>
@@ -35,7 +37,7 @@
   </form>
 
   <!-- back -->
-  <p class="text-center text-sm text-neutral-500">
+  <p class="fade-in animation-delay-4 text-center text-sm text-neutral-500">
     Don't have an account?
     <a class="text-neutral-400 hover:text-white" href="/register">Register here</a>
   </p>
