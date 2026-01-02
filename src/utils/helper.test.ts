@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { generateAPIKey, hashKey, timingSafeEqual } from "./helpers";
 import {
   tableToJson,
-  stripHtml as stripHTML,
+  stripHtml,
   buildPaginationQuery,
   calculatePagination,
 } from "./scraper";
@@ -130,28 +130,28 @@ describe("buildPaginationQuery", () => {
   });
 });
 
-describe("stripHTML", () => {
+describe("stripHtml", () => {
   test("removes HTML tags from the input string", () => {
     const input = "<p>This is <strong>bold</strong> text.</p>";
-    const result = stripHTML(input);
+    const result = stripHtml(input);
     expect(result).toEqual("This is bold text.");
   });
 
   test("handles empty string correctly", () => {
     const input = "";
-    const result = stripHTML(input);
+    const result = stripHtml(input);
     expect(result).toEqual("");
   });
 
   test("handles input with no HTML tags correctly", () => {
     const input = "This is plain text.";
-    const result = stripHTML(input);
+    const result = stripHtml(input);
     expect(result).toEqual("This is plain text.");
   });
 
   test("handles input with only HTML tags correctly", () => {
     const input = "<p></p>";
-    const result = stripHTML(input);
+    const result = stripHtml(input);
     expect(result).toEqual("");
   });
 });
