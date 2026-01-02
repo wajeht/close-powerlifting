@@ -126,6 +126,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "equipment": "Raw", "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment",
@@ -171,6 +179,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw/men",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "sex": "M", "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment/:sex",
@@ -217,6 +233,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw/men/100",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "weight_class_kg": "100", "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class",
@@ -268,6 +292,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "date": "2024-06-15", "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year",
@@ -321,6 +353,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "total_kg": 950, "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year/:event",
@@ -376,6 +416,14 @@ export function RankingsRouter() {
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
+   *   "message": "The resource was returned successfully!",
+   *   "cache": true,
+   *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}]
+   * }
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
@@ -413,6 +461,13 @@ export function RankingsRouter() {
    * @return {RankingsResponse} 200 - Single ranking entry
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Ranking not found
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/rankings/1",
+   *   "message": "The resource was returned successfully!",
+   *   "data": {"rank": 1, "name": "John Haack", "dots": 617.45}
+   * }
    */
   router.get(
     "/:rank",

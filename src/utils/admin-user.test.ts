@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, Mock, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { config } from "../config";
 
