@@ -90,7 +90,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
- * @property {array} data - Empty array
+ * @property {object[]} data - Empty array
  */
 
 export function UsersRouter() {

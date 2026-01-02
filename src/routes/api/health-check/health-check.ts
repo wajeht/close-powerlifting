@@ -7,7 +7,7 @@ import express, { Request, Response } from "express";
  * @property {string} request_url - Request URL
  * @property {string} message - Health status message (ok)
  * @property {boolean} cache - Cache parameter value
- * @property {array} data - Empty array (reserved for future use)
+ * @property {object[]} data - Empty array (reserved for future use)
  */
 
 export function HealthCheckRouter() {
