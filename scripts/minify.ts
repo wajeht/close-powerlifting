@@ -2,11 +2,11 @@ import fs from "fs";
 import path from "path";
 // import { build } from "esbuild";
 import { minify as minifyHtml } from "html-minifier-terser";
-import { minify as terserMinify } from "terser";
+// import { minify as terserMinify } from "terser";
 
 // const distDir = path.join(__dirname, "..", "dist");
 const viewsDir = path.join(__dirname, "..", "src", "routes");
-const publicDir = path.join(__dirname, "..", "public");
+// const publicDir = path.join(__dirname, "..", "public");
 
 function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -55,26 +55,26 @@ function getAllFiles(dir: string, ext: string, files: string[] = []): string[] {
 //   console.log(`Minified ${jsFiles.length} JavaScript files`);
 // }
 
-async function minifyJavaScript(): Promise<void> {
-  // const distJsFiles = getAllFiles(distDir, ".js");
-  const publicJsFiles = getAllFiles(publicDir, ".js");
-  // const jsFiles = [...distJsFiles, ...publicJsFiles];
-  const jsFiles = publicJsFiles;
+// async function minifyJavaScript(): Promise<void> {
+//   // const distJsFiles = getAllFiles(distDir, ".js");
+//   const publicJsFiles = getAllFiles(publicDir, ".js");
+//   // const jsFiles = [...distJsFiles, ...publicJsFiles];
+//   const jsFiles = publicJsFiles;
 
-  for (const file of jsFiles) {
-    const code = fs.readFileSync(file, "utf8");
+//   for (const file of jsFiles) {
+//     const code = fs.readFileSync(file, "utf8");
 
-    const out = await terserMinify(code, {
-      compress: true,
-      mangle: true,
-      format: {
-        comments: true,
-      },
-    });
+//     const out = await terserMinify(code, {
+//       compress: true,
+//       mangle: true,
+//       format: {
+//         comments: true,
+//       },
+//     });
 
-    fs.writeFileSync(file, out.code ?? code, "utf8");
-  }
-}
+//     fs.writeFileSync(file, out.code ?? code, "utf8");
+//   }
+// }
 
 async function minifyHtmlFiles(): Promise<void> {
   const htmlFiles = getAllFiles(viewsDir, ".html");
@@ -115,7 +115,9 @@ async function minifyHtmlFiles(): Promise<void> {
 async function minifyAll(): Promise<void> {
   console.log("Starting minification...\n");
 
-  await Promise.all([minifyJavaScript(), minifyHtmlFiles()]);
+  // JS minification disabled for now - only doing CSS and HTML
+  // await Promise.all([minifyJavaScript(), minifyHtmlFiles()]);
+  await minifyHtmlFiles();
 
   console.log("\nMinification complete!");
 }
