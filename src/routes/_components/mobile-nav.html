@@ -30,6 +30,13 @@
         </li>
         <li>
           <a
+            class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
+            href="/status"
+            >Status</a
+          >
+        </li>
+        <li>
+          <a
             class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
             href="/about"
             >About</a
