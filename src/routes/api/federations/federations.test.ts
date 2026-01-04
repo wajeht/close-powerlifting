@@ -19,10 +19,11 @@ describe("GET /api/federations", () => {
 });
 
 describe("GET /api/federations/:federation", () => {
-  test("should return success or 404 for valid federation", async () => {
+  test("should return 200 for valid federation", async () => {
     const response = await authenticatedRequest().get("/api/federations/usapl");
 
-    expect([200, 404]).toContain(response.status);
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
   });
 
   test("should return 404 for non-existent federation", async () => {

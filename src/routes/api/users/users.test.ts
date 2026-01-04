@@ -32,14 +32,12 @@ describe("GET /api/users/:username", () => {
     expect(response.status).toBe(401);
   });
 
-  test("should return success or 404 for valid username", async () => {
+  test("should return 200 for valid username", async () => {
     const response = await authenticatedRequest().get("/api/users/johnhaack");
 
-    expect([200, 404]).toContain(response.status);
-    if (response.status === 200) {
-      expect(response.body.status).toBe("success");
-      expect(response.body).toHaveProperty("data");
-    }
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body).toHaveProperty("data");
   });
 
   test("should return 404 for non-existent username", async () => {

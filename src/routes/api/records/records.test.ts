@@ -9,22 +9,21 @@ describe("GET /api/records", () => {
     expect(response.status).toBe(401);
   });
 
-  test("should return success or 404 with authentication", async () => {
+  test("should return 200 with authentication", async () => {
     const response = await authenticatedRequest().get("/api/records");
 
-    expect([200, 404]).toContain(response.status);
-    if (response.status === 200) {
-      expect(response.body.status).toBe("success");
-      expect(response.body).toHaveProperty("data");
-    }
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body).toHaveProperty("data");
   });
 });
 
 describe("GET /api/records/:equipment", () => {
-  test("should return success or 404 for valid equipment filter", async () => {
+  test("should return 200 for valid equipment filter", async () => {
     const response = await authenticatedRequest().get("/api/records/raw");
 
-    expect([200, 404]).toContain(response.status);
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
   });
 
   test("should return 400 for invalid equipment", async () => {
@@ -35,9 +34,10 @@ describe("GET /api/records/:equipment", () => {
 });
 
 describe("GET /api/records/:equipment/:sex", () => {
-  test("should return success or 404 for valid equipment and sex", async () => {
+  test("should return 200 for valid equipment and sex", async () => {
     const response = await authenticatedRequest().get("/api/records/raw/men");
 
-    expect([200, 404]).toContain(response.status);
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
   });
 });

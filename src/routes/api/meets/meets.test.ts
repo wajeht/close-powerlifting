@@ -9,10 +9,12 @@ describe("GET /api/meets/:meet", () => {
     expect(response.status).toBe(401);
   });
 
-  test("should return success or 404 for valid meet", async () => {
+  test("should return 200 for valid meet", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
 
-    expect([200, 404]).toContain(response.status);
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body).toHaveProperty("data");
   });
 
   test("should return 404 for non-existent meet", async () => {

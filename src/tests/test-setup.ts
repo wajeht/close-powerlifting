@@ -2,12 +2,23 @@ process.env.APP_ENV = "testing";
 process.env.NODE_ENV = "testing";
 
 import request from "supertest";
-import { afterAll, beforeAll } from "vitest";
+import { afterAll, beforeAll, vi } from "vitest";
 
 import { createApp } from "../app";
 import { createContext } from "../context";
 import { createDatabase } from "../db/db";
 import { createLogger } from "../utils/logger";
+
+import { rankingsDefault } from "../routes/api/rankings/fixtures";
+import { mlistHtml, mlistUsaplHtml } from "../routes/api/federations/fixtures";
+import { statusHtml } from "../routes/api/status/fixtures";
+import { userJohnHaackHtml } from "../routes/api/users/fixtures";
+import { meetUspa1969Html } from "../routes/api/meets/fixtures";
+import {
+  recordsDefaultHtml,
+  recordsRawHtml,
+  recordsRawMenHtml,
+} from "../routes/api/records/fixtures";
 
 const logger = createLogger();
 logger.setLevel("SILENT");
@@ -16,6 +27,44 @@ const database = createDatabase(logger);
 export const knex = database.instance;
 
 const context = createContext();
+
+vi.spyOn(context.scraper, "fetchJson").mockImplementation(async (path: string) => {
+  if (path.includes("rankings")) {
+    return rankingsDefault;
+  }
+  throw new Error(`No fixture for JSON path: ${path}`);
+});
+
+vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string) => {
+  if (path.includes("status")) {
+    return statusHtml;
+  }
+  if (path.includes("mlist") && path.includes("usapl")) {
+    return mlistUsaplHtml;
+  }
+  if (path.includes("mlist") && !path.includes("nonexistent")) {
+    return mlistHtml;
+  }
+  if (path.includes("johnhaack") || path.includes("search=haack")) {
+    return userJohnHaackHtml;
+  }
+  if (path.includes("uspa/1969") || path.includes("m/uspa/1969")) {
+    return meetUspa1969Html;
+  }
+  if (path.includes("records") && path.includes("raw") && path.includes("men")) {
+    return recordsRawMenHtml;
+  }
+  if (path.includes("records") && path.includes("raw")) {
+    return recordsRawHtml;
+  }
+  if (path.includes("records")) {
+    return recordsDefaultHtml;
+  }
+
+  const { ScraperError } = await import("../error");
+  throw new ScraperError(`Not found: ${path}`, 404, path);
+});
+
 export const { app } = createApp(context);
 
 export let testApiKey: string;
