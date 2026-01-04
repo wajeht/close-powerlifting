@@ -7,28 +7,6 @@
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<% if (it.apiKey) { %>
-<!-- API Key Display (shown once after verification) -->
-<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-green-800 bg-green-900/20 p-6 max-w-2xl">
-  <h2 class="mb-2 text-lg font-semibold text-white">Your API Key</h2>
-  <p class="mb-4 text-sm text-neutral-400">
-    Copy this key now - it won't be shown again. You can also find it in the welcome email we sent you.
-  </p>
-  <div class="flex items-center gap-2">
-    <code class="flex-1 rounded bg-neutral-800 px-4 py-3 font-mono text-sm text-green-400 break-all">
-      <%= it.apiKey %>
-    </code>
-    <button
-      type="button"
-      onclick="navigator.clipboard.writeText('<%= it.apiKey %>'); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000);"
-      class="rounded bg-neutral-700 px-4 py-3 text-sm font-medium text-white hover:bg-neutral-600 transition-colors cursor-pointer"
-    >
-      Copy
-    </button>
-  </div>
-</div>
-<% } %>
-
 <!-- Usage Section -->
 <div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-6 max-w-2xl">
   <div class="mb-4 flex items-center justify-between">
