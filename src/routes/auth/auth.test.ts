@@ -1,7 +1,7 @@
 import request from "supertest";
 import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, it } from "vitest";
 
-import { app, knex } from "../../tests/test-setup";
+import { app, knex, createUnauthenticatedSessionAgent } from "../../tests/test-setup";
 
 describe("Auth Routes", () => {
   let testUserId: number;
@@ -45,10 +45,10 @@ describe("Auth Routes", () => {
         magic_link_expires_at: null,
       });
 
-      const agent = request.agent(app);
-      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      const response = await agent.get("/login");
+      const response = await sessionAgent.get("/login");
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/dashboard");
@@ -101,14 +101,16 @@ describe("Auth Routes", () => {
     });
 
     it("should login user with valid magic link", async () => {
-      const agent = request.agent(app);
-      const response = await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      const response = await sessionAgent.get(
+        `/magic-link?token=${testMagicToken}&email=${testEmail}`,
+      );
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/dashboard");
 
       // Should be able to access dashboard now
-      const dashboardResponse = await agent.get("/dashboard");
+      const dashboardResponse = await sessionAgent.get("/dashboard");
       expect(dashboardResponse.status).toBe(200);
     });
 
@@ -151,15 +153,15 @@ describe("Auth Routes", () => {
         magic_link_expires_at: null,
       });
 
-      const agent = request.agent(app);
-      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      const response = await agent.post("/logout");
+      const response = await sessionAgent.post("/logout");
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
 
-      const dashboardResponse = await agent.get("/dashboard");
+      const dashboardResponse = await sessionAgent.get("/dashboard");
       expect(dashboardResponse.status).toBe(302);
       expect(dashboardResponse.headers.location).toBe("/login");
     });
@@ -224,7 +226,7 @@ describe("Auth Routes", () => {
   });
 
   describe("Dashboard routes with authentication", () => {
-    let agent: ReturnType<typeof request.agent>;
+    let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
 
     beforeEach(async () => {
       // Reset token for login (also clear any expired timestamp)
@@ -233,13 +235,13 @@ describe("Auth Routes", () => {
         magic_link_expires_at: null,
       });
 
-      agent = request.agent(app);
-      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
     });
 
     describe("GET /dashboard", () => {
       it("should render dashboard with user info", async () => {
-        const response = await agent.get("/dashboard");
+        const response = await sessionAgent.get("/dashboard");
 
         expect(response.status).toBe(200);
         expect(response.text).toContain("Dashboard");
@@ -253,7 +255,7 @@ describe("Auth Routes", () => {
         const beforeUser = await knex("users").where({ id: testUserId }).first();
         const beforeKey = beforeUser.key;
 
-        const response = await agent.post("/settings/regenerate-key");
+        const response = await sessionAgent.post("/settings/regenerate-key");
 
         expect(response.status).toBe(200);
 
@@ -264,7 +266,7 @@ describe("Auth Routes", () => {
   });
 
   describe("Profile routes with authentication", () => {
-    let agent: ReturnType<typeof request.agent>;
+    let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
 
     beforeEach(async () => {
       // Reset token for login (also clear any expired timestamp)
@@ -273,13 +275,13 @@ describe("Auth Routes", () => {
         magic_link_expires_at: null,
       });
 
-      agent = request.agent(app);
-      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
     });
 
     describe("GET /settings", () => {
       it("should render settings page", async () => {
-        const response = await agent.get("/settings");
+        const response = await sessionAgent.get("/settings");
 
         expect(response.status).toBe(200);
         expect(response.text).toContain("Settings");
@@ -294,7 +296,10 @@ describe("Auth Routes", () => {
       });
 
       it("should update user name", async () => {
-        const response = await agent.post("/settings").type("form").send({ name: "Updated Name" });
+        const response = await sessionAgent
+          .post("/settings")
+          .type("form")
+          .send({ name: "Updated Name" });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/settings");
@@ -325,12 +330,12 @@ describe("Auth Routes", () => {
       });
 
       it("should soft delete account and logout", async () => {
-        const deleteAgent = request.agent(app);
-        await deleteAgent.get(
+        const deleteSessionAgent = createUnauthenticatedSessionAgent();
+        await deleteSessionAgent.get(
           `/magic-link?token=${deleteMagicToken}&email=delete-test@example.com`,
         );
 
-        const response = await deleteAgent.post("/settings/delete");
+        const response = await deleteSessionAgent.post("/settings/delete");
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/login");

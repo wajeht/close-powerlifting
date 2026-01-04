@@ -90,7 +90,11 @@ export const { app } = createApp(context);
 export let testApiKey: string;
 let testUserId: number;
 
-export function authenticatedRequest() {
+export function createUnauthenticatedSessionAgent() {
+  return request.agent(app);
+}
+
+export function createAuthenticatedApiAgent() {
   return {
     get: (url: string) => request(app).get(url).set("Authorization", `Bearer ${testApiKey}`),
     post: (url: string) => request(app).post(url).set("Authorization", `Bearer ${testApiKey}`),
@@ -100,7 +104,7 @@ export function authenticatedRequest() {
   };
 }
 
-export function unauthenticatedRequest() {
+export function createUnauthenticatedApiAgent() {
   return {
     get: (url: string) => request(app).get(url),
     post: (url: string) => request(app).post(url),

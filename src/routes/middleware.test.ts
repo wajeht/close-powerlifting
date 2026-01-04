@@ -13,6 +13,7 @@ const middleware = createMiddleware(
   context.mail,
   context.helpers,
   context.logger,
+  knex,
 );
 
 describe("notFoundHandler", () => {

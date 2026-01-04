@@ -1,24 +1,27 @@
 import { describe, expect } from "vitest";
 
-import { authenticatedRequest, unauthenticatedRequest } from "../../../tests/test-setup";
+import {
+  createAuthenticatedApiAgent,
+  createUnauthenticatedApiAgent,
+} from "../../../tests/test-setup";
 
 describe("GET /api/users", () => {
   it("should return 401 without authentication", async () => {
-    const response = await unauthenticatedRequest().get("/api/users");
+    const response = await createUnauthenticatedApiAgent().get("/api/users");
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe("fail");
   });
 
   it("should redirect to rankings without search query", async () => {
-    const response = await authenticatedRequest().get("/api/users");
+    const response = await createAuthenticatedApiAgent().get("/api/users");
 
     expect([302, 308]).toContain(response.status);
     expect(response.header.location).toBe("/api/rankings");
   });
 
   it("should return search results with correct structure", async () => {
-    const response = await authenticatedRequest().get("/api/users?search=haack");
+    const response = await createAuthenticatedApiAgent().get("/api/users?search=haack");
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
@@ -29,14 +32,14 @@ describe("GET /api/users", () => {
   });
 
   it("should return array of matched users", async () => {
-    const response = await authenticatedRequest().get("/api/users?search=haack");
+    const response = await createAuthenticatedApiAgent().get("/api/users?search=haack");
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBeGreaterThan(0);
   });
 
   it("should return search results with ranking row fields", async () => {
-    const response = await authenticatedRequest().get("/api/users?search=haack");
+    const response = await createAuthenticatedApiAgent().get("/api/users?search=haack");
     const entry = response.body.data[0];
 
     expect(entry).toHaveProperty("username");
@@ -50,14 +53,14 @@ describe("GET /api/users", () => {
 
 describe("GET /api/users/:username", () => {
   it("should return 401 without authentication", async () => {
-    const response = await unauthenticatedRequest().get("/api/users/johnhaack");
+    const response = await createUnauthenticatedApiAgent().get("/api/users/johnhaack");
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe("fail");
   });
 
   it("should return user profile with correct structure", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
@@ -67,7 +70,7 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return user data as array with profile information", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
     const data = response.body.data;
 
     expect(Array.isArray(data)).toBe(true);
@@ -82,7 +85,7 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return user with instagram information", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
     const user = response.body.data[0];
 
     expect(user).toHaveProperty("instagram");
@@ -90,7 +93,7 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return user with personal bests array", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
     const user = response.body.data[0];
 
     expect(user).toHaveProperty("personal_best");
@@ -98,7 +101,7 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return user with competition results array", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
     const user = response.body.data[0];
 
     expect(user).toHaveProperty("competition_results");
@@ -106,7 +109,7 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return competition results with meet information", async () => {
-    const response = await authenticatedRequest().get("/api/users/johnhaack");
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
     const results = response.body.data[0].competition_results;
 
     if (results.length > 0) {
@@ -123,7 +126,9 @@ describe("GET /api/users/:username", () => {
   });
 
   it("should return 404 for non-existent username", async () => {
-    const response = await authenticatedRequest().get("/api/users/nonexistent-user-xyz-12345");
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/nonexistent-user-xyz-12345",
+    );
 
     expect(response.status).toBe(404);
     expect(response.body.status).toBe("fail");

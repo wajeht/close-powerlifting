@@ -1,16 +1,16 @@
 import { describe, expect } from "vitest";
 
-import { unauthenticatedRequest } from "../../../tests/test-setup";
+import { createUnauthenticatedApiAgent } from "../../../tests/test-setup";
 
 describe("GET /api/status", () => {
   it("should return 200 without authentication", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
 
     expect(response.status).toBe(200);
   });
 
   it("should return status data with correct structure", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
 
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("The resource was returned successfully!");
@@ -20,7 +20,7 @@ describe("GET /api/status", () => {
   });
 
   it("should return status with server version", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
     const data = response.body.data;
 
     expect(data).toHaveProperty("server_version");
@@ -29,7 +29,7 @@ describe("GET /api/status", () => {
   });
 
   it("should return status with meets count", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
     const data = response.body.data;
 
     expect(data).toHaveProperty("meets");
@@ -37,7 +37,7 @@ describe("GET /api/status", () => {
   });
 
   it("should return status with federations list", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
     const data = response.body.data;
 
     expect(data).toHaveProperty("federations");
@@ -46,7 +46,7 @@ describe("GET /api/status", () => {
   });
 
   it("should return federation status with required fields", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
     const federation = response.body.data.federations[0];
 
     expect(federation).toHaveProperty("name");
@@ -59,7 +59,7 @@ describe("GET /api/status", () => {
   });
 
   it("should return federation with correct data types", async () => {
-    const response = await unauthenticatedRequest().get("/api/status");
+    const response = await createUnauthenticatedApiAgent().get("/api/status");
     const federation = response.body.data.federations[0];
 
     expect(typeof federation.name).toBe("string");
