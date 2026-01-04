@@ -54,7 +54,15 @@ function log(level: Exclude<LogLevel, "SILENT">, message: string, ...args: unkno
   }
 }
 
-export function Logger() {
+export interface LoggerType {
+  debug: (message: string, ...args: unknown[]) => void;
+  info: (message: string, ...args: unknown[]) => void;
+  warn: (message: string, ...args: unknown[]) => void;
+  error: (message: string | Error, ...args: unknown[]) => void;
+  setLevel: (level: LogLevel) => void;
+}
+
+export function createLogger(): LoggerType {
   function debug(message: string, ...args: unknown[]) {
     log("DEBUG", message, ...args);
   }

@@ -1,19 +1,20 @@
 import { describe, expect, test } from "vitest";
 
-import { Scraper } from "../../../utils/scraper";
-import { RecordsService } from "./records.service";
+import { createContext } from "../../../context";
+import { createRecordService } from "./records.service";
 import { recordsDefaultHtml, recordsRawHtml, recordsRawMenHtml } from "./fixtures";
 
-const scraper = Scraper();
-const recordsService = RecordsService();
+const ctx = createContext();
+const scraper = ctx.scraper;
+const recordService = createRecordService(scraper);
 
 const defaultDoc = scraper.parseHtml(recordsDefaultHtml);
 const rawDoc = scraper.parseHtml(recordsRawHtml);
 const rawMenDoc = scraper.parseHtml(recordsRawMenHtml);
 
-const defaultCategories = recordsService.parseRecordsHtml(defaultDoc);
-const rawCategories = recordsService.parseRecordsHtml(rawDoc);
-const rawMenCategories = recordsService.parseRecordsHtml(rawMenDoc);
+const defaultCategories = recordService.parseRecordsHtml(defaultDoc);
+const rawCategories = recordService.parseRecordsHtml(rawDoc);
+const rawMenCategories = recordService.parseRecordsHtml(rawMenDoc);
 
 describe("records service", () => {
   describe("parseRecordsHtml", () => {
@@ -37,16 +38,16 @@ describe("records service", () => {
     });
 
     test("each category has a title", () => {
-      defaultCategories.forEach((category) => {
+      for (const category of defaultCategories) {
         expect(category.title).toBeDefined();
         expect(category.title.length).toBeGreaterThan(0);
-      });
+      }
     });
 
     test("each category has records array", () => {
-      defaultCategories.forEach((category) => {
+      for (const category of defaultCategories) {
         expect(Array.isArray(category.records)).toBe(true);
-      });
+      }
     });
 
     test("categories include expected lift titles", () => {

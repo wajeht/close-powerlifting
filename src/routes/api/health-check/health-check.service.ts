@@ -1,12 +1,10 @@
-import { Cache } from "../../../db/cache";
-import { Scraper } from "../../../utils/scraper";
-import { Logger } from "../../../utils/logger";
+import type { CacheType, ScraperType, LoggerType } from "../../../context";
 
-export function HealthCheckService() {
-  const cache = Cache();
-  const scraper = Scraper();
-  const logger = Logger();
-
+export function createHealthCheckService(
+  cache: CacheType,
+  scraper: ScraperType,
+  logger: LoggerType,
+) {
   async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
     const fetchStatus = async () => {
       const routes = [

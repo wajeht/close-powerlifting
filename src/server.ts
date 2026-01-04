@@ -1,7 +1,7 @@
-import { Logger } from "./utils/logger";
+import { createLogger } from "./utils/logger";
 import { createServer, closeServer, ServerInfo } from "./app";
 
-const logger = Logger();
+const logger = createLogger();
 
 async function gracefulShutdown(signal: string, serverInfo: ServerInfo): Promise<void> {
   logger.info(`Received ${signal}, shutting down gracefully.`);

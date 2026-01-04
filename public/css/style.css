@@ -410,6 +410,9 @@
   .relative {
     position: relative !important;
   }
+  .static {
+    position: static !important;
+  }
   .sticky {
     position: sticky !important;
   }

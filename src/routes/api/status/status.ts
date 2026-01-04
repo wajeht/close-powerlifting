@@ -1,8 +1,8 @@
 import express, { Request, Response } from "express";
 
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { StatusService } from "./status.service";
+import type { AppContext } from "../../../context";
+import { createMiddleware } from "../../middleware";
+import { createStatusService } from "./status.service";
 import { getStatusValidation, GetStatusType } from "./status.validation";
 
 /**
@@ -35,10 +35,15 @@ import { getStatusValidation, GetStatusType } from "./status.validation";
  * @property {StatusData} data - Status data
  */
 
-export function StatusRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const statusService = StatusService();
+export function createStatusRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const statusService = createStatusService(ctx.scraper);
 
   const router = express.Router();
 
@@ -64,7 +69,7 @@ export function StatusRouter() {
     async (req: Request<{}, {}, GetStatusType>, res: Response) => {
       const status = await statusService.getStatus(req.query);
 
-      logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

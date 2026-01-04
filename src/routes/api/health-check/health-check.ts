@@ -10,7 +10,7 @@ import express, { Request, Response } from "express";
  * @property {object[]} data - Empty array (reserved for future use)
  */
 
-export function HealthCheckRouter() {
+export function createHealthCheckRouter() {
   const router = express.Router();
 
   /**
@@ -30,7 +30,7 @@ export function HealthCheckRouter() {
    * }
    */
   router.get("/", async (req: Request, res: Response) => {
-    const data: any = [];
+    const data: unknown[] = [];
 
     res.status(200).json({
       status: "success",

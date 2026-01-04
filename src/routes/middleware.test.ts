@@ -1,11 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ZodError, ZodIssue, ZodIssueCode } from "zod";
+import { ZodError } from "zod";
 
 import { config } from "../config";
+import { createContext } from "../context";
 import { db } from "../tests/test-setup";
-import { Middleware } from "./middleware";
+import { createMiddleware } from "./middleware";
 
-const middleware = Middleware();
+const ctx = createContext();
+const middleware = createMiddleware(
+  ctx.cache,
+  ctx.userRepository,
+  ctx.mail,
+  ctx.helpers,
+  ctx.logger,
+);
 
 describe("notFoundHandler", () => {
   let req: any;
@@ -105,11 +113,11 @@ describe("validate", () => {
   test("catches ZodError and flashes the error message, then redirects", async () => {
     const errorMessage = "Zod validation error";
 
-    const issue: ZodIssue = {
-      code: ZodIssueCode.invalid_type,
+    const issue = {
+      code: "invalid_type" as const,
       expected: "string",
       received: "undefined",
-      path: [],
+      path: [] as (string | number)[],
       message: errorMessage,
     };
 

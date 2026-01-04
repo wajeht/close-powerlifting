@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { RecordsService } from "./records.service";
+import { createMiddleware } from "../../middleware";
+import { createRecordService } from "./records.service";
 import {
   getRecordsValidation,
   getFilteredRecordsParamValidation,
@@ -49,10 +49,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function RecordsRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const recordsService = RecordsService();
+export function createRecordsRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const recordService = createRecordService(ctx.scraper);
 
   const router = express.Router();
 
@@ -80,11 +85,11 @@ export function RecordsRouter() {
     "/",
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
     async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
-      const records = await recordsService.getRecords(req.query);
+      const records = await recordService.getRecords(req.query);
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -132,11 +137,11 @@ export function RecordsRouter() {
       >,
       res: Response,
     ) => {
-      const records = await recordsService.getFilteredRecords(req.params, req.query);
+      const records = await recordService.getFilteredRecords(req.params, req.query);
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -180,11 +185,11 @@ export function RecordsRouter() {
       req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
       res: Response,
     ) => {
-      const records = await recordsService.getFilteredRecords(req.params, req.query);
+      const records = await recordService.getFilteredRecords(req.params, req.query);
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

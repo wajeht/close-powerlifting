@@ -1,4 +1,4 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import { config } from "../../../config";
 import type {
   UserProfile,
@@ -49,9 +49,7 @@ function transformRankingRow(row: (string | number)[]): RankingRow {
   };
 }
 
-export function UsersService() {
-  const scraper = Scraper();
-
+export function createUserService(scraper: ScraperType) {
   function parseUserProfileHtml(doc: Document, username: string): UserProfile {
     const mixedContent = scraper.getElementByClass(doc, "mixed-content");
     if (!mixedContent) {

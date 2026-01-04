@@ -1,12 +1,10 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import type { MeetData, MeetResult, ApiResponse } from "../../../types";
 import type { GetMeetParamType, GetMeetQueryType } from "./meets.validation";
 
 const CACHE_TTL = 3600;
 
-export function MeetsService() {
-  const scraper = Scraper();
-
+export function createMeetService(scraper: ScraperType) {
   function parseMeetHtml(doc: Document): MeetData {
     const h1 = doc.querySelector("h1#meet");
     const title = h1?.textContent?.trim() || "";

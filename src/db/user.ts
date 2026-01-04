@@ -1,41 +1,59 @@
-import { Database } from "./db";
-import type { User, CreateUserInput, UpdateUserInput } from "../types";
+import type { Knex } from "knex";
+import type { User as UserType, CreateUserInput, UpdateUserInput } from "../types";
 
-export function User() {
-  const db = Database().instance;
+export interface UserRepositoryType {
+  findById: (id: number) => Promise<UserType | undefined>;
+  findByEmail: (email: string) => Promise<UserType | undefined>;
+  findByVerificationToken: (token: string) => Promise<UserType | undefined>;
+  findOne: (where: Partial<UserType>) => Promise<UserType | undefined>;
+  findAll: (where?: Partial<UserType>) => Promise<UserType[]>;
+  findVerified: () => Promise<UserType[]>;
+  findByApiCallCount: (count: number) => Promise<UserType[]>;
+  create: (data: CreateUserInput) => Promise<UserType>;
+  update: (email: string, data: UpdateUserInput) => Promise<UserType | undefined>;
+  updateById: (id: number, data: UpdateUserInput) => Promise<UserType | undefined>;
+  incrementApiCallCount: (id: number) => Promise<UserType | undefined>;
+  resetAllApiCallCounts: () => Promise<void>;
+  softDelete: (id: number) => Promise<void>;
+}
 
-  async function findById(id: number): Promise<User | undefined> {
-    return db<User>("users").where({ id, deleted: false }).first();
+export function createUserRepository(db: Knex): UserRepositoryType {
+  async function findById(id: number): Promise<UserType | undefined> {
+    return db<UserType>("users").where({ id, deleted: false }).first();
   }
 
-  async function findByEmail(email: string): Promise<User | undefined> {
-    return db<User>("users").where({ email, deleted: false }).first();
+  async function findByEmail(email: string): Promise<UserType | undefined> {
+    return db<UserType>("users").where({ email, deleted: false }).first();
   }
 
-  async function findByVerificationToken(token: string): Promise<User | undefined> {
-    return db<User>("users").where({ verification_token: token, deleted: false }).first();
+  async function findByVerificationToken(token: string): Promise<UserType | undefined> {
+    return db<UserType>("users").where({ verification_token: token, deleted: false }).first();
   }
 
-  async function findOne(where: Partial<User>): Promise<User | undefined> {
-    return db<User>("users")
+  async function findOne(where: Partial<UserType>): Promise<UserType | undefined> {
+    return db<UserType>("users")
       .where({ ...where, deleted: false })
       .first();
   }
 
-  async function findAll(where: Partial<User> = {}): Promise<User[]> {
-    return db<User>("users").where({ ...where, deleted: false });
+  async function findAll(where: Partial<UserType> = {}): Promise<UserType[]> {
+    return db<UserType>("users").where({ ...where, deleted: false });
   }
 
-  async function findVerified(): Promise<User[]> {
-    return db<User>("users").where({ verified: true, deleted: false });
+  async function findVerified(): Promise<UserType[]> {
+    return db<UserType>("users").where({ verified: true, deleted: false });
   }
 
-  async function findByApiCallCount(count: number): Promise<User[]> {
-    return db<User>("users").where({ api_call_count: count, verified: true, deleted: false });
+  async function findByApiCallCount(count: number): Promise<UserType[]> {
+    return db<UserType>("users").where({
+      api_call_count: count,
+      verified: true,
+      deleted: false,
+    });
   }
 
-  async function create(data: CreateUserInput): Promise<User> {
-    const [insertedId] = await db<User>("users").insert({
+  async function create(data: CreateUserInput): Promise<UserType> {
+    const [insertedId] = await db<UserType>("users").insert({
       ...data,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -47,8 +65,8 @@ export function User() {
     return user;
   }
 
-  async function update(email: string, data: UpdateUserInput): Promise<User | undefined> {
-    await db<User>("users")
+  async function update(email: string, data: UpdateUserInput): Promise<UserType | undefined> {
+    await db<UserType>("users")
       .where({ email })
       .update({
         ...data,
@@ -57,8 +75,8 @@ export function User() {
     return findByEmail(email);
   }
 
-  async function updateById(id: number, data: UpdateUserInput): Promise<User | undefined> {
-    await db<User>("users")
+  async function updateById(id: number, data: UpdateUserInput): Promise<UserType | undefined> {
+    await db<UserType>("users")
       .where({ id })
       .update({
         ...data,
@@ -67,17 +85,17 @@ export function User() {
     return findById(id);
   }
 
-  async function incrementApiCallCount(id: number): Promise<User | undefined> {
-    await db<User>("users").where({ id }).increment("api_call_count", 1);
+  async function incrementApiCallCount(id: number): Promise<UserType | undefined> {
+    await db<UserType>("users").where({ id }).increment("api_call_count", 1);
     return findById(id);
   }
 
   async function resetAllApiCallCounts(): Promise<void> {
-    await db<User>("users").where({ verified: true }).update({ api_call_count: 0 });
+    await db<UserType>("users").where({ verified: true }).update({ api_call_count: 0 });
   }
 
   async function softDelete(id: number): Promise<void> {
-    await db<User>("users")
+    await db<UserType>("users")
       .where({ id })
       .update({ deleted: true, updated_at: new Date().toISOString() });
   }

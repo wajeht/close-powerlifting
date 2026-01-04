@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { Scraper } from "../../../utils/scraper";
-import { MeetsService } from "./meets.service";
+import { createContext } from "../../../context";
+import { createMeetService } from "./meets.service";
 import {
   meetRps2548Html,
   meetUsaplIsr2025Html,
@@ -9,18 +9,19 @@ import {
   meetUspa1969Html,
 } from "./fixtures";
 
-const scraper = Scraper();
-const meetsService = MeetsService();
+const ctx = createContext();
+const scraper = ctx.scraper;
+const meetService = createMeetService(scraper);
 
 const rpsDoc = scraper.parseHtml(meetRps2548Html);
 const usaplDoc = scraper.parseHtml(meetUsaplIsr2025Html);
 const wrpfDoc = scraper.parseHtml(meetWrpfUsa23e1Html);
 const uspaDoc = scraper.parseHtml(meetUspa1969Html);
 
-const rpsMeet = meetsService.parseMeetHtml(rpsDoc);
-const usaplMeet = meetsService.parseMeetHtml(usaplDoc);
-const wrpfMeet = meetsService.parseMeetHtml(wrpfDoc);
-const uspaMeet = meetsService.parseMeetHtml(uspaDoc);
+const rpsMeet = meetService.parseMeetHtml(rpsDoc);
+const usaplMeet = meetService.parseMeetHtml(usaplDoc);
+const wrpfMeet = meetService.parseMeetHtml(wrpfDoc);
+const uspaMeet = meetService.parseMeetHtml(uspaDoc);
 
 describe("meets service", () => {
   describe("parseMeetHtml", () => {

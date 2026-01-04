@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { FederationsService } from "./federations.service";
+import { createMiddleware } from "../../middleware";
+import { createFederationService } from "./federations.service";
 import {
   getFederationsValidation,
   getFederationsParamValidation,
@@ -55,10 +55,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function FederationsRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const federationsService = FederationsService();
+export function createFederationsRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const federationService = createFederationService(ctx.scraper);
 
   const router = express.Router();
 
@@ -87,9 +92,9 @@ export function FederationsRouter() {
     "/",
     middleware.apiValidationMiddleware({ query: getFederationsValidation }),
     async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
-      const federations = await federationsService.getFederations(req.query);
+      const federations = await federationService.getFederations(req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -131,11 +136,11 @@ export function FederationsRouter() {
       query: getFederationsQueryValidation,
     }),
     async (req: Request<GetFederationsParamType, {}, GetFederationsQueryType>, res: Response) => {
-      const federations = await federationsService.getFederation({ ...req.params, ...req.query });
+      const federations = await federationService.getFederation({ ...req.params, ...req.query });
 
       if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

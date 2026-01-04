@@ -2,12 +2,9 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 
 import { config } from "../../config";
-import { User } from "../../db/user";
+import type { AppContext } from "../../context";
 import { UnauthorizedError, ValidationError } from "../../error";
-import { Helpers } from "../../utils/helpers";
-import { Logger } from "../../utils/logger";
-import { Middleware } from "../middleware";
-import { AuthService } from "./auth.service";
+import { createMiddleware } from "../middleware";
 
 const registerValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
@@ -47,12 +44,14 @@ interface GoogleUserResult {
   locale: string;
 }
 
-export function AuthRouter() {
-  const userRepository = User();
-  const helpers = Helpers();
-  const logger = Logger();
-  const middleware = Middleware();
-  const authService = AuthService();
+export function createAuthRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
 
   const router = express.Router();
 
@@ -77,8 +76,8 @@ export function AuthRouter() {
       });
 
       return response.json();
-    } catch (error: any) {
-      logger.error("Failed to fetch Google Oauth Tokens");
+    } catch (error: unknown) {
+      ctx.logger.error("Failed to fetch Google Oauth Tokens");
       throw error;
     }
   }
@@ -101,8 +100,8 @@ export function AuthRouter() {
       );
 
       return response.json();
-    } catch (error: any) {
-      logger.error("Failed to fetch Google User info");
+    } catch (error: unknown) {
+      ctx.logger.error("Failed to fetch Google User info");
       throw error;
     }
   }
@@ -121,22 +120,26 @@ export function AuthRouter() {
     async (req: Request<{}, {}, RegisterType>, res: Response) => {
       const { email, name } = req.body;
 
-      const found = await userRepository.findByEmail(email);
+      const found = await ctx.userRepository.findByEmail(email);
 
       if (found) {
         req.flash("error", "Email already exist!");
         return res.redirect("/register");
       }
 
-      const { key: token } = await helpers.hashKey();
+      const { key: token } = await ctx.helpers.hashKey();
 
-      const createdUser = await userRepository.create({ email, name, verification_token: token });
+      const createdUser = await ctx.userRepository.create({
+        email,
+        name,
+        verification_token: token,
+      });
 
-      const hostname = helpers.getHostName(req);
+      const hostname = ctx.helpers.getHostName(req);
 
-      logger.info(`user_id: ${createdUser.id} has registered an account!`);
+      ctx.logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-      authService.sendVerificationEmail({
+      ctx.authService.sendVerificationEmail({
         name,
         email,
         verification_token: token,
@@ -163,30 +166,30 @@ export function AuthRouter() {
     async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
       const { email } = req.body;
 
-      const foundUser = await userRepository.findByEmail(email);
+      const foundUser = await ctx.userRepository.findByEmail(email);
 
-      logger.info(
+      ctx.logger.info(
         `Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`,
       );
 
       if (foundUser && !foundUser.verified) {
-        logger.info(`User ${email} not verified, sending verification email`);
-        await authService.sendVerificationEmail({
-          hostname: helpers.getHostName(req),
+        ctx.logger.info(`User ${email} not verified, sending verification email`);
+        await ctx.authService.sendVerificationEmail({
+          hostname: ctx.helpers.getHostName(req),
           name: foundUser.name,
           email: foundUser.email,
           verification_token: foundUser.verification_token!,
         });
       } else if (foundUser && foundUser.verified && foundUser.admin) {
-        logger.info(`User ${email} is admin, resetting admin API key`);
-        await authService.resetAdminAPIKey({
+        ctx.logger.info(`User ${email} is admin, resetting admin API key`);
+        await ctx.authService.resetAdminAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
         });
       } else if (foundUser && foundUser.verified) {
-        logger.info(`User ${email} is verified, resetting API key`);
-        await authService.resetAPIKey({
+        ctx.logger.info(`User ${email} is verified, resetting API key`);
+        await ctx.authService.resetAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
@@ -201,7 +204,7 @@ export function AuthRouter() {
 
   router.get("/verify-email", async (req: Request, res: Response) => {
     const { token, email } = req.query as { token: string; email: string };
-    const foundUser = await userRepository.findByEmail(email);
+    const foundUser = await ctx.userRepository.findByEmail(email);
 
     if (!foundUser) {
       req.flash("error", "Something wrong while verifying your account!");
@@ -210,7 +213,7 @@ export function AuthRouter() {
 
     if (
       !foundUser.verification_token ||
-      !helpers.timingSafeEqual(foundUser.verification_token, token)
+      !ctx.helpers.timingSafeEqual(foundUser.verification_token, token)
     ) {
       req.flash("error", "Something wrong while verifying your account!");
       return res.redirect("/register");
@@ -221,7 +224,7 @@ export function AuthRouter() {
       return res.redirect("/register");
     }
 
-    authService.sendWelcomeEmail({
+    ctx.authService.sendWelcomeEmail({
       name: foundUser.name,
       email: foundUser.email,
       userId: String(foundUser.id),
@@ -236,7 +239,7 @@ export function AuthRouter() {
   });
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
-    res.redirect(helpers.getGoogleOAuthURL());
+    res.redirect(ctx.helpers.getGoogleOAuthURL());
   });
 
   router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
@@ -257,10 +260,10 @@ export function AuthRouter() {
       throw new UnauthorizedError("Something went wrong while authenticating with Google");
     }
 
-    const found = await userRepository.findByEmail(googleUser.email);
+    const found = await ctx.userRepository.findByEmail(googleUser.email);
 
     if (!found) {
-      const createdUser = await userRepository.create({
+      const createdUser = await ctx.userRepository.create({
         email: googleUser.email,
         name: googleUser.name,
         verification_token: access_token,
@@ -268,7 +271,7 @@ export function AuthRouter() {
         verified_at: new Date().toISOString(),
       });
 
-      authService.sendWelcomeEmail({
+      ctx.authService.sendWelcomeEmail({
         name: createdUser.name,
         email: createdUser.email,
         userId: String(createdUser.id),
@@ -293,21 +296,25 @@ export function AuthRouter() {
     async (req: Request<{}, {}, RegisterType>, res: Response) => {
       const { email, name } = req.body;
 
-      const found = await userRepository.findByEmail(email);
+      const found = await ctx.userRepository.findByEmail(email);
 
       if (found) {
         throw new ValidationError("email already exist");
       }
 
-      const { key: token } = await helpers.hashKey();
+      const { key: token } = await ctx.helpers.hashKey();
 
-      const createdUser = await userRepository.create({ email, name, verification_token: token });
+      const createdUser = await ctx.userRepository.create({
+        email,
+        name,
+        verification_token: token,
+      });
 
-      const hostname = helpers.getHostName(req);
+      const hostname = ctx.helpers.getHostName(req);
 
-      logger.info(`user_id: ${createdUser.id} has registered an account!`);
+      ctx.logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-      authService.sendVerificationEmail({
+      ctx.authService.sendVerificationEmail({
         name,
         email,
         verification_token: token,
@@ -329,7 +336,7 @@ export function AuthRouter() {
     async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
       const { token, email } = req.body;
 
-      const foundUser = await userRepository.findByEmail(email);
+      const foundUser = await ctx.userRepository.findByEmail(email);
 
       if (!foundUser) {
         throw new ValidationError("Something wrong while verifying your account!");
@@ -337,7 +344,7 @@ export function AuthRouter() {
 
       if (
         !foundUser.verification_token ||
-        !helpers.timingSafeEqual(foundUser.verification_token, token)
+        !ctx.helpers.timingSafeEqual(foundUser.verification_token, token)
       ) {
         throw new ValidationError("Something wrong while verifying your account!");
       }
@@ -346,7 +353,7 @@ export function AuthRouter() {
         throw new ValidationError("This account has already been verified!");
       }
 
-      const unhashedKey = await authService.sendWelcomeEmail({
+      const unhashedKey = await ctx.authService.sendWelcomeEmail({
         name: foundUser.name,
         email: foundUser.email,
         userId: String(foundUser.id),
@@ -373,23 +380,23 @@ export function AuthRouter() {
     async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
       const { email } = req.body;
 
-      const foundUser = await userRepository.findByEmail(email);
+      const foundUser = await ctx.userRepository.findByEmail(email);
 
       if (foundUser && !foundUser.verified) {
-        await authService.sendVerificationEmail({
-          hostname: helpers.getHostName(req),
+        await ctx.authService.sendVerificationEmail({
+          hostname: ctx.helpers.getHostName(req),
           name: foundUser.name,
           email: foundUser.email,
           verification_token: foundUser.verification_token!,
         });
       } else if (foundUser && foundUser.verified && foundUser.admin) {
-        await authService.resetAdminAPIKey({
+        await ctx.authService.resetAdminAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
         });
       } else if (foundUser && foundUser.verified) {
-        await authService.resetAPIKey({
+        await ctx.authService.resetAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,

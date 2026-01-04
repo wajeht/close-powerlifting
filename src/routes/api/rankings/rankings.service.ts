@@ -1,4 +1,4 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import { config } from "../../../config";
 import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types";
 import type {
@@ -48,9 +48,7 @@ function transformRankingRow(row: (string | number)[]): RankingRow {
   };
 }
 
-export function RankingsService() {
-  const scraper = Scraper();
-
+export function createRankingService(scraper: ScraperType) {
   async function fetchRankingsData(
     currentPage: number,
     perPage: number,

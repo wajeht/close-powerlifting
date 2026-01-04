@@ -1,13 +1,11 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import type { StatusData, Federation, ApiResponse } from "../../../types";
 import type { GetStatusType } from "./status.validation";
 
 const CACHE_KEY = "status";
 const CACHE_TTL = 3600;
 
-export function StatusService() {
-  const scraper = Scraper();
-
+export function createStatusService(scraper: ScraperType) {
   function parseStatusHtml(doc: Document): StatusData {
     const textContent = scraper.getElementByClass(doc, "text-content");
     if (!textContent) {

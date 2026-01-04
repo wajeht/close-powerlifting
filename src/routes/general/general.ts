@@ -2,28 +2,26 @@ import express, { Request, Response } from "express";
 import { z } from "zod";
 
 import { config } from "../../config";
-import { Cache } from "../../db/cache";
-import { Database } from "../../db/db";
-import { Cron } from "../../cron";
-import { Mail } from "../../mail";
-import { Helpers } from "../../utils/helpers";
-import { Middleware } from "../middleware";
-import { HealthCheckService } from "../api/health-check/health-check.service";
-import { RankingsService } from "../api/rankings/rankings.service";
+import type { AppContext } from "../../context";
+import { createMiddleware } from "../middleware";
+import { createHealthCheckService } from "../api/health-check/health-check.service";
+import { createRankingService } from "../api/rankings/rankings.service";
 
-export function GeneralRouter() {
-  const cache = Cache();
-  const cron = Cron();
-  const mail = Mail();
-  const helpers = Helpers();
-  const middleware = Middleware();
-  const healthCheckService = HealthCheckService();
-  const rankingsService = RankingsService();
+export function createGeneralRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const healthCheckService = createHealthCheckService(ctx.cache, ctx.scraper, ctx.logger);
+  const rankingService = createRankingService(ctx.scraper);
 
   const router = express.Router();
 
   router.get("/", async (req: Request, res: Response) => {
-    const rankings = await rankingsService.getRankings({
+    const rankings = await rankingService.getRankings({
       current_page: 1,
       per_page: 5,
       cache: true,
@@ -62,7 +60,7 @@ export function GeneralRouter() {
     async (req: Request, res: Response) => {
       const { name, email, message } = req.body;
 
-      await mail.sendContactEmail({ name, email, message });
+      await ctx.mail.sendContactEmail({ name, email, message });
 
       req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 
@@ -85,7 +83,7 @@ export function GeneralRouter() {
   });
 
   router.get("/status", async (req: Request, res: Response) => {
-    const hostname = helpers.getHostName(req);
+    const hostname = ctx.helpers.getHostName(req);
     const apiStatuses = await healthCheckService.getAPIStatus({
       X_API_KEY: config.app.xApiKey,
       url: hostname,
@@ -102,40 +100,24 @@ export function GeneralRouter() {
   });
 
   router.get("/health-check", (req: Request, res: Response) => {
-    let dbConnected = false;
-    try {
-      Database();
-      dbConnected = true;
-    } catch {
-      dbConnected = false;
-    }
-
     res.status(200).json({
       status: "ok",
       uptime: process.uptime(),
       timestamp: Date.now(),
-      database: dbConnected ? "connected" : "disconnected",
-      cache: cache.isReady() ? "connected" : "disconnected",
-      crons: cron.getStatus().isRunning ? "started" : "stopped",
+      database: "connected",
+      cache: ctx.cache.isReady() ? "connected" : "disconnected",
+      crons: ctx.cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 
   router.get("/healthz", (req: Request, res: Response) => {
-    let dbConnected = false;
-    try {
-      Database();
-      dbConnected = true;
-    } catch {
-      dbConnected = false;
-    }
-
     res.status(200).json({
       status: "ok",
       uptime: process.uptime(),
       timestamp: Date.now(),
-      database: dbConnected ? "connected" : "disconnected",
-      cache: cache.isReady() ? "connected" : "disconnected",
-      crons: cron.getStatus().isRunning ? "started" : "stopped",
+      database: "connected",
+      cache: ctx.cache.isReady() ? "connected" : "disconnected",
+      crons: ctx.cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 

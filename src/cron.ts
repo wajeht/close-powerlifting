@@ -1,10 +1,10 @@
 import cron, { ScheduledTask } from "node-cron";
 
 import { config } from "./config";
-import { Cache } from "./db/cache";
-import { User } from "./db/user";
-import { Logger } from "./utils/logger";
-import { Mail } from "./mail";
+import type { CacheType } from "./db/cache";
+import type { UserRepositoryType } from "./db/user";
+import type { MailType } from "./mail";
+import type { LoggerType } from "./utils/logger";
 
 export interface CronType {
   start: () => void;
@@ -12,12 +12,12 @@ export interface CronType {
   getStatus: () => { isRunning: boolean; jobCount: number };
 }
 
-export function Cron(): CronType {
-  const cache = Cache();
-  const userRepository = User();
-  const logger = Logger();
-  const mail = Mail();
-
+export function createCron(
+  cache: CacheType,
+  userRepository: UserRepositoryType,
+  mail: MailType,
+  logger: LoggerType,
+): CronType {
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
 
@@ -87,7 +87,9 @@ export function Cron(): CronType {
   }
 
   function stop(): void {
-    cronJobs.forEach((job) => job.stop());
+    for (const job of cronJobs) {
+      job.stop();
+    }
     cronJobs = [];
     isRunning = false;
     logger.info("cron service stopped");

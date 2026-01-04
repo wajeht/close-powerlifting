@@ -1,11 +1,12 @@
 import { describe, expect, test } from "vitest";
 
-import { Scraper } from "../../../utils/scraper";
-import { StatusService } from "./status.service";
+import { createContext } from "../../../context";
+import { createStatusService } from "./status.service";
 import { statusHtml } from "./fixtures";
 
-const scraper = Scraper();
-const statusService = StatusService();
+const ctx = createContext();
+const scraper = ctx.scraper;
+const statusService = createStatusService(scraper);
 
 const statusDoc = scraper.parseHtml(statusHtml);
 const statusData = statusService.parseStatusHtml(statusDoc);

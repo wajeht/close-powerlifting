@@ -1,6 +1,6 @@
 import knex, { Knex } from "knex";
 import { knexConfig } from "./knexfile";
-import { Logger } from "../utils/logger";
+import type { LoggerType } from "../utils/logger";
 
 let _db: Knex | null = null;
 
@@ -12,9 +12,14 @@ function _createKnexInstance(): Knex {
   return _db;
 }
 
-export function Database() {
+export interface DatabaseType {
+  instance: Knex;
+  init: () => Promise<void>;
+  stop: () => Promise<void>;
+}
+
+export function createDatabase(logger: LoggerType): DatabaseType {
   const db = _createKnexInstance();
-  const logger = Logger();
 
   async function init(): Promise<void> {
     try {

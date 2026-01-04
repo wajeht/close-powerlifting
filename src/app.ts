@@ -9,22 +9,27 @@ import { Server } from "http";
 import { AddressInfo } from "net";
 
 import { config } from "./config";
-import { Middleware } from "./routes/middleware";
-import { MainRouter } from "./routes/routes";
+import { createContext, type AppContext } from "./context";
+import { createMiddleware } from "./routes/middleware";
+import { createMainRouter } from "./routes/routes";
 import { expressJSDocSwaggerHandler } from "./utils/swagger";
 import { engine, layoutMiddleware } from "./utils/template";
-import { Database } from "./db/db";
-import { AdminUser } from "./utils/admin-user";
-import { Cron } from "./cron";
-import { Logger } from "./utils/logger";
 
 export interface ServerInfo {
   app: Express;
   server: Server;
+  ctx: AppContext;
 }
 
-export function createApp(): { app: Express } {
-  const middleware = Middleware();
+export function createApp(ctx?: AppContext): { app: Express; ctx: AppContext } {
+  const context = ctx ?? createContext();
+  const middleware = createMiddleware(
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
+  );
 
   const app = express();
 
@@ -67,22 +72,18 @@ export function createApp(): { app: Express } {
     .set("view cache", config.app.env === "production")
     .use(layoutMiddleware)
     .use(middleware.rateLimitMiddleware())
-    .use(MainRouter());
+    .use(createMainRouter(context));
 
   expressJSDocSwaggerHandler(app);
 
   app.use(middleware.notFoundMiddleware).use(middleware.errorMiddleware);
 
-  return { app };
+  return { app, ctx: context };
 }
 
-export function createServer(): ServerInfo {
-  const database = Database();
-  const cron = Cron();
-  const adminUser = AdminUser();
-  const logger = Logger();
-
-  const { app } = createApp();
+export function createServer(ctx?: AppContext): ServerInfo {
+  const context = ctx ?? createContext();
+  const { app } = createApp(context);
 
   const server: Server = app.listen(config.app.port);
 
@@ -91,14 +92,14 @@ export function createServer(): ServerInfo {
     const bind: string =
       typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
 
-    logger.info(`Server is listening on ${bind}`);
+    context.logger.info(`Server is listening on ${bind}`);
 
     try {
-      await database.init();
-      cron.start();
-      await adminUser.initAdminUser();
+      await context.database.init();
+      context.cron.start();
+      await context.adminUser.initializeAdminUser();
     } catch (error) {
-      logger.error((error as any).message);
+      context.logger.error((error as any).message);
     }
   });
 
@@ -112,52 +113,48 @@ export function createServer(): ServerInfo {
 
     switch (error.code) {
       case "EACCES":
-        logger.error(`${bind} requires elevated privileges`);
+        context.logger.error(`${bind} requires elevated privileges`);
         process.exit(1);
       case "EADDRINUSE":
-        logger.error(`${bind} is already in use`);
+        context.logger.error(`${bind} is already in use`);
         process.exit(1);
       default:
         throw error;
     }
   });
 
-  return { app, server };
+  return { app, server, ctx: context };
 }
 
-export async function closeServer({ server }: ServerInfo): Promise<void> {
-  const database = Database();
-  const cron = Cron();
-  const logger = Logger();
+export async function closeServer({ server, ctx }: ServerInfo): Promise<void> {
+  ctx.logger.info("Shutting down server gracefully");
 
-  logger.info("Shutting down server gracefully");
-
-  cron.stop();
+  ctx.cron.stop();
 
   try {
-    await database.stop();
-    logger.info("Database connection closed");
+    await ctx.database.stop();
+    ctx.logger.info("Database connection closed");
   } catch (error) {
-    logger.error("Error closing database connection", error);
+    ctx.logger.error("Error closing database connection", error);
   }
 
   await new Promise<void>((resolve, reject) => {
     const shutdownTimeout = setTimeout(() => {
-      logger.error("Could not close connections in time, forcefully shutting down");
+      ctx.logger.error("Could not close connections in time, forcefully shutting down");
       reject(new Error("Server close timeout"));
     }, 10000);
 
     server.close((error) => {
       clearTimeout(shutdownTimeout);
       if (error) {
-        logger.error("Error closing HTTP server", error);
+        ctx.logger.error("Error closing HTTP server", error);
         reject(error);
       } else {
-        logger.info("HTTP server closed");
+        ctx.logger.info("HTTP server closed");
         resolve();
       }
     });
   });
 
-  logger.info("Server shutdown complete");
+  ctx.logger.info("Server shutdown complete");
 }

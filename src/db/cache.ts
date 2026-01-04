@@ -1,5 +1,5 @@
-import { Database } from "./db";
-import { Logger } from "../utils/logger";
+import type { Knex } from "knex";
+import type { LoggerType } from "../utils/logger";
 
 type CacheEntry = {
   key: string;
@@ -9,10 +9,18 @@ type CacheEntry = {
   updated_at: string;
 };
 
-export function Cache() {
-  const db = Database().instance;
-  const logger = Logger();
+export interface CacheType {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string, ttlSeconds?: number) => Promise<void>;
+  del: (key: string) => Promise<void>;
+  delPattern: (pattern: string) => Promise<number>;
+  keys: (pattern: string) => Promise<string[]>;
+  clearExpired: () => Promise<number>;
+  clearAll: () => Promise<void>;
+  isReady: () => boolean;
+}
 
+export function createCache(db: Knex, logger: LoggerType): CacheType {
   async function get(key: string): Promise<string | null> {
     const entry = await db<CacheEntry>("cache").where({ key }).first();
 
@@ -81,12 +89,7 @@ export function Cache() {
   }
 
   function isReady(): boolean {
-    try {
-      Database();
-      return true;
-    } catch {
-      return false;
-    }
+    return db !== null;
   }
 
   return {

@@ -1,16 +1,23 @@
 import express from "express";
 
-import { Middleware } from "../middleware";
-import { FederationsRouter } from "./federations/federations";
-import { HealthCheckRouter } from "./health-check/health-check";
-import { MeetsRouter } from "./meets/meets";
-import { RankingsRouter } from "./rankings/rankings";
-import { RecordsRouter } from "./records/records";
-import { StatusRouter } from "./status/status";
-import { UsersRouter } from "./users/users";
+import type { AppContext } from "../../context";
+import { createMiddleware } from "../middleware";
+import { createFederationsRouter } from "./federations/federations";
+import { createHealthCheckRouter } from "./health-check/health-check";
+import { createMeetsRouter } from "./meets/meets";
+import { createRankingsRouter } from "./rankings/rankings";
+import { createRecordsRouter } from "./records/records";
+import { createStatusRouter } from "./status/status";
+import { createUsersRouter } from "./users/users";
 
-export function ApiRouter() {
-  const middleware = Middleware();
+export function createApiRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
 
   const router = express.Router();
 
@@ -18,35 +25,35 @@ export function ApiRouter() {
     "/rankings",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    RankingsRouter(),
+    createRankingsRouter(ctx),
   );
   router.use(
     "/federations",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    FederationsRouter(),
+    createFederationsRouter(ctx),
   );
   router.use(
     "/meets",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    MeetsRouter(),
+    createMeetsRouter(ctx),
   );
   router.use(
     "/records",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    RecordsRouter(),
+    createRecordsRouter(ctx),
   );
   router.use(
     "/users",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    UsersRouter(),
+    createUsersRouter(ctx),
   );
 
-  router.use("/status", StatusRouter());
-  router.use("/health-check", HealthCheckRouter());
+  router.use("/status", createStatusRouter(ctx));
+  router.use("/health-check", createHealthCheckRouter());
 
   return router;
 }

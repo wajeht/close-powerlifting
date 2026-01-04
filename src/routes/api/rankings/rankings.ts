@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { RankingsService } from "./rankings.service";
+import { createMiddleware } from "../../middleware";
+import { createRankingService } from "./rankings.service";
 import {
   getRankingsValidation,
   getRankValidation,
@@ -64,10 +64,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function RankingsRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const rankingsService = RankingsService();
+export function createRankingsRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const rankingService = createRankingService(ctx.scraper);
 
   const router = express.Router();
 
@@ -98,9 +103,9 @@ export function RankingsRouter() {
     "/",
     middleware.apiValidationMiddleware({ query: getRankingsValidation }),
     async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
-      const rankings = await rankingsService.getRankings(req.query);
+      const rankings = await rankingService.getRankings(req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -150,9 +155,9 @@ export function RankingsRouter() {
       >,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -203,9 +208,9 @@ export function RankingsRouter() {
       >,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -261,9 +266,9 @@ export function RankingsRouter() {
       >,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -321,9 +326,9 @@ export function RankingsRouter() {
       >,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -383,9 +388,9 @@ export function RankingsRouter() {
       >,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -435,9 +440,9 @@ export function RankingsRouter() {
       req: Request<GetFilteredRankingsParamType, {}, {}, GetFilteredRankingsQueryType>,
       res: Response,
     ) => {
-      const rankings = await rankingsService.getFilteredRankings(req.params, req.query);
+      const rankings = await rankingService.getFilteredRankings(req.params, req.query);
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -473,11 +478,11 @@ export function RankingsRouter() {
     "/:rank",
     middleware.apiValidationMiddleware({ params: getRankValidation }),
     async (req: Request<GetRankType, {}, {}>, res: Response) => {
-      const rank = await rankingsService.getRank(req.params);
+      const rank = await rankingService.getRank(req.params);
 
       if (!rank) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

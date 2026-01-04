@@ -6,7 +6,18 @@ import jwt from "jsonwebtoken";
 import { config } from "../config";
 import type { UserParams } from "../types";
 
-export function Helpers() {
+export interface HelpersType {
+  getHostName: (req: Request) => string;
+  hashKey: () => Promise<{ key: string; hashedKey: string }>;
+  generateAPIKey: (
+    userParams: UserParams & { admin?: boolean },
+  ) => Promise<{ unhashedKey: string; hashedKey: string }>;
+  generatePassword: (length?: number) => string;
+  timingSafeEqual: (a: string, b: string) => boolean;
+  getGoogleOAuthURL: () => string;
+}
+
+export function createHelpers(): HelpersType {
   function getHostName(req: Request): string {
     if (config.app.env === "development") {
       const protocol = req.protocol;

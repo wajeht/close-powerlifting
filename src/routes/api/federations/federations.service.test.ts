@@ -1,21 +1,22 @@
 import { describe, expect, test } from "vitest";
 
 import { config } from "../../../config";
-import { Scraper } from "../../../utils/scraper";
-import { FederationsService } from "./federations.service";
+import { createContext } from "../../../context";
+import { createFederationService } from "./federations.service";
 import { mlistHtml, mlistUsaplHtml, mlistUsapl2024Html } from "./fixtures";
 
-const scraper = Scraper();
-const federationsService = FederationsService();
+const ctx = createContext();
+const scraper = ctx.scraper;
+const federationService = createFederationService(scraper);
 const { defaultPerPage, maxPerPage } = config.pagination;
 
 const mlistDoc = scraper.parseHtml(mlistHtml);
 const mlistUsaplDoc = scraper.parseHtml(mlistUsaplHtml);
 const mlistUsapl2024Doc = scraper.parseHtml(mlistUsapl2024Html);
 
-const mlistMeets = federationsService.parseFederationMeetsHtml(mlistDoc);
-const mlistUsaplMeets = federationsService.parseFederationMeetsHtml(mlistUsaplDoc);
-const mlistUsapl2024Meets = federationsService.parseFederationMeetsHtml(mlistUsapl2024Doc);
+const mlistMeets = federationService.parseFederationMeetsHtml(mlistDoc);
+const mlistUsaplMeets = federationService.parseFederationMeetsHtml(mlistUsaplDoc);
+const mlistUsapl2024Meets = federationService.parseFederationMeetsHtml(mlistUsapl2024Doc);
 
 function getField(row: Record<string, string>, fieldName: string): string {
   const key = Object.keys(row).find((k) => k.toLowerCase() === fieldName.toLowerCase());

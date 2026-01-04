@@ -1,9 +1,9 @@
 import { JSDOM } from "jsdom";
-import { Cache } from "../db/cache";
 import { config } from "../config";
 import { ScraperError } from "../error";
-import type { ApiResponse } from "../types";
-import { Logger } from "./logger";
+import type { ApiResponse, Pagination } from "../types";
+import type { CacheType } from "../db/cache";
+import type { LoggerType } from "./logger";
 
 type CacheConfig = {
   key: string;
@@ -20,10 +20,31 @@ const DEFAULT_HEADERS: Record<string, string> = {
   Pragma: "no-cache",
 };
 
-export function Scraper() {
-  const cache = Cache();
-  const logger = Logger();
+export interface ScraperType {
+  fetchHtml: (path: string) => Promise<string>;
+  fetchJson: <T>(path: string) => Promise<T>;
+  parseHtml: (html: string) => Document;
+  tableToJson: <T extends Record<string, string> = Record<string, string>>(
+    table: Element | null,
+  ) => T[];
+  stripHtml: (html: string) => string;
+  getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
+  getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
+  withCache: <T>(
+    cacheConfig: CacheConfig,
+    fetcher: () => Promise<T>,
+    useCache?: boolean,
+  ) => Promise<ApiResponse<T>>;
+  buildPaginationQuery: (currentPage: number, perPage: number) => string;
+  calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
+  fetchWithAuth: (
+    baseUrl: string,
+    path: string,
+    token: string,
+  ) => Promise<{ ok: boolean; url: string; date: string | null }>;
+}
 
+export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
   async function fetchHtml(path: string): Promise<string> {
     const url = `${config.app.baseUrl}${path.startsWith("/") ? path.slice(1) : path}`;
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
@@ -63,10 +84,10 @@ export function Scraper() {
     if (!headerRow) return [];
 
     const headers: string[] = [];
-    headerRow.querySelectorAll("th, td").forEach((cell) => {
+    for (const cell of headerRow.querySelectorAll("th, td")) {
       const text = cell.textContent?.trim().toLowerCase().replace(/\s+/g, "") || "";
       headers.push(text);
-    });
+    }
 
     const data: T[] = [];
     for (let i = 1; i < rows.length; i++) {
@@ -76,11 +97,14 @@ export function Scraper() {
       const cells = row.querySelectorAll("td");
       const rowData: Record<string, string> = {};
 
-      cells.forEach((cell, j) => {
-        if (headers[j]) {
-          rowData[headers[j]] = cell.textContent?.trim() || "";
+      let j = 0;
+      for (const cell of cells) {
+        const header = headers[j];
+        if (header) {
+          rowData[header] = cell.textContent?.trim() || "";
         }
-      });
+        j++;
+      }
 
       if (Object.keys(rowData).length > 0) {
         data.push(rowData as T);
@@ -169,16 +193,7 @@ export function Scraper() {
     totalItems: number,
     currentPage: number,
     perPage: number,
-  ): {
-    items: number;
-    pages: number;
-    per_page: number;
-    current_page: number;
-    last_page: number;
-    first_page: number;
-    from: number;
-    to: number;
-  } {
+  ): Pagination {
     const pages = Math.ceil(totalItems / perPage);
     const from = (currentPage - 1) * perPage + 1;
     const to = Math.min(currentPage * perPage, totalItems);

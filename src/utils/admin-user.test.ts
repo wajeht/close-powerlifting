@@ -2,29 +2,42 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { config } from "../config";
 import { db } from "../tests/test-setup";
+import { createUserRepository } from "../db/user";
+import { createHelpers } from "./helpers";
+import { createLogger } from "./logger";
+import { createAdminUser } from "./admin-user";
+import { createAuthService } from "../routes/auth/auth.service";
 
-vi.mock("../mail", () => ({
-  Mail: () => ({
-    sendAdminCredentialsEmail: vi.fn().mockResolvedValue({}),
-  }),
-}));
-
-import { AdminUser } from "./admin-user";
+const mockMail = {
+  sendAdminCredentialsEmail: vi.fn().mockResolvedValue({}),
+  sendNewApiKeyEmail: vi.fn().mockResolvedValue({}),
+  sendWelcomeEmail: vi.fn().mockResolvedValue({}),
+  sendVerificationEmail: vi.fn().mockResolvedValue({}),
+  sendContactEmail: vi.fn().mockResolvedValue({}),
+  sendApiLimitResetEmail: vi.fn().mockResolvedValue({}),
+  sendReachingApiLimitEmail: vi.fn().mockResolvedValue({}),
+};
 
 describe("AdminUser", () => {
   beforeEach(async () => {
     await db("users").del();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {
     await db("users").del();
   });
 
-  describe("initAdminUser", () => {
+  describe("initializeAdminUser", () => {
     it("should create a new admin user if one does not exist", async () => {
-      const adminUser = AdminUser();
+      const logger = createLogger();
+      logger.setLevel("SILENT");
+      const helpers = createHelpers();
+      const userRepository = createUserRepository(db);
+      const authService = createAuthService(userRepository, helpers, mockMail);
+      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
 
-      await adminUser.initAdminUser();
+      await adminUser.initializeAdminUser();
 
       const user = await db("users").where({ email: config.app.adminEmail }).first();
 
@@ -47,8 +60,14 @@ describe("AdminUser", () => {
         updated_at: new Date().toISOString(),
       });
 
-      const adminUser = AdminUser();
-      await adminUser.initAdminUser();
+      const logger = createLogger();
+      logger.setLevel("SILENT");
+      const helpers = createHelpers();
+      const userRepository = createUserRepository(db);
+      const authService = createAuthService(userRepository, helpers, mockMail);
+      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
+
+      await adminUser.initializeAdminUser();
 
       const users = await db("users").where({ email: config.app.adminEmail });
       expect(users).toHaveLength(1);
@@ -58,9 +77,14 @@ describe("AdminUser", () => {
       const originalEmail = config.app.adminEmail;
       (config.app as any).adminEmail = null;
 
-      const adminUser = AdminUser();
+      const logger = createLogger();
+      logger.setLevel("SILENT");
+      const helpers = createHelpers();
+      const userRepository = createUserRepository(db);
+      const authService = createAuthService(userRepository, helpers, mockMail);
+      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
 
-      await expect(adminUser.initAdminUser()).resolves.not.toThrow();
+      await expect(adminUser.initializeAdminUser()).resolves.not.toThrow();
 
       (config.app as any).adminEmail = originalEmail;
     });

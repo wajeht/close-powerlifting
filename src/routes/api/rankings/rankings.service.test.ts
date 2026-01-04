@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
 
 import { config } from "../../../config";
-import { Scraper } from "../../../utils/scraper";
+import { createContext } from "../../../context";
 
-const scraper = Scraper();
+const ctx = createContext();
+const scraper = ctx.scraper;
 import {
   rankingsDefault,
   rankingsRawMen,

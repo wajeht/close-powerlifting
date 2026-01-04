@@ -1,4 +1,4 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import { config } from "../../../config";
 import type { Meet, ApiResponse, Pagination } from "../../../types";
 import type {
@@ -12,9 +12,7 @@ const { defaultPerPage } = config.pagination;
 
 type FederationMeet = Meet;
 
-export function FederationsService() {
-  const scraper = Scraper();
-
+export function createFederationService(scraper: ScraperType) {
   function parseFederationMeetsHtml(doc: Document): FederationMeet[] {
     const table = doc.querySelector("table");
     return scraper.tableToJson(table) as FederationMeet[];

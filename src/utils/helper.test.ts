@@ -1,11 +1,11 @@
 import { JSDOM } from "jsdom";
 import { beforeEach, describe, expect, test } from "vitest";
 
-import { Helpers } from "./helpers";
-import { Scraper } from "./scraper";
+import { createContext } from "../context";
 
-const helpers = Helpers();
-const scraper = Scraper();
+const ctx = createContext();
+const helpers = ctx.helpers;
+const scraper = ctx.scraper;
 
 describe("tableToJson", () => {
   let table: any;

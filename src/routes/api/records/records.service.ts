@@ -1,4 +1,4 @@
-import { Scraper } from "../../../utils/scraper";
+import type { ScraperType } from "../../../context";
 import type { RecordCategory, ApiResponse } from "../../../types";
 import type {
   GetRecordsType,
@@ -8,9 +8,7 @@ import type {
 
 const CACHE_TTL = 3600;
 
-export function RecordsService() {
-  const scraper = Scraper();
-
+export function createRecordService(scraper: ScraperType) {
   function parseRecordsHtml(doc: Document): RecordCategory[] {
     const recordCols = doc.getElementsByClassName("records-col");
     const data: RecordCategory[] = [];

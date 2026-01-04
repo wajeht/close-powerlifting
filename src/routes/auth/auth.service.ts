@@ -1,17 +1,30 @@
 import bcrypt from "bcryptjs";
 
 import { config } from "../../config";
-import { User } from "../../db/user";
-import type { UserParams } from "../../types";
-import { Helpers } from "../../utils/helpers";
-import { Mail } from "../../mail";
+import type { UserRepositoryType } from "../../db/user";
+import type { HelpersType } from "../../utils/helpers";
+import type { MailType } from "../../mail";
+import type { User, UserParams, UpdateUserInput } from "../../types";
 
-export function AuthService() {
-  const userRepository = User();
-  const helpers = Helpers();
-  const mail = Mail();
+export interface AuthServiceType {
+  updateUser: (email: string, updates: UpdateUserInput) => Promise<User | undefined>;
+  resetAPIKey: (userParams: UserParams) => Promise<void>;
+  resetAdminAPIKey: (userParams: UserParams) => Promise<void>;
+  sendVerificationEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    verification_token: string;
+  }) => Promise<void>;
+  sendWelcomeEmail: (userParams: UserParams) => Promise<string>;
+}
 
-  async function updateUser(email: string, updates: any): Promise<any> {
+export function createAuthService(
+  userRepository: UserRepositoryType,
+  helpers: HelpersType,
+  mail: MailType,
+): AuthServiceType {
+  async function updateUser(email: string, updates: UpdateUserInput): Promise<User | undefined> {
     return await userRepository.update(email, updates);
   }
 
@@ -33,7 +46,10 @@ export function AuthService() {
     const password = helpers.generatePassword();
     const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
 
-    const { unhashedKey, hashedKey } = await helpers.generateAPIKey({ ...userParams, admin: true });
+    const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
+      ...userParams,
+      admin: true,
+    });
 
     await updateUser(email, {
       key: hashedKey,

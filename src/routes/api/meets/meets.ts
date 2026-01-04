@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { MeetsService } from "./meets.service";
+import { createMiddleware } from "../../middleware";
+import { createMeetService } from "./meets.service";
 import {
   getMeetParamValidation,
   getMeetQueryValidation,
@@ -56,10 +56,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function MeetsRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const meetsService = MeetsService();
+export function createMeetsRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const meetService = createMeetService(ctx.scraper);
 
   const router = express.Router();
 
@@ -91,11 +96,11 @@ export function MeetsRouter() {
       query: getMeetQueryValidation,
     }),
     async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
-      const result = await meetsService.getMeet({ ...req.params, ...req.query });
+      const result = await meetService.getMeet({ ...req.params, ...req.query });
 
       if (!result.data) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

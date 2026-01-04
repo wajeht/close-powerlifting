@@ -1,16 +1,17 @@
 import express from "express";
 
-import { ApiRouter } from "./api/api";
-import { AuthRouter } from "./auth/auth";
-import { GeneralRouter } from "./general/general";
+import type { AppContext } from "../context";
+import { createApiRouter } from "./api/api";
+import { createAuthRouter } from "./auth/auth";
+import { createGeneralRouter } from "./general/general";
 
-export function MainRouter() {
+export function createMainRouter(ctx: AppContext) {
   const router = express.Router();
 
-  router.use("/", GeneralRouter());
-  router.use("/", AuthRouter());
-  router.use("/api/auth", AuthRouter());
-  router.use("/api", ApiRouter());
+  router.use("/", createGeneralRouter(ctx));
+  router.use("/", createAuthRouter(ctx));
+  router.use("/api/auth", createAuthRouter(ctx));
+  router.use("/api", createApiRouter(ctx));
 
   return router;
 }

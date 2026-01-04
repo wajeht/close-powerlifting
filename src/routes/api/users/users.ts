@@ -1,9 +1,9 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import { Logger } from "../../../utils/logger";
-import { Middleware } from "../../middleware";
-import { UsersService } from "./users.service";
+import { createMiddleware } from "../../middleware";
+import { createUserService } from "./users.service";
 import {
   getUserValidation,
   getUsersValidation,
@@ -93,10 +93,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function UsersRouter() {
-  const middleware = Middleware();
-  const logger = Logger();
-  const usersService = UsersService();
+export function createUsersRouter(ctx: AppContext) {
+  const middleware = createMiddleware(
+    ctx.cache,
+    ctx.userRepository,
+    ctx.mail,
+    ctx.helpers,
+    ctx.logger,
+  );
+  const userService = createUserService(ctx.scraper);
 
   const router = express.Router();
 
@@ -128,11 +133,11 @@ export function UsersRouter() {
     middleware.apiValidationMiddleware({ query: getUsersValidation }),
     async (req: Request<GetUsersType, {}, {}>, res: Response) => {
       if (req.query.search) {
-        const searched = await usersService.searchUser(req.query);
+        const searched = await userService.searchUser(req.query);
 
         if (!searched?.data) throw new NotFoundError("The resource cannot be found!");
 
-        logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+        ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
         res.status(200).json({
           status: "success",
@@ -173,11 +178,11 @@ export function UsersRouter() {
     "/:username",
     middleware.apiValidationMiddleware({ params: getUserValidation }),
     async (req: Request<GetUserType, {}, {}>, res: Response) => {
-      const user = await usersService.getUser(req.params);
+      const user = await userService.getUser(req.params);
 
       if (!user) throw new NotFoundError("The resource cannot be found!");
 
-      logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

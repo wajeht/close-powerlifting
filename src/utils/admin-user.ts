@@ -1,20 +1,24 @@
 import bcrypt from "bcryptjs";
 
 import { config } from "../config";
-import { User } from "../db/user";
-import { Helpers } from "../utils/helpers";
-import { AuthService } from "../routes/auth/auth.service";
-import { Logger } from "./logger";
-import { Mail } from "../mail";
+import type { UserRepositoryType } from "../db/user";
+import type { HelpersType } from "./helpers";
+import type { AuthServiceType } from "../routes/auth/auth.service";
+import type { MailType } from "../mail";
+import type { LoggerType } from "./logger";
 
-export function AdminUser() {
-  const userRepository = User();
-  const helpers = Helpers();
-  const authService = AuthService();
-  const logger = Logger();
-  const mail = Mail();
+export interface AdminUserType {
+  initializeAdminUser: () => Promise<void>;
+}
 
-  async function initAdminUser() {
+export function createAdminUser(
+  userRepository: UserRepositoryType,
+  helpers: HelpersType,
+  authService: AuthServiceType,
+  mail: MailType,
+  logger: LoggerType,
+): AdminUserType {
+  async function initializeAdminUser() {
     try {
       const found = await userRepository.findByEmail(config.app.adminEmail);
 
@@ -75,6 +79,6 @@ export function AdminUser() {
   }
 
   return {
-    initAdminUser,
+    initializeAdminUser,
   };
 }

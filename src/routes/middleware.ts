@@ -5,12 +5,12 @@ import jwt, { JwtPayload } from "jsonwebtoken";
 import { z, ZodError } from "zod";
 
 import { config } from "../config";
-import { Cache } from "../db/cache";
-import { User } from "../db/user";
+import type { CacheType } from "../db/cache";
+import type { UserRepositoryType } from "../db/user";
+import type { MailType } from "../mail";
+import type { HelpersType } from "../utils/helpers";
+import type { LoggerType } from "../utils/logger";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
-import { Mail } from "../mail";
-import { Helpers } from "../utils/helpers";
-import { Logger } from "../utils/logger";
 
 type RequestValidators = {
   params?: z.ZodTypeAny;
@@ -18,13 +18,29 @@ type RequestValidators = {
   query?: z.ZodTypeAny;
 };
 
-export function Middleware() {
-  const cache = Cache();
-  const userRepository = User();
-  const mail = Mail();
-  const helpers = Helpers();
-  const logger = Logger();
+export interface MiddlewareType {
+  rateLimitMiddleware: () => ReturnType<typeof rateLimit>;
+  notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  errorMiddleware: (err: unknown, req: Request, res: Response, next: NextFunction) => void;
+  validationMiddleware: (
+    validators: RequestValidators,
+  ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  apiValidationMiddleware: (
+    validators: RequestValidators,
+  ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  authenticationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  sessionMiddleware: () => ReturnType<typeof session>;
+}
 
+export function createMiddleware(
+  cache: CacheType,
+  userRepository: UserRepositoryType,
+  mail: MailType,
+  helpers: HelpersType,
+  logger: LoggerType,
+): MiddlewareType {
   function rateLimitMiddleware() {
     return rateLimit({
       windowMs: 60 * 60 * 1000, // 60 minutes
