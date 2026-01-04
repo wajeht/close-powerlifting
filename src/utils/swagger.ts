@@ -20,9 +20,10 @@ REST API for accessing the world's largest powerlifting database. Data is source
 ## Authentication
 All API endpoints (except \`/api/status\` and \`/api/health-check\`) require authentication via API key.
 
-Include your API key in requests using one of these methods:
-- **Header**: \`x-api-key: YOUR_API_KEY\`
-- **Bearer Token**: \`Authorization: Bearer YOUR_API_KEY\`
+Include your API key as a Bearer token:
+\`\`\`
+Authorization: Bearer YOUR_API_KEY
+\`\`\`
 
 ## Rate Limits
 - **Free tier**: 500 requests per month
@@ -44,7 +45,7 @@ All responses follow this structure:
     contact: {
       name: "API Support",
       url: `${link}/contact`,
-      email: "support@closepowerlifting.com",
+      email: configuration.email.from,
     },
     license: {
       name: "MIT",
@@ -65,12 +66,6 @@ All responses follow this structure:
       scheme: "bearer",
       bearerFormat: "JWT",
       description: "Enter your API key",
-    },
-    ApiKeyAuth: {
-      type: "apiKey",
-      in: "header",
-      name: "x-api-key",
-      description: "API key passed in x-api-key header",
     },
   },
   tags: [

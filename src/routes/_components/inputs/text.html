@@ -1,0 +1,14 @@
+<div class="flex flex-col gap-2">
+  <label class="text-sm text-neutral-400" for="<%= it.name %>"><%= it.label %><% if (it.required) { %> <span class="text-red-400">*</span><% } %></label>
+  <input
+    class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
+    type="text"
+    id="<%= it.name %>"
+    name="<%= it.name %>"
+    <% if (it.value) { %>value="<%= it.value %>"<% } %>
+    <% if (it.placeholder) { %>placeholder="<%= it.placeholder %>"<% } %>
+    <% if (it.required) { %>required<% } %>
+    <% if (it.readonly) { %>readonly<% } %>
+    <% if (it.autocomplete) { %>autocomplete="<%= it.autocomplete %>"<% } %>
+  />
+</div>

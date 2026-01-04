@@ -1,19 +1,5 @@
 <nav class="hidden sm:block">
   <ul class="flex items-center gap-6">
-    <!-- docs -->
-    <li>
-      <a class="text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank">Docs</a>
-    </li>
-
-    <!-- about -->
-    <li>
-      <a
-        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
-        href="/status"
-        >Status</a
-      >
-    </li>
-
     <!-- about -->
     <li>
       <a
@@ -22,6 +8,22 @@
         >About</a
       >
     </li>
+
+    <!-- status -->
+    <li>
+      <a
+        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
+        href="/status"
+        >Status</a
+      >
+    </li>
+
+
+    <!-- docs -->
+    <li>
+      <a class="text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank">Docs</a>
+    </li>
+
 
     <!-- register -->
     <li>

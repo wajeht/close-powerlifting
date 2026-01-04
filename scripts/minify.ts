@@ -80,7 +80,7 @@ async function minifyHtmlFiles(): Promise<void> {
   console.log(`Minified ${htmlFiles.length} HTML files`);
 }
 
-async function minifyAll(): Promise<void> {
+async function main(): Promise<void> {
   console.log("Starting minification...\n");
 
   await Promise.all([minifyJavaScript(), minifyHtmlFiles()]);
@@ -88,7 +88,7 @@ async function minifyAll(): Promise<void> {
   console.log("\nMinification complete!");
 }
 
-minifyAll().catch((error) => {
+main().catch((error) => {
   console.error("Minification failed:", error);
   process.exit(1);
 });

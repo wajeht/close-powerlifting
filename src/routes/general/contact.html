@@ -1,75 +1,20 @@
 <div class="mx-auto flex max-w-md flex-col gap-6 px-4">
-  <!-- header -->
-  <header class="fade-in-heading">
-    <h1 class="text-2xl font-bold text-white">Get in touch</h1>
-    <p class="mt-2 text-neutral-400">
-      Questions, feedback, or just want to say hi? We'd love to hear from you.
-    </p>
-  </header>
+  <%~ include('../_components/page-header.html', { title: 'Get in touch', description: "Questions, feedback, or just want to say hi? We'd love to hear from you." }) %>
 
-  <!-- flash -->
   <div class="fade-in animation-delay-2">
     <%~ include('../_components/flash-message.html') %>
   </div>
 
-  <!-- form -->
   <form action="/contact" method="post" class="fade-in animation-delay-3 flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <!-- name -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-neutral-300" for="name">Name</label>
-      <input
-        class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
-        type="text"
-        name="name"
-        id="name"
-        placeholder="Your name"
-        required
-      />
-    </div>
+    <%~ include('../_components/inputs/text.html', { label: 'Name', name: 'name', placeholder: 'Your name', required: true }) %>
+    <%~ include('../_components/inputs/email.html', { label: 'Email', name: 'email', placeholder: 'you@example.com', required: true }) %>
+    <%~ include('../_components/inputs/textarea.html', { label: 'Message', name: 'message', rows: 5, placeholder: "What's on your mind?", required: true }) %>
 
-    <!-- email -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-neutral-300" for="email">Email</label>
-      <input
-        class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
-        type="email"
-        name="email"
-        id="email"
-        placeholder="you@example.com"
-        required
-      />
-    </div>
-
-    <!-- message -->
-    <div class="flex flex-col gap-2">
-      <label class="text-sm font-medium text-neutral-300" for="message">Message</label>
-      <textarea
-        class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600"
-        name="message"
-        id="message"
-        rows="5"
-        placeholder="What's on your mind?"
-        required
-      ></textarea>
-    </div>
-
-    <!-- submit -->
-    <button
-      type="submit"
-      class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"
-    >
-      Send message
-    </button>
+    <%~ include('../_components/button.html', { text: 'Send message' }) %>
   </form>
 
-  <!-- alternative -->
   <p class="fade-in animation-delay-4 text-center text-sm text-neutral-500">
     Found a bug?
-    <a
-      class="text-power/80 hover:text-power"
-      href="https://github.com/wajeht/close-powerlifting/issues"
-      target="_blank"
-      >Open an issue on GitHub</a
-    >
+    <a class="text-power/80 hover:text-power" href="https://github.com/wajeht/close-powerlifting/issues" target="_blank">Open an issue on GitHub</a>
   </p>
 </div>

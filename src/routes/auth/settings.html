@@ -1,0 +1,92 @@
+<%~ include('../_components/page-header.html', {
+  title: 'Settings',
+  description: 'Manage your account and API key.'
+}) %>
+
+<div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl">
+  <%~ include('../_components/flash-message.html') %>
+</div>
+
+<div class="max-w-2xl space-y-6">
+  <!-- API Key Section -->
+  <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
+    <%~ include('../_components/card-header.html', {
+      title: 'API Key'
+    }) %>
+
+    <% if (it.user.key) { %>
+    <div class="mb-4">
+      <div class="mb-2 flex items-center justify-between">
+        <p class="text-sm text-neutral-400">Your API key is active. Use it as a Bearer token in the <code class="rounded bg-neutral-800 px-1">Authorization</code> header.</p>
+        <span class="text-sm text-neutral-500">v<%= it.user.api_key_version %></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <input
+          type="text"
+          value="<%= it.user.key %>"
+          readonly
+          class="flex-1 rounded-md bg-neutral-800 px-3 py-2 font-mono text-sm text-neutral-300"
+          id="api-key-input"
+        />
+        <%~ include('../_components/button.html', { type: 'button', text: 'Copy', variant: 'secondary', onclick: "navigator.clipboard.writeText(document.getElementById('api-key-input').value)" }) %>
+      </div>
+    </div>
+    <% } else { %>
+    <p class="mb-4 text-sm text-neutral-400">You don't have an API key yet. Generate one below.</p>
+    <% } %>
+
+    <form action="/settings/regenerate-key" method="post" onsubmit="return confirm('This will invalidate your current API key. Continue?')">
+      <%~ include('../_components/button.html', { text: it.user.key ? 'Regenerate API Key' : 'Generate API Key' }) %>
+    </form>
+  </div>
+
+  <!-- Account -->
+  <div class="fade-in animation-delay-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-white">Account</h2>
+      <% if (it.user.verified) { %>
+      <span class="rounded-full bg-green-900/50 px-2 py-1 text-xs text-green-400">Verified</span>
+      <% } else { %>
+      <span class="rounded-full bg-yellow-900/50 px-2 py-1 text-xs text-yellow-400">Unverified</span>
+      <% } %>
+    </div>
+
+    <form action="/settings" method="post" class="space-y-4">
+      <%~ include('../_components/inputs/text.html', { label: 'Name', name: 'name', value: it.user.name, required: true }) %>
+      <div class="flex flex-col gap-2">
+        <label class="text-sm text-neutral-400">Email</label>
+        <div class="rounded-md bg-neutral-800/50 px-3 py-2 text-neutral-400"><%= it.user.email %></div>
+      </div>
+      <div class="flex items-center justify-between pt-2">
+        <%~ include('../_components/button.html', { text: 'Save Changes' }) %>
+        <span class="text-sm text-neutral-500">Member since <%= new Date(it.user.created_at).toLocaleDateString() %></span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Security -->
+  <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
+    <%~ include('../_components/card-header.html', {
+      title: 'Security'
+    }) %>
+
+    <form action="/settings/password" method="post" class="space-y-4">
+      <%~ include('../_components/inputs/password.html', { label: 'Current Password', name: 'current_password', required: true }) %>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <%~ include('../_components/inputs/password.html', { label: 'New Password', name: 'new_password', minlength: 8, placeholder: 'At least 8 characters', required: true, autocomplete: 'new-password' }) %>
+        <%~ include('../_components/inputs/password.html', { label: 'Confirm Password', name: 'confirm_password', minlength: 8, required: true, autocomplete: 'new-password' }) %>
+      </div>
+      <div class="pt-2">
+        <%~ include('../_components/button.html', { text: 'Update Password' }) %>
+      </div>
+    </form>
+  </div>
+
+  <!-- Danger Zone -->
+  <div class="fade-in animation-delay-6 rounded-lg border border-neutral-800 bg-neutral-900 p-6 flex flex-col gap-4">
+    <%~ include('../_components/card-header.html', { title: 'Danger Zone', description: 'Once you delete your account, there is no going back. Please be certain.' }) %>
+    <form action="/settings/delete" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">
+      <%~ include('../_components/button.html', { text: 'Delete Account', variant: 'danger' }) %>
+    </form>
+  </div>
+</div>

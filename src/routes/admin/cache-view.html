@@ -1,0 +1,95 @@
+<%~ include('../_components/page-header.html', { title: 'Cache Management', description: 'View and manage cached data.' }) %>
+
+<div class="fade-in animation-delay-2 mb-6">
+  <%~ include('../_components/flash-message.html') %>
+</div>
+
+<!-- Cache Statistics -->
+<div class="fade-in animation-delay-3 mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+    <div class="text-sm text-neutral-400">Total Entries</div>
+    <div class="mt-auto text-3xl font-bold text-power"><%= it.stats.totalEntries %></div>
+  </div>
+  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+    <div class="text-sm text-neutral-400">Oldest Entry</div>
+    <div class="mt-auto text-sm font-bold text-white">
+      <% if (it.stats.oldestEntry) { %>
+      <%= new Date(it.stats.oldestEntry).toLocaleString() %>
+      <% } else { %>
+      N/A
+      <% } %>
+    </div>
+  </div>
+  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+    <div class="text-sm text-neutral-400">Newest Entry</div>
+    <div class="mt-auto text-sm font-bold text-white">
+      <% if (it.stats.newestEntry) { %>
+      <%= new Date(it.stats.newestEntry).toLocaleString() %>
+      <% } else { %>
+      N/A
+      <% } %>
+    </div>
+  </div>
+  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+    <div class="text-sm text-neutral-400">Key Patterns <span class="text-neutral-500">(<%= it.stats.keyPatterns.length %>)</span></div>
+    <div class="mt-2 flex-1 overflow-y-auto">
+      <div class="flex flex-wrap gap-2">
+        <% for (const kp of it.stats.keyPatterns) { %>
+        <span class="rounded bg-neutral-800 px-2 py-1 text-xs text-white"><%= kp.pattern %>: <%= kp.count %></span>
+        <% } %>
+        <% if (it.stats.keyPatterns.length === 0) { %>
+        <span class="text-sm text-neutral-500">No patterns found</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Clear Actions -->
+<div class="fade-in animation-delay-4 mb-8">
+  <form action="/admin/cache/clear" method="post" onsubmit="return confirm('Are you sure you want to clear ALL cache entries?')">
+    <%~ include('../_components/button.html', { text: 'Clear All Cache', variant: 'danger' }) %>
+  </form>
+</div>
+
+<!-- Cache Entries -->
+<div class="fade-in animation-delay-5 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+  <table class="w-full text-left">
+    <thead class="border-b border-neutral-800 text-neutral-400">
+      <tr>
+        <th class="p-4">Key</th>
+        <th class="p-4">Created</th>
+        <th class="p-4">Updated</th>
+        <th class="p-4">Value Preview</th>
+        <th class="p-4"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-neutral-800">
+      <% for (const entry of it.entries) { %>
+      <tr class="hover:bg-neutral-800/50">
+        <td class="p-4 font-mono text-sm text-white"><%= entry.key %></td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.created_at).toLocaleString() %></td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.updated_at).toLocaleString() %></td>
+        <td class="max-w-xs truncate p-4 text-sm text-neutral-400" title="<%= entry.value.substring(0, 200) %>">
+          <%= entry.value.substring(0, 100) %><%= entry.value.length > 100 ? '...' : '' %>
+        </td>
+        <td class="p-4">
+          <form action="/admin/cache/delete" method="post" onsubmit="return confirm('Delete this cache entry?')">
+            <input type="hidden" name="key" value="<%= entry.key %>" />
+            <button type="submit" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-red-400">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </form>
+        </td>
+      </tr>
+      <% } %>
+      <% if (it.entries.length === 0) { %>
+      <tr>
+        <td colspan="5" class="p-8 text-center text-neutral-400">No cache entries found.</td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>

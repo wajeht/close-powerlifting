@@ -1,0 +1,65 @@
+<%~ include('../_components/page-header.html', { title: 'Manage Users', description: 'View and manage user accounts.' }) %>
+
+<div class="fade-in animation-delay-2 mb-6">
+  <%~ include('../_components/flash-message.html') %>
+</div>
+
+<form action="/admin/users" method="get" class="fade-in animation-delay-3 mb-6">
+  <div class="flex gap-2">
+    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email...', value: it.search, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
+    <%~ include('../_components/button.html', { text: 'Search' }) %>
+  </div>
+</form>
+
+<div class="fade-in animation-delay-4 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+  <table class="w-full text-left">
+    <thead class="border-b border-neutral-800 text-neutral-400">
+      <tr>
+        <th class="p-4">ID</th>
+        <th class="p-4">Name</th>
+        <th class="p-4">Email</th>
+        <th class="p-4">Status</th>
+        <th class="p-4">API Calls</th>
+        <th class="p-4">Limit</th>
+        <th class="p-4">Admin</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-neutral-800">
+      <% for (const user of it.users) { %>
+      <tr class="hover:bg-neutral-800/50 cursor-pointer" onclick="window.location='/admin/users/<%= user.id %>'">
+        <td class="p-4 text-neutral-400"><%= user.id %></td>
+        <td class="p-4 text-white"><%= user.name %></td>
+        <td class="p-4 text-neutral-300"><%= user.email %></td>
+        <td class="p-4">
+          <% if (user.verified) { %>
+          <span class="rounded-full bg-green-900/50 px-2 py-1 text-xs text-green-400">Verified</span>
+          <% } else { %>
+          <span class="rounded-full bg-yellow-900/50 px-2 py-1 text-xs text-yellow-400">Unverified</span>
+          <% } %>
+        </td>
+        <td class="p-4 text-neutral-300"><%= user.api_call_count %></td>
+        <td class="p-4 text-neutral-300"><%= user.api_call_limit %></td>
+        <td class="p-4">
+          <% if (user.admin) { %>
+          <span class="rounded-full bg-purple-900/50 px-2 py-1 text-xs text-purple-400">Admin</span>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<% if (it.pagination.pages > 1) { %>
+<div class="fade-in animation-delay-5 mt-6 flex items-center justify-center gap-2">
+  <% if (it.pagination.current_page > 1) { %>
+  <a href="/admin/users?page=<%= it.pagination.current_page - 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <% } %>
+  <span class="px-4 text-neutral-400">
+    Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
+  </span>
+  <% if (it.pagination.current_page < it.pagination.pages) { %>
+  <a href="/admin/users?page=<%= it.pagination.current_page + 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <% } %>
+</div>
+<% } %>

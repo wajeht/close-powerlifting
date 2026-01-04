@@ -1,0 +1,57 @@
+<%~ include('../_components/page-header.html', { title: 'Dashboard', description: 'View your API usage statistics.' }) %>
+
+<div class="fade-in animation-delay-2 mt-6 mb-6">
+  <%~ include('../_components/flash-message.html') %>
+</div>
+
+<!-- Usage Section -->
+<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-6 max-w-2xl">
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-lg font-semibold text-white">API Usage</h2>
+    <span class="text-2xl font-bold <%= it.usagePercent > 80 ? 'text-yellow-500' : 'text-green-500' %>">
+      <%= it.usagePercent %>%
+    </span>
+  </div>
+  <div class="mb-2 h-3 w-full overflow-hidden rounded-full bg-neutral-800">
+    <div
+      class="h-full rounded-full transition-all <%= it.usagePercent > 80 ? 'bg-yellow-500' : 'bg-power' %>"
+      style="width: <%= Math.min(it.usagePercent, 100) %>%"
+    ></div>
+  </div>
+  <p class="text-sm text-neutral-400">
+    <span class="font-medium text-white"><%= it.user.api_call_count.toLocaleString() %></span> of <span class="font-medium text-white"><%= it.user.api_call_limit.toLocaleString() %></span> calls used this month
+  </p>
+</div>
+
+<% if (it.user.admin && it.stats) { %>
+<!-- Admin: System Overview -->
+<div class="fade-in animation-delay-4 max-w-2xl">
+  <h2 class="mb-4 text-lg font-semibold text-white">System Overview</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-power"><%= it.stats.totalUsers %></div>
+      <div class="text-neutral-400">Total Users</div>
+    </div>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-green-500"><%= it.stats.verifiedUsers %></div>
+      <div class="text-neutral-400">Verified Users</div>
+    </div>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-yellow-500"><%= it.stats.unverifiedUsers %></div>
+      <div class="text-neutral-400">Unverified Users</div>
+    </div>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-purple-500"><%= it.stats.adminUsers %></div>
+      <div class="text-neutral-400">Admin Users</div>
+    </div>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-blue-500"><%= it.stats.cacheEntries %></div>
+      <div class="text-neutral-400">Cache Entries</div>
+    </div>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+      <div class="text-3xl font-bold text-orange-500"><%= it.stats.totalApiCalls.toLocaleString() %></div>
+      <div class="text-neutral-400">Total API Calls</div>
+    </div>
+  </div>
+</div>
+<% } %>

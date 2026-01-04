@@ -32,6 +32,8 @@ export interface MiddlewareType {
   trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
+  userAuthorizationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  adminAuthorizationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
 export function createMiddleware(
@@ -171,17 +173,16 @@ export function createMiddleware(
     try {
       let token: string = "";
 
-      if (req.headers.authorization) {
-        if (req.headers.authorization.split(" ").length != 2)
-          throw new UnauthorizedError("Must use bearer token authentication!");
-        if (!req.headers.authorization.startsWith("Bearer"))
-          throw new UnauthorizedError("Must use bearer token authentication!");
-        token = req.headers.authorization.split(" ")[1] as string;
-      } else if (req.headers["x-api-key"]) {
-        token = req.headers["x-api-key"] as string;
-      } else {
-        throw new UnauthorizedError("Invalid authentication!");
+      if (!req.headers.authorization) {
+        throw new UnauthorizedError("Authorization header required!");
       }
+      if (req.headers.authorization.split(" ").length != 2) {
+        throw new UnauthorizedError("Must use bearer token authentication!");
+      }
+      if (!req.headers.authorization.startsWith("Bearer")) {
+        throw new UnauthorizedError("Must use bearer token authentication!");
+      }
+      token = req.headers.authorization.split(" ")[1] as string;
 
       try {
         const decoded = jwt.verify(token, configuration.app.jwtSecret) as JwtPayload;
@@ -257,6 +258,65 @@ export function createMiddleware(
     });
   }
 
+  async function userAuthorizationMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.session?.userId as number | undefined;
+
+      if (!userId) {
+        res.redirect("/login");
+        return;
+      }
+
+      const user = await userRepository.findById(userId);
+
+      if (!user) {
+        req.session?.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async function adminAuthorizationMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.session?.userId as number | undefined;
+
+      if (!userId) {
+        res.redirect("/login");
+        return;
+      }
+
+      const user = await userRepository.findById(userId);
+
+      if (!user || !user.admin) {
+        req.session?.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      // Attach user to res.locals for templates
+      res.locals.user = user;
+
+      next();
+    } catch (error) {
+      next(error);
+    }
+  }
+
   return {
     rateLimitMiddleware,
     notFoundMiddleware,
@@ -267,5 +327,7 @@ export function createMiddleware(
     trackAPICallsMiddleware,
     hostNameMiddleware,
     sessionMiddleware,
+    userAuthorizationMiddleware,
+    adminAuthorizationMiddleware,
   };
 }
