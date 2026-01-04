@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { authenticatedRequest, unauthenticatedRequest } from "../../../tests/test-setup";
 
 describe("GET /api/rankings", () => {
-  test("should return 401 without authentication", async () => {
+  it("should return 401 without authentication", async () => {
     const response = await unauthenticatedRequest().get("/api/rankings");
 
     expect(response.status).toBe(401);
@@ -11,7 +11,7 @@ describe("GET /api/rankings", () => {
     expect(response.body.message).toContain("authentication");
   });
 
-  test("should return rankings data with correct structure", async () => {
+  it("should return rankings data with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
 
     expect(response.status).toBe(200);
@@ -23,14 +23,14 @@ describe("GET /api/rankings", () => {
     expect(response.body).toHaveProperty("pagination");
   });
 
-  test("should return array of ranking entries", async () => {
+  it("should return array of ranking entries", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBeGreaterThan(0);
   });
 
-  test("should return ranking entries with required fields", async () => {
+  it("should return ranking entries with required fields", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
     const entry = response.body.data[0];
 
@@ -52,7 +52,7 @@ describe("GET /api/rankings", () => {
     expect(entry).toHaveProperty("dots");
   });
 
-  test("should return correct data types for ranking fields", async () => {
+  it("should return correct data types for ranking fields", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
     const entry = response.body.data[0];
 
@@ -66,7 +66,7 @@ describe("GET /api/rankings", () => {
     expect(typeof entry.body_weight).toBe("number");
   });
 
-  test("should return pagination with required fields", async () => {
+  it("should return pagination with required fields", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
     const pagination = response.body.pagination;
 
@@ -80,21 +80,21 @@ describe("GET /api/rankings", () => {
     expect(pagination).toHaveProperty("to");
   });
 
-  test("should accept per_page query parameter", async () => {
+  it("should accept per_page query parameter", async () => {
     const response = await authenticatedRequest().get("/api/rankings?per_page=5");
 
     expect(response.status).toBe(200);
     expect(Number(response.body.pagination.per_page)).toBe(5);
   });
 
-  test("should accept current_page query parameter", async () => {
+  it("should accept current_page query parameter", async () => {
     const response = await authenticatedRequest().get("/api/rankings?current_page=2");
 
     expect(response.status).toBe(200);
     expect(Number(response.body.pagination.current_page)).toBe(2);
   });
 
-  test("should return entries sorted by DOTS score by default", async () => {
+  it("should return entries sorted by DOTS score by default", async () => {
     const response = await authenticatedRequest().get("/api/rankings");
     const entries = response.body.data;
 
@@ -105,13 +105,13 @@ describe("GET /api/rankings", () => {
 });
 
 describe("GET /api/rankings/filter/:equipment", () => {
-  test("should return 401 without authentication", async () => {
+  it("should return 401 without authentication", async () => {
     const response = await unauthenticatedRequest().get("/api/rankings/filter/raw");
 
     expect(response.status).toBe(401);
   });
 
-  test("should filter by raw equipment", async () => {
+  it("should filter by raw equipment", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw");
 
     expect(response.status).toBe(200);
@@ -120,14 +120,14 @@ describe("GET /api/rankings/filter/:equipment", () => {
     expect(response.body.data.length).toBeGreaterThan(0);
   });
 
-  test("should filter by wraps equipment", async () => {
+  it("should filter by wraps equipment", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/wraps");
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
   });
 
-  test("should return 400 for invalid equipment", async () => {
+  it("should return 400 for invalid equipment", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/invalid-equipment");
 
     expect(response.status).toBe(400);
@@ -137,7 +137,7 @@ describe("GET /api/rankings/filter/:equipment", () => {
 });
 
 describe("GET /api/rankings/filter/:equipment/:sex", () => {
-  test("should filter by equipment and sex (men)", async () => {
+  it("should filter by equipment and sex (men)", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw/men");
 
     expect(response.status).toBe(200);
@@ -146,14 +146,14 @@ describe("GET /api/rankings/filter/:equipment/:sex", () => {
     expect(response.body.data.length).toBeGreaterThan(0);
   });
 
-  test("should filter by equipment and sex (women)", async () => {
+  it("should filter by equipment and sex (women)", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw/women");
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
   });
 
-  test("should return 400 for invalid sex", async () => {
+  it("should return 400 for invalid sex", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw/invalid");
 
     expect(response.status).toBe(400);
@@ -162,7 +162,7 @@ describe("GET /api/rankings/filter/:equipment/:sex", () => {
 });
 
 describe("GET /api/rankings/filter/:equipment/:sex/:weight_class", () => {
-  test("should filter by equipment, sex, and weight class", async () => {
+  it("should filter by equipment, sex, and weight class", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw/women/75");
 
     expect(response.status).toBe(200);
@@ -170,7 +170,7 @@ describe("GET /api/rankings/filter/:equipment/:sex/:weight_class", () => {
     expect(Array.isArray(response.body.data)).toBe(true);
   });
 
-  test("should return rankings data with correct structure", async () => {
+  it("should return rankings data with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/rankings/filter/raw/women/75");
 
     expect(response.body).toHaveProperty("data");
@@ -180,7 +180,7 @@ describe("GET /api/rankings/filter/:equipment/:sex/:weight_class", () => {
 });
 
 describe("GET /api/rankings/:rank", () => {
-  test("should return single ranking entry by rank number", async () => {
+  it("should return single ranking entry by rank number", async () => {
     const response = await authenticatedRequest().get("/api/rankings/1");
 
     expect(response.status).toBe(200);
@@ -189,7 +189,7 @@ describe("GET /api/rankings/:rank", () => {
     expect(response.body.data.rank).toBe(1);
   });
 
-  test("should return ranking with all required fields", async () => {
+  it("should return ranking with all required fields", async () => {
     const response = await authenticatedRequest().get("/api/rankings/1");
     const entry = response.body.data;
 
@@ -202,13 +202,13 @@ describe("GET /api/rankings/:rank", () => {
     expect(entry).toHaveProperty("deadlift");
   });
 
-  test("should return 404 for non-numeric rank", async () => {
+  it("should return 404 for non-numeric rank", async () => {
     const response = await authenticatedRequest().get("/api/rankings/invalid");
 
     expect(response.status).toBe(404);
   });
 
-  test("should return 404 for very large rank number", async () => {
+  it("should return 404 for very large rank number", async () => {
     const response = await authenticatedRequest().get("/api/rankings/999999999");
 
     expect(response.status).toBe(404);

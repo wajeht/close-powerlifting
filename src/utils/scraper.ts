@@ -5,13 +5,6 @@ import type { ApiResponse, Pagination } from "../types";
 import type { CacheType } from "../db/cache";
 import type { LoggerType } from "./logger";
 
-type CacheConfig = {
-  key: string;
-  ttlSeconds?: number;
-};
-
-const DEFAULT_CACHE_TTL = 3600;
-
 const DEFAULT_HEADERS: Record<string, string> = {
   Cookie: "units=lbs;",
   Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -30,7 +23,7 @@ export interface ScraperType {
   stripHtml: (html: string) => string;
   getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
   getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
-  withCache: <T>(cacheConfig: CacheConfig, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
+  withCache: <T>(key: string, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
   buildPaginationQuery: (currentPage: number, perPage: number) => string;
   calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
   fetchWithAuth: (
@@ -125,12 +118,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     return elements[index] || null;
   }
 
-  async function withCache<T>(
-    cacheConfig: CacheConfig,
-    fetcher: () => Promise<T>,
-  ): Promise<ApiResponse<T>> {
-    const { key, ttlSeconds = DEFAULT_CACHE_TTL } = cacheConfig;
-
+  async function withCache<T>(key: string, fetcher: () => Promise<T>): Promise<ApiResponse<T>> {
     try {
       const cached = await cache.get(key);
       if (cached) {
@@ -143,7 +131,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     try {
       const data = await fetcher();
 
-      cache.set(key, JSON.stringify(data), ttlSeconds).catch((error) => {
+      cache.set(key, JSON.stringify(data)).catch((error) => {
         logger.warn(`Cache write error for ${key}: ${error}`);
       });
 

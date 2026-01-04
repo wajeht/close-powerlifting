@@ -7,7 +7,7 @@ const { maxPerPage } = configuration.pagination;
 
 describe("federations validation", () => {
   describe("getFederationsValidation", () => {
-    test("accepts valid per_page within limit", () => {
+    it("accepts valid per_page within limit", () => {
       const result = getFederationsValidation.safeParse({ per_page: "50" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -15,7 +15,7 @@ describe("federations validation", () => {
       }
     });
 
-    test("caps per_page at maxPerPage", () => {
+    it("caps per_page at maxPerPage", () => {
       const result = getFederationsValidation.safeParse({ per_page: "600" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -23,7 +23,7 @@ describe("federations validation", () => {
       }
     });
 
-    test("enforces minimum current_page of 1", () => {
+    it("enforces minimum current_page of 1", () => {
       const result = getFederationsValidation.safeParse({ current_page: "0" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -31,7 +31,7 @@ describe("federations validation", () => {
       }
     });
 
-    test("accepts empty object with optional fields", () => {
+    it("accepts empty object with optional fields", () => {
       const result = getFederationsValidation.safeParse({});
       expect(result.success).toBe(true);
     });

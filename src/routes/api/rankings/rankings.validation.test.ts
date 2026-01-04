@@ -7,7 +7,7 @@ const { maxPerPage } = configuration.pagination;
 
 describe("rankings validation", () => {
   describe("getRankingsValidation", () => {
-    test("accepts valid per_page within limit", () => {
+    it("accepts valid per_page within limit", () => {
       const result = getRankingsValidation.safeParse({ per_page: "100" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -15,7 +15,7 @@ describe("rankings validation", () => {
       }
     });
 
-    test("caps per_page at maxPerPage", () => {
+    it("caps per_page at maxPerPage", () => {
       const result = getRankingsValidation.safeParse({ per_page: "1000" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -23,7 +23,7 @@ describe("rankings validation", () => {
       }
     });
 
-    test("accepts valid current_page", () => {
+    it("accepts valid current_page", () => {
       const result = getRankingsValidation.safeParse({ current_page: "5" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -31,7 +31,7 @@ describe("rankings validation", () => {
       }
     });
 
-    test("enforces minimum current_page of 1", () => {
+    it("enforces minimum current_page of 1", () => {
       const result = getRankingsValidation.safeParse({ current_page: "0" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -39,7 +39,7 @@ describe("rankings validation", () => {
       }
     });
 
-    test("enforces minimum current_page of 1 for negative values", () => {
+    it("enforces minimum current_page of 1 for negative values", () => {
       const result = getRankingsValidation.safeParse({ current_page: "-5" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -47,14 +47,14 @@ describe("rankings validation", () => {
       }
     });
 
-    test("accepts empty object with optional fields", () => {
+    it("accepts empty object with optional fields", () => {
       const result = getRankingsValidation.safeParse({});
       expect(result.success).toBe(true);
     });
   });
 
   describe("getFilteredRankingsQueryValidation", () => {
-    test("caps per_page at maxPerPage", () => {
+    it("caps per_page at maxPerPage", () => {
       const result = getFilteredRankingsQueryValidation.safeParse({ per_page: "999" });
       expect(result.success).toBe(true);
       if (result.success) {

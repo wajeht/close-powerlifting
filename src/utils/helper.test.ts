@@ -31,7 +31,7 @@ describe("tableToJson", () => {
     table = dom.window.document.querySelector("table");
   });
 
-  test("converts table to JSON", () => {
+  it("converts table to JSON", () => {
     const expectedData = [
       { header1: "Data 1-1", header2: "Data 1-2" },
       { header1: "Data 2-1", header2: "Data 2-2" },
@@ -40,7 +40,7 @@ describe("tableToJson", () => {
     expect(scraper.tableToJson(table)).toEqual(expectedData);
   });
 
-  test("handles empty table correctly", () => {
+  it("handles empty table correctly", () => {
     const dom = new JSDOM(`
       <table>
         <tr>
@@ -54,7 +54,7 @@ describe("tableToJson", () => {
     expect(scraper.tableToJson(table)).toEqual([]);
   });
 
-  test("handles table with only headers correctly", () => {
+  it("handles table with only headers correctly", () => {
     const dom = new JSDOM(`
       <table>
         <tr>
@@ -68,7 +68,7 @@ describe("tableToJson", () => {
     expect(scraper.tableToJson(table)).toEqual([]);
   });
 
-  test("handles table with only one row correctly", () => {
+  it("handles table with only one row correctly", () => {
     const dom = new JSDOM(`
       <table>
         <tr>
@@ -86,7 +86,7 @@ describe("tableToJson", () => {
     expect(scraper.tableToJson(table)).toEqual([{ header1: "Data 1-1", header2: "Data 1-2" }]);
   });
 
-  test("handles table with only one column correctly", () => {
+  it("handles table with only one column correctly", () => {
     const dom = new JSDOM(`
       <table>
         <tr>
@@ -107,47 +107,47 @@ describe("tableToJson", () => {
 });
 
 describe("buildPaginationQuery", () => {
-  test("returns the correct pagination string", () => {
+  it("returns the correct pagination string", () => {
     const pagination = scraper.buildPaginationQuery(2, 10);
     expect(pagination).toEqual("start=10&end=20&lang=en&units=lbs");
   });
 
-  test("handles the first page correctly", () => {
+  it("handles the first page correctly", () => {
     const pagination = scraper.buildPaginationQuery(1, 10);
     expect(pagination).toEqual("start=0&end=10&lang=en&units=lbs");
   });
 
-  test("handles the last page correctly", () => {
+  it("handles the last page correctly", () => {
     const pagination = scraper.buildPaginationQuery(5, 10);
     expect(pagination).toEqual("start=40&end=50&lang=en&units=lbs");
   });
 
-  test("handles the first page with a different number of items per page correctly", () => {
+  it("handles the first page with a different number of items per page correctly", () => {
     const pagination = scraper.buildPaginationQuery(1, 5);
     expect(pagination).toEqual("start=0&end=5&lang=en&units=lbs");
   });
 });
 
 describe("stripHtml", () => {
-  test("removes HTML tags from the input string", () => {
+  it("removes HTML tags from the input string", () => {
     const input = "<p>This is <strong>bold</strong> text.</p>";
     const result = scraper.stripHtml(input);
     expect(result).toEqual("This is bold text.");
   });
 
-  test("handles empty string correctly", () => {
+  it("handles empty string correctly", () => {
     const input = "";
     const result = scraper.stripHtml(input);
     expect(result).toEqual("");
   });
 
-  test("handles input with no HTML tags correctly", () => {
+  it("handles input with no HTML tags correctly", () => {
     const input = "This is plain text.";
     const result = scraper.stripHtml(input);
     expect(result).toEqual("This is plain text.");
   });
 
-  test("handles input with only HTML tags correctly", () => {
+  it("handles input with only HTML tags correctly", () => {
     const input = "<p></p>";
     const result = scraper.stripHtml(input);
     expect(result).toEqual("");
@@ -155,13 +155,13 @@ describe("stripHtml", () => {
 });
 
 describe("hashKey", () => {
-  test("returns a hashed key", async () => {
+  it("returns a hashed key", async () => {
     const { key, hashedKey } = await helpers.hashKey();
     expect(key).toBeDefined();
     expect(hashedKey).toBeDefined();
   });
 
-  test("returns a different key and hashed key each time", async () => {
+  it("returns a different key and hashed key each time", async () => {
     const { key: key1, hashedKey: hashedKey1 } = await helpers.hashKey();
     const { key: key2, hashedKey: hashedKey2 } = await helpers.hashKey();
     expect(key1).not.toEqual(key2);
@@ -170,7 +170,7 @@ describe("hashKey", () => {
 });
 
 describe("generateAPIKey", () => {
-  test("returns a hashed key", async () => {
+  it("returns a hashed key", async () => {
     const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
       userId: "1",
       email: "test@test.com",
@@ -180,7 +180,7 @@ describe("generateAPIKey", () => {
     expect(hashedKey).toBeDefined();
   });
 
-  test("returns a different key and hashed key each time", async () => {
+  it("returns a different key and hashed key each time", async () => {
     const { unhashedKey: key1, hashedKey: hashedKey1 } = await helpers.generateAPIKey({
       userId: "1",
       email: "1test@test.com",
@@ -196,7 +196,7 @@ describe("generateAPIKey", () => {
   });
 
   describe("when admin flag is passed", () => {
-    test("returns a hashed key", async () => {
+    it("returns a hashed key", async () => {
       const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
         userId: "1",
         email: "",
@@ -210,7 +210,7 @@ describe("generateAPIKey", () => {
 });
 
 describe("calculatePagination", () => {
-  test("calculates pagination for first page", () => {
+  it("calculates pagination for first page", () => {
     const result = scraper.calculatePagination(100, 1, 10);
 
     expect(result).toEqual({
@@ -225,7 +225,7 @@ describe("calculatePagination", () => {
     });
   });
 
-  test("calculates pagination for middle page", () => {
+  it("calculates pagination for middle page", () => {
     const result = scraper.calculatePagination(100, 5, 10);
 
     expect(result).toEqual({
@@ -240,7 +240,7 @@ describe("calculatePagination", () => {
     });
   });
 
-  test("calculates pagination for last page", () => {
+  it("calculates pagination for last page", () => {
     const result = scraper.calculatePagination(100, 10, 10);
 
     expect(result).toEqual({
@@ -255,7 +255,7 @@ describe("calculatePagination", () => {
     });
   });
 
-  test("handles partial last page correctly", () => {
+  it("handles partial last page correctly", () => {
     const result = scraper.calculatePagination(95, 10, 10);
 
     expect(result).toEqual({
@@ -270,7 +270,7 @@ describe("calculatePagination", () => {
     });
   });
 
-  test("handles single page correctly", () => {
+  it("handles single page correctly", () => {
     const result = scraper.calculatePagination(5, 1, 10);
 
     expect(result).toEqual({
@@ -285,7 +285,7 @@ describe("calculatePagination", () => {
     });
   });
 
-  test("handles large dataset with default per_page", () => {
+  it("handles large dataset with default per_page", () => {
     const result = scraper.calculatePagination(3000000, 1, 100);
 
     expect(result.items).toBe(3000000);
@@ -297,33 +297,33 @@ describe("calculatePagination", () => {
 });
 
 describe("timingSafeEqual", () => {
-  test("returns true for equal strings", () => {
+  it("returns true for equal strings", () => {
     expect(helpers.timingSafeEqual("test", "test")).toBe(true);
   });
 
-  test("returns false for different strings of same length", () => {
+  it("returns false for different strings of same length", () => {
     expect(helpers.timingSafeEqual("test", "tset")).toBe(false);
   });
 
-  test("returns false for strings of different length", () => {
+  it("returns false for strings of different length", () => {
     expect(helpers.timingSafeEqual("test", "testing")).toBe(false);
   });
 
-  test("returns true for empty strings", () => {
+  it("returns true for empty strings", () => {
     expect(helpers.timingSafeEqual("", "")).toBe(true);
   });
 
-  test("returns false for empty vs non-empty", () => {
+  it("returns false for empty vs non-empty", () => {
     expect(helpers.timingSafeEqual("", "test")).toBe(false);
   });
 
-  test("handles special characters", () => {
+  it("handles special characters", () => {
     const token1 = "abc123!@#$%^&*()";
     const token2 = "abc123!@#$%^&*()";
     expect(helpers.timingSafeEqual(token1, token2)).toBe(true);
   });
 
-  test("handles UUID-like tokens", () => {
+  it("handles UUID-like tokens", () => {
     const token1 = "550e8400-e29b-41d4-a716-446655440000";
     const token2 = "550e8400-e29b-41d4-a716-446655440000";
     expect(helpers.timingSafeEqual(token1, token2)).toBe(true);

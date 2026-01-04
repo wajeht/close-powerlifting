@@ -7,7 +7,7 @@ const { maxPerPage } = configuration.pagination;
 
 describe("users validation", () => {
   describe("getUsersValidation", () => {
-    test("accepts valid search query", () => {
+    it("accepts valid search query", () => {
       const result = getUsersValidation.safeParse({ search: "haack" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -15,7 +15,7 @@ describe("users validation", () => {
       }
     });
 
-    test("accepts valid per_page within limit", () => {
+    it("accepts valid per_page within limit", () => {
       const result = getUsersValidation.safeParse({ search: "test", per_page: "100" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -23,7 +23,7 @@ describe("users validation", () => {
       }
     });
 
-    test("caps per_page at maxPerPage", () => {
+    it("caps per_page at maxPerPage", () => {
       const result = getUsersValidation.safeParse({ search: "test", per_page: "1000" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -31,7 +31,7 @@ describe("users validation", () => {
       }
     });
 
-    test("enforces minimum current_page of 1", () => {
+    it("enforces minimum current_page of 1", () => {
       const result = getUsersValidation.safeParse({ search: "test", current_page: "-1" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -39,14 +39,14 @@ describe("users validation", () => {
       }
     });
 
-    test("accepts empty object with optional fields", () => {
+    it("accepts empty object with optional fields", () => {
       const result = getUsersValidation.safeParse({});
       expect(result.success).toBe(true);
     });
   });
 
   describe("getUserValidation", () => {
-    test("accepts valid username", () => {
+    it("accepts valid username", () => {
       const result = getUserValidation.safeParse({ username: "johnhaack" });
       expect(result.success).toBe(true);
       if (result.success) {
@@ -54,7 +54,7 @@ describe("users validation", () => {
       }
     });
 
-    test("rejects missing username", () => {
+    it("rejects missing username", () => {
       const result = getUserValidation.safeParse({});
       expect(result.success).toBe(false);
     });

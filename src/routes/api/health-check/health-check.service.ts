@@ -69,8 +69,7 @@ export function createHealthCheckService(
     if (data === null) {
       data = await fetchStatus();
 
-      // Cache for 24 hours (86400 seconds)
-      await cache.set(cacheKey, JSON.stringify(data), 86400);
+      await cache.set(cacheKey, JSON.stringify(data));
 
       logger.info("Global status cache was updated!");
     }

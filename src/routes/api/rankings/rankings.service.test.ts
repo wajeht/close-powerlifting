@@ -16,26 +16,26 @@ const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 describe("rankings service", () => {
   describe("rankings JSON structure", () => {
-    test("default rankings has expected structure", () => {
+    it("default rankings has expected structure", () => {
       expect(rankingsDefault).toHaveProperty("total_length");
       expect(rankingsDefault).toHaveProperty("rows");
       expect(Array.isArray(rankingsDefault.rows)).toBe(true);
       expect(rankingsDefault.rows.length).toBeGreaterThan(0);
     });
 
-    test("raw men rankings has expected structure", () => {
+    it("raw men rankings has expected structure", () => {
       expect(rankingsRawMen).toHaveProperty("total_length");
       expect(rankingsRawMen).toHaveProperty("rows");
       expect(Array.isArray(rankingsRawMen.rows)).toBe(true);
     });
 
-    test("raw women 75kg rankings has expected structure", () => {
+    it("raw women 75kg rankings has expected structure", () => {
       expect(rankingsRawWomen75).toHaveProperty("total_length");
       expect(rankingsRawWomen75).toHaveProperty("rows");
       expect(Array.isArray(rankingsRawWomen75.rows)).toBe(true);
     });
 
-    test("full filter rankings has expected structure", () => {
+    it("full filter rankings has expected structure", () => {
       expect(rankingsFullFilter).toHaveProperty("total_length");
       expect(rankingsFullFilter).toHaveProperty("rows");
       expect(Array.isArray(rankingsFullFilter.rows)).toBe(true);
@@ -43,13 +43,13 @@ describe("rankings service", () => {
   });
 
   describe("rankings row structure", () => {
-    test("each row has expected number of fields", () => {
+    it("each row has expected number of fields", () => {
       const row = rankingsDefault.rows[0];
       expect(Array.isArray(row)).toBe(true);
       expect(row.length).toBeGreaterThanOrEqual(24);
     });
 
-    test("row contains expected data types", () => {
+    it("row contains expected data types", () => {
       const row = rankingsDefault.rows[0];
       expect(typeof row[0]).toBe("number"); // id
       expect(typeof row[1]).toBe("number"); // rank
@@ -57,7 +57,7 @@ describe("rankings service", () => {
       expect(typeof row[3]).toBe("string"); // username
     });
 
-    test("row index mapping is correct", () => {
+    it("row index mapping is correct", () => {
       const row = rankingsDefault.rows[0];
       const id = row[0];
       const rank = row[1];
@@ -110,7 +110,7 @@ describe("rankings service", () => {
       };
     }
 
-    test("transforms row to RankingRow object", () => {
+    it("transforms row to RankingRow object", () => {
       const row = rankingsDefault.rows[0];
       const transformed = transformRankingRow(row);
 
@@ -132,14 +132,14 @@ describe("rankings service", () => {
       expect(transformed).toHaveProperty("dots");
     });
 
-    test("generates correct user_profile URL", () => {
+    it("generates correct user_profile URL", () => {
       const row = rankingsDefault.rows[0];
       const transformed = transformRankingRow(row);
 
       expect(transformed.user_profile).toBe(`/api/users/${transformed.username}`);
     });
 
-    test("generates correct instagram_url when instagram exists", () => {
+    it("generates correct instagram_url when instagram exists", () => {
       const row = rankingsDefault.rows[0];
       const transformed = transformRankingRow(row);
 
@@ -152,7 +152,7 @@ describe("rankings service", () => {
       }
     });
 
-    test("generates correct federation_url from meet_code", () => {
+    it("generates correct federation_url from meet_code", () => {
       const row = rankingsDefault.rows[0];
       const transformed = transformRankingRow(row);
 
@@ -162,7 +162,7 @@ describe("rankings service", () => {
       }
     });
 
-    test("numeric fields are properly parsed", () => {
+    it("numeric fields are properly parsed", () => {
       const row = rankingsDefault.rows[0];
       const transformed = transformRankingRow(row);
 
@@ -179,25 +179,25 @@ describe("rankings service", () => {
   });
 
   describe("total_length", () => {
-    test("total_length is a positive number", () => {
+    it("total_length is a positive number", () => {
       expect(rankingsDefault.total_length).toBeGreaterThan(0);
     });
 
-    test("filtered rankings have different total_length", () => {
+    it("filtered rankings have different total_length", () => {
       expect(rankingsRawMen.total_length).not.toBe(rankingsDefault.total_length);
     });
   });
 
   describe("pagination", () => {
-    test("uses correct default per_page from config", () => {
+    it("uses correct default per_page from config", () => {
       expect(defaultPerPage).toBe(100);
     });
 
-    test("uses correct max per_page from config", () => {
+    it("uses correct max per_page from config", () => {
       expect(maxPerPage).toBe(500);
     });
 
-    test("calculatePagination returns correct structure for rankings data", () => {
+    it("calculatePagination returns correct structure for rankings data", () => {
       const totalItems = rankingsDefault.total_length;
       const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
 
@@ -211,7 +211,7 @@ describe("rankings service", () => {
       expect(pagination).toHaveProperty("to");
     });
 
-    test("calculatePagination calculates correct values", () => {
+    it("calculatePagination calculates correct values", () => {
       const totalItems = rankingsDefault.total_length;
       const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
 
@@ -225,7 +225,7 @@ describe("rankings service", () => {
       expect(pagination.last_page).toBe(pagination.pages);
     });
 
-    test("row count matches requested page size", () => {
+    it("row count matches requested page size", () => {
       // Fixture should have exactly 100 rows (default per_page)
       expect(rankingsDefault.rows.length).toBeLessThanOrEqual(defaultPerPage);
     });

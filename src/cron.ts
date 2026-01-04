@@ -10,13 +10,18 @@ import type { RankingsApiResponse } from "./types";
 import { transformRankingRow } from "./routes/api/rankings/rankings.service";
 
 const RANKINGS_PAGES_TO_REFRESH = 10;
-const REFRESH_DELAY_MS = 2000;
-const CACHE_TTL = 90000;
+
+const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
 export interface CronType {
   start: () => void;
   stop: () => void;
   getStatus: () => { isRunning: boolean; jobCount: number };
+  tasks: {
+    refreshCache: () => Promise<void>;
+    resetApiCallCount: () => Promise<void>;
+    sendReachingApiLimitEmail: () => Promise<void>;
+  };
 }
 
 interface RefreshResult {
@@ -117,7 +122,7 @@ export function createCron(
           federations,
         };
 
-        await cache.set("status", JSON.stringify(statusData), CACHE_TTL);
+        await cache.set("status", JSON.stringify(statusData));
       }),
     );
     await delay(REFRESH_DELAY_MS);
@@ -129,7 +134,7 @@ export function createCron(
         const doc = scraper.parseHtml(html);
         const table = doc.querySelector("table");
         const federationsList = scraper.tableToJson(table);
-        await cache.set("federations-list", JSON.stringify(federationsList), CACHE_TTL);
+        await cache.set("federations-list", JSON.stringify(federationsList));
       }),
     );
     await delay(REFRESH_DELAY_MS);
@@ -154,7 +159,7 @@ export function createCron(
           }
         }
 
-        await cache.set("records", JSON.stringify(recordsData), CACHE_TTL);
+        await cache.set("records", JSON.stringify(recordsData));
       }),
     );
     await delay(REFRESH_DELAY_MS);
@@ -170,7 +175,7 @@ export function createCron(
             rows: response.rows.map(transformRankingRow),
             totalLength: response.total_length,
           };
-          await cache.set(cacheKey, JSON.stringify(data), CACHE_TTL);
+          await cache.set(cacheKey, JSON.stringify(data));
         }),
       );
       await delay(REFRESH_DELAY_MS);
@@ -235,9 +240,9 @@ export function createCron(
   }
 
   function start(): void {
-    cronJobs.push(cron.schedule("0 4 * * *", refreshCacheTask));
-    cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask));
-    cronJobs.push(cron.schedule("0 0 * * *", resetApiCallCountTask));
+    cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
+    cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
+    cronJobs.push(cron.schedule("0 0 * * *", resetApiCallCountTask)); // Daily API call count reset: every day at 12:00 AM UTC
 
     isRunning = true;
     logger.info("cron service started", { jobs: cronJobs.length });
@@ -256,5 +261,14 @@ export function createCron(
     return { isRunning, jobCount: cronJobs.length };
   }
 
-  return { start, stop, getStatus };
+  return {
+    start,
+    stop,
+    getStatus,
+    tasks: {
+      refreshCache: refreshCacheTask,
+      resetApiCallCount: resetApiCallCountTask,
+      sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
+    },
+  };
 }

@@ -17,7 +17,7 @@
     "build": "npm run build:tailwind && npm run build:server",
     "build:prod": "npm run build && npm run minify",
     "build:server": "rm -rf ./dist && tsgo",
-    "build:tailwind": "npx @tailwindcss/cli -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
+    "build:tailwind": "rm ./public/css/style.css && npx @tailwindcss/cli -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
     "minify": "tsx scripts/minify.ts",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",

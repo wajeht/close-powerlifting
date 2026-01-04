@@ -8,24 +8,24 @@ const context = createContext();
 const { app } = createApp(context);
 
 describe("server", () => {
-  test("GET /health-check returns status ok", async () => {
+  it("GET /health-check returns status ok", async () => {
     const response = await request(app).get("/health-check");
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("ok");
   });
 
-  test("GET /healthz returns status ok", async () => {
+  it("GET /healthz returns status ok", async () => {
     const response = await request(app).get("/healthz");
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("ok");
   });
 
-  test("GET /about returns 200", async () => {
+  it("GET /about returns 200", async () => {
     const response = await request(app).get("/about");
     expect(response.status).toBe(200);
   });
 
-  test("GET /nonexistent returns 404", async () => {
+  it("GET /nonexistent returns 404", async () => {
     const response = await request(app).get("/nonexistent-route-xyz");
     expect(response.status).toBe(404);
   });

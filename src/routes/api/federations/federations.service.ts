@@ -7,7 +7,6 @@ import type {
   GetFederationsQueryType,
 } from "./federations.validation";
 
-const CACHE_TTL = 90000;
 const { defaultPerPage } = configuration.pagination;
 
 type FederationMeet = Meet;
@@ -30,10 +29,7 @@ export function createFederationService(scraper: ScraperType) {
   }: GetFederationsType): Promise<ApiResponse<FederationMeet[]> & { pagination?: Pagination }> {
     const cacheKey = `federations-list`;
 
-    const result = await scraper.withCache<FederationMeet[]>(
-      { key: cacheKey, ttlSeconds: CACHE_TTL },
-      fetchFederationsList,
-    );
+    const result = await scraper.withCache<FederationMeet[]>(cacheKey, fetchFederationsList);
 
     if (!result.data) {
       return result;
@@ -67,7 +63,7 @@ export function createFederationService(scraper: ScraperType) {
   }: GetFederationsParamType & GetFederationsQueryType): Promise<ApiResponse<FederationMeet[]>> {
     const cacheKey = year ? `federation-${federation}-${year}` : `federation-${federation}`;
 
-    return scraper.withCache<FederationMeet[]>({ key: cacheKey, ttlSeconds: CACHE_TTL }, () =>
+    return scraper.withCache<FederationMeet[]>(cacheKey, () =>
       fetchFederationMeets(federation, year),
     );
   }

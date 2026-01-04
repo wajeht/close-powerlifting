@@ -36,7 +36,7 @@ describe("notFoundHandler", () => {
     next = vi.fn();
   });
 
-  test('renders error page if the URL does not start with "/api/"', () => {
+  it('renders error page if the URL does not start with "/api/"', () => {
     req.url = "/some-url";
     middleware.notFoundMiddleware(req, res, next);
 
@@ -51,7 +51,7 @@ describe("notFoundHandler", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  test('returns a JSON response if the URL starts with "/api/"', () => {
+  it('returns a JSON response if the URL starts with "/api/"', () => {
     req.url = "/api/some-url";
     req.originalUrl = "/api/some-url";
     middleware.notFoundMiddleware(req, res, next);
@@ -97,7 +97,7 @@ describe("validate", () => {
     };
   });
 
-  test("successfully validates and calls next if no errors", async () => {
+  it("successfully validates and calls next if no errors", async () => {
     validators.body.parseAsync.mockResolvedValue({ foo: "bar" });
 
     const validationMw = middleware.validationMiddleware(validators);
@@ -107,7 +107,7 @@ describe("validate", () => {
     expect(next).toHaveBeenCalled();
   });
 
-  test("catches ZodError and flashes the error message, then redirects", async () => {
+  it("catches ZodError and flashes the error message, then redirects", async () => {
     const errorMessage = "Zod validation error";
 
     const issue = {
@@ -131,7 +131,7 @@ describe("validate", () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  test("calls next with error if non-ZodError occurs", async () => {
+  it("calls next with error if non-ZodError occurs", async () => {
     const error = new Error("Something bad happened");
     validators.body.parseAsync.mockRejectedValue(error);
 
@@ -161,7 +161,7 @@ describe("handleHostname", () => {
     next = vi.fn();
   });
 
-  test("sets hostname from cache if available", async () => {
+  it("sets hostname from cache if available", async () => {
     await knex("cache").insert({
       key: "hostname",
       value: "http://cached-hostname.com",
@@ -175,7 +175,7 @@ describe("handleHostname", () => {
     expect(next).toHaveBeenCalled();
   });
 
-  test("sets hostname using config domain if not in cache", async () => {
+  it("sets hostname using config domain if not in cache", async () => {
     await middleware.hostNameMiddleware(req, res, next);
 
     expect(req.app.locals.hostname).toBe(configuration.app.domain);

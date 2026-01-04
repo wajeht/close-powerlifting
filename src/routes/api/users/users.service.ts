@@ -10,7 +10,6 @@ import type {
 import type { GetUserType, GetUsersType } from "./users.validation";
 import { transformRankingRow } from "../rankings/rankings.service";
 
-const CACHE_TTL = 7200;
 const { defaultPerPage } = configuration.pagination;
 
 export function createUserService(scraper: ScraperType) {
@@ -55,9 +54,8 @@ export function createUserService(scraper: ScraperType) {
   }
 
   async function getUser({ username }: GetUserType): Promise<UserProfile[] | null> {
-    const result = await scraper.withCache<UserProfile>(
-      { key: `user-${username}`, ttlSeconds: CACHE_TTL },
-      () => fetchUserProfile(username),
+    const result = await scraper.withCache<UserProfile>(`user-${username}`, () =>
+      fetchUserProfile(username),
     );
 
     if (!result.data) {

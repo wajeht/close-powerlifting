@@ -3,14 +3,14 @@ import { describe, expect, test } from "vitest";
 import { authenticatedRequest, unauthenticatedRequest } from "../../../tests/test-setup";
 
 describe("GET /api/meets/:meet", () => {
-  test("should return 401 without authentication", async () => {
+  it("should return 401 without authentication", async () => {
     const response = await unauthenticatedRequest().get("/api/meets/uspa/1969");
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe("fail");
   });
 
-  test("should return meet data with correct structure", async () => {
+  it("should return meet data with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
 
     expect(response.status).toBe(200);
@@ -21,7 +21,7 @@ describe("GET /api/meets/:meet", () => {
     expect(response.body).toHaveProperty("data");
   });
 
-  test("should return meet with title and results", async () => {
+  it("should return meet with title and results", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
     const data = response.body.data;
 
@@ -30,7 +30,7 @@ describe("GET /api/meets/:meet", () => {
     expect(Array.isArray(data.results)).toBe(true);
   });
 
-  test("should return meet with date and location", async () => {
+  it("should return meet with date and location", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
     const data = response.body.data;
 
@@ -40,7 +40,7 @@ describe("GET /api/meets/:meet", () => {
     expect(typeof data.location).toBe("string");
   });
 
-  test("should return meet results with lifter data", async () => {
+  it("should return meet results with lifter data", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
     const results = response.body.data.results;
 
@@ -60,7 +60,7 @@ describe("GET /api/meets/:meet", () => {
     expect(lifter).toHaveProperty("dots");
   });
 
-  test("should return 404 for non-existent meet", async () => {
+  it("should return 404 for non-existent meet", async () => {
     const response = await authenticatedRequest().get("/api/meets/fake/99999999");
 
     expect(response.status).toBe(404);

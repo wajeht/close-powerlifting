@@ -4,15 +4,15 @@ import { configuration } from "./configuration";
 
 describe("config", () => {
   describe("pagination", () => {
-    test("has defaultPerPage set to 100", () => {
+    it("has defaultPerPage set to 100", () => {
       expect(configuration.pagination.defaultPerPage).toBe(100);
     });
 
-    test("has maxPerPage set to 500", () => {
+    it("has maxPerPage set to 500", () => {
       expect(configuration.pagination.maxPerPage).toBe(500);
     });
 
-    test("defaultPerPage is less than or equal to maxPerPage", () => {
+    it("defaultPerPage is less than or equal to maxPerPage", () => {
       expect(configuration.pagination.defaultPerPage).toBeLessThanOrEqual(
         configuration.pagination.maxPerPage,
       );
@@ -20,43 +20,43 @@ describe("config", () => {
   });
 
   describe("app", () => {
-    test("has required app settings", () => {
+    it("has required app settings", () => {
       expect(configuration.app).toHaveProperty("port");
       expect(configuration.app).toHaveProperty("env");
       expect(configuration.app).toHaveProperty("version");
       expect(configuration.app).toHaveProperty("domain");
     });
 
-    test("port is a number", () => {
+    it("port is a number", () => {
       expect(typeof configuration.app.port).toBe("number");
     });
 
-    test("defaultApiCallLimit is 500", () => {
+    it("defaultApiCallLimit is 500", () => {
       expect(configuration.app.defaultApiCallLimit).toBe(500);
     });
   });
 
   describe("session", () => {
-    test("has required session settings", () => {
+    it("has required session settings", () => {
       expect(configuration.session).toHaveProperty("name");
       expect(configuration.session).toHaveProperty("secret");
     });
   });
 
   describe("email", () => {
-    test("has required email settings", () => {
+    it("has required email settings", () => {
       expect(configuration.email).toHaveProperty("host");
       expect(configuration.email).toHaveProperty("port");
       expect(configuration.email).toHaveProperty("from");
     });
 
-    test("port is a number", () => {
+    it("port is a number", () => {
       expect(typeof configuration.email.port).toBe("number");
     });
   });
 
   describe("cookie", () => {
-    test("has required cookie settings", () => {
+    it("has required cookie settings", () => {
       expect(configuration.cookie).toHaveProperty("expiration");
       expect(configuration.cookie).toHaveProperty("password");
       expect(configuration.cookie).toHaveProperty("name");
@@ -64,7 +64,7 @@ describe("config", () => {
   });
 
   describe("oauth", () => {
-    test("has google oauth settings", () => {
+    it("has google oauth settings", () => {
       expect(configuration.oauth).toHaveProperty("google");
       expect(configuration.oauth.google).toHaveProperty("clientId");
       expect(configuration.oauth.google).toHaveProperty("clientSecret");

@@ -8,7 +8,6 @@ import type {
   GetFilteredRankingsQueryType,
 } from "./rankings.validation";
 
-const CACHE_TTL = 90000;
 const { defaultPerPage } = configuration.pagination;
 
 export function transformRankingRow(row: (string | number)[]): RankingRow {
@@ -69,7 +68,7 @@ export function createRankingService(scraper: ScraperType) {
     const cacheKey = `rankings-${current_page}-${per_page}`;
 
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
-      { key: cacheKey, ttlSeconds: CACHE_TTL },
+      cacheKey,
       () => fetchRankingsData(current_page, per_page),
     );
 
@@ -147,7 +146,7 @@ export function createRankingService(scraper: ScraperType) {
     const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
 
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
-      { key: cacheKey, ttlSeconds: CACHE_TTL },
+      cacheKey,
       () => fetchFilteredRankingsData(filters, currentPage, perPage),
     );
 

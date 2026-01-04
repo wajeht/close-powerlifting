@@ -3,14 +3,14 @@ import { describe, expect, test } from "vitest";
 import { authenticatedRequest, unauthenticatedRequest } from "../../../tests/test-setup";
 
 describe("GET /api/federations", () => {
-  test("should return 401 without authentication", async () => {
+  it("should return 401 without authentication", async () => {
     const response = await unauthenticatedRequest().get("/api/federations");
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe("fail");
   });
 
-  test("should return federations data with correct structure", async () => {
+  it("should return federations data with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/federations");
 
     expect(response.status).toBe(200);
@@ -22,14 +22,14 @@ describe("GET /api/federations", () => {
     expect(response.body).toHaveProperty("pagination");
   });
 
-  test("should return array of federation meets", async () => {
+  it("should return array of federation meets", async () => {
     const response = await authenticatedRequest().get("/api/federations");
 
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBeGreaterThan(0);
   });
 
-  test("should return federation entries with required fields", async () => {
+  it("should return federation entries with required fields", async () => {
     const response = await authenticatedRequest().get("/api/federations");
     const entry = response.body.data[0];
 
@@ -39,7 +39,7 @@ describe("GET /api/federations", () => {
     expect(entry).toHaveProperty("competition");
   });
 
-  test("should return correct data types for federation fields", async () => {
+  it("should return correct data types for federation fields", async () => {
     const response = await authenticatedRequest().get("/api/federations");
     const entry = response.body.data[0];
 
@@ -49,7 +49,7 @@ describe("GET /api/federations", () => {
     expect(typeof entry.competition).toBe("string");
   });
 
-  test("should return pagination with required fields", async () => {
+  it("should return pagination with required fields", async () => {
     const response = await authenticatedRequest().get("/api/federations");
     const pagination = response.body.pagination;
 
@@ -59,7 +59,7 @@ describe("GET /api/federations", () => {
     expect(pagination).toHaveProperty("current_page");
   });
 
-  test("should respect per_page query parameter", async () => {
+  it("should respect per_page query parameter", async () => {
     const response = await authenticatedRequest().get("/api/federations?per_page=5");
 
     expect(response.status).toBe(200);
@@ -68,7 +68,7 @@ describe("GET /api/federations", () => {
 });
 
 describe("GET /api/federations/:federation", () => {
-  test("should return federation meets with correct structure", async () => {
+  it("should return federation meets with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/federations/usapl");
 
     expect(response.status).toBe(200);
@@ -78,7 +78,7 @@ describe("GET /api/federations/:federation", () => {
     expect(Array.isArray(response.body.data)).toBe(true);
   });
 
-  test("should return meets with expected fields", async () => {
+  it("should return meets with expected fields", async () => {
     const response = await authenticatedRequest().get("/api/federations/usapl");
     const entry = response.body.data[0];
 
@@ -88,7 +88,7 @@ describe("GET /api/federations/:federation", () => {
     expect(entry).toHaveProperty("competition");
   });
 
-  test("should return 404 for non-existent federation", async () => {
+  it("should return 404 for non-existent federation", async () => {
     const response = await authenticatedRequest().get(
       "/api/federations/nonexistent-federation-xyz",
     );

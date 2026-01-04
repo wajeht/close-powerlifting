@@ -2,8 +2,6 @@ import type { ScraperType } from "../../../context";
 import type { MeetData, MeetResult, ApiResponse } from "../../../types";
 import type { GetMeetParamType } from "./meets.validation";
 
-const CACHE_TTL = 14400;
-
 export function createMeetService(scraper: ScraperType) {
   function parseMeetHtml(doc: Document): MeetData {
     const h1 = doc.querySelector("h1#meet");
@@ -32,9 +30,7 @@ export function createMeetService(scraper: ScraperType) {
   }
 
   async function getMeet({ meet }: GetMeetParamType): Promise<ApiResponse<MeetData>> {
-    return scraper.withCache<MeetData>({ key: `meet-${meet}`, ttlSeconds: CACHE_TTL }, () =>
-      fetchMeetData(meet),
-    );
+    return scraper.withCache<MeetData>(`meet-${meet}`, () => fetchMeetData(meet));
   }
 
   return {

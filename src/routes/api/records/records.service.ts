@@ -6,8 +6,6 @@ import type {
   GetFilteredRecordsQueryType,
 } from "./records.validation";
 
-const CACHE_TTL = 90000;
-
 export function createRecordService(scraper: ScraperType) {
   function parseRecordsHtml(doc: Document): RecordCategory[] {
     const recordCols = doc.getElementsByClassName("records-col");
@@ -35,9 +33,7 @@ export function createRecordService(scraper: ScraperType) {
   }
 
   async function getRecords(_options: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
-    return scraper.withCache<RecordCategory[]>({ key: "records", ttlSeconds: CACHE_TTL }, () =>
-      fetchRecordsData(),
-    );
+    return scraper.withCache<RecordCategory[]>("records", () => fetchRecordsData());
   }
 
   function buildRecordsFilterPath(filters: GetFilteredRecordsParamType): string {
@@ -54,9 +50,7 @@ export function createRecordService(scraper: ScraperType) {
     const filterPath = buildRecordsFilterPath(filters);
     const cacheKey = `records${filterPath}`;
 
-    return scraper.withCache<RecordCategory[]>({ key: cacheKey, ttlSeconds: CACHE_TTL }, () =>
-      fetchRecordsData(filterPath),
-    );
+    return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));
   }
 
   return {

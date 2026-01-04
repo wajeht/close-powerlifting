@@ -3,13 +3,13 @@ import { describe, expect, test } from "vitest";
 import { unauthenticatedRequest } from "../../../tests/test-setup";
 
 describe("GET /api/status", () => {
-  test("should return 200 without authentication", async () => {
+  it("should return 200 without authentication", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
 
     expect(response.status).toBe(200);
   });
 
-  test("should return status data with correct structure", async () => {
+  it("should return status data with correct structure", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
 
     expect(response.body.status).toBe("success");
@@ -19,7 +19,7 @@ describe("GET /api/status", () => {
     expect(response.body).toHaveProperty("data");
   });
 
-  test("should return status with server version", async () => {
+  it("should return status with server version", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
     const data = response.body.data;
 
@@ -28,7 +28,7 @@ describe("GET /api/status", () => {
     expect(data.server_version.length).toBeGreaterThan(0);
   });
 
-  test("should return status with meets count", async () => {
+  it("should return status with meets count", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
     const data = response.body.data;
 
@@ -36,7 +36,7 @@ describe("GET /api/status", () => {
     expect(typeof data.meets).toBe("string");
   });
 
-  test("should return status with federations list", async () => {
+  it("should return status with federations list", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
     const data = response.body.data;
 
@@ -45,7 +45,7 @@ describe("GET /api/status", () => {
     expect(data.federations.length).toBeGreaterThan(0);
   });
 
-  test("should return federation status with required fields", async () => {
+  it("should return federation status with required fields", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
     const federation = response.body.data.federations[0];
 
@@ -58,7 +58,7 @@ describe("GET /api/status", () => {
     expect(federation).toHaveProperty("maintainers");
   });
 
-  test("should return federation with correct data types", async () => {
+  it("should return federation with correct data types", async () => {
     const response = await unauthenticatedRequest().get("/api/status");
     const federation = response.body.data.federations[0];
 
