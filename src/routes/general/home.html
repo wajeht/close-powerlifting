@@ -49,7 +49,7 @@
     <div class="grid gap-4 text-center sm:grid-cols-3" id="stats-grid">
       <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
         <div class="text-3xl font-bold text-power">
-          <span class="counter" data-target="3" data-suffix="M+">0</span>
+          <span class="counter" data-target="3.3" data-start="1.0" data-decimals="1" data-suffix="M+">0</span>
         </div>
         <div class="mt-1 text-sm text-neutral-400">Competition results</div>
         <div class="mt-2 text-xs text-neutral-600">Every squat, bench, deadlift recorded</div>
@@ -143,20 +143,23 @@
     let animated = false;
 
     function animateCounter(counter) {
-      const target = parseInt(counter.dataset.target);
+      const target = parseFloat(counter.dataset.target);
+      const start = parseFloat(counter.dataset.start) || 0;
+      const decimals = parseInt(counter.dataset.decimals) || 0;
       const suffix = counter.dataset.suffix || '';
       const duration = 2000;
       const steps = 60;
       const stepDuration = duration / steps;
-      let current = 0;
-      const increment = target / steps;
+      let current = start;
+      const increment = (target - start) / steps;
 
       function updateCounter() {
         current += increment;
         if (current >= target) {
-          counter.textContent = target + suffix;
+          counter.textContent = (decimals > 0 ? target.toFixed(decimals) : target) + suffix;
         } else {
-          counter.textContent = Math.floor(current) + suffix;
+          const display = decimals > 0 ? current.toFixed(decimals) : Math.floor(current);
+          counter.textContent = display + suffix;
           requestAnimationFrame(() => setTimeout(updateCounter, stepDuration));
         }
       }
