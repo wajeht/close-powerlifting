@@ -16,7 +16,7 @@ const defaultCategories = recordService.parseRecordsHtml(defaultDoc);
 const rawCategories = recordService.parseRecordsHtml(rawDoc);
 const rawMenCategories = recordService.parseRecordsHtml(rawMenDoc);
 
-describe("records service", () => {
+describe.concurrent("records service", () => {
   describe("parseRecordsHtml", () => {
     it("parses default records HTML correctly", () => {
       expect(defaultCategories).toBeDefined();

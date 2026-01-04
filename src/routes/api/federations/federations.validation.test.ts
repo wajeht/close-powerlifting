@@ -5,7 +5,7 @@ import { getFederationsValidation } from "./federations.validation";
 
 const { maxPerPage } = configuration.pagination;
 
-describe("federations validation", () => {
+describe.concurrent("federations validation", () => {
   describe("getFederationsValidation", () => {
     it("accepts valid per_page within limit", () => {
       const result = getFederationsValidation.safeParse({ per_page: "50" });

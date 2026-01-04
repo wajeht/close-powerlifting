@@ -23,7 +23,7 @@ function getField(row: Record<string, string>, fieldName: string): string {
   return key ? row[key] : "";
 }
 
-describe("federations service", () => {
+describe.concurrent("federations service", () => {
   describe("parseFederationMeetsHtml", () => {
     it("parses mlist HTML correctly", () => {
       expect(mlistMeets).toBeDefined();

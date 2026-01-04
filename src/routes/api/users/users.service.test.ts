@@ -16,7 +16,7 @@ const johnDoc = scraper.parseHtml(userJohnHaackHtml);
 const kristyProfile = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins");
 const johnProfile = userService.parseUserProfileHtml(johnDoc, "johnhaack");
 
-describe("users service", () => {
+describe.concurrent("users service", () => {
   describe("parseUserProfileHtml", () => {
     it("parses Kristy Hawkins profile HTML correctly", () => {
       expect(kristyProfile).toBeDefined();

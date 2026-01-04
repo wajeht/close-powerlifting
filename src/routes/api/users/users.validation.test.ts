@@ -5,7 +5,7 @@ import { getUsersValidation, getUserValidation } from "./users.validation";
 
 const { maxPerPage } = configuration.pagination;
 
-describe("users validation", () => {
+describe.concurrent("users validation", () => {
   describe("getUsersValidation", () => {
     it("accepts valid search query", () => {
       const result = getUsersValidation.safeParse({ search: "haack" });
