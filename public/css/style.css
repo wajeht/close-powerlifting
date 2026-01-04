@@ -79,6 +79,7 @@
       monospace;
     --color-green-400: oklch(79.2% 0.209 151.711);
     --color-green-500: oklch(72.3% 0.219 149.579);
+    --color-blue-300: oklch(80.9% 0.105 251.813);
     --color-blue-400: oklch(70.7% 0.165 254.624);
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-neutral-100: oklch(97% 0 0);
@@ -1172,6 +1173,9 @@
     }
     .hover\:bg-power-dark:hover {
       background-color: var(--color-power-dark) !important;
+    }
+    .hover\:text-blue-300:hover {
+      color: var(--color-blue-300) !important;
     }
     .hover\:text-neutral-300:hover {
       color: var(--color-neutral-300) !important;
