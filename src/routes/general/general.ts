@@ -1,9 +1,7 @@
 import express, { Request, Response } from "express";
-import { z } from "zod";
 
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
-import { createMiddleware } from "../middleware";
 import { createHealthCheckService } from "../api/health-check/health-check.service";
 import { createRankingService } from "../api/rankings/rankings.service";
 
@@ -11,14 +9,6 @@ const RANKINGS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 let rankingsCache: { data: unknown; timestamp: number } | null = null;
 
 export function createGeneralRouter(context: AppContext) {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.mail,
-    context.helpers,
-    context.logger,
-    context.knex,
-  );
   const healthCheckService = createHealthCheckService(
     context.cache,
     context.scraper,
@@ -52,34 +42,9 @@ export function createGeneralRouter(context: AppContext) {
     });
   });
 
-  router.get("/contact", (req: Request, res: Response) => {
-    return res.status(200).render("general/contact.html", {
-      path: "/contact",
-      title: "Contact",
-      messages: req.flash(),
-    });
+  router.get("/contact", (_req: Request, res: Response) => {
+    return res.redirect(301, "https://github.com/wajeht/close-powerlifting/issues/new/choose");
   });
-
-  router.post(
-    "/contact",
-    middleware.csrfValidationMiddleware,
-    middleware.validationMiddleware({
-      body: z.object({
-        email: z.email({ message: "must be valid email address!" }),
-        name: z.string({ message: "name is required!" }),
-        message: z.string({ message: "message is required!" }),
-      }),
-    }),
-    async (req: Request, res: Response) => {
-      const { name, email, message } = req.body;
-
-      await context.mail.sendContactEmail({ name, email, message });
-
-      req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
-
-      return res.status(307).redirect("/contact");
-    },
-  );
 
   router.get("/terms", (req: Request, res: Response) => {
     return res.status(200).render("general/terms.html", {

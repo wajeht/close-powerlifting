@@ -200,14 +200,6 @@ describe("CSRF Protection", () => {
       expect(response.text).toContain('type="hidden"');
     });
 
-    it("should include CSRF token in contact page HTML", async () => {
-      const agent = createUnauthenticatedSessionAgent();
-      const response = await agent.get("/contact");
-
-      expect(response.status).toBe(200);
-      expect(response.text).toContain('name="_csrf"');
-    });
-
     it("should NOT include CSRF token in API responses", async () => {
       const agent = createUnauthenticatedSessionAgent();
       const response = await agent.get("/api/health-check");
@@ -337,7 +329,7 @@ describe("CSRF Protection", () => {
       const agent = createUnauthenticatedSessionAgent();
 
       const response1 = await agent.get("/login");
-      const response2 = await agent.get("/contact");
+      const response2 = await agent.get("/login");
 
       const tokenMatch1 = response1.text.match(/name="_csrf"\s+value="([^"]+)"/);
       const tokenMatch2 = response2.text.match(/name="_csrf"\s+value="([^"]+)"/);
