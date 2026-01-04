@@ -23,7 +23,7 @@ const usaplMeet = meetService.parseMeetHtml(usaplDoc);
 const wrpfMeet = meetService.parseMeetHtml(wrpfDoc);
 const uspaMeet = meetService.parseMeetHtml(uspaDoc);
 
-describe("meets service", () => {
+describe.concurrent("meets service", () => {
   describe("parseMeetHtml", () => {
     it("parses RPS meet HTML correctly", () => {
       expect(rpsMeet).toBeDefined();

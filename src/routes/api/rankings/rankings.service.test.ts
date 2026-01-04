@@ -14,7 +14,7 @@ import {
 
 const { defaultPerPage, maxPerPage } = configuration.pagination;
 
-describe("rankings service", () => {
+describe.concurrent("rankings service", () => {
   describe("rankings JSON structure", () => {
     it("default rankings has expected structure", () => {
       expect(rankingsDefault).toHaveProperty("total_length");

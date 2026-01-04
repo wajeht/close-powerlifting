@@ -2,7 +2,7 @@ import { describe, expect } from "vitest";
 
 import { configuration } from "./configuration";
 
-describe("config", () => {
+describe.concurrent("config", () => {
   describe("pagination", () => {
     it("has defaultPerPage set to 100", () => {
       expect(configuration.pagination.defaultPerPage).toBe(100);

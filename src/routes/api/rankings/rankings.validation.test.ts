@@ -5,7 +5,7 @@ import { getRankingsValidation, getFilteredRankingsQueryValidation } from "./ran
 
 const { maxPerPage } = configuration.pagination;
 
-describe("rankings validation", () => {
+describe.concurrent("rankings validation", () => {
   describe("getRankingsValidation", () => {
     it("accepts valid per_page within limit", () => {
       const result = getRankingsValidation.safeParse({ per_page: "100" });

@@ -7,7 +7,7 @@ const context = createContext();
 const helpers = context.helpers;
 const scraper = context.scraper;
 
-describe("tableToJson", () => {
+describe.concurrent("tableToJson", () => {
   let table: any;
 
   beforeEach(() => {
@@ -106,7 +106,7 @@ describe("tableToJson", () => {
   });
 });
 
-describe("buildPaginationQuery", () => {
+describe.concurrent("buildPaginationQuery", () => {
   it("returns the correct pagination string", () => {
     const pagination = scraper.buildPaginationQuery(2, 10);
     expect(pagination).toEqual("start=10&end=20&lang=en&units=lbs");
@@ -128,7 +128,7 @@ describe("buildPaginationQuery", () => {
   });
 });
 
-describe("stripHtml", () => {
+describe.concurrent("stripHtml", () => {
   it("removes HTML tags from the input string", () => {
     const input = "<p>This is <strong>bold</strong> text.</p>";
     const result = scraper.stripHtml(input);
@@ -154,7 +154,7 @@ describe("stripHtml", () => {
   });
 });
 
-describe("hashKey", () => {
+describe.concurrent("hashKey", () => {
   it("returns a hashed key", async () => {
     const { key, hashedKey } = await helpers.hashKey();
     expect(key).toBeDefined();
@@ -169,7 +169,7 @@ describe("hashKey", () => {
   });
 });
 
-describe("generateAPIKey", () => {
+describe.concurrent("generateAPIKey", () => {
   it("returns a hashed key", async () => {
     const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
       userId: "1",
@@ -209,7 +209,7 @@ describe("generateAPIKey", () => {
   });
 });
 
-describe("calculatePagination", () => {
+describe.concurrent("calculatePagination", () => {
   it("calculates pagination for first page", () => {
     const result = scraper.calculatePagination(100, 1, 10);
 
@@ -296,7 +296,7 @@ describe("calculatePagination", () => {
   });
 });
 
-describe("timingSafeEqual", () => {
+describe.concurrent("timingSafeEqual", () => {
   it("returns true for equal strings", () => {
     expect(helpers.timingSafeEqual("test", "test")).toBe(true);
   });
@@ -330,7 +330,7 @@ describe("timingSafeEqual", () => {
   });
 });
 
-describe("extractNameFromEmail", () => {
+describe.concurrent("extractNameFromEmail", () => {
   it("extracts name from simple email", () => {
     expect(helpers.extractNameFromEmail("john@example.com")).toBe("John");
   });

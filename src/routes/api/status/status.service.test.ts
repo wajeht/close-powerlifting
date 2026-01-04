@@ -11,7 +11,7 @@ const statusService = createStatusService(scraper);
 const statusDoc = scraper.parseHtml(statusHtml);
 const statusData = statusService.parseStatusHtml(statusDoc);
 
-describe("status service", () => {
+describe.concurrent("status service", () => {
   describe("parseStatusHtml", () => {
     it("parses status HTML correctly", () => {
       expect(statusData).toBeDefined();
