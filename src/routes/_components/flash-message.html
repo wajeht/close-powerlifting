@@ -1,26 +1,31 @@
 <% if (Object.keys(messages).length) { %>
   <% for (const m in messages) { %>
-  <div class="<%= m === 'success' ? 'border-green-500/30 bg-green-500/10' : m === 'error' ? 'border-power/30 bg-power/10' : m === 'info' ? 'border-blue-500/30 bg-blue-500/10' : '' %> flex items-center gap-4 rounded-lg border p-4">
+  <div class="<%= m === 'success' ? 'border-green-500/30 bg-green-500/10' : m === 'error' ? 'border-power/30 bg-power/10' : m === 'info' ? 'border-blue-500/30 bg-blue-500/10' : '' %> flex items-start gap-3 rounded-lg border p-4">
     <% if (m === 'success') { %>
-    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-500/20">
-      <svg class="h-5 w-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
+    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+    <div class="flex flex-col gap-1">
+      <span class="font-medium text-green-400">Success</span>
+      <p class="text-sm text-neutral-300"><%= messages[m] %></p>
     </div>
     <% } else if (m === 'error') { %>
-    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-power/20">
-      <svg class="h-5 w-5 text-power" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
+    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-power" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    <div class="flex flex-col gap-1">
+      <span class="font-medium text-power">Error</span>
+      <p class="text-sm text-neutral-300"><%= messages[m] %></p>
     </div>
     <% } else if (m === 'info') { %>
-    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
-      <svg class="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
+    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <div class="flex flex-col gap-1">
+      <span class="font-medium text-blue-400">Info</span>
+      <p class="text-sm text-neutral-300"><%= messages[m] %></p>
     </div>
     <% } %>
-    <p class="text-neutral-300"><%= messages[m] %></p>
   </div>
   <% } %>
 <% } %>
