@@ -26,10 +26,6 @@ export const usersQueryValidation = z.object({
   search: z.string().optional(),
 });
 
-export const cachePatternValidation = z.object({
-  pattern: z.string().min(1, { message: "Pattern is required" }),
-});
-
 export const cacheKeyValidation = z.object({
   key: z.string().min(1, { message: "Cache key is required" }),
 });
@@ -38,4 +34,4 @@ export type UserIdParamType = z.infer<typeof userIdParamValidation>;
 export type UpdateApiCountType = z.infer<typeof updateApiCountValidation>;
 export type UpdateApiLimitType = z.infer<typeof updateApiLimitValidation>;
 export type UsersQueryType = z.infer<typeof usersQueryValidation>;
-export type CachePatternType = z.infer<typeof cachePatternValidation>;
+export type CacheKeyType = z.infer<typeof cacheKeyValidation>;

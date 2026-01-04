@@ -8,7 +8,6 @@ import {
   updateApiCountValidation,
   updateApiLimitValidation,
   usersQueryValidation,
-  cachePatternValidation,
   cacheKeyValidation,
 } from "./admin.validation";
 
@@ -151,14 +150,15 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.get("/cache", async (req: Request, res: Response) => {
-    const stats = await adminService.getCacheStatistics();
-    const entries = await adminService.getCacheEntries("%");
+    const search = (req.query.search as string) || "";
+    const pattern = search ? `%${search}%` : "%";
+    const entries = await adminService.getCacheEntries(pattern);
 
     return res.render("admin/cache-view.html", {
       title: "Cache Management",
       path: "/admin/cache",
-      stats,
       entries,
+      search,
       messages: req.flash(),
       layout: "_layouts/authenticated.html",
     });
@@ -170,19 +170,6 @@ export function createAdminRouter(context: AppContext) {
     req.flash("success", "All cache entries cleared");
     return res.redirect("/admin/cache");
   });
-
-  router.post(
-    "/cache/clear-pattern",
-    middleware.validationMiddleware({ body: cachePatternValidation }),
-    async (req: Request, res: Response) => {
-      const pattern = req.body.pattern as string;
-
-      const count = await adminService.clearCacheByPattern(pattern);
-
-      req.flash("success", `Cleared ${count} cache entries matching "${pattern}"`);
-      return res.redirect("/admin/cache");
-    },
-  );
 
   router.post(
     "/cache/delete",

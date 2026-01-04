@@ -110,16 +110,6 @@ describe("Admin Routes", () => {
       expect(response.headers.location).toBe("/login");
     });
 
-    it("should redirect POST /admin/cache/clear-pattern to login", async () => {
-      const response = await request(app)
-        .post("/admin/cache/clear-pattern")
-        .type("form")
-        .send({ pattern: "test%" });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
     it("should redirect POST /admin/cache/delete to login", async () => {
       const response = await request(app)
         .post("/admin/cache/delete")
@@ -331,7 +321,7 @@ describe("Admin Routes", () => {
 
         expect(response.status).toBe(200);
         expect(response.text).toContain("Cache Management");
-        expect(response.text).toContain("Total Entries");
+        expect(response.text).toContain("Search by key");
       });
     });
 
@@ -355,46 +345,6 @@ describe("Admin Routes", () => {
 
         const afterCount = await knex("cache").count("* as count").first();
         expect(Number(afterCount?.count)).toBe(0);
-      });
-    });
-
-    describe("POST /admin/cache/clear-pattern", () => {
-      beforeEach(async () => {
-        await knex("cache").del();
-        await knex("cache").insert([
-          {
-            key: "rankings-page-1",
-            value: "test-value-1",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            key: "rankings-page-2",
-            value: "test-value-2",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          {
-            key: "users-list",
-            value: "test-value-3",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-      });
-
-      it("should clear cache entries matching pattern", async () => {
-        const response = await agent
-          .post("/admin/cache/clear-pattern")
-          .type("form")
-          .send({ pattern: "rankings%" });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/cache");
-
-        const remaining = await knex("cache").select("key");
-        expect(remaining.length).toBe(1);
-        expect(remaining[0].key).toBe("users-list");
       });
     });
 
