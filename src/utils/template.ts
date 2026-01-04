@@ -2,7 +2,7 @@ import { Eta } from "eta";
 import path from "path";
 
 import { config } from "../config";
-import { assetUtils } from "./assets";
+import { asset } from "./assets";
 
 const viewsDir = path.join(process.cwd(), "src/routes");
 
@@ -28,7 +28,7 @@ export function engine(
 }
 
 const isProd = config.app.env === "production";
-const assetVersions = isProd ? assetUtils.getAssetVersions() : null;
+const assetVersions = isProd ? asset.getAssetVersions() : null;
 const randomVersion = () => String(Math.random()).slice(2, 10);
 const version = {
   style: assetVersions?.style ?? randomVersion(),

@@ -1,7 +1,7 @@
 import type { Knex } from "knex";
 
 import { createLogger, type LoggerType } from "./utils/logger";
-import { createHelpers, type HelpersType } from "./utils/helpers";
+import { createHelper, type HelpersType } from "./utils/helpers";
 import { createDatabase, type DatabaseType } from "./db/db";
 import { createCache, type CacheType } from "./db/cache";
 import { createMail, type MailType } from "./mail";
@@ -46,7 +46,7 @@ export function createContext(): AppContext {
   }
 
   const logger = createLogger();
-  const helpers = createHelpers();
+  const helpers = createHelper();
   const database = createDatabase(logger);
   const db = database.instance;
   const cache = createCache(db, logger);

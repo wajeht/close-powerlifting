@@ -7,7 +7,7 @@ export type AssetVersions = {
   script: string;
 };
 
-export function createAssetUtils() {
+export function createAsset() {
   const HASH_LENGTH = 8;
   const PUBLIC_DIR = path.resolve("./public");
   const hashCache = new Map<string, string>();
@@ -40,4 +40,4 @@ export function createAssetUtils() {
   };
 }
 
-export const assetUtils = createAssetUtils();
+export const asset = createAsset();

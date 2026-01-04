@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { config } from "../config";
 import { db } from "../tests/test-setup";
 import { createUserRepository } from "../db/user";
-import { createHelpers } from "./helpers";
+import { createHelper } from "./helpers";
 import { createLogger } from "./logger";
 import { createAdminUser } from "./admin-user";
 import { createAuthService } from "../routes/auth/auth.service";
@@ -32,7 +32,7 @@ describe("AdminUser", () => {
     it("should create a new admin user if one does not exist", async () => {
       const logger = createLogger();
       logger.setLevel("SILENT");
-      const helpers = createHelpers();
+      const helpers = createHelper();
       const userRepository = createUserRepository(db);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
@@ -62,7 +62,7 @@ describe("AdminUser", () => {
 
       const logger = createLogger();
       logger.setLevel("SILENT");
-      const helpers = createHelpers();
+      const helpers = createHelper();
       const userRepository = createUserRepository(db);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
@@ -79,7 +79,7 @@ describe("AdminUser", () => {
 
       const logger = createLogger();
       logger.setLevel("SILENT");
-      const helpers = createHelpers();
+      const helpers = createHelper();
       const userRepository = createUserRepository(db);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);

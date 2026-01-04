@@ -17,7 +17,7 @@ export interface HelpersType {
   getGoogleOAuthURL: () => string;
 }
 
-export function createHelpers(): HelpersType {
+export function createHelper(): HelpersType {
   function getHostName(req: Request): string {
     if (config.app.env === "development") {
       const protocol = req.protocol;
