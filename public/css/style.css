@@ -1228,6 +1228,9 @@
     }
   }
   @media (min-width: 64rem) {
+    .lg\:grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
     .lg\:text-6xl {
       font-size: var(--text-6xl) !important;
       line-height: var(--tw-leading, var(--text-6xl--line-height)) !important;
