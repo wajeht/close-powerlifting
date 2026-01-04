@@ -1,7 +1,12 @@
 import request from "supertest";
 import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, it } from "vitest";
 
-import { app, knex, createUnauthenticatedSessionAgent } from "../../tests/test-setup";
+import {
+  app,
+  knex,
+  createUnauthenticatedSessionAgent,
+  createUnauthenticatedApiAgent,
+} from "../../tests/test-setup";
 
 describe("Auth Routes", () => {
   let testUserId: number;
@@ -343,6 +348,380 @@ describe("Auth Routes", () => {
         const user = await knex("users").where({ id: deleteUserId }).first();
         expect(user.deleted).toBe(1); // SQLite stores booleans as 1/0
       });
+    });
+  });
+
+  describe("GET /verify-email - auto login flow", () => {
+    let verifyUserId: number;
+    const verifyEmail = "verify-auto-login@example.com";
+    const verifyToken = "verify-auto-login-token";
+
+    beforeEach(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Verify User",
+          email: verifyEmail,
+          verification_token: verifyToken,
+          verified: false,
+        })
+        .returning("*");
+      verifyUserId = user.id;
+    });
+
+    afterEach(async () => {
+      await knex("users").where({ id: verifyUserId }).delete();
+    });
+
+    it("should auto-login user after email verification and redirect to dashboard", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+
+      const response = await sessionAgent.get(
+        `/verify-email?token=${verifyToken}&email=${verifyEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/dashboard");
+
+      // Verify user is marked as verified in database
+      const user = await knex("users").where({ id: verifyUserId }).first();
+      expect(user.verified).toBe(1);
+      expect(user.verification_token).toBeNull();
+
+      // Should be able to access dashboard
+      const dashboardResponse = await sessionAgent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(200);
+      expect(dashboardResponse.text).toContain("Dashboard");
+    });
+
+    it("should show API key on dashboard after verification", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+
+      await sessionAgent.get(`/verify-email?token=${verifyToken}&email=${verifyEmail}`);
+
+      const dashboardResponse = await sessionAgent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(200);
+      expect(dashboardResponse.text).toContain("Your API Key");
+      expect(dashboardResponse.text).toContain("Copy this key now");
+    });
+
+    it("should clear API key from session after first dashboard view", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+
+      await sessionAgent.get(`/verify-email?token=${verifyToken}&email=${verifyEmail}`);
+
+      // First view shows API key
+      const firstView = await sessionAgent.get("/dashboard");
+      expect(firstView.text).toContain("Your API Key");
+
+      // Second view should not show API key
+      const secondView = await sessionAgent.get("/dashboard");
+      expect(secondView.text).not.toContain("Your API Key");
+    });
+
+    it("should reject verification with invalid token", async () => {
+      const response = await request(app).get(
+        `/verify-email?token=wrong-token&email=${verifyEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      // User should still be unverified
+      const user = await knex("users").where({ id: verifyUserId }).first();
+      expect(user.verified).toBe(0);
+    });
+
+    it("should redirect already verified users to login", async () => {
+      await knex("users").where({ id: verifyUserId }).update({ verified: true });
+
+      const response = await request(app).get(
+        `/verify-email?token=${verifyToken}&email=${verifyEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should reject verification for non-existent user", async () => {
+      const response = await request(app).get(
+        `/verify-email?token=any-token&email=nonexistent@example.com`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+  });
+
+  describe("POST /api/login - API endpoint", () => {
+    const apiAgent = createUnauthenticatedApiAgent();
+
+    afterEach(async () => {
+      await knex("users").where({ email: "api-new-user@example.com" }).delete();
+    });
+
+    it("should create new user and return 201 for non-existent email", async () => {
+      const response = await apiAgent
+        .post("/api/login")
+        .send({ email: "api-new-user@example.com" });
+
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe("success");
+      expect(response.body.message).toContain("Check your email to verify your account");
+
+      const user = await knex("users").where({ email: "api-new-user@example.com" }).first();
+      expect(user).toBeDefined();
+      expect(user.name).toBe("Api New User");
+      expect(user.verified).toBe(0);
+    });
+
+    it("should send magic link for verified user", async () => {
+      const response = await apiAgent.post("/api/login").send({ email: testEmail });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+      expect(response.body.message).toContain("Check your email for a magic link");
+    });
+
+    it("should resend verification for unverified user", async () => {
+      const [unverifiedUser] = await knex("users")
+        .insert({
+          name: "Unverified API User",
+          email: "unverified-api@example.com",
+          verification_token: "unverified-api-token",
+          verified: false,
+        })
+        .returning("*");
+
+      const response = await apiAgent
+        .post("/api/login")
+        .send({ email: "unverified-api@example.com" });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+      expect(response.body.message).toContain("verify your email first");
+
+      await knex("users").where({ id: unverifiedUser.id }).delete();
+    });
+
+    it("should reject invalid email format", async () => {
+      const response = await apiAgent.post("/api/login").send({ email: "not-an-email" });
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe("fail");
+    });
+  });
+
+  describe("POST /api/verify-email - API endpoint", () => {
+    const apiAgent = createUnauthenticatedApiAgent();
+    let apiVerifyUserId: number;
+    const apiVerifyEmail = "api-verify@example.com";
+    const apiVerifyToken = "api-verify-token";
+
+    beforeEach(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "API Verify User",
+          email: apiVerifyEmail,
+          verification_token: apiVerifyToken,
+          verified: false,
+        })
+        .returning("*");
+      apiVerifyUserId = user.id;
+    });
+
+    afterEach(async () => {
+      await knex("users").where({ id: apiVerifyUserId }).delete();
+    });
+
+    it("should verify email and return API key", async () => {
+      const response = await apiAgent
+        .post("/api/verify-email")
+        .send({ email: apiVerifyEmail, token: apiVerifyToken });
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+      expect(response.body.data[0].email).toBe(apiVerifyEmail);
+      expect(response.body.data[0].apiKey).toBeDefined();
+
+      const user = await knex("users").where({ id: apiVerifyUserId }).first();
+      expect(user.verified).toBe(1);
+    });
+
+    it("should reject verification with invalid token", async () => {
+      const response = await apiAgent
+        .post("/api/verify-email")
+        .send({ email: apiVerifyEmail, token: "wrong-token" });
+
+      expect(response.status).toBe(422);
+      expect(response.body.status).toBe("fail");
+    });
+
+    it("should reject verification for already verified user", async () => {
+      await knex("users").where({ id: apiVerifyUserId }).update({ verified: true });
+
+      const response = await apiAgent
+        .post("/api/verify-email")
+        .send({ email: apiVerifyEmail, token: apiVerifyToken });
+
+      expect(response.status).toBe(422);
+      expect(response.body.status).toBe("fail");
+    });
+
+    it("should reject verification for non-existent user", async () => {
+      const response = await apiAgent
+        .post("/api/verify-email")
+        .send({ email: "nonexistent@example.com", token: "any-token" });
+
+      expect(response.status).toBe(422);
+      expect(response.body.status).toBe("fail");
+    });
+  });
+
+  describe("Session user edge cases", () => {
+    it("should redirect to login if session user is deleted from database", async () => {
+      const [tempUser] = await knex("users")
+        .insert({
+          name: "Temp User",
+          email: "temp-user@example.com",
+          verification_token: "temp-token",
+          verified: true,
+        })
+        .returning("*");
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=temp-token&email=temp-user@example.com`);
+
+      // Verify logged in
+      const dashboardBefore = await sessionAgent.get("/dashboard");
+      expect(dashboardBefore.status).toBe(200);
+
+      // Delete user from database
+      await knex("users").where({ id: tempUser.id }).delete();
+
+      // Should redirect to login
+      const dashboardAfter = await sessionAgent.get("/dashboard");
+      expect(dashboardAfter.status).toBe(302);
+      expect(dashboardAfter.headers.location).toBe("/login");
+    });
+
+    it("should redirect non-admin to login when accessing admin routes", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+        admin: false,
+      });
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      const response = await sessionAgent.get("/admin");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should allow admin to access admin routes", async () => {
+      const [adminUser] = await knex("users")
+        .insert({
+          name: "Admin User",
+          email: "admin-test@example.com",
+          verification_token: "admin-token",
+          verified: true,
+          admin: true,
+        })
+        .returning("*");
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      const magicLinkResponse = await sessionAgent.get(
+        `/magic-link?token=admin-token&email=admin-test@example.com`,
+      );
+
+      // Verify magic link login worked
+      expect(magicLinkResponse.status).toBe(302);
+      expect(magicLinkResponse.headers.location).toBe("/dashboard");
+
+      // Verify can access dashboard (regular user auth)
+      const dashboardResponse = await sessionAgent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(200);
+
+      // Admin can access /admin/users page
+      const response = await sessionAgent.get("/admin/users");
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain("Manage Users");
+
+      await knex("users").where({ id: adminUser.id }).delete();
+    });
+  });
+
+  describe("Validation edge cases", () => {
+    it("POST /login should reject invalid email format", async () => {
+      const response = await request(app)
+        .post("/login")
+        .type("form")
+        .send({ email: "not-an-email" });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("POST /settings should reject empty name", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      const response = await sessionAgent.post("/settings").type("form").send({ name: "" });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/settings");
+
+      // Name should not have changed
+      const user = await knex("users").where({ id: testUserId }).first();
+      expect(user.name).toBe(testName);
+    });
+  });
+
+  describe("Session persistence", () => {
+    it("should maintain session across multiple requests", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      // Make multiple requests with same session
+      const dashboard1 = await sessionAgent.get("/dashboard");
+      expect(dashboard1.status).toBe(200);
+
+      const settings = await sessionAgent.get("/settings");
+      expect(settings.status).toBe(200);
+
+      const dashboard2 = await sessionAgent.get("/dashboard");
+      expect(dashboard2.status).toBe(200);
+    });
+
+    it("should update session name after name change", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      await sessionAgent.post("/settings").type("form").send({ name: "Updated Session Name" });
+
+      // Session should reflect new name in subsequent requests
+      const settingsPage = await sessionAgent.get("/settings");
+      expect(settingsPage.text).toContain("Updated Session Name");
+
+      // Restore original name
+      await knex("users").where({ id: testUserId }).update({ name: testName });
     });
   });
 });

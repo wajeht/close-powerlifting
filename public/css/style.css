@@ -88,6 +88,7 @@
     --color-yellow-900: oklch(42.1% 0.095 57.708);
     --color-green-400: oklch(79.2% 0.209 151.711);
     --color-green-500: oklch(72.3% 0.219 149.579);
+    --color-green-800: oklch(44.8% 0.119 151.328);
     --color-green-900: oklch(39.3% 0.095 152.535);
     --color-blue-300: oklch(80.9% 0.105 251.813);
     --color-blue-400: oklch(70.7% 0.165 254.624);
@@ -805,6 +806,9 @@
       border-color: color-mix(in oklab, var(--color-green-500) 30%, transparent) !important;
     }
   }
+  .border-green-800 {
+    border-color: var(--color-green-800) !important;
+  }
   .border-neutral-700 {
     border-color: var(--color-neutral-700) !important;
   }
@@ -860,6 +864,14 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-green-500\/20 {
       background-color: color-mix(in oklab, var(--color-green-500) 20%, transparent) !important;
+    }
+  }
+  .bg-green-900\/20 {
+    background-color: #0d542b33 !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-green-900\/20 {
+      background-color: color-mix(in oklab, var(--color-green-900) 20%, transparent) !important;
     }
   }
   .bg-green-900\/50 {
@@ -1111,6 +1123,9 @@
   .tracking-wider {
     --tw-tracking: var(--tracking-wider) !important;
     letter-spacing: var(--tracking-wider) !important;
+  }
+  .break-all {
+    word-break: break-all !important;
   }
   .whitespace-nowrap {
     white-space: nowrap !important;
