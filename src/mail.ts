@@ -53,8 +53,15 @@ export function createMail(logger: LoggerType): MailType {
     try {
       await transporter.sendMail({ from, to, subject, text });
       logger.info(`Email sent to ${to}: ${subject}`);
-    } catch (error) {
-      logger.error(`Failed to send email to ${to}`, error);
+    } catch {
+      logger.info("=".repeat(50));
+      logger.info("EMAIL (mailpit unavailable)");
+      logger.info("=".repeat(50));
+      logger.info(`To: ${to}`);
+      logger.info(`Subject: ${subject}`);
+      logger.info("-".repeat(50));
+      logger.info(text);
+      logger.info("=".repeat(50));
     }
   }
 
