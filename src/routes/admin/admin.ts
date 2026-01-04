@@ -29,14 +29,13 @@ export function createAdminRouter(context: AppContext) {
 
   const router = express.Router();
 
-  router.use(middleware.adminAuthorizationMiddleware);
-
-  router.get("/", (req: Request, res: Response) => {
+  router.get("/", middleware.adminAuthorizationMiddleware, (req: Request, res: Response) => {
     return res.redirect("/dashboard");
   });
 
   router.get(
     "/users",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({ query: usersQueryValidation }),
     async (req: Request, res: Response) => {
       const page = req.query.page as number | undefined;
@@ -61,6 +60,7 @@ export function createAdminRouter(context: AppContext) {
 
   router.get(
     "/users/:id",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({ params: userIdParamValidation }),
     async (req: Request, res: Response) => {
       const id = req.params.id as unknown as number;
@@ -84,6 +84,7 @@ export function createAdminRouter(context: AppContext) {
 
   router.post(
     "/users/:id/api-count",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({
       params: userIdParamValidation,
       body: updateApiCountValidation,
@@ -108,6 +109,7 @@ export function createAdminRouter(context: AppContext) {
 
   router.post(
     "/users/:id/api-limit",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({
       params: userIdParamValidation,
       body: updateApiLimitValidation,
@@ -132,6 +134,7 @@ export function createAdminRouter(context: AppContext) {
 
   router.post(
     "/users/:id/resend-verification",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({ params: userIdParamValidation }),
     async (req: Request, res: Response) => {
       const id = req.params.id as unknown as number;
@@ -149,30 +152,39 @@ export function createAdminRouter(context: AppContext) {
     },
   );
 
-  router.get("/cache", async (req: Request, res: Response) => {
-    const search = (req.query.search as string) || "";
-    const pattern = search ? `%${search}%` : "%";
-    const entries = await adminService.getCacheEntries(pattern);
+  router.get(
+    "/cache",
+    middleware.adminAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      const search = (req.query.search as string) || "";
+      const pattern = search ? `%${search}%` : "%";
+      const entries = await adminService.getCacheEntries(pattern);
 
-    return res.render("admin/cache-view.html", {
-      title: "Cache Management",
-      path: "/admin/cache",
-      entries,
-      search,
-      messages: req.flash(),
-      layout: "_layouts/authenticated.html",
-    });
-  });
+      return res.render("admin/cache-view.html", {
+        title: "Cache Management",
+        path: "/admin/cache",
+        entries,
+        search,
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
 
-  router.post("/cache/clear", async (req: Request, res: Response) => {
-    await adminService.clearAllCache();
+  router.post(
+    "/cache/clear",
+    middleware.adminAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      await adminService.clearAllCache();
 
-    req.flash("success", "All cache entries cleared");
-    return res.redirect("/admin/cache");
-  });
+      req.flash("success", "All cache entries cleared");
+      return res.redirect("/admin/cache");
+    },
+  );
 
   router.post(
     "/cache/delete",
+    middleware.adminAuthorizationMiddleware,
     middleware.validationMiddleware({ body: cacheKeyValidation }),
     async (req: Request, res: Response) => {
       const key = req.body.key as string;

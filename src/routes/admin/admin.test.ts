@@ -336,8 +336,6 @@ describe("Admin Routes", () => {
       });
 
       it("should clear all cache entries", async () => {
-        const beforeCount = await knex("cache").count("* as count").first();
-
         const response = await agent.post("/admin/cache/clear");
 
         expect(response.status).toBe(302);

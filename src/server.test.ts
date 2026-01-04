@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, test } from "vitest";
+import { describe, expect } from "vitest";
 
 import { createApp } from "./app";
 import { createContext } from "./context";
