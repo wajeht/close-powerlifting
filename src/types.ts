@@ -1,8 +1,16 @@
 import "express-session";
 
+export interface SessionUser {
+  id: number;
+  email: string;
+  name: string;
+  admin: boolean;
+  newApiKey?: string;
+}
+
 declare module "express-session" {
   interface SessionData {
-    userId?: number;
+    user?: SessionUser;
   }
 }
 

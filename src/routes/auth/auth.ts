@@ -109,7 +109,7 @@ export function createAuthRouter(context: AppContext) {
   }
 
   router.get("/login", (req: Request, res: Response) => {
-    if (req.session.userId) {
+    if (req.session.user) {
       return res.redirect("/dashboard");
     }
     return res.status(200).render("auth/login.html", {
@@ -188,9 +188,9 @@ export function createAuthRouter(context: AppContext) {
   );
 
   router.post("/logout", (req: Request, res: Response) => {
-    const userId = req.session.userId;
+    const sessionUser = req.session.user;
     req.session.destroy(() => {
-      context.logger.info(`User ${userId} logged out`);
+      context.logger.info(`User ${sessionUser?.id} (${sessionUser?.email}) logged out`);
       res.redirect("/login");
     });
   });
@@ -239,7 +239,12 @@ export function createAuthRouter(context: AppContext) {
     });
 
     // Log the user in
-    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      admin: Boolean(user.admin),
+    };
 
     context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
 
@@ -250,8 +255,8 @@ export function createAuthRouter(context: AppContext) {
     "/dashboard",
     middleware.userAuthorizationMiddleware,
     async (req: Request, res: Response) => {
-      const userId = req.session.userId!;
-      const user = await context.userRepository.findById(userId);
+      const sessionUser = req.session.user!;
+      const user = await context.userRepository.findById(sessionUser.id);
 
       if (!user) {
         req.session.destroy(() => {
@@ -261,6 +266,12 @@ export function createAuthRouter(context: AppContext) {
       }
 
       const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
+
+      // Get and clear the new API key from session (shown once after verification)
+      const apiKey = sessionUser.newApiKey || null;
+      if (sessionUser.newApiKey) {
+        delete req.session.user!.newApiKey;
+      }
 
       let stats = null;
       if (user.admin) {
@@ -281,6 +292,7 @@ export function createAuthRouter(context: AppContext) {
         path: "/dashboard",
         user,
         usagePercent,
+        apiKey,
         stats,
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
@@ -292,8 +304,8 @@ export function createAuthRouter(context: AppContext) {
     "/settings",
     middleware.userAuthorizationMiddleware,
     async (req: Request, res: Response) => {
-      const userId = req.session.userId!;
-      const user = await context.userRepository.findById(userId);
+      const sessionUser = req.session.user!;
+      const user = await context.userRepository.findById(sessionUser.id);
 
       if (!user) {
         req.session.destroy(() => {
@@ -318,12 +330,15 @@ export function createAuthRouter(context: AppContext) {
     middleware.userAuthorizationMiddleware,
     middleware.validationMiddleware({ body: updateNameValidation }),
     async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
-      const userId = req.session.userId!;
+      const sessionUser = req.session.user!;
       const { name } = req.body;
 
-      await context.userRepository.updateById(userId, { name });
+      await context.userRepository.updateById(sessionUser.id, { name });
 
-      context.logger.info(`User ${userId} updated name to ${name}`);
+      // Update session with new name
+      req.session.user!.name = name;
+
+      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
 
       req.flash("success", "Name updated successfully");
       return res.redirect("/settings");
@@ -334,8 +349,8 @@ export function createAuthRouter(context: AppContext) {
     "/settings/regenerate-key",
     middleware.userAuthorizationMiddleware,
     async (req: Request, res: Response) => {
-      const userId = req.session.userId!;
-      const user = await context.userRepository.findById(userId);
+      const sessionUser = req.session.user!;
+      const user = await context.userRepository.findById(sessionUser.id);
 
       if (!user) {
         req.session.destroy(() => {
@@ -350,13 +365,13 @@ export function createAuthRouter(context: AppContext) {
         userId: String(user.id),
       });
 
-      await context.userRepository.updateById(userId, {
+      await context.userRepository.updateById(sessionUser.id, {
         api_key_version: (user.api_key_version || 0) + 1,
       });
 
-      const updatedUser = await context.userRepository.findById(userId);
+      const updatedUser = await context.userRepository.findById(sessionUser.id);
 
-      context.logger.info(`User ${userId} regenerated API key`);
+      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) regenerated API key`);
 
       req.flash("success", "Your new API key has been generated and sent to your email!");
 
@@ -375,11 +390,11 @@ export function createAuthRouter(context: AppContext) {
     "/settings/delete",
     middleware.userAuthorizationMiddleware,
     async (req: Request, res: Response) => {
-      const userId = req.session.userId!;
+      const sessionUser = req.session.user!;
 
-      await context.userRepository.softDelete(userId);
+      await context.userRepository.softDelete(sessionUser.id);
 
-      context.logger.info(`User ${userId} deleted their account`);
+      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) deleted their account`);
 
       req.session.destroy(() => {
         res.redirect("/login");
@@ -404,23 +419,39 @@ export function createAuthRouter(context: AppContext) {
       return res.redirect("/login");
     }
 
-    if (foundUser.verified === true) {
+    if (foundUser.verified) {
       req.flash("info", "Your email is already verified. Please login.");
       return res.redirect("/login");
     }
 
-    context.authService.sendWelcomeEmail({
+    const unhashedKey = await context.authService.sendWelcomeEmail({
       name: foundUser.name,
       email: foundUser.email,
       userId: String(foundUser.id),
     });
 
+    // Clear verification token after successful verification
+    await context.userRepository.updateById(foundUser.id, {
+      verification_token: null,
+    });
+
+    // Log the user in automatically
+    req.session.user = {
+      id: foundUser.id,
+      email: foundUser.email,
+      name: foundUser.name,
+      admin: Boolean(foundUser.admin),
+      newApiKey: unhashedKey,
+    };
+
+    context.logger.info(`User ${foundUser.id} (${foundUser.email}) verified and logged in`);
+
     req.flash(
       "success",
-      "Thank you for verifying your email address. We sent you an API key to your email. Please login to access your dashboard.",
+      "Your email has been verified! Your API key is shown below and has also been sent to your email.",
     );
 
-    return res.redirect("/login");
+    return res.redirect("/dashboard");
   });
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
@@ -468,7 +499,12 @@ export function createAuthRouter(context: AppContext) {
     }
 
     // Log the user in
-    req.session.userId = user.id;
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      admin: Boolean(user.admin),
+    };
 
     context.logger.info(`User ${user.id} (${user.email}) logged in via Google OAuth`);
 
@@ -576,7 +612,7 @@ export function createAuthRouter(context: AppContext) {
         throw new ValidationError("Something wrong while verifying your account!");
       }
 
-      if (foundUser.verified === true) {
+      if (foundUser.verified) {
         throw new ValidationError("This account has already been verified!");
       }
 

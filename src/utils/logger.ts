@@ -59,6 +59,7 @@ export interface LoggerType {
   info: (message: string, ...args: unknown[]) => void;
   warn: (message: string, ...args: unknown[]) => void;
   error: (message: string | Error, ...args: unknown[]) => void;
+  box: (title: string, content: string) => void;
   setLevel: (level: LogLevel) => void;
 }
 
@@ -87,11 +88,21 @@ export function createLogger(): LoggerType {
     globalLevel = level;
   }
 
+  function box(title: string, content: string) {
+    if (priority["INFO"] < priority[globalLevel]) return;
+
+    const divider = styleText("dim", "=".repeat(50));
+    const styledTitle = styleText("cyan", title);
+    const output = ["", divider, styledTitle, divider, content, divider, ""].join("\n");
+    process.stdout.write(output);
+  }
+
   return {
     debug,
     info,
     warn,
     error,
+    box,
     setLevel,
   };
 }

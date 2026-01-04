@@ -280,14 +280,14 @@ export function createMiddleware(
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.session?.userId as number | undefined;
+      const sessionUser = req.session?.user;
 
-      if (!userId) {
+      if (!sessionUser) {
         res.redirect("/login");
         return;
       }
 
-      const user = await userRepository.findById(userId);
+      const user = await userRepository.findById(sessionUser.id);
 
       if (!user) {
         req.session?.destroy(() => {
@@ -308,14 +308,14 @@ export function createMiddleware(
     next: NextFunction,
   ): Promise<void> {
     try {
-      const userId = req.session?.userId as number | undefined;
+      const sessionUser = req.session?.user;
 
-      if (!userId) {
+      if (!sessionUser || !sessionUser.admin) {
         res.redirect("/login");
         return;
       }
 
-      const user = await userRepository.findById(userId);
+      const user = await userRepository.findById(sessionUser.id);
 
       if (!user || !user.admin) {
         req.session?.destroy(() => {
