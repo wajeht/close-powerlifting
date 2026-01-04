@@ -5,7 +5,6 @@ export interface SessionUser {
   email: string;
   name: string;
   admin: boolean;
-  newApiKey?: string;
 }
 
 declare module "express-session" {

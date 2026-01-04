@@ -267,12 +267,6 @@ export function createAuthRouter(context: AppContext) {
 
       const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
 
-      // Get and clear the new API key from session (shown once after verification)
-      const apiKey = sessionUser.newApiKey || null;
-      if (sessionUser.newApiKey) {
-        delete req.session.user!.newApiKey;
-      }
-
       let stats = null;
       if (user.admin) {
         const allUsers = await context.userRepository.findAll();
@@ -292,7 +286,6 @@ export function createAuthRouter(context: AppContext) {
         path: "/dashboard",
         user,
         usagePercent,
-        apiKey,
         stats,
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
@@ -424,7 +417,7 @@ export function createAuthRouter(context: AppContext) {
       return res.redirect("/login");
     }
 
-    const unhashedKey = await context.authService.sendWelcomeEmail({
+    await context.authService.sendWelcomeEmail({
       name: foundUser.name,
       email: foundUser.email,
       userId: String(foundUser.id),
@@ -441,14 +434,13 @@ export function createAuthRouter(context: AppContext) {
       email: foundUser.email,
       name: foundUser.name,
       admin: Boolean(foundUser.admin),
-      newApiKey: unhashedKey,
     };
 
     context.logger.info(`User ${foundUser.id} (${foundUser.email}) verified and logged in`);
 
     req.flash(
       "success",
-      "Your email has been verified! Your API key is shown below and has also been sent to your email.",
+      "Your email has been verified! Your API key has been sent to your email. You can also view it in Settings.",
     );
 
     return res.redirect("/dashboard");

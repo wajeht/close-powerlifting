@@ -393,31 +393,6 @@ describe("Auth Routes", () => {
       expect(dashboardResponse.text).toContain("Dashboard");
     });
 
-    it("should show API key on dashboard after verification", async () => {
-      const sessionAgent = createUnauthenticatedSessionAgent();
-
-      await sessionAgent.get(`/verify-email?token=${verifyToken}&email=${verifyEmail}`);
-
-      const dashboardResponse = await sessionAgent.get("/dashboard");
-      expect(dashboardResponse.status).toBe(200);
-      expect(dashboardResponse.text).toContain("Your API Key");
-      expect(dashboardResponse.text).toContain("Copy this key now");
-    });
-
-    it("should clear API key from session after first dashboard view", async () => {
-      const sessionAgent = createUnauthenticatedSessionAgent();
-
-      await sessionAgent.get(`/verify-email?token=${verifyToken}&email=${verifyEmail}`);
-
-      // First view shows API key
-      const firstView = await sessionAgent.get("/dashboard");
-      expect(firstView.text).toContain("Your API Key");
-
-      // Second view should not show API key
-      const secondView = await sessionAgent.get("/dashboard");
-      expect(secondView.text).not.toContain("Your API Key");
-    });
-
     it("should reject verification with invalid token", async () => {
       const response = await request(app).get(
         `/verify-email?token=wrong-token&email=${verifyEmail}`,
