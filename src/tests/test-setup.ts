@@ -114,6 +114,14 @@ export function createUnauthenticatedApiAgent() {
   };
 }
 
+export function extractCsrfToken(html: string): string {
+  const match = html.match(/name="_csrf"\s+value="([^"]+)"/);
+  if (!match) {
+    throw new Error("CSRF token not found in response");
+  }
+  return match[1];
+}
+
 beforeAll(async () => {
   try {
     await knex.migrate.latest();

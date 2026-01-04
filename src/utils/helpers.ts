@@ -13,7 +13,8 @@ export interface HelpersType {
     userParams: UserParams & { admin?: boolean },
   ) => Promise<{ unhashedKey: string; hashedKey: string }>;
   timingSafeEqual: (a: string, b: string) => boolean;
-  getGoogleOAuthURL: () => string;
+  getGoogleOAuthURL: (state: string) => string;
+  generateOAuthState: () => string;
   extractNameFromEmail: (email: string) => string;
 }
 
@@ -29,7 +30,7 @@ export function createHelper(): HelpersType {
 
   async function hashKey(): Promise<{ key: string; hashedKey: string }> {
     const key = crypto.randomUUID();
-    const hashedKey = await bcrypt.hash(key, 5);
+    const hashedKey = await bcrypt.hash(key, 12);
     return { key, hashedKey };
   }
 
@@ -49,7 +50,7 @@ export function createHelper(): HelpersType {
     const salt = parseInt(configuration.app.passwordSalt, 10);
 
     if (admin) {
-      const key = jwt.sign(keyOptions, configuration.app.jwtSecret);
+      const key = jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "1y" });
       return {
         unhashedKey: key,
         hashedKey: await bcrypt.hash(key, salt),
@@ -64,13 +65,16 @@ export function createHelper(): HelpersType {
   }
 
   function timingSafeEqual(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
-    return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
+    const aHash = crypto.createHash("sha256").update(a).digest();
+    const bHash = crypto.createHash("sha256").update(b).digest();
+    return crypto.timingSafeEqual(aHash, bHash);
   }
 
-  function getGoogleOAuthURL(): string {
+  function generateOAuthState(): string {
+    return crypto.randomUUID();
+  }
+
+  function getGoogleOAuthURL(state: string): string {
     const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
     const options = {
@@ -79,6 +83,7 @@ export function createHelper(): HelpersType {
       access_type: "offline",
       response_type: "code",
       prompt: "consent",
+      state,
       scope: [
         "https://www.googleapis.com/auth/userinfo.profile",
         "https://www.googleapis.com/auth/userinfo.email",
@@ -104,6 +109,7 @@ export function createHelper(): HelpersType {
     hashKey,
     generateAPIKey,
     timingSafeEqual,
+    generateOAuthState,
     getGoogleOAuthURL,
     extractNameFromEmail,
   };

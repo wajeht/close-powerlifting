@@ -1,4 +1,5 @@
 import { ConnectSessionKnexStore } from "connect-session-knex";
+import { csrfSync } from "csrf-sync";
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
@@ -22,6 +23,7 @@ type RequestValidators = {
 
 export interface MiddlewareType {
   rateLimitMiddleware: () => ReturnType<typeof rateLimit>;
+  authRateLimitMiddleware: () => ReturnType<typeof rateLimit>;
   notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   errorMiddleware: (err: unknown, req: Request, res: Response, next: NextFunction) => void;
   validationMiddleware: (
@@ -34,6 +36,8 @@ export interface MiddlewareType {
   trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
+  csrfMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  csrfValidationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   sessionAuthenticationMiddleware: (
     req: Request,
     res: Response,
@@ -71,6 +75,29 @@ export function createMiddleware(
           });
         }
         return res.render("general/rate-limit.html", { title: "Rate Limited" });
+      },
+      skip: () => configuration.app.env !== "production",
+    });
+  }
+
+  function authRateLimitMiddleware() {
+    return rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 10, // Limit each IP to 10 auth requests per window
+      standardHeaders: true,
+      legacyHeaders: false,
+      validate: { trustProxy: false },
+      message: (req: Request, res: Response) => {
+        if (req.get("Content-Type") === "application/json") {
+          return res.json({
+            status: "fail",
+            request_url: req.originalUrl,
+            message: "Too many authentication attempts, please try again later.",
+            data: [],
+          });
+        }
+        req.flash("error", "Too many authentication attempts. Please try again in 15 minutes.");
+        return res.redirect("/login");
       },
       skip: () => configuration.app.env !== "production",
     });
@@ -282,6 +309,51 @@ export function createMiddleware(
     });
   }
 
+  const { csrfSynchronisedProtection, generateToken } = csrfSync({
+    getTokenFromRequest: (req: Request) => {
+      if (req.body && req.body._csrf) {
+        return req.body._csrf;
+      }
+      if (req.headers["x-csrf-token"]) {
+        return req.headers["x-csrf-token"] as string;
+      }
+      return undefined;
+    },
+  });
+
+  function csrfMiddleware(req: Request, res: Response, next: NextFunction): void {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+
+    try {
+      res.locals.csrfToken = generateToken(req);
+      next();
+    } catch {
+      res.locals.csrfToken = "";
+      next();
+    }
+  }
+
+  function csrfValidationMiddleware(req: Request, res: Response, next: NextFunction): void {
+    if (req.path.startsWith("/api/")) {
+      return next();
+    }
+
+    if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
+      return next();
+    }
+
+    csrfSynchronisedProtection(req, res, (err: unknown) => {
+      if (err) {
+        logger.error(err as Error);
+        req.flash("error", "Invalid form submission. Please refresh the page and try again.");
+        return res.redirect("back");
+      }
+      next();
+    });
+  }
+
   async function sessionAuthenticationMiddleware(
     req: Request,
     res: Response,
@@ -343,6 +415,7 @@ export function createMiddleware(
 
   return {
     rateLimitMiddleware,
+    authRateLimitMiddleware,
     notFoundMiddleware,
     errorMiddleware,
     validationMiddleware,
@@ -351,6 +424,8 @@ export function createMiddleware(
     trackAPICallsMiddleware,
     hostNameMiddleware,
     sessionMiddleware,
+    csrfMiddleware,
+    csrfValidationMiddleware,
     sessionAuthenticationMiddleware,
     sessionAdminAuthenticationMiddleware,
   };

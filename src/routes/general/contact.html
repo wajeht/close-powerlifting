@@ -9,6 +9,7 @@
   </div>
 
   <form action="/contact" method="post" class="fade-in animation-delay-3 flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6">
+    <%~ include('../_components/csrf-input.html') %>
     <%~ include('../_components/inputs/text.html', { label: 'Name', name: 'name', placeholder: 'Your name', required: true }) %>
     <%~ include('../_components/inputs/email.html', { label: 'Email', name: 'email', placeholder: 'you@example.com', required: true }) %>
     <%~ include('../_components/inputs/textarea.html', { label: 'Message', name: 'message', rows: 5, placeholder: "What's on your mind?", required: true }) %>

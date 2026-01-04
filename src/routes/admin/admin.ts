@@ -90,6 +90,7 @@ export function createAdminRouter(context: AppContext) {
   router.post(
     "/users/:id/api-count",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({
       params: userIdParamValidation,
       body: updateApiCountValidation,
@@ -115,6 +116,7 @@ export function createAdminRouter(context: AppContext) {
   router.post(
     "/users/:id/api-limit",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({
       params: userIdParamValidation,
       body: updateApiLimitValidation,
@@ -140,6 +142,7 @@ export function createAdminRouter(context: AppContext) {
   router.post(
     "/users/:id/resend-verification",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ params: userIdParamValidation }),
     async (req: Request, res: Response) => {
       const id = req.params.id as unknown as number;
@@ -179,6 +182,7 @@ export function createAdminRouter(context: AppContext) {
   router.post(
     "/cache/clear",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
       await adminService.clearAllCache();
 
@@ -190,6 +194,7 @@ export function createAdminRouter(context: AppContext) {
   router.post(
     "/cache/delete",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: cacheKeyValidation }),
     async (req: Request, res: Response) => {
       const key = req.body.key as string;

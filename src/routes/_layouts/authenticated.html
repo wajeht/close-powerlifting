@@ -17,6 +17,7 @@
             <% } %>
           </nav>
           <form action="/logout" method="post" class="mt-8">
+            <%~ include('../_components/csrf-input.html') %>
             <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-neutral-400 hover:bg-neutral-800 hover:text-white">Logout</button>
           </form>
         </aside>

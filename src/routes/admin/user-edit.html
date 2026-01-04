@@ -57,6 +57,7 @@
     <h2 class="text-lg font-semibold text-white">API Call Count</h2>
     <p class="text-sm text-neutral-400">Current usage: <%= it.editUser.api_call_count %> / <%= it.editUser.api_call_limit %></p>
     <form action="/admin/users/<%= it.editUser.id %>/api-count" method="post" class="flex items-end gap-2">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/inputs/number.html', { name: 'api_call_count', value: it.editUser.api_call_count, min: 0, required: true, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
       <%~ include('../_components/button.html', { text: 'Update Count' }) %>
     </form>
@@ -67,6 +68,7 @@
     <h2 class="text-lg font-semibold text-white">API Call Limit</h2>
     <p class="text-sm text-neutral-400">Monthly limit for this user.</p>
     <form action="/admin/users/<%= it.editUser.id %>/api-limit" method="post" class="flex items-end gap-2">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/inputs/number.html', { name: 'api_call_limit', value: it.editUser.api_call_limit, min: 0, required: true, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
       <%~ include('../_components/button.html', { text: 'Update Limit' }) %>
     </form>
@@ -78,6 +80,7 @@
     <h2 class="text-lg font-semibold text-white">Verification Email</h2>
     <p class="text-sm text-neutral-400">This user has not verified their email address.</p>
     <form action="/admin/users/<%= it.editUser.id %>/resend-verification" method="post">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/button.html', { text: 'Resend Verification Email', variant: 'warning' }) %>
     </form>
   </div>
