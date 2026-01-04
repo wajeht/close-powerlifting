@@ -1,7 +1,7 @@
 import request from "supertest";
-import { describe, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, expect, beforeAll, afterAll, beforeEach, it } from "vitest";
 
-import { app, knex } from "../../tests/test-setup";
+import { app, knex, extractCsrfToken } from "../../tests/test-setup";
 
 describe("Admin Routes", () => {
   let adminUserId: number;
@@ -282,10 +282,13 @@ describe("Admin Routes", () => {
 
     describe("POST /admin/users/:id/api-count", () => {
       it("should update user api_call_count", async () => {
+        const userPage = await agent.get(`/admin/users/${regularUserId}`);
+        const csrfToken = extractCsrfToken(userPage.text);
+
         const response = await agent
           .post(`/admin/users/${regularUserId}/api-count`)
           .type("form")
-          .send({ api_call_count: 25 });
+          .send({ api_call_count: 25, _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe(`/admin/users/${regularUserId}`);
@@ -295,10 +298,13 @@ describe("Admin Routes", () => {
       });
 
       it("should redirect with error for non-existent user", async () => {
+        const usersPage = await agent.get("/admin/users");
+        const csrfToken = extractCsrfToken(usersPage.text);
+
         const response = await agent
           .post("/admin/users/999999/api-count")
           .type("form")
-          .send({ api_call_count: 10 });
+          .send({ api_call_count: 10, _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/admin/users");
@@ -307,10 +313,13 @@ describe("Admin Routes", () => {
 
     describe("POST /admin/users/:id/api-limit", () => {
       it("should update user api_call_limit", async () => {
+        const userPage = await agent.get(`/admin/users/${regularUserId}`);
+        const csrfToken = extractCsrfToken(userPage.text);
+
         const response = await agent
           .post(`/admin/users/${regularUserId}/api-limit`)
           .type("form")
-          .send({ api_call_limit: 1000 });
+          .send({ api_call_limit: 1000, _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe(`/admin/users/${regularUserId}`);
@@ -341,7 +350,13 @@ describe("Admin Routes", () => {
       });
 
       it("should clear all cache entries", async () => {
-        const response = await agent.post("/admin/cache/clear");
+        const cachePage = await agent.get("/admin/cache");
+        const csrfToken = extractCsrfToken(cachePage.text);
+
+        const response = await agent
+          .post("/admin/cache/clear")
+          .type("form")
+          .send({ _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/admin/cache");
@@ -371,10 +386,13 @@ describe("Admin Routes", () => {
       });
 
       it("should delete a single cache entry", async () => {
+        const cachePage = await agent.get("/admin/cache");
+        const csrfToken = extractCsrfToken(cachePage.text);
+
         const response = await agent
           .post("/admin/cache/delete")
           .type("form")
-          .send({ key: "cache-entry-1" });
+          .send({ key: "cache-entry-1", _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/admin/cache");
@@ -385,10 +403,13 @@ describe("Admin Routes", () => {
       });
 
       it("should handle non-existent key gracefully", async () => {
+        const cachePage = await agent.get("/admin/cache");
+        const csrfToken = extractCsrfToken(cachePage.text);
+
         const response = await agent
           .post("/admin/cache/delete")
           .type("form")
-          .send({ key: "non-existent-key" });
+          .send({ key: "non-existent-key", _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/admin/cache");
@@ -398,7 +419,13 @@ describe("Admin Routes", () => {
       });
 
       it("should reject empty key", async () => {
-        const response = await agent.post("/admin/cache/delete").type("form").send({ key: "" });
+        const cachePage = await agent.get("/admin/cache");
+        const csrfToken = extractCsrfToken(cachePage.text);
+
+        const response = await agent
+          .post("/admin/cache/delete")
+          .type("form")
+          .send({ key: "", _csrf: csrfToken });
 
         expect(response.status).toBe(302);
 

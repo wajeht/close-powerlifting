@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ZodError } from "zod";
 
 import { configuration } from "../configuration";
 import { createContext } from "../context";
-import { knex } from "../tests/test-setup";
+import { knex, createUnauthenticatedSessionAgent } from "../tests/test-setup";
 import { createMiddleware } from "./middleware";
 
 const context = createContext();
@@ -185,5 +185,168 @@ describe("handleHostname", () => {
     const cached = await knex("cache").where({ key: "hostname" }).first();
     expect(cached).toBeDefined();
     expect(cached.value).toBe(configuration.app.domain);
+  });
+});
+
+describe("CSRF Protection", () => {
+  describe("csrfMiddleware - token generation", () => {
+    it("should include CSRF token in login page HTML", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/login");
+
+      expect(response.status).toBe(200);
+      // Check that the hidden CSRF input is present
+      expect(response.text).toContain('name="_csrf"');
+      expect(response.text).toContain('type="hidden"');
+    });
+
+    it("should include CSRF token in contact page HTML", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/contact");
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('name="_csrf"');
+    });
+
+    it("should NOT include CSRF token in API responses", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/api/health-check");
+
+      expect(response.status).toBe(200);
+      expect(response.text).not.toContain('name="_csrf"');
+    });
+  });
+
+  describe("csrfMiddleware - middleware behavior", () => {
+    let req: any;
+    let res: any;
+    let next: any;
+
+    beforeEach(() => {
+      req = {
+        path: "/some-page",
+        method: "GET",
+        session: {},
+      };
+      res = {
+        locals: {},
+      };
+      next = vi.fn();
+    });
+
+    it("should set csrfToken in res.locals for HTML routes", () => {
+      middleware.csrfMiddleware(req, res, next);
+
+      expect(res.locals.csrfToken).toBeDefined();
+      expect(typeof res.locals.csrfToken).toBe("string");
+      expect(res.locals.csrfToken.length).toBeGreaterThan(0);
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should skip token generation for API routes", () => {
+      req.path = "/api/rankings";
+
+      middleware.csrfMiddleware(req, res, next);
+
+      expect(res.locals.csrfToken).toBeUndefined();
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe("csrfValidationMiddleware - validation behavior", () => {
+    let req: any;
+    let res: any;
+    let next: any;
+
+    beforeEach(() => {
+      req = {
+        path: "/login",
+        method: "POST",
+        body: {},
+        headers: {},
+        session: {},
+        flash: vi.fn(),
+      };
+      res = {
+        redirect: vi.fn(),
+        locals: {},
+      };
+      next = vi.fn();
+    });
+
+    it("should skip validation for API routes", () => {
+      req.path = "/api/login";
+
+      middleware.csrfValidationMiddleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.redirect).not.toHaveBeenCalled();
+    });
+
+    it("should skip validation for GET requests", () => {
+      req.method = "GET";
+
+      middleware.csrfValidationMiddleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.redirect).not.toHaveBeenCalled();
+    });
+
+    it("should skip validation for HEAD requests", () => {
+      req.method = "HEAD";
+
+      middleware.csrfValidationMiddleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.redirect).not.toHaveBeenCalled();
+    });
+
+    it("should skip validation for OPTIONS requests", () => {
+      req.method = "OPTIONS";
+
+      middleware.csrfValidationMiddleware(req, res, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(res.redirect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("CSRF token flow - integration", () => {
+    it("should generate unique tokens per session", async () => {
+      const agent1 = createUnauthenticatedSessionAgent();
+      const agent2 = createUnauthenticatedSessionAgent();
+
+      const response1 = await agent1.get("/login");
+      const response2 = await agent2.get("/login");
+
+      // Extract CSRF tokens from responses
+      const tokenMatch1 = response1.text.match(/name="_csrf"\s+value="([^"]+)"/);
+      const tokenMatch2 = response2.text.match(/name="_csrf"\s+value="([^"]+)"/);
+
+      expect(tokenMatch1).toBeTruthy();
+      expect(tokenMatch2).toBeTruthy();
+
+      const token1 = tokenMatch1![1];
+      const token2 = tokenMatch2![1];
+
+      // Tokens should be different for different sessions
+      expect(token1).not.toBe(token2);
+    });
+
+    it("should maintain consistent token within same session", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+
+      const response1 = await agent.get("/login");
+      const response2 = await agent.get("/contact");
+
+      const tokenMatch1 = response1.text.match(/name="_csrf"\s+value="([^"]+)"/);
+      const tokenMatch2 = response2.text.match(/name="_csrf"\s+value="([^"]+)"/);
+
+      expect(tokenMatch1).toBeTruthy();
+      expect(tokenMatch2).toBeTruthy();
+
+      // Same session should have consistent token
+      expect(tokenMatch1![1]).toBe(tokenMatch2![1]);
+    });
   });
 });

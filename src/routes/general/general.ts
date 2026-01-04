@@ -54,6 +54,7 @@ export function createGeneralRouter(context: AppContext) {
 
   router.post(
     "/contact",
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({
       body: z.object({
         email: z.email({ message: "must be valid email address!" }),

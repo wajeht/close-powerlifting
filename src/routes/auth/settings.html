@@ -12,16 +12,16 @@
   <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
     <h2 class="text-lg font-semibold text-white">API Key</h2>
 
-    <% if (it.user.key) { %>
+    <% if (it.apiKey) { %>
     <div class="mb-4">
       <div class="mb-2 flex items-center justify-between">
-        <p class="text-sm text-neutral-400">Your API key is active. Use it as a Bearer token in the <code class="rounded bg-neutral-800 px-1">Authorization</code> header.</p>
+        <p class="text-sm text-neutral-400">Your new API key (copy it now - you won't see it again):</p>
         <span class="text-sm text-neutral-500">v<%= it.user.api_key_version %></span>
       </div>
       <div class="flex items-center gap-2">
         <input
           type="text"
-          value="<%= it.user.key %>"
+          value="<%= it.apiKey %>"
           readonly
           class="flex-1 rounded-md bg-neutral-800 px-3 py-2 font-mono text-sm text-neutral-300"
           id="api-key-input"
@@ -29,11 +29,20 @@
         <%~ include('../_components/button.html', { type: 'button', text: 'Copy', variant: 'secondary', onclick: "navigator.clipboard.writeText(document.getElementById('api-key-input').value)" }) %>
       </div>
     </div>
+    <% } else if (it.user.key) { %>
+    <div class="mb-4">
+      <div class="mb-2 flex items-center justify-between">
+        <p class="text-sm text-neutral-400">Your API key is active. Use it as a Bearer token in the <code class="rounded bg-neutral-800 px-1">Authorization</code> header.</p>
+        <span class="text-sm text-neutral-500">v<%= it.user.api_key_version %></span>
+      </div>
+      <p class="text-sm text-neutral-500">For security, your key is only shown once when generated. Check your email or regenerate below.</p>
+    </div>
     <% } else { %>
     <p class="mb-4 text-sm text-neutral-400">You don't have an API key yet. Generate one below.</p>
     <% } %>
 
     <form action="/settings/regenerate-key" method="post" onsubmit="return confirm('This will invalidate your current API key. Continue?')">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/button.html', { text: it.user.key ? 'Regenerate API Key' : 'Generate API Key' }) %>
     </form>
   </div>
@@ -50,6 +59,7 @@
     </div>
 
     <form action="/settings" method="post" class="space-y-4">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/inputs/text.html', { label: 'Name', name: 'name', value: it.user.name, required: true }) %>
       <div class="flex flex-col gap-2">
         <label class="text-sm text-neutral-400">Email</label>
@@ -67,6 +77,7 @@
     <h2 class="text-lg font-semibold text-white">Danger Zone</h2>
     <p class="text-sm text-neutral-400">Once you delete your account, there is no going back. Please be certain.</p>
     <form action="/settings/delete" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">
+      <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/button.html', { text: 'Delete Account', variant: 'danger' }) %>
     </form>
   </div>

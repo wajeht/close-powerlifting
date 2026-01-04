@@ -6,6 +6,7 @@ import {
   knex,
   createUnauthenticatedSessionAgent,
   createUnauthenticatedApiAgent,
+  extractCsrfToken,
 } from "../../tests/test-setup";
 
 describe("Auth Routes", () => {
@@ -62,17 +63,28 @@ describe("Auth Routes", () => {
 
   describe("POST /login", () => {
     it("should redirect back to login with info message for valid email", async () => {
-      const response = await request(app).post("/login").type("form").send({ email: testEmail });
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent
+        .post("/login")
+        .type("form")
+        .send({ email: testEmail, _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
     });
 
     it("should redirect back to login for non-existent user", async () => {
-      const response = await request(app)
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent
         .post("/login")
         .type("form")
-        .send({ email: "nonexistent@example.com" });
+        .send({ email: "nonexistent@example.com", _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -88,10 +100,14 @@ describe("Auth Routes", () => {
         })
         .returning("*");
 
-      const response = await request(app)
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent
         .post("/login")
         .type("form")
-        .send({ email: "unverified-test@example.com" });
+        .send({ email: "unverified-test@example.com", _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -152,7 +168,6 @@ describe("Auth Routes", () => {
 
   describe("POST /logout", () => {
     it("should logout and redirect to login", async () => {
-      // Reset token for login (also clear any expired timestamp)
       await knex("users").where({ id: testUserId }).update({
         verification_token: testMagicToken,
         magic_link_expires_at: null,
@@ -161,7 +176,10 @@ describe("Auth Routes", () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      const response = await sessionAgent.post("/logout");
+      const dashboardPage = await sessionAgent.get("/dashboard");
+      const csrfToken = extractCsrfToken(dashboardPage.text);
+
+      const response = await sessionAgent.post("/logout").type("form").send({ _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -178,8 +196,13 @@ describe("Auth Routes", () => {
     });
 
     it("should create new user and redirect when email does not exist", async () => {
-      const response = await request(app).post("/login").type("form").send({
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent.post("/login").type("form").send({
         email: "new-user@example.com",
+        _csrf: csrfToken,
       });
 
       expect(response.status).toBe(302);
@@ -187,9 +210,9 @@ describe("Auth Routes", () => {
 
       const user = await knex("users").where({ email: "new-user@example.com" }).first();
       expect(user).toBeDefined();
-      expect(user.name).toBe("New User"); // extracted from email
+      expect(user.name).toBe("New User");
       expect(user.verification_token).toBeDefined();
-      expect(user.verified).toBe(0); // SQLite stores booleans as 0/1
+      expect(user.verified).toBe(0);
     });
   });
 
@@ -260,7 +283,13 @@ describe("Auth Routes", () => {
         const beforeUser = await knex("users").where({ id: testUserId }).first();
         const beforeKey = beforeUser.key;
 
-        const response = await sessionAgent.post("/settings/regenerate-key");
+        const settingsPage = await sessionAgent.get("/settings");
+        const csrfToken = extractCsrfToken(settingsPage.text);
+
+        const response = await sessionAgent
+          .post("/settings/regenerate-key")
+          .type("form")
+          .send({ _csrf: csrfToken });
 
         expect(response.status).toBe(200);
 
@@ -301,10 +330,13 @@ describe("Auth Routes", () => {
       });
 
       it("should update user name", async () => {
+        const settingsPage = await sessionAgent.get("/settings");
+        const csrfToken = extractCsrfToken(settingsPage.text);
+
         const response = await sessionAgent
           .post("/settings")
           .type("form")
-          .send({ name: "Updated Name" });
+          .send({ name: "Updated Name", _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/settings");
@@ -340,13 +372,19 @@ describe("Auth Routes", () => {
           `/magic-link?token=${deleteMagicToken}&email=delete-test@example.com`,
         );
 
-        const response = await deleteSessionAgent.post("/settings/delete");
+        const settingsPage = await deleteSessionAgent.get("/settings");
+        const csrfToken = extractCsrfToken(settingsPage.text);
+
+        const response = await deleteSessionAgent
+          .post("/settings/delete")
+          .type("form")
+          .send({ _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/login");
 
         const user = await knex("users").where({ id: deleteUserId }).first();
-        expect(user.deleted).toBe(1); // SQLite stores booleans as 1/0
+        expect(user.deleted).toBe(1);
       });
     });
   });
@@ -434,14 +472,15 @@ describe("Auth Routes", () => {
       await knex("users").where({ email: "api-new-user@example.com" }).delete();
     });
 
-    it("should create new user and return 201 for non-existent email", async () => {
+    it("should create new user and return 200 for non-existent email", async () => {
       const response = await apiAgent
         .post("/api/login")
         .send({ email: "api-new-user@example.com" });
 
-      expect(response.status).toBe(201);
+      // Returns generic message to prevent account enumeration
+      expect(response.status).toBe(200);
       expect(response.body.status).toBe("success");
-      expect(response.body.message).toContain("Check your email to verify your account");
+      expect(response.body.message).toContain("If this email is registered");
 
       const user = await knex("users").where({ email: "api-new-user@example.com" }).first();
       expect(user).toBeDefined();
@@ -452,9 +491,10 @@ describe("Auth Routes", () => {
     it("should send magic link for verified user", async () => {
       const response = await apiAgent.post("/api/login").send({ email: testEmail });
 
+      // Returns generic message to prevent account enumeration
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("success");
-      expect(response.body.message).toContain("Check your email for a magic link");
+      expect(response.body.message).toContain("If this email is registered");
     });
 
     it("should resend verification for unverified user", async () => {
@@ -471,9 +511,10 @@ describe("Auth Routes", () => {
         .post("/api/login")
         .send({ email: "unverified-api@example.com" });
 
+      // Returns generic message to prevent account enumeration
       expect(response.status).toBe(200);
       expect(response.body.status).toBe("success");
-      expect(response.body.message).toContain("verify your email first");
+      expect(response.body.message).toContain("If this email is registered");
 
       await knex("users").where({ id: unverifiedUser.id }).delete();
     });
@@ -630,10 +671,14 @@ describe("Auth Routes", () => {
 
   describe("Validation edge cases", () => {
     it("POST /login should reject invalid email format", async () => {
-      const response = await request(app)
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent
         .post("/login")
         .type("form")
-        .send({ email: "not-an-email" });
+        .send({ email: "not-an-email", _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -648,12 +693,17 @@ describe("Auth Routes", () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      const response = await sessionAgent.post("/settings").type("form").send({ name: "" });
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+
+      const response = await sessionAgent
+        .post("/settings")
+        .type("form")
+        .send({ name: "", _csrf: csrfToken });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/settings");
 
-      // Name should not have changed
       const user = await knex("users").where({ id: testUserId }).first();
       expect(user.name).toBe(testName);
     });
@@ -689,13 +739,17 @@ describe("Auth Routes", () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      await sessionAgent.post("/settings").type("form").send({ name: "Updated Session Name" });
-
-      // Session should reflect new name in subsequent requests
       const settingsPage = await sessionAgent.get("/settings");
-      expect(settingsPage.text).toContain("Updated Session Name");
+      const csrfToken = extractCsrfToken(settingsPage.text);
 
-      // Restore original name
+      await sessionAgent
+        .post("/settings")
+        .type("form")
+        .send({ name: "Updated Session Name", _csrf: csrfToken });
+
+      const settingsPageAfter = await sessionAgent.get("/settings");
+      expect(settingsPageAfter.text).toContain("Updated Session Name");
+
       await knex("users").where({ id: testUserId }).update({ name: testName });
     });
   });

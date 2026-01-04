@@ -121,6 +121,8 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/login",
+    middleware.authRateLimitMiddleware(),
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: loginValidation }),
     async (req: Request<{}, {}, LoginType>, res: Response) => {
       const { email } = req.body;
@@ -148,7 +150,7 @@ export function createAuthRouter(context: AppContext) {
           hostname,
         });
 
-        req.flash("info", "Check your email to verify your account and get your API key.");
+        req.flash("info", "If this email is registered, you will receive an email shortly.");
         return res.redirect("/login");
       }
 
@@ -160,7 +162,7 @@ export function createAuthRouter(context: AppContext) {
           verification_token: user.verification_token!,
           hostname,
         });
-        req.flash("info", "Please verify your email first. We've sent a new verification link.");
+        req.flash("info", "If this email is registered, you will receive an email shortly.");
         return res.redirect("/login");
       }
 
@@ -182,12 +184,12 @@ export function createAuthRouter(context: AppContext) {
 
       context.logger.info(`Magic link sent to ${user.email}`);
 
-      req.flash("info", "Check your email for a magic link to log in.");
+      req.flash("info", "If this email is registered, you will receive an email shortly.");
       return res.redirect("/login");
     },
   );
 
-  router.post("/logout", (req: Request, res: Response) => {
+  router.post("/logout", middleware.csrfValidationMiddleware, (req: Request, res: Response) => {
     const sessionUser = req.session.user;
     req.session.destroy(() => {
       context.logger.info(`User ${sessionUser?.id} (${sessionUser?.email}) logged out`);
@@ -321,6 +323,7 @@ export function createAuthRouter(context: AppContext) {
   router.post(
     "/settings",
     middleware.sessionAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: updateNameValidation }),
     async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
       const sessionUser = req.session.user!;
@@ -341,6 +344,7 @@ export function createAuthRouter(context: AppContext) {
   router.post(
     "/settings/regenerate-key",
     middleware.sessionAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
       const user = await context.userRepository.findById(sessionUser.id);
@@ -382,6 +386,7 @@ export function createAuthRouter(context: AppContext) {
   router.post(
     "/settings/delete",
     middleware.sessionAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
 
@@ -447,15 +452,24 @@ export function createAuthRouter(context: AppContext) {
   });
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
-    res.redirect(context.helpers.getGoogleOAuthURL());
+    const state = context.helpers.generateOAuthState();
+    req.session.oauthState = state;
+    res.redirect(context.helpers.getGoogleOAuthURL(state));
   });
 
   router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
     const code = req.query.code as string;
+    const state = req.query.state as string;
 
     if (!code) {
       throw new UnauthorizedError("Something went wrong while authenticating with Google");
     }
+
+    if (!state || !req.session.oauthState || state !== req.session.oauthState) {
+      delete req.session.oauthState;
+      throw new UnauthorizedError("Invalid OAuth state - please try again");
+    }
+    delete req.session.oauthState;
 
     const { id_token, access_token } = await getGoogleOauthToken({ code });
 
@@ -505,6 +519,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/api/login",
+    middleware.authRateLimitMiddleware(),
     middleware.apiValidationMiddleware({ body: loginValidation }),
     async (req: Request<{}, {}, LoginType>, res: Response) => {
       const { email } = req.body;
@@ -532,10 +547,10 @@ export function createAuthRouter(context: AppContext) {
           hostname,
         });
 
-        res.status(201).json({
+        res.status(200).json({
           status: "success",
           request_url: req.originalUrl,
-          message: "Check your email to verify your account and get your API key.",
+          message: "If this email is registered, you will receive an email shortly.",
           data: [],
         });
         return;
@@ -552,7 +567,7 @@ export function createAuthRouter(context: AppContext) {
         res.status(200).json({
           status: "success",
           request_url: req.originalUrl,
-          message: "Please verify your email first. We've sent a new verification link.",
+          message: "If this email is registered, you will receive an email shortly.",
           data: [],
         });
         return;
@@ -579,7 +594,7 @@ export function createAuthRouter(context: AppContext) {
       res.status(200).json({
         status: "success",
         request_url: req.originalUrl,
-        message: "Check your email for a magic link to log in.",
+        message: "If this email is registered, you will receive an email shortly.",
         data: [],
       });
     },

@@ -49,12 +49,20 @@ export function createMail(logger: LoggerType): MailType {
     }
   }
 
+  function redactSensitiveData(text: string): string {
+    return text.replace(
+      /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g,
+      "[REDACTED_API_KEY]",
+    );
+  }
+
   async function send(to: string, subject: string, text: string): Promise<void> {
     try {
       await transporter.sendMail({ from, to, subject, text });
       logger.info(`Email sent to ${to}: ${subject}`);
     } catch {
-      const content = `To: ${to}\nSubject: ${subject}\n${"-".repeat(50)}\n${text}`;
+      const redactedText = redactSensitiveData(text);
+      const content = `To: ${to}\nSubject: ${subject}\n${"-".repeat(50)}\n${redactedText}`;
       logger.box("EMAIL (mailpit unavailable)", content);
     }
   }
