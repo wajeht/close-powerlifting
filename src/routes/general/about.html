@@ -1,34 +1,15 @@
 <div class="mx-auto max-w-5xl px-4">
-  <!-- hero -->
-  <div class="fade-in-heading mb-12 text-center">
-    <h1 class="text-3xl font-bold text-white sm:text-4xl">
-      Making powerlifting data<br class="hidden sm:inline" />
-      <span class="text-power">accessible to everyone</span>
-    </h1>
-    <p class="mx-auto mt-4 max-w-2xl text-lg text-neutral-400">
-      A free API that lets developers build apps with the world's largest powerlifting database.
+  <!-- header -->
+  <div class="fade-in-heading mb-8">
+    <h1 class="text-2xl font-bold text-white">About</h1>
+    <p class="mt-2 text-sm text-neutral-400">
+      Making powerlifting data accessible to everyone.
     </p>
   </div>
 
-  <div class="flex flex-col gap-12">
-    <!-- the story -->
-    <div class="fade-in animation-delay-2">
-      <h2 class="mb-4 text-xl font-semibold text-white">The story</h2>
-      <div class="space-y-4 text-neutral-400">
-        <p>
-          OpenPowerlifting.org is an incredible resource — over 3 million competition results from 100+ federations worldwide, all freely available. But if you want to build an app with that data, you're stuck scraping HTML tables and parsing inconsistent formats.
-        </p>
-        <p>
-          Close Powerlifting was built to solve that problem. Instead of spending days writing scrapers and handling edge cases, developers can now query the entire database with a simple REST API.
-        </p>
-        <p>
-          Whether you're building a coaching app, analyzing strength trends, or just want to look up your own competition history programmatically — this API makes it possible in minutes.
-        </p>
-      </div>
-    </div>
-
+  <div class="flex flex-col gap-6 text-sm leading-relaxed text-neutral-400">
     <!-- data source credit -->
-    <div class="fade-in animation-delay-3 rounded-xl border border-power/30 bg-power/10 p-6">
+    <section class="fade-in animation-delay-2 rounded-xl border border-power/30 bg-power/10 p-6">
       <div class="flex items-start gap-4">
         <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-power/20">
           <svg class="h-5 w-5 text-power" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -37,176 +18,44 @@
         </div>
         <div>
           <h3 class="font-semibold text-white">Built on OpenPowerlifting</h3>
-          <p class="mt-1 text-sm text-neutral-300">
+          <p class="mt-1 text-neutral-300">
             All data is sourced from <a class="font-medium text-power hover:text-power-dark" href="https://openpowerlifting.org" target="_blank">OpenPowerlifting.org</a>, a community-driven project that archives powerlifting competition results. They do the hard work of collecting and maintaining the data — we just make it easier to access programmatically.
           </p>
-          <p class="mt-2 text-sm text-neutral-400">
+          <p class="mt-2 text-neutral-400">
             Consider <a class="text-power/80 hover:text-power" href="https://www.openpowerlifting.org/donate" target="_blank">supporting their project</a> if you find this API useful.
           </p>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- getting started -->
-    <div class="fade-in animation-delay-3">
-      <h2 class="mb-4 text-xl font-semibold text-white">Getting started</h2>
-      <div class="grid gap-4 sm:grid-cols-3">
-        <div class="flex gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-power text-sm font-bold text-white">
-            1
-          </div>
+    <!-- the story -->
+    <section class="fade-in animation-delay-3">
+      <p>
+        OpenPowerlifting.org is an incredible resource — over 3 million competition results from more than 100 federations worldwide, all freely available to the public. But if you want to build an application with that data, you're stuck scraping HTML tables and parsing inconsistent formats across thousands of pages.
+      </p>
+      <p class="mt-3">
+        Close Powerlifting was created to solve exactly that problem. Instead of spending days or weeks writing scrapers, handling edge cases, and normalizing data formats, developers can now query the entire database with a simple, well-documented REST API.
+      </p>
+      <p class="mt-3">
+        Whether you're building a coaching dashboard to track your athletes, analyzing historical strength trends, or just want to look up your own competition history programmatically — this API makes it possible in minutes, not days.
+      </p>
+
+      <!-- signature -->
+      <div class="mt-6 flex justify-end">
+        <a href="https://github.com/wajeht" target="_blank" class="group inline-flex items-center gap-3 text-right">
           <div>
-            <p class="font-medium text-white">Get an API key</p>
-            <p class="mt-1 text-sm text-neutral-500">
-              <a class="text-power/80 hover:text-power" href="/register">Register</a> for free
-            </p>
+            <p class="font-medium text-neutral-300 group-hover:text-power">@wajeht</p>
+            <p class="text-xs text-neutral-500">gym: 1585lbs @ 200lbs / competition: 1477lbs @ 185lbs</p>
           </div>
-        </div>
-        <div class="flex gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-power text-sm font-bold text-white">
-            2
-          </div>
-          <div>
-            <p class="font-medium text-white">Read the docs</p>
-            <p class="mt-1 text-sm text-neutral-500">
-              <a class="text-power/80 hover:text-power" href="/docs/api" target="_blank">View endpoints</a>
-            </p>
-          </div>
-        </div>
-        <div class="flex gap-3 rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-power text-sm font-bold text-white">
-            3
-          </div>
-          <div>
-            <p class="font-medium text-white">Start building</p>
-            <p class="mt-1 text-sm text-neutral-500">
-              Use <code class="text-xs">x-api-key</code> header
-            </p>
-          </div>
-        </div>
+          <img
+            src="https://github.com/wajeht.png"
+            alt="wajeht"
+            class="h-10 w-10 rounded-full border-2 border-neutral-700 transition-all group-hover:border-power"
+          />
+        </a>
       </div>
-    </div>
+    </section>
 
-    <!-- creator -->
-    <div class="fade-in animation-delay-3">
-      <h2 class="mb-4 text-xl font-semibold text-white">Built by</h2>
-      <div class="flex items-center gap-4 rounded-xl border border-neutral-800 bg-neutral-900 p-6">
-        <img
-          src="https://github.com/wajeht.png"
-          alt="wajeht"
-          class="h-16 w-16 rounded-full border-2 border-neutral-700"
-        />
-        <div>
-          <p class="font-semibold text-white">@wajeht</p>
-          <p class="text-sm text-neutral-400">
-            Developer and powerlifting enthusiast. Built this because I wanted an easier way to access competition data for my own projects.
-          </p>
-          <div class="mt-2 flex gap-3">
-            <a
-              class="text-sm text-power/80 hover:text-power"
-              href="https://github.com/wajeht"
-              target="_blank"
-            >
-              GitHub
-            </a>
-            <a
-              class="text-sm text-power/80 hover:text-power"
-              href="https://github.com/wajeht/close-powerlifting"
-              target="_blank"
-            >
-              Source Code
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- faq -->
-    <div class="fade-in animation-delay-4">
-      <h2 class="mb-4 text-xl font-semibold text-white">Frequently asked questions</h2>
-      <div class="flex flex-col gap-2">
-        <details class="group rounded-xl border border-neutral-800 bg-neutral-900">
-          <summary class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300">
-            Is it free to use?
-            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="border-t border-neutral-800 px-4 py-3 text-sm text-neutral-400">
-            Yes. Every account gets 500 free API calls per month, which resets at the beginning of each month. No credit card required.
-          </div>
-        </details>
-
-        <details class="group rounded-xl border border-neutral-800 bg-neutral-900">
-          <summary class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300">
-            How often is the data updated?
-            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="border-t border-neutral-800 px-4 py-3 text-sm text-neutral-400">
-            The database syncs with OpenPowerlifting weekly. New competition results are typically available within a few days of being added to their database.
-          </div>
-        </details>
-
-        <details class="group rounded-xl border border-neutral-800 bg-neutral-900">
-          <summary class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300">
-            What if I need more API calls?
-            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="border-t border-neutral-800 px-4 py-3 text-sm text-neutral-400">
-            <a class="text-power/80 hover:text-power" href="/contact">Contact us</a> with your use case. We're happy to increase limits for legitimate projects.
-          </div>
-        </details>
-
-        <details class="group rounded-xl border border-neutral-800 bg-neutral-900">
-          <summary class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300">
-            Can I use this for commercial projects?
-            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="border-t border-neutral-800 px-4 py-3 text-sm text-neutral-400">
-            This project is primarily educational. For commercial use, please review OpenPowerlifting's data license and consider supporting their project directly.
-          </div>
-        </details>
-
-        <details class="group rounded-xl border border-neutral-800 bg-neutral-900">
-          <summary class="flex cursor-pointer items-center justify-between p-4 font-medium text-neutral-300">
-            I lost my API key
-            <svg class="h-5 w-5 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </summary>
-          <div class="border-t border-neutral-800 px-4 py-3 text-sm text-neutral-400">
-            Visit the <a class="text-power/80 hover:text-power" href="/reset-api-key">reset API key</a> page and enter your email. A new key will be sent to you.
-          </div>
-        </details>
-      </div>
-    </div>
-
-    <!-- cta -->
-    <div class="fade-in animation-delay-5 text-center">
-      <p class="mb-4 text-neutral-400">Ready to start building?</p>
-      <a
-        class="inline-block rounded-md bg-power px-6 py-3 font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl hover:shadow-power-glow"
-        href="/register"
-      >
-        Get your free API key
-      </a>
-    </div>
   </div>
 </div>
-
-<style>
-  details summary::-webkit-details-marker {
-    display: none;
-  }
-
-  details summary::marker {
-    display: none;
-    content: '';
-  }
-</style>
