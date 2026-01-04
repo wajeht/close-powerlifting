@@ -29,11 +29,8 @@ export async function up(knex: Knex): Promise<void> {
     await knex.schema.createTable("cache", (table) => {
       table.string("key").primary();
       table.text("value").notNullable();
-      table.timestamp("expires_at").nullable();
       table.timestamp("created_at").defaultTo(knex.fn.now());
       table.timestamp("updated_at").defaultTo(knex.fn.now());
-
-      table.index("expires_at");
     });
   }
 }
