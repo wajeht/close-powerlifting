@@ -3,7 +3,7 @@
   <p class="mt-2 text-neutral-400">View and manage user accounts.</p>
 </header>
 
-<div class="fade-in animation-delay-2 mb-6">
+<div class="fade-in animation-delay-2 mt-6 mb-6">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
@@ -25,11 +25,12 @@
         <th class="p-4">API Calls</th>
         <th class="p-4">Limit</th>
         <th class="p-4">Admin</th>
+        <th class="p-4"></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-neutral-800">
       <% for (const user of it.users) { %>
-      <tr class="hover:bg-neutral-800/50 cursor-pointer" onclick="window.location='/admin/users/<%= user.id %>'">
+      <tr class="hover:bg-neutral-800/50">
         <td class="p-4 text-neutral-400"><%= user.id %></td>
         <td class="p-4 text-white"><%= user.name %></td>
         <td class="p-4 text-neutral-300"><%= user.email %></td>
@@ -47,16 +48,50 @@
           <span class="rounded-full bg-purple-900/50 px-2 py-1 text-xs text-purple-400">Admin</span>
           <% } %>
         </td>
+        <td class="p-4">
+          <button
+            type="button"
+            class="open-modal rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-blue-400"
+            data-modal="modal-user-<%= user.id %>"
+            title="Update API Limit"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </button>
+        </td>
       </tr>
       <% } %>
       <% if (it.users.length === 0) { %>
       <tr>
-        <td colspan="7" class="p-8 text-center text-neutral-400">No users found.</td>
+        <td colspan="8" class="p-8 text-center text-neutral-400">No users found.</td>
       </tr>
       <% } %>
     </tbody>
   </table>
 </div>
+
+<% for (const user of it.users) { %>
+<dialog id="modal-user-<%= user.id %>" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="/admin/users/<%= user.id %>/api-limit" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('../_components/csrf-input.html') %>
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white">Update API Limit</h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400">Set a new API call limit for <span class="text-white"><%= user.name %></span>.</p>
+    <%~ include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }) %>
+    <div class="flex gap-2 justify-end">
+      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('../_components/button.html', { text: 'Update Limit' }) %>
+    </div>
+  </form>
+</dialog>
+<% } %>
 
 <% if (it.pagination.pages > 1) { %>
 <div class="fade-in animation-delay-5 mt-6 flex items-center justify-center gap-2">
@@ -71,3 +106,11 @@
   <% } %>
 </div>
 <% } %>
+
+<script>
+document.querySelectorAll('.open-modal').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById(btn.dataset.modal).showModal();
+  });
+});
+</script>

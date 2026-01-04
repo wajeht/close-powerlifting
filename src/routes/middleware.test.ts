@@ -350,3 +350,192 @@ describe("CSRF Protection", () => {
     });
   });
 });
+
+describe("appLocalStateMiddleware", () => {
+  describe("currentYear", () => {
+    it("should render footer with current year", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/");
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain(`© ${new Date().getFullYear()} Close Powerlifting`);
+    });
+  });
+
+  describe("navigation state", () => {
+    it("should show 'Get API Key' when user is not logged in", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/");
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain('href="/login"');
+      expect(response.text).toContain("Get API Key");
+      expect(response.text).not.toContain('href="/dashboard"');
+    });
+
+    it("should show 'Dashboard' when user is logged in with API key", async () => {
+      const testEmail = "nav-test@example.com";
+      const testToken = "nav-test-token-123";
+
+      const [user] = await knex("users")
+        .insert({
+          name: "Nav Test User",
+          email: testEmail,
+          verification_token: testToken,
+          key: "test-api-key-for-nav",
+          api_call_count: 0,
+          api_call_limit: 100,
+          admin: false,
+          verified: true,
+        })
+        .returning("*");
+
+      try {
+        const agent = createUnauthenticatedSessionAgent();
+
+        // Login via magic link
+        await agent.get(`/magic-link?token=${testToken}&email=${testEmail}`);
+
+        // Check navigation shows Dashboard
+        const response = await agent.get("/");
+
+        expect(response.status).toBe(200);
+        expect(response.text).toContain('href="/dashboard"');
+        expect(response.text).toContain("Dashboard");
+      } finally {
+        await knex("users").where({ id: user.id }).delete();
+      }
+    });
+
+    it("should show 'Get API Key' when user is logged in but has no API key", async () => {
+      const testEmail = "nav-nokey@example.com";
+      const testToken = "nav-nokey-token-123";
+
+      const [user] = await knex("users")
+        .insert({
+          name: "Nav No Key User",
+          email: testEmail,
+          verification_token: testToken,
+          key: null,
+          api_call_count: 0,
+          api_call_limit: 100,
+          admin: false,
+          verified: true,
+        })
+        .returning("*");
+
+      try {
+        const agent = createUnauthenticatedSessionAgent();
+
+        // Login via magic link
+        await agent.get(`/magic-link?token=${testToken}&email=${testEmail}`);
+
+        // Check navigation shows Get API Key (not Dashboard)
+        const response = await agent.get("/");
+
+        expect(response.status).toBe(200);
+        expect(response.text).toContain('href="/login"');
+        expect(response.text).toContain("Get API Key");
+      } finally {
+        await knex("users").where({ id: user.id }).delete();
+      }
+    });
+  });
+
+  describe("unit tests", () => {
+    let req: any;
+    let res: any;
+    let next: any;
+
+    beforeEach(() => {
+      req = {
+        session: null,
+      };
+      res = {
+        locals: {},
+      };
+      next = vi.fn();
+    });
+
+    it("should set state.currentYear to current year", async () => {
+      await middleware.appLocalStateMiddleware(req, res, next);
+
+      expect(res.locals.state).toBeDefined();
+      expect(res.locals.state.currentYear).toBe(new Date().getFullYear());
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should set state.user to null when no session", async () => {
+      await middleware.appLocalStateMiddleware(req, res, next);
+
+      expect(res.locals.state.user).toBeNull();
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should set state.user to null when session has no user", async () => {
+      req.session = {};
+
+      await middleware.appLocalStateMiddleware(req, res, next);
+
+      expect(res.locals.state.user).toBeNull();
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should load user from database when session has user", async () => {
+      const testEmail = "state-test@example.com";
+
+      const [user] = await knex("users")
+        .insert({
+          name: "State Test User",
+          email: testEmail,
+          verification_token: "state-test-token",
+          key: "state-test-key",
+          api_call_count: 0,
+          api_call_limit: 100,
+          admin: false,
+          verified: true,
+        })
+        .returning("*");
+
+      try {
+        req.session = { user: { id: user.id } };
+
+        await middleware.appLocalStateMiddleware(req, res, next);
+
+        expect(res.locals.state.user).toBeDefined();
+        expect(res.locals.state.user.id).toBe(user.id);
+        expect(res.locals.state.user.email).toBe(testEmail);
+        expect(next).toHaveBeenCalled();
+      } finally {
+        await knex("users").where({ id: user.id }).delete();
+      }
+    });
+
+    it("should set state.user to null when session user not found in database", async () => {
+      req.session = { user: { id: 999999 } };
+
+      await middleware.appLocalStateMiddleware(req, res, next);
+
+      expect(res.locals.state.user).toBeNull();
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should still call next and set fallback state on error", async () => {
+      // Simulate an error by passing invalid session
+      req.session = {
+        user: {
+          get id() {
+            throw new Error("Simulated error");
+          },
+        },
+      };
+
+      await middleware.appLocalStateMiddleware(req, res, next);
+
+      expect(res.locals.state).toBeDefined();
+      expect(res.locals.state.user).toBeNull();
+      expect(res.locals.state.currentYear).toBe(new Date().getFullYear());
+      expect(next).toHaveBeenCalled();
+    });
+  });
+});

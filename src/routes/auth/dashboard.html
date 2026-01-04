@@ -3,27 +3,29 @@
   <p class="mt-2 text-neutral-400">View your API usage statistics.</p>
 </header>
 
-<div class="fade-in animation-delay-2 mt-6 mb-6">
+<div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
 <!-- Usage Section -->
-<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-6 max-w-2xl">
-  <div class="mb-4 flex items-center justify-between">
+<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-6 max-w-2xl flex flex-col gap-4">
+  <div class="flex items-center justify-between">
     <h2 class="text-lg font-semibold text-white">API Usage</h2>
     <span class="text-2xl font-bold <%= it.usagePercent > 80 ? 'text-yellow-500' : 'text-green-500' %>">
       <%= it.usagePercent %>%
     </span>
   </div>
-  <div class="mb-2 h-3 w-full overflow-hidden rounded-full bg-neutral-800">
-    <div
-      class="h-full rounded-full transition-all <%= it.usagePercent > 80 ? 'bg-yellow-500' : 'bg-power' %>"
-      style="width: <%= Math.min(it.usagePercent, 100) %>%"
-    ></div>
+  <div>
+    <div class="mb-2 h-3 w-full overflow-hidden rounded-full bg-neutral-800">
+      <div
+        class="h-full rounded-full transition-all <%= it.usagePercent > 80 ? 'bg-yellow-500' : 'bg-power' %>"
+        style="width: <%= Math.min(it.usagePercent, 100) %>%"
+      ></div>
+    </div>
+    <p class="text-sm text-neutral-400">
+      <span class="font-medium text-white"><%= it.user.api_call_count.toLocaleString() %></span> of <span class="font-medium text-white"><%= it.user.api_call_limit.toLocaleString() %></span> calls used this month
+    </p>
   </div>
-  <p class="text-sm text-neutral-400">
-    <span class="font-medium text-white"><%= it.user.api_call_count.toLocaleString() %></span> of <span class="font-medium text-white"><%= it.user.api_call_limit.toLocaleString() %></span> calls used this month
-  </p>
 </div>
 
 <% if (it.user.admin && it.stats) { %>

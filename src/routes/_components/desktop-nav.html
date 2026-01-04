@@ -25,13 +25,21 @@
     </li>
 
 
-    <!-- login -->
+    <!-- login/dashboard -->
     <li>
+      <% if (state && state.user && state.user.key) { %>
+      <a
+        class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"
+        href="/dashboard"
+        >Dashboard</a
+      >
+      <% } else { %>
       <a
         class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"
         href="/login"
         >Get API Key</a
       >
+      <% } %>
     </li>
   </ul>
 </nav>

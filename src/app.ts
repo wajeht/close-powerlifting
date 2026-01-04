@@ -74,6 +74,7 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
     .set("view cache", configuration.app.env === "production")
     .use(layoutMiddleware)
     .use(middleware.csrfMiddleware)
+    .use(middleware.appLocalStateMiddleware)
     .use(middleware.rateLimitMiddleware())
     .use(createMainRouter(context));
 

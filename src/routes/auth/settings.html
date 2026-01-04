@@ -10,46 +10,32 @@
 <div class="max-w-2xl space-y-6">
   <!-- API Key Section -->
   <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
-    <h2 class="text-lg font-semibold text-white">API Key</h2>
-
-    <% if (it.apiKey) { %>
-    <div class="mb-4">
-      <div class="mb-2 flex items-center justify-between">
-        <p class="text-sm text-neutral-400">Your new API key (copy it now - you won't see it again):</p>
-        <span class="text-sm text-neutral-500">v<%= it.user.api_key_version %></span>
-      </div>
-      <div class="flex items-center gap-2">
-        <input
-          type="text"
-          value="<%= it.apiKey %>"
-          readonly
-          class="flex-1 rounded-md bg-neutral-800 px-3 py-2 font-mono text-sm text-neutral-300"
-          id="api-key-input"
-        />
-        <%~ include('../_components/button.html', { type: 'button', text: 'Copy', variant: 'secondary', onclick: "navigator.clipboard.writeText(document.getElementById('api-key-input').value)" }) %>
-      </div>
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold text-white">API Key</h2>
+      <% if (it.user.key) { %>
+      <span class="rounded-full bg-blue-900/50 px-2 py-1 text-xs text-blue-400">v<%= it.user.api_key_version %></span>
+      <% } %>
     </div>
-    <% } else if (it.user.key) { %>
-    <div class="mb-4">
-      <div class="mb-2 flex items-center justify-between">
-        <p class="text-sm text-neutral-400">Your API key is active. Use it as a Bearer token in the <code class="rounded bg-neutral-800 px-1">Authorization</code> header.</p>
-        <span class="text-sm text-neutral-500">v<%= it.user.api_key_version %></span>
-      </div>
-      <p class="text-sm text-neutral-500">For security, your key is only shown once when generated. Check your email or regenerate below.</p>
+
+    <% if (it.user.key) { %>
+    <p class="text-sm text-neutral-400">Authenticate requests using the <code class="rounded bg-neutral-800 px-1">Authorization: Bearer</code> header.</p>
+    <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.key, readonly: true }) %>
+    <div class="flex gap-2">
+      <button type="button" class="open-modal rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark" data-modal="regenerate-key-modal">Regenerate API Key</button>
+      <%~ include('../_components/button.html', { text: 'Copy', variant: 'secondary', type: 'button', id: 'copy-btn' }) %>
     </div>
     <% } else { %>
-    <p class="mb-4 text-sm text-neutral-400">You don't have an API key yet. Generate one below.</p>
-    <% } %>
-
-    <form action="/settings/regenerate-key" method="post" onsubmit="return confirm('This will invalidate your current API key. Continue?')">
+    <p class="text-sm text-neutral-400">Generate an API key to start making authenticated requests.</p>
+    <form action="/settings/regenerate-key" method="post">
       <%~ include('../_components/csrf-input.html') %>
-      <%~ include('../_components/button.html', { text: it.user.key ? 'Regenerate API Key' : 'Generate API Key' }) %>
+      <%~ include('../_components/button.html', { text: 'Generate API Key' }) %>
     </form>
+    <% } %>
   </div>
 
   <!-- Account -->
   <div class="fade-in animation-delay-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
-    <div class="mb-4 flex items-center justify-between">
+    <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-white">Account</h2>
       <% if (it.user.verified) { %>
       <span class="rounded-full bg-green-900/50 px-2 py-1 text-xs text-green-400">Verified</span>
@@ -76,9 +62,66 @@
   <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-6 flex flex-col gap-4">
     <h2 class="text-lg font-semibold text-white">Danger Zone</h2>
     <p class="text-sm text-neutral-400">Once you delete your account, there is no going back. Please be certain.</p>
-    <form action="/settings/delete" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">
-      <%~ include('../_components/csrf-input.html') %>
-      <%~ include('../_components/button.html', { text: 'Delete Account', variant: 'danger' }) %>
-    </form>
+    <button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700 self-start" data-modal="delete-account-modal">Delete Account</button>
   </div>
 </div>
+
+<!-- Regenerate Key Confirmation Modal -->
+<% if (it.user.key) { %>
+<dialog id="regenerate-key-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="/settings/regenerate-key" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('../_components/csrf-input.html') %>
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white">Regenerate API Key</h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400">This will invalidate your current API key. Any applications using it will stop working.</p>
+    <div class="flex gap-2 justify-end">
+      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('../_components/button.html', { text: 'Regenerate' }) %>
+    </div>
+  </form>
+</dialog>
+<% } %>
+
+<!-- Delete Account Confirmation Modal -->
+<dialog id="delete-account-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="/settings/delete" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('../_components/csrf-input.html') %>
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white">Delete Account</h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400">Are you sure you want to delete your account? This action cannot be undone.</p>
+    <div class="flex gap-2 justify-end">
+      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('../_components/button.html', { text: 'Delete', variant: 'danger' }) %>
+    </div>
+  </form>
+</dialog>
+
+<script>
+document.querySelectorAll('.open-modal').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById(btn.dataset.modal).showModal();
+  });
+});
+
+var copyBtn = document.getElementById('copy-btn');
+var apiKeyInput = document.getElementById('api-key-input');
+if (copyBtn && apiKeyInput) {
+  copyBtn.addEventListener('click', function() {
+    navigator.clipboard.writeText(apiKeyInput.value);
+    copyBtn.textContent = 'Copied!';
+    setTimeout(function() { copyBtn.textContent = 'Copy'; }, 2000);
+  });
+}
+</script>
