@@ -28,7 +28,7 @@ export function createAdminUser(
 
         const createdAdminUser = await userRepository.create({
           email: configuration.app.adminEmail,
-          name: configuration.app.adminName,
+          name: helpers.extractNameFromEmail(configuration.app.adminEmail),
           admin: true,
           verification_token: token,
           verified: true,
