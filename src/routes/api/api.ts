@@ -24,31 +24,31 @@ export function createApiRouter(context: AppContext) {
 
   router.use(
     "/rankings",
-    middleware.authenticationMiddleware,
+    middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     createRankingsRouter(context),
   );
   router.use(
     "/federations",
-    middleware.authenticationMiddleware,
+    middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     createFederationsRouter(context),
   );
   router.use(
     "/meets",
-    middleware.authenticationMiddleware,
+    middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     createMeetsRouter(context),
   );
   router.use(
     "/records",
-    middleware.authenticationMiddleware,
+    middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     createRecordsRouter(context),
   );
   router.use(
     "/users",
-    middleware.authenticationMiddleware,
+    middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     createUsersRouter(context),
   );

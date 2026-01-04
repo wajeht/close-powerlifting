@@ -30,12 +30,20 @@ export interface MiddlewareType {
   apiValidationMiddleware: (
     validators: RequestValidators,
   ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  authenticationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
-  userAuthorizationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  adminAuthorizationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  sessionAuthenticationMiddleware: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => Promise<void>;
+  sessionAdminAuthenticationMiddleware: (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => Promise<void>;
 }
 
 export function createMiddleware(
@@ -172,7 +180,7 @@ export function createMiddleware(
     };
   }
 
-  function authenticationMiddleware(req: Request, res: Response, next: NextFunction) {
+  function apiAuthenticationMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
       let token: string = "";
 
@@ -274,7 +282,7 @@ export function createMiddleware(
     });
   }
 
-  async function userAuthorizationMiddleware(
+  async function sessionAuthenticationMiddleware(
     req: Request,
     res: Response,
     next: NextFunction,
@@ -302,7 +310,7 @@ export function createMiddleware(
     }
   }
 
-  async function adminAuthorizationMiddleware(
+  async function sessionAdminAuthenticationMiddleware(
     req: Request,
     res: Response,
     next: NextFunction,
@@ -339,11 +347,11 @@ export function createMiddleware(
     errorMiddleware,
     validationMiddleware,
     apiValidationMiddleware,
-    authenticationMiddleware,
+    apiAuthenticationMiddleware,
     trackAPICallsMiddleware,
     hostNameMiddleware,
     sessionMiddleware,
-    userAuthorizationMiddleware,
-    adminAuthorizationMiddleware,
+    sessionAuthenticationMiddleware,
+    sessionAdminAuthenticationMiddleware,
   };
 }

@@ -253,7 +253,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.get(
     "/dashboard",
-    middleware.userAuthorizationMiddleware,
+    middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
       const user = await context.userRepository.findById(sessionUser.id);
@@ -302,7 +302,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.get(
     "/settings",
-    middleware.userAuthorizationMiddleware,
+    middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
       const user = await context.userRepository.findById(sessionUser.id);
@@ -327,7 +327,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/settings",
-    middleware.userAuthorizationMiddleware,
+    middleware.sessionAuthenticationMiddleware,
     middleware.validationMiddleware({ body: updateNameValidation }),
     async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
       const sessionUser = req.session.user!;
@@ -347,7 +347,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/settings/regenerate-key",
-    middleware.userAuthorizationMiddleware,
+    middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
       const user = await context.userRepository.findById(sessionUser.id);
@@ -388,7 +388,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/settings/delete",
-    middleware.userAuthorizationMiddleware,
+    middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
 
