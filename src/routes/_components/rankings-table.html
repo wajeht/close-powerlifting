@@ -1,31 +1,38 @@
-<div class="mx-auto mt-8 max-w-5xl overflow-x-scroll">
-  <table
-    class="table-fixed border border-neutral-900"
-    style="min-width: 80% !important; padding: 5px"
-  >
-    <thead class="bg-neutral-900">
-      <tr>
-        <% for (let key of Object.keys(rankings.data[0]) ) { %>
-        <!-- skip id -->
-        <% if (key !== 'id') { %>
-        <th class="px-4 py-2 text-left"><%= key %></th>
-        <% } %> <% } %>
-      </tr>
-    </thead>
-    <tbody>
-      <% for (let i of rankings.data) { %>
-      <tr>
-        <% for (let j in i) { %>
-        <!-- skip id -->
-        <% if ( j !== 'id') { %>
-        <td class="whitespace-nowrap px-4 py-2 text-left">
-          <% if ( j === 'instagram_url') { %>
-          <a class="hover:text-slate-50" href="<%= i[j] %>" target="_blank"><%= i[j] %></a>
-          <% } else { %> <%= i[j] %> <% } %>
-        </td>
-        <% } %> <% } %>
-      </tr>
-      <% } %>
-    </tbody>
-  </table>
+<div class="overflow-hidden rounded-xl border border-neutral-800 bg-neutral-900">
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[800px] text-sm">
+      <thead>
+        <tr class="border-b border-neutral-800">
+          <% for (let key of Object.keys(rankings.data[0]) ) { %>
+          <% if (key !== 'id') { %>
+          <th class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-power"><%= key %></th>
+          <% } %>
+          <% } %>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-800">
+        <% for (let i of rankings.data) { %>
+        <tr class="transition-colors hover:bg-neutral-800/50">
+          <% for (let j in i) { %>
+          <% if (j !== 'id') { %>
+          <td class="whitespace-nowrap px-6 py-4">
+            <% if (j === 'rank') { %>
+            <span class="font-bold text-power"><%= i[j] %></span>
+            <% } else if (j === 'full_name') { %>
+            <span class="font-medium text-white"><%= i[j] %></span>
+            <% } else if (j === 'user_profile') { %>
+            <a class="text-neutral-500 transition-colors hover:text-power" href="<%= i[j] %>"><%= i[j] %></a>
+            <% } else if (j === 'instagram_url') { %>
+            <a class="text-neutral-500 transition-colors hover:text-power" href="<%= i[j] %>" target="_blank"><%= i[j] %></a>
+            <% } else { %>
+            <span class="text-neutral-400"><%= i[j] %></span>
+            <% } %>
+          </td>
+          <% } %>
+          <% } %>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
 </div>

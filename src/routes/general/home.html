@@ -1,6 +1,6 @@
-<div class="mx-auto max-w-5xl">
-  <!-- hero -->
-  <div class="relative my-auto px-4 text-center">
+<!-- hero section -->
+<div class="relative">
+  <div class="mx-auto max-w-5xl px-4 text-center">
     <!-- background image with overlay -->
     <div class="pointer-events-none absolute -top-40 left-1/2 -z-10 h-[900px] w-full max-w-8xl -translate-x-1/2 opacity-10">
       <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black"></div>
@@ -37,9 +37,11 @@
       Free tier includes 500 API calls/month. No credit card required.
     </p>
   </div>
+</div>
 
-  <!-- stats section -->
-  <div class="fade-in animation-delay-4 mt-24 px-4">
+<!-- stats section -->
+<div class="mt-24">
+  <div class="fade-in animation-delay-4 mx-auto max-w-5xl px-4">
     <h2 class="mb-3 text-center text-2xl font-bold text-white">
       Tired of scraping OpenPowerlifting?
     </h2>
@@ -70,9 +72,11 @@
       </div>
     </div>
   </div>
+</div>
 
-  <!-- endpoints -->
-  <div class="fade-in animation-delay-5 mt-24 px-4">
+<!-- endpoints section -->
+<div class="mt-24">
+  <div class="fade-in animation-delay-5 mx-auto max-w-5xl px-4">
     <h2 class="mb-3 text-center text-2xl font-bold text-white">
       Six endpoints. Unlimited possibilities.
     </h2>
@@ -80,42 +84,42 @@
       Simple, RESTful API designed for developers
     </p>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/rankings</h3>
         <p class="mb-3 text-sm text-white">Query the all-time leaderboard</p>
         <p class="text-sm text-neutral-500">
           Filter by federation, weight class, equipment, sex, year. Sort by total, squat, bench, or deadlift.
         </p>
       </div>
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/records</h3>
         <p class="mb-3 text-sm text-white">Get world and federation records</p>
         <p class="text-sm text-neutral-500">
           Raw, wraps, single-ply, multi-ply. By weight class and sex. Always up-to-date.
         </p>
       </div>
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/meets</h3>
         <p class="mb-3 text-sm text-white">Search competitions worldwide</p>
         <p class="text-sm text-neutral-500">
           Find meets by federation, country, or date range. Returns full results for every competitor.
         </p>
       </div>
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/users/{'{'}name{'}'}</h3>
         <p class="mb-3 text-sm text-white">Get complete athlete profiles</p>
         <p class="text-sm text-neutral-500">
           Full competition history, personal records, progression over time. Everything about any lifter.
         </p>
       </div>
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/federations</h3>
         <p class="mb-3 text-sm text-white">Browse all federations</p>
         <p class="text-sm text-neutral-500">
           List meets by federation. USAPL, USPA, IPF, WRPF, and 100+ more organizations worldwide.
         </p>
       </div>
-      <div class="group rounded-xl border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
+      <div class="group rounded-xl border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
         <h3 class="mb-1 font-mono text-lg font-semibold text-power">/status</h3>
         <p class="mb-3 text-sm text-white">Check data source status</p>
         <p class="text-sm text-neutral-500">
@@ -124,30 +128,36 @@
       </div>
     </div>
   </div>
+</div>
 
-  <!-- sample rankings -->
-  <div class="fade-in animation-delay-6 mt-24 px-4">
+<!-- sample rankings section -->
+<div class="mt-24">
+  <div class="fade-in animation-delay-6 mx-auto max-w-5xl px-4">
     <h2 class="mb-2 text-center text-2xl font-bold text-white">See it in action</h2>
     <p class="mb-6 text-center text-neutral-500">Live data from the /rankings endpoint</p>
     <%~ include('../_components/rankings-table.html', rankings) %>
   </div>
+</div>
 
-  <!-- final cta -->
-  <div class="fade-in animation-delay-7 mx-4 mt-24 overflow-hidden rounded-2xl border border-neutral-800 px-4 py-16 text-center">
-    <h2 class="mb-4 text-2xl font-bold text-white">
-      Ready to build something great?
-    </h2>
-    <p class="mb-8 text-neutral-400">
-      Get started in under a minute. No credit card required.
-    </p>
-    <a
-      class="inline-block rounded-md bg-power px-8 py-4 text-lg font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl hover:shadow-power-glow"
-      href="/register"
-    >Get your free API key</a>
-    <p class="mt-6 text-sm text-neutral-500">
-      Data sourced from
-      <a class="text-power/80 hover:text-power" href="https://openpowerlifting.org" target="_blank">OpenPowerlifting.org</a>
-    </p>
+<!-- final cta section -->
+<div class="mt-24">
+  <div class="fade-in animation-delay-7 mx-auto max-w-5xl px-4">
+    <div class="overflow-hidden rounded-2xl border border-neutral-800 bg-black px-4 py-16 text-center">
+      <h2 class="mb-4 text-2xl font-bold text-white">
+        Ready to build something great?
+      </h2>
+      <p class="mb-8 text-neutral-400">
+        Get started in under a minute. No credit card required.
+      </p>
+      <a
+        class="inline-block rounded-md bg-power px-8 py-4 text-lg font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl hover:shadow-power-glow"
+        href="/register"
+      >Get your free API key</a>
+      <p class="mt-6 text-sm text-neutral-500">
+        Data sourced from
+        <a class="text-power/80 hover:text-power" href="https://openpowerlifting.org" target="_blank">OpenPowerlifting.org</a>
+      </p>
+    </div>
   </div>
 </div>
 
