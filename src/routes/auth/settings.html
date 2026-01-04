@@ -62,24 +62,8 @@
     </form>
   </div>
 
-  <!-- Security -->
-  <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
-    <h2 class="text-lg font-semibold text-white">Security</h2>
-
-    <form action="/settings/password" method="post" class="space-y-4">
-      <%~ include('../_components/inputs/password.html', { label: 'Current Password', name: 'current_password', required: true }) %>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <%~ include('../_components/inputs/password.html', { label: 'New Password', name: 'new_password', minlength: 8, placeholder: 'At least 8 characters', required: true, autocomplete: 'new-password' }) %>
-        <%~ include('../_components/inputs/password.html', { label: 'Confirm Password', name: 'confirm_password', minlength: 8, required: true, autocomplete: 'new-password' }) %>
-      </div>
-      <div class="pt-2">
-        <%~ include('../_components/button.html', { text: 'Update Password' }) %>
-      </div>
-    </form>
-  </div>
-
   <!-- Danger Zone -->
-  <div class="fade-in animation-delay-6 rounded-lg border border-neutral-800 bg-neutral-900 p-6 flex flex-col gap-4">
+  <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-6 flex flex-col gap-4">
     <h2 class="text-lg font-semibold text-white">Danger Zone</h2>
     <p class="text-sm text-neutral-400">Once you delete your account, there is no going back. Please be certain.</p>
     <form action="/settings/delete" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">

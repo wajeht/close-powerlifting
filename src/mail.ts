@@ -10,26 +10,19 @@ export interface MailType {
     name: string;
     verification_token: string;
   }) => Promise<void>;
-  sendWelcomeEmail: (params: { email: string; name: string; key: string }) => Promise<void>;
-  sendNewApiKeyEmail: (params: { email: string; name: string; key: string }) => Promise<void>;
-  sendAdminCredentialsEmail: (params: {
+  sendMagicLinkEmail: (params: {
+    hostname: string;
     email: string;
     name: string;
-    password: string;
-    apiKey: string;
+    token: string;
   }) => Promise<void>;
+  sendWelcomeEmail: (params: { email: string; name: string; key: string }) => Promise<void>;
   sendContactEmail: (params: { name: string; email: string; message: string }) => Promise<void>;
   sendApiLimitResetEmail: (params: { email: string; name: string }) => Promise<void>;
   sendReachingApiLimitEmail: (params: {
     email: string;
     name: string;
     percent: number;
-  }) => Promise<void>;
-  sendPasswordResetEmail: (params: {
-    hostname: string;
-    email: string;
-    name: string;
-    token: string;
   }) => Promise<void>;
 }
 
@@ -84,6 +77,35 @@ The Close Powerlifting Team`,
     );
   }
 
+  async function sendMagicLinkEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "Login to Close Powerlifting",
+      `Hi ${name},
+
+Click the link below to log in to your Close Powerlifting account:
+
+${hostname}/magic-link?token=${token}&email=${email}
+
+This link expires in 1 hour.
+
+If you didn't request this, you can safely ignore this email.
+
+Cheers,
+The Close Powerlifting Team`,
+    );
+  }
+
   async function sendWelcomeEmail({
     email,
     name,
@@ -107,61 +129,6 @@ Your key expires in 3 months. We'll send you a reminder before it does.
 Check out our documentation to get started: https://close-powerlifting.jaw.dev/docs/api
 
 Happy lifting!
-The Close Powerlifting Team`,
-    );
-  }
-
-  async function sendNewApiKeyEmail({
-    email,
-    name,
-    key,
-  }: {
-    email: string;
-    name: string;
-    key: string;
-  }): Promise<void> {
-    await send(
-      email,
-      "New API key for Close Powerlifting",
-      `Hi ${name},
-
-Your API key has been reset. Here's your new key:
-
-API Key: ${key}
-
-Your previous key is now inactive. This new key expires in 3 months.
-
-If you didn't request this change, please contact us immediately.
-
-Cheers,
-The Close Powerlifting Team`,
-    );
-  }
-
-  async function sendAdminCredentialsEmail({
-    email,
-    name,
-    password,
-    apiKey,
-  }: {
-    email: string;
-    name: string;
-    password: string;
-    apiKey: string;
-  }): Promise<void> {
-    await send(
-      email,
-      "API Key and Admin Password for Close Powerlifting",
-      `Hi ${name},
-
-Your admin credentials have been updated:
-
-Password: ${password}
-API Key: ${apiKey}
-
-Please change your password after logging in and store your API key securely.
-
-Cheers,
 The Close Powerlifting Team`,
     );
   }
@@ -233,43 +200,12 @@ The Close Powerlifting Team`,
     );
   }
 
-  async function sendPasswordResetEmail({
-    hostname,
-    email,
-    name,
-    token,
-  }: {
-    hostname: string;
-    email: string;
-    name: string;
-    token: string;
-  }): Promise<void> {
-    await send(
-      email,
-      "Reset your password",
-      `Hi ${name},
-
-We received a request to reset your password. Click the link below to set a new password:
-
-${hostname}/reset-password?token=${token}&email=${email}
-
-This link expires in 1 hour.
-
-If you didn't request this, you can safely ignore this email. Your password won't be changed.
-
-Cheers,
-The Close Powerlifting Team`,
-    );
-  }
-
   return {
     sendVerificationEmail,
+    sendMagicLinkEmail,
     sendWelcomeEmail,
-    sendNewApiKeyEmail,
-    sendAdminCredentialsEmail,
     sendContactEmail,
     sendApiLimitResetEmail,
     sendReachingApiLimitEmail,
-    sendPasswordResetEmail,
   };
 }

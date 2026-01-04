@@ -1,7 +1,7 @@
 <div class="mx-auto flex max-w-md flex-col gap-6 px-4">
   <header class="fade-in-heading">
-    <h1 class="text-2xl font-bold text-white">Login to your account</h1>
-    <p class="mt-2 text-neutral-400">Access your API key and usage dashboard.</p>
+    <h1 class="text-2xl font-bold text-white">Get started</h1>
+    <p class="mt-2 text-neutral-400">Enter your email to get an API key or log in to your account.</p>
   </header>
 
   <div class="fade-in animation-delay-2">
@@ -10,25 +10,24 @@
 
   <form action="/login" method="post" class="fade-in animation-delay-3 flex flex-col gap-4 rounded-lg border border-neutral-800 bg-neutral-900 p-6">
     <%~ include('../_components/inputs/email.html', { label: 'Email', name: 'email', placeholder: 'you@example.com', required: true }) %>
-    <%~ include('../_components/inputs/password.html', { label: 'Password', name: 'password', placeholder: 'Your password', required: true }) %>
-    <%~ include('../_components/button.html', { text: 'Login' }) %>
+
+    <div class="flex items-start gap-3">
+      <input class="mt-1 rounded bg-neutral-700" type="checkbox" name="agree" id="agree" required />
+      <label for="agree" class="text-sm text-neutral-400">
+        I agree to the
+        <a class="text-power/80 hover:text-power" href="/terms">Terms of Service</a> and
+        <a class="text-power/80 hover:text-power" href="/privacy">Privacy Policy</a>
+      </label>
+    </div>
+
+    <%~ include('../_components/button.html', { text: 'Continue with Email' }) %>
   </form>
 
-  <p class="fade-in animation-delay-4 text-center text-sm text-neutral-500">
-    Forgot your password?
-    <a class="text-power/80 hover:text-power" href="/forgot-password">Reset it here</a>
-  </p>
-
-  <div class="fade-in animation-delay-5">
+  <div class="fade-in animation-delay-4">
     <%~ include('../_components/or.html') %>
   </div>
 
-  <div class="fade-in animation-delay-6">
+  <div class="fade-in animation-delay-5">
     <%~ include('../_components/social-oauth.html') %>
   </div>
-
-  <p class="fade-in animation-delay-7 text-center text-sm text-neutral-500">
-    Don't have an account?
-    <a class="text-power/80 hover:text-power" href="/register">Register here</a>
-  </p>
 </div>

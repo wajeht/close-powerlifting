@@ -12,9 +12,9 @@ export interface HelpersType {
   generateAPIKey: (
     userParams: UserParams & { admin?: boolean },
   ) => Promise<{ unhashedKey: string; hashedKey: string }>;
-  generatePassword: (length?: number) => string;
   timingSafeEqual: (a: string, b: string) => boolean;
   getGoogleOAuthURL: () => string;
+  extractNameFromEmail: (email: string) => string;
 }
 
 export function createHelper(): HelpersType {
@@ -63,10 +63,6 @@ export function createHelper(): HelpersType {
     };
   }
 
-  function generatePassword(length = 50): string {
-    return crypto.randomBytes(length).toString("base64").slice(0, length);
-  }
-
   function timingSafeEqual(a: string, b: string): boolean {
     if (a.length !== b.length) {
       return false;
@@ -93,12 +89,22 @@ export function createHelper(): HelpersType {
     return `${rootUrl}?${qs.toString()}`;
   }
 
+  function extractNameFromEmail(email: string): string {
+    const username = email.split("@")[0] ?? email;
+    // Replace dots, underscores, hyphens with spaces and capitalize each word
+    return username
+      .replace(/[._-]/g, " ")
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ");
+  }
+
   return {
     getHostName,
     hashKey,
     generateAPIKey,
-    generatePassword,
     timingSafeEqual,
     getGoogleOAuthURL,
+    extractNameFromEmail,
   };
 }

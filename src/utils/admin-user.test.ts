@@ -9,8 +9,7 @@ import { createAdminUser } from "./admin-user";
 import { createAuthService } from "../routes/auth/auth.service";
 
 const mockMail = {
-  sendAdminCredentialsEmail: vi.fn().mockResolvedValue({}),
-  sendNewApiKeyEmail: vi.fn().mockResolvedValue({}),
+  sendMagicLinkEmail: vi.fn().mockResolvedValue({}),
   sendWelcomeEmail: vi.fn().mockResolvedValue({}),
   sendVerificationEmail: vi.fn().mockResolvedValue({}),
   sendContactEmail: vi.fn().mockResolvedValue({}),
@@ -46,7 +45,6 @@ describe("AdminUser", () => {
       expect(user.name).toBe(configuration.app.adminName);
       expect(user.admin).toBe(1); // SQLite stores booleans as 1/0
       expect(user.verified).toBe(1);
-      expect(user.password).toBeDefined();
       expect(user.key).toBeDefined();
     });
 

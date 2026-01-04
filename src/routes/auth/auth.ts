@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import express, { Request, Response } from "express";
 import { z } from "zod";
 
@@ -7,66 +6,24 @@ import type { AppContext } from "../../context";
 import { UnauthorizedError, ValidationError } from "../../error";
 import { createMiddleware } from "../middleware";
 
-const registerValidation = z.object({
-  email: z.email({ message: "must be a valid email address!" }),
-  name: z.string({ message: "name is required!" }),
-  password: z
-    .string({ message: "password is required!" })
-    .min(8, "password must be at least 8 characters"),
-});
+const MAGIC_LINK_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
 
 const loginValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
-  password: z.string({ message: "password is required!" }),
 });
 
-const verifyEmailValidation = z.object({
+const magicLinkValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
   token: z.string({ message: "token is required!" }),
 });
-
-const forgotPasswordValidation = z.object({
-  email: z.email({ message: "must be a valid email address!" }),
-});
-
-const resetPasswordValidation = z
-  .object({
-    email: z.email({ message: "must be a valid email address!" }),
-    token: z.string({ message: "token is required!" }),
-    password: z
-      .string({ message: "password is required!" })
-      .min(8, "password must be at least 8 characters"),
-    confirm_password: z.string({ message: "confirm password is required!" }),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "passwords do not match",
-    path: ["confirm_password"],
-  });
 
 const updateNameValidation = z.object({
   name: z.string({ message: "name is required!" }).min(1, "name is required"),
 });
 
-const changePasswordValidation = z
-  .object({
-    current_password: z.string({ message: "current password is required!" }),
-    new_password: z
-      .string({ message: "new password is required!" })
-      .min(8, "password must be at least 8 characters"),
-    confirm_password: z.string({ message: "confirm password is required!" }),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "passwords do not match",
-    path: ["confirm_password"],
-  });
-
-type RegisterType = z.infer<typeof registerValidation>;
 type LoginType = z.infer<typeof loginValidation>;
-type VerifyEmailType = z.infer<typeof verifyEmailValidation>;
-type ForgotPasswordType = z.infer<typeof forgotPasswordValidation>;
-type ResetPasswordType = z.infer<typeof resetPasswordValidation>;
+type MagicLinkType = z.infer<typeof magicLinkValidation>;
 type UpdateNameType = z.infer<typeof updateNameValidation>;
-type ChangePasswordType = z.infer<typeof changePasswordValidation>;
 
 interface GoogleOauthToken {
   access_token: string;
@@ -150,57 +107,6 @@ export function createAuthRouter(context: AppContext) {
     }
   }
 
-  router.get("/register", (req: Request, res: Response) => {
-    return res.status(200).render("auth/register.html", {
-      path: "/register",
-      title: "Get API Key",
-      messages: req.flash(),
-    });
-  });
-
-  router.post(
-    "/register",
-    middleware.validationMiddleware({ body: registerValidation }),
-    async (req: Request<{}, {}, RegisterType>, res: Response) => {
-      const { email, name, password } = req.body;
-
-      const found = await context.userRepository.findByEmail(email);
-
-      if (found) {
-        req.flash("error", "Email already exist!");
-        return res.redirect("/register");
-      }
-
-      const { key: token } = await context.helpers.hashKey();
-      const hashedPassword = await bcrypt.hash(
-        password,
-        parseInt(configuration.app.passwordSalt, 10),
-      );
-
-      const createdUser = await context.userRepository.create({
-        email,
-        name,
-        password: hashedPassword,
-        verification_token: token,
-      });
-
-      const hostname = context.helpers.getHostName(req);
-
-      context.logger.info(`user_id: ${createdUser.id} has registered an account!`);
-
-      context.authService.sendVerificationEmail({
-        name,
-        email,
-        verification_token: token,
-        hostname,
-      });
-
-      req.flash("info", "Thank you for registering. Please check your email for confirmation!");
-
-      return res.redirect("/register");
-    },
-  );
-
   router.get("/login", (req: Request, res: Response) => {
     if (req.session.userId) {
       return res.redirect("/dashboard");
@@ -216,32 +122,67 @@ export function createAuthRouter(context: AppContext) {
     "/login",
     middleware.validationMiddleware({ body: loginValidation }),
     async (req: Request<{}, {}, LoginType>, res: Response) => {
-      const { email, password } = req.body;
+      const { email } = req.body;
+      const hostname = context.helpers.getHostName(req);
 
-      const user = await context.userRepository.findByEmail(email);
+      let user = await context.userRepository.findByEmail(email);
 
-      if (!user || !user.password) {
-        req.flash("error", "Invalid email or password");
+      // Create new user if doesn't exist
+      if (!user) {
+        const { key: token } = await context.helpers.hashKey();
+        const name = context.helpers.extractNameFromEmail(email);
+
+        user = await context.userRepository.create({
+          email,
+          name,
+          verification_token: token,
+        });
+
+        context.logger.info(`user_id: ${user.id} has registered an account!`);
+
+        context.authService.sendVerificationEmail({
+          name,
+          email,
+          verification_token: token,
+          hostname,
+        });
+
+        req.flash("info", "Check your email to verify your account and get your API key.");
         return res.redirect("/login");
       }
 
       if (!user.verified) {
-        req.flash("error", "Please verify your email first");
+        // Resend verification email for unverified users
+        context.authService.sendVerificationEmail({
+          name: user.name,
+          email: user.email,
+          verification_token: user.verification_token!,
+          hostname,
+        });
+        req.flash("info", "Please verify your email first. We've sent a new verification link.");
         return res.redirect("/login");
       }
 
-      const isValid = await bcrypt.compare(password, user.password);
+      // Generate magic link token for existing verified users
+      const { key: token } = await context.helpers.hashKey();
+      const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MS).toISOString();
 
-      if (!isValid) {
-        req.flash("error", "Invalid email or password");
-        return res.redirect("/login");
-      }
+      await context.userRepository.updateById(user.id, {
+        verification_token: token,
+        magic_link_expires_at: expiresAt,
+      });
 
-      req.session.userId = user.id;
+      context.authService.sendMagicLinkEmail({
+        name: user.name,
+        email: user.email,
+        token,
+        hostname,
+      });
 
-      context.logger.info(`User ${user.id} (${user.email}) logged in`);
+      context.logger.info(`Magic link sent to ${user.email}`);
 
-      return res.redirect("/dashboard");
+      req.flash("info", "Check your email for a magic link to log in.");
+      return res.redirect("/login");
     },
   );
 
@@ -251,6 +192,57 @@ export function createAuthRouter(context: AppContext) {
       context.logger.info(`User ${userId} logged out`);
       res.redirect("/login");
     });
+  });
+
+  router.get("/magic-link", async (req: Request, res: Response) => {
+    const { token, email } = req.query as { token: string; email: string };
+
+    if (!token || !email) {
+      req.flash("error", "Invalid magic link.");
+      return res.redirect("/login");
+    }
+
+    const user = await context.userRepository.findByEmail(email);
+
+    if (!user) {
+      req.flash("error", "Invalid magic link.");
+      return res.redirect("/login");
+    }
+
+    if (!user.verified) {
+      req.flash("error", "Please verify your email first.");
+      return res.redirect("/login");
+    }
+
+    if (
+      !user.verification_token ||
+      !context.helpers.timingSafeEqual(user.verification_token, token)
+    ) {
+      req.flash("error", "Invalid or expired magic link.");
+      return res.redirect("/login");
+    }
+
+    // Check if magic link has expired
+    if (user.magic_link_expires_at) {
+      const expiresAt = new Date(user.magic_link_expires_at);
+      if (expiresAt < new Date()) {
+        req.flash("error", "Magic link has expired. Please request a new one.");
+        return res.redirect("/login");
+      }
+    }
+
+    // Clear the magic link token after successful use
+    await context.userRepository.updateById(user.id, {
+      verification_token: null,
+      magic_link_expires_at: null,
+    });
+
+    // Log the user in
+    req.session.userId = user.id;
+
+    context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
+
+    return res.redirect("/dashboard");
   });
 
   router.get(
@@ -379,41 +371,6 @@ export function createAuthRouter(context: AppContext) {
   );
 
   router.post(
-    "/settings/password",
-    middleware.userAuthorizationMiddleware,
-    middleware.validationMiddleware({ body: changePasswordValidation }),
-    async (req: Request<{}, {}, ChangePasswordType>, res: Response) => {
-      const userId = req.session.userId!;
-      const { current_password, new_password } = req.body;
-
-      const user = await context.userRepository.findById(userId);
-
-      if (!user || !user.password) {
-        req.flash("error", "Cannot change password for OAuth accounts");
-        return res.redirect("/settings");
-      }
-
-      const isValid = await bcrypt.compare(current_password, user.password);
-
-      if (!isValid) {
-        req.flash("error", "Current password is incorrect");
-        return res.redirect("/settings");
-      }
-
-      const hashedPassword = await bcrypt.hash(
-        new_password,
-        parseInt(configuration.app.passwordSalt, 10),
-      );
-      await context.userRepository.updateById(userId, { password: hashedPassword });
-
-      context.logger.info(`User ${userId} changed password`);
-
-      req.flash("success", "Password changed successfully");
-      return res.redirect("/settings");
-    },
-  );
-
-  router.post(
     "/settings/delete",
     middleware.userAuthorizationMiddleware,
     async (req: Request, res: Response) => {
@@ -429,120 +386,13 @@ export function createAuthRouter(context: AppContext) {
     },
   );
 
-  router.get("/forgot-password", (req: Request, res: Response) => {
-    return res.status(200).render("auth/forgot-password.html", {
-      path: "/forgot-password",
-      title: "Forgot Password",
-      messages: req.flash(),
-    });
-  });
-
-  router.post(
-    "/forgot-password",
-    middleware.validationMiddleware({ body: forgotPasswordValidation }),
-    async (req: Request<{}, {}, ForgotPasswordType>, res: Response) => {
-      const { email } = req.body;
-
-      const foundUser = await context.userRepository.findByEmail(email);
-
-      context.logger.info(
-        `Password reset requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}`,
-      );
-
-      if (foundUser && foundUser.verified) {
-        // Generate a reset token and save it
-        const { key: resetToken } = await context.helpers.hashKey();
-        await context.userRepository.updateById(foundUser.id, {
-          verification_token: resetToken,
-        });
-
-        context.logger.info(`Sending password reset email to ${email}`);
-        await context.authService.sendPasswordResetEmail({
-          hostname: context.helpers.getHostName(req),
-          name: foundUser.name,
-          email: foundUser.email,
-          token: resetToken,
-        });
-      } else if (foundUser && !foundUser.verified) {
-        // If not verified, send verification email instead
-        context.logger.info(`User ${email} not verified, sending verification email`);
-        await context.authService.sendVerificationEmail({
-          hostname: context.helpers.getHostName(req),
-          name: foundUser.name,
-          email: foundUser.email,
-          verification_token: foundUser.verification_token!,
-        });
-      }
-
-      req.flash("info", "If you have an account with us, we'll send you a password reset link.");
-
-      res.redirect("/forgot-password");
-    },
-  );
-
-  router.get("/reset-password", (req: Request, res: Response) => {
-    const { token, email } = req.query as { token: string; email: string };
-
-    if (!token || !email) {
-      req.flash("error", "Invalid password reset link.");
-      return res.redirect("/forgot-password");
-    }
-
-    return res.status(200).render("auth/reset-password.html", {
-      path: "/reset-password",
-      title: "Reset Password",
-      token,
-      email,
-      messages: req.flash(),
-    });
-  });
-
-  router.post(
-    "/reset-password",
-    middleware.validationMiddleware({ body: resetPasswordValidation }),
-    async (req: Request<{}, {}, ResetPasswordType>, res: Response) => {
-      const { email, token, password } = req.body;
-
-      const foundUser = await context.userRepository.findByEmail(email);
-
-      if (!foundUser) {
-        req.flash("error", "Invalid password reset link.");
-        return res.redirect("/forgot-password");
-      }
-
-      if (
-        !foundUser.verification_token ||
-        !context.helpers.timingSafeEqual(foundUser.verification_token, token)
-      ) {
-        req.flash("error", "Invalid or expired password reset link.");
-        return res.redirect("/forgot-password");
-      }
-
-      // Hash the new password and update
-      const hashedPassword = await bcrypt.hash(
-        password,
-        parseInt(configuration.app.passwordSalt, 10),
-      );
-
-      await context.userRepository.updateById(foundUser.id, {
-        password: hashedPassword,
-        verification_token: null,
-      });
-
-      context.logger.info(`User ${foundUser.id} (${email}) reset their password`);
-
-      req.flash("success", "Your password has been reset. Please login with your new password.");
-      return res.redirect("/login");
-    },
-  );
-
   router.get("/verify-email", async (req: Request, res: Response) => {
     const { token, email } = req.query as { token: string; email: string };
     const foundUser = await context.userRepository.findByEmail(email);
 
     if (!foundUser) {
       req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/register");
+      return res.redirect("/login");
     }
 
     if (
@@ -550,7 +400,7 @@ export function createAuthRouter(context: AppContext) {
       !context.helpers.timingSafeEqual(foundUser.verification_token, token)
     ) {
       req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/register");
+      return res.redirect("/login");
     }
 
     if (foundUser.verified === true) {
@@ -625,40 +475,82 @@ export function createAuthRouter(context: AppContext) {
   });
 
   router.post(
-    "/api/register",
-    middleware.apiValidationMiddleware({ body: registerValidation }),
-    async (req: Request<{}, {}, RegisterType>, res: Response) => {
-      const { email, name } = req.body;
-
-      const found = await context.userRepository.findByEmail(email);
-
-      if (found) {
-        throw new ValidationError("email already exist");
-      }
-
-      const { key: token } = await context.helpers.hashKey();
-
-      const createdUser = await context.userRepository.create({
-        email,
-        name,
-        verification_token: token,
-      });
-
+    "/api/login",
+    middleware.apiValidationMiddleware({ body: loginValidation }),
+    async (req: Request<{}, {}, LoginType>, res: Response) => {
+      const { email } = req.body;
       const hostname = context.helpers.getHostName(req);
 
-      context.logger.info(`user_id: ${createdUser.id} has registered an account!`);
+      let user = await context.userRepository.findByEmail(email);
 
-      context.authService.sendVerificationEmail({
-        name,
-        email,
+      // Create new user if doesn't exist
+      if (!user) {
+        const { key: token } = await context.helpers.hashKey();
+        const name = context.helpers.extractNameFromEmail(email);
+
+        user = await context.userRepository.create({
+          email,
+          name,
+          verification_token: token,
+        });
+
+        context.logger.info(`user_id: ${user.id} has registered an account!`);
+
+        context.authService.sendVerificationEmail({
+          name,
+          email,
+          verification_token: token,
+          hostname,
+        });
+
+        res.status(201).json({
+          status: "success",
+          request_url: req.originalUrl,
+          message: "Check your email to verify your account and get your API key.",
+          data: [],
+        });
+        return;
+      }
+
+      if (!user.verified) {
+        context.authService.sendVerificationEmail({
+          name: user.name,
+          email: user.email,
+          verification_token: user.verification_token!,
+          hostname,
+        });
+
+        res.status(200).json({
+          status: "success",
+          request_url: req.originalUrl,
+          message: "Please verify your email first. We've sent a new verification link.",
+          data: [],
+        });
+        return;
+      }
+
+      // Generate magic link for existing verified users
+      const { key: token } = await context.helpers.hashKey();
+      const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MS).toISOString();
+
+      await context.userRepository.updateById(user.id, {
         verification_token: token,
+        magic_link_expires_at: expiresAt,
+      });
+
+      context.authService.sendMagicLinkEmail({
+        name: user.name,
+        email: user.email,
+        token,
         hostname,
       });
 
-      res.status(201).json({
+      context.logger.info(`Magic link sent to ${user.email}`);
+
+      res.status(200).json({
         status: "success",
         request_url: req.originalUrl,
-        message: "Thank you for registering. Please check your email for confirmation.",
+        message: "Check your email for a magic link to log in.",
         data: [],
       });
     },
@@ -666,8 +558,8 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/api/verify-email",
-    middleware.apiValidationMiddleware({ body: verifyEmailValidation }),
-    async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
+    middleware.apiValidationMiddleware({ body: magicLinkValidation }),
+    async (req: Request<{}, {}, MagicLinkType>, res: Response) => {
       const { token, email } = req.body;
 
       const foundUser = await context.userRepository.findByEmail(email);
