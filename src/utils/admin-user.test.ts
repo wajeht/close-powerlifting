@@ -8,6 +8,7 @@ import { createAdminUser } from "./admin-user";
 import { createAuthService } from "../routes/auth/auth.service";
 
 const mockMail = {
+  verifyConnection: vi.fn().mockResolvedValue(true),
   sendMagicLinkEmail: vi.fn().mockResolvedValue({}),
   sendWelcomeEmail: vi.fn().mockResolvedValue({}),
   sendVerificationEmail: vi.fn().mockResolvedValue({}),

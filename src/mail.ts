@@ -4,6 +4,7 @@ import { configuration } from "./configuration";
 import type { LoggerType } from "./utils/logger";
 
 export interface MailType {
+  verifyConnection: () => Promise<boolean>;
   sendVerificationEmail: (params: {
     hostname: string;
     email: string;
@@ -38,6 +39,15 @@ export function createMail(logger: LoggerType): MailType {
   });
 
   const from = `"Close Powerlifting" <${configuration.email.from}>`;
+
+  async function verifyConnection(): Promise<boolean> {
+    try {
+      await transporter.verify();
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   async function send(to: string, subject: string, text: string): Promise<void> {
     try {
@@ -201,6 +211,7 @@ The Close Powerlifting Team`,
   }
 
   return {
+    verifyConnection,
     sendVerificationEmail,
     sendMagicLinkEmail,
     sendWelcomeEmail,
