@@ -24,11 +24,4 @@ describe("GET /api/health-check", () => {
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBe(0);
   });
-
-  test("should include cache parameter in response", async () => {
-    const response = await unauthenticatedRequest().get("/api/health-check?cache=false");
-
-    expect(response.body).toHaveProperty("cache");
-    expect(response.body.cache).toBe("false");
-  });
 });

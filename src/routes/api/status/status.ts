@@ -67,7 +67,7 @@ export function createStatusRouter(context: AppContext) {
     "/",
     middleware.apiValidationMiddleware({ query: getStatusValidation }),
     async (req: Request<{}, {}, GetStatusType>, res: Response) => {
-      const status = await statusService.getStatus(req.query);
+      const status = await statusService.getStatus({});
 
       context.logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
 

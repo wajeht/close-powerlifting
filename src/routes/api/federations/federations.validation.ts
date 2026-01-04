@@ -13,34 +13,12 @@ export const getFederationsValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
-  cache: z
-    .string()
-    .transform((val) => {
-      if (val === "true") {
-        return true;
-      }
-      if (val === "false") {
-        return false;
-      }
-    })
-    .optional(),
 });
 
 export const getFederationsQueryValidation = z.object({
   year: z
     .string()
     .transform((val) => Number(val))
-    .optional(),
-  cache: z
-    .string()
-    .transform((val) => {
-      if (val === "true") {
-        return true;
-      }
-      if (val === "false") {
-        return false;
-      }
-    })
     .optional(),
 });
 

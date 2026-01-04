@@ -30,11 +30,7 @@ export interface ScraperType {
   stripHtml: (html: string) => string;
   getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
   getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
-  withCache: <T>(
-    cacheConfig: CacheConfig,
-    fetcher: () => Promise<T>,
-    useCache?: boolean,
-  ) => Promise<ApiResponse<T>>;
+  withCache: <T>(cacheConfig: CacheConfig, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
   buildPaginationQuery: (currentPage: number, perPage: number) => string;
   calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
   fetchWithAuth: (
@@ -132,19 +128,8 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
   async function withCache<T>(
     cacheConfig: CacheConfig,
     fetcher: () => Promise<T>,
-    useCache = true,
   ): Promise<ApiResponse<T>> {
     const { key, ttlSeconds = DEFAULT_CACHE_TTL } = cacheConfig;
-
-    if (!useCache) {
-      try {
-        const data = await fetcher();
-        return { data, cache: false };
-      } catch (error) {
-        logScraperError(error, key);
-        return { data: null, cache: false };
-      }
-    }
 
     try {
       const cached = await cache.get(key);

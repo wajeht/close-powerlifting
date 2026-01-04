@@ -3,7 +3,7 @@ import type { StatusData, Federation, ApiResponse } from "../../../types";
 import type { GetStatusType } from "./status.validation";
 
 const CACHE_KEY = "status";
-const CACHE_TTL = 3600;
+const CACHE_TTL = 90000;
 
 export function createStatusService(scraper: ScraperType) {
   function parseStatusHtml(doc: Document): StatusData {
@@ -60,14 +60,8 @@ export function createStatusService(scraper: ScraperType) {
     return parseStatusHtml(doc);
   }
 
-  async function getStatus({
-    cache: useCache = true,
-  }: GetStatusType): Promise<ApiResponse<StatusData>> {
-    return scraper.withCache<StatusData>(
-      { key: CACHE_KEY, ttlSeconds: CACHE_TTL },
-      fetchStatus,
-      useCache,
-    );
+  async function getStatus(_options: GetStatusType): Promise<ApiResponse<StatusData>> {
+    return scraper.withCache<StatusData>({ key: CACHE_KEY, ttlSeconds: CACHE_TTL }, fetchStatus);
   }
 
   return {

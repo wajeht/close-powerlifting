@@ -8,10 +8,10 @@ import type {
   GetFilteredRankingsQueryType,
 } from "./rankings.validation";
 
-const CACHE_TTL = 300;
+const CACHE_TTL = 90000;
 const { defaultPerPage } = configuration.pagination;
 
-function transformRankingRow(row: (string | number)[]): RankingRow {
+export function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");
   const meetCode = String(row[12] || "");
   const instagram = String(row[4] || "");
@@ -65,14 +65,12 @@ export function createRankingService(scraper: ScraperType) {
   async function getRankings({
     current_page = 1,
     per_page = defaultPerPage,
-    cache: useCache = true,
   }: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
     const cacheKey = `rankings-${current_page}-${per_page}`;
 
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
       { key: cacheKey, ttlSeconds: CACHE_TTL },
       () => fetchRankingsData(current_page, per_page),
-      useCache,
     );
 
     if (!result.data) {
@@ -99,7 +97,6 @@ export function createRankingService(scraper: ScraperType) {
     const result = await getRankings({
       current_page: currentPage,
       per_page: perPage,
-      cache: false,
     });
 
     if (!result.data || !result.data[indexInPage]) {
@@ -145,7 +142,6 @@ export function createRankingService(scraper: ScraperType) {
   ): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
-    const useCache = query.cache ?? true;
 
     const filterPath = buildFilterPath(filters);
     const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
@@ -153,7 +149,6 @@ export function createRankingService(scraper: ScraperType) {
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
       { key: cacheKey, ttlSeconds: CACHE_TTL },
       () => fetchFilteredRankingsData(filters, currentPage, perPage),
-      useCache,
     );
 
     if (!result.data) {

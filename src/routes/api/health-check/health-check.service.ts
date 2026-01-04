@@ -9,37 +9,37 @@ export function createHealthCheckService(
     const fetchStatus = async () => {
       const routes = [
         // Rankings
-        "/api/rankings?cache=false",
-        "/api/rankings/1?cache=false",
-        "/api/rankings?current_page=1&per_page=100&cache=false",
-        "/api/rankings/filter/raw?cache=false",
-        "/api/rankings/filter/raw/men?cache=false",
-        "/api/rankings/filter/raw/men/100?cache=false",
-        "/api/rankings/filter/raw/men/100/2024?cache=false",
-        "/api/rankings/filter/raw/men/100/2024/full-power?cache=false",
-        "/api/rankings/filter/raw/men/100/2024/full-power/by-dots?cache=false",
+        "/api/rankings",
+        "/api/rankings/1",
+        "/api/rankings?current_page=1&per_page=100",
+        "/api/rankings/filter/raw",
+        "/api/rankings/filter/raw/men",
+        "/api/rankings/filter/raw/men/100",
+        "/api/rankings/filter/raw/men/100/2024",
+        "/api/rankings/filter/raw/men/100/2024/full-power",
+        "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
 
         // Federations
-        "/api/federations?cache=false",
-        "/api/federations?current_page=1&per_page=100&cache=false",
-        "/api/federations/ipf?cache=false",
-        "/api/federations/ipf?year=2020&cache=false",
+        "/api/federations",
+        "/api/federations?current_page=1&per_page=100",
+        "/api/federations/ipf",
+        "/api/federations/ipf?year=2020",
 
         // Meets
-        "/api/meets/uspa/1969?cache=false",
+        "/api/meets/uspa/1969",
 
         // Records
-        "/api/records?cache=false",
-        "/api/records/raw?cache=false",
-        "/api/records/raw/men?cache=false",
+        "/api/records",
+        "/api/records/raw",
+        "/api/records/raw/men",
 
         // Users
-        "/api/users/johnhaack?cache=false",
-        "/api/users?search=haack&cache=false",
+        "/api/users/johnhaack",
+        "/api/users?search=haack",
 
         // Public (no auth)
-        "/api/status?cache=false",
-        "/api/health-check?cache=false",
+        "/api/status",
+        "/api/health-check",
       ];
 
       const promises = await Promise.allSettled(

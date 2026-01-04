@@ -28,7 +28,6 @@ export function createGeneralRouter(context: AppContext) {
     const rankings = await rankingService.getRankings({
       current_page: 1,
       per_page: 5,
-      cache: true,
     });
 
     return res.status(200).render("general/home.html", {

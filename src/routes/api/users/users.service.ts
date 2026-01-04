@@ -8,46 +8,10 @@ import type {
   RankingsApiResponse,
 } from "../../../types";
 import type { GetUserType, GetUsersType } from "./users.validation";
+import { transformRankingRow } from "../rankings/rankings.service";
 
-const CACHE_TTL = 1800;
+const CACHE_TTL = 7200;
 const { defaultPerPage } = configuration.pagination;
-
-function transformRankingRow(row: (string | number)[]): RankingRow {
-  const username = String(row[3] || "");
-  const meetCode = String(row[12] || "");
-  const instagram = String(row[4] || "");
-
-  return {
-    id: Number(row[0]) || 0,
-    rank: Number(row[1]) || 0,
-    full_name: String(row[2] || ""),
-    username,
-    user_profile: `/api/users/${username}`,
-    instagram,
-    instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
-    username_color: String(row[5] || ""),
-    country: String(row[6] || ""),
-    location: String(row[7] || ""),
-    fed: String(row[8] || ""),
-    federation_url: meetCode ? `/api/federations/${meetCode.split("/")[0]}` : "",
-    date: String(row[9] || ""),
-    country_two: String(row[10] || ""),
-    state: String(row[11] || ""),
-    meet_code: meetCode,
-    meet_url: meetCode ? `/api/meets/${meetCode}` : "",
-    sex: String(row[13] || ""),
-    equip: String(row[14] || ""),
-    age: parseInt(String(row[15]), 10) || 0,
-    open: String(row[16] || ""),
-    body_weight: parseFloat(String(row[17])) || 0,
-    weight_class: parseFloat(String(row[18])) || 0,
-    squat: parseFloat(String(row[19])) || 0,
-    bench: parseFloat(String(row[20])) || 0,
-    deadlift: parseFloat(String(row[21])) || 0,
-    total: parseFloat(String(row[22])) || 0,
-    dots: parseFloat(String(row[23])) || 0,
-  };
-}
 
 export function createUserService(scraper: ScraperType) {
   function parseUserProfileHtml(doc: Document, username: string): UserProfile {
@@ -94,7 +58,6 @@ export function createUserService(scraper: ScraperType) {
     const result = await scraper.withCache<UserProfile>(
       { key: `user-${username}`, ttlSeconds: CACHE_TTL },
       () => fetchUserProfile(username),
-      true,
     );
 
     if (!result.data) {

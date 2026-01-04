@@ -35,14 +35,10 @@ All responses follow this structure:
   "status": "success",
   "request_url": "/api/rankings",
   "message": "The resource was returned successfully!",
-  "cache": true,
   "data": [...],
   "pagination": {...}
 }
 \`\`\`
-
-## Caching
-Responses are cached by default. Add \`?cache=false\` to bypass caching.
     `,
     termsOfService: `${link}/terms`,
     contact: {

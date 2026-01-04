@@ -6,19 +6,7 @@ export const getMeetParamValidation = z.object({
   }),
 });
 
-export const getMeetQueryValidation = z.object({
-  cache: z
-    .string()
-    .transform((val) => {
-      if (val === "true") {
-        return true;
-      }
-      if (val === "false") {
-        return false;
-      }
-    })
-    .optional(),
-});
+export const getMeetQueryValidation = z.object({});
 
 export type GetMeetParamType = z.infer<typeof getMeetParamValidation>;
 export type GetMeetQueryType = z.infer<typeof getMeetQueryValidation>;

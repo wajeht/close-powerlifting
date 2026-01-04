@@ -96,7 +96,7 @@ export function createMeetsRouter(context: AppContext) {
       query: getMeetQueryValidation,
     }),
     async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
-      const result = await meetService.getMeet({ ...req.params, ...req.query });
+      const result = await meetService.getMeet(req.params);
 
       if (!result.data) throw new NotFoundError("The resource cannot be found!");
 

@@ -24,9 +24,7 @@ describe("notFoundHandler", () => {
     req = {
       url: "",
       originalUrl: "",
-      query: {
-        cache: false,
-      },
+      query: {},
     };
 
     res = {
@@ -63,7 +61,6 @@ describe("notFoundHandler", () => {
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
-      cache: req.query.cache,
       data: [],
     });
     expect(res.render).not.toHaveBeenCalled();

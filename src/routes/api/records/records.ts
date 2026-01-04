@@ -85,7 +85,7 @@ export function createRecordsRouter(context: AppContext) {
     "/",
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
     async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
-      const records = await recordService.getRecords(req.query);
+      const records = await recordService.getRecords({});
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 

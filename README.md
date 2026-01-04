@@ -45,7 +45,6 @@ curl -H "x-api-key: YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankin
   "status": "success",
   "request_url": "/api/rankings",
   "message": "The resource was returned successfully!",
-  "cache": true,
   "data": [
     {
       "rank": 1,
@@ -66,8 +65,6 @@ curl -H "x-api-key: YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankin
   }
 }
 ```
-
-Add `?cache=false` to bypass caching and get the latest data.
 
 ## 📑 Docs
 

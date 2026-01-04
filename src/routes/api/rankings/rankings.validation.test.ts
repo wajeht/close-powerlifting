@@ -47,20 +47,6 @@ describe("rankings validation", () => {
       }
     });
 
-    test("transforms cache string to boolean", () => {
-      const resultTrue = getRankingsValidation.safeParse({ cache: "true" });
-      const resultFalse = getRankingsValidation.safeParse({ cache: "false" });
-
-      expect(resultTrue.success).toBe(true);
-      expect(resultFalse.success).toBe(true);
-      if (resultTrue.success) {
-        expect(resultTrue.data.cache).toBe(true);
-      }
-      if (resultFalse.success) {
-        expect(resultFalse.data.cache).toBe(false);
-      }
-    });
-
     test("accepts empty object with optional fields", () => {
       const result = getRankingsValidation.safeParse({});
       expect(result.success).toBe(true);

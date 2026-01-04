@@ -6,7 +6,7 @@ import type {
   GetFilteredRecordsQueryType,
 } from "./records.validation";
 
-const CACHE_TTL = 3600;
+const CACHE_TTL = 90000;
 
 export function createRecordService(scraper: ScraperType) {
   function parseRecordsHtml(doc: Document): RecordCategory[] {
@@ -34,13 +34,9 @@ export function createRecordService(scraper: ScraperType) {
     return parseRecordsHtml(doc);
   }
 
-  async function getRecords({
-    cache: useCache = true,
-  }: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
-    return scraper.withCache<RecordCategory[]>(
-      { key: "records", ttlSeconds: CACHE_TTL },
-      () => fetchRecordsData(),
-      useCache,
+  async function getRecords(_options: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
+    return scraper.withCache<RecordCategory[]>({ key: "records", ttlSeconds: CACHE_TTL }, () =>
+      fetchRecordsData(),
     );
   }
 
@@ -53,16 +49,13 @@ export function createRecordService(scraper: ScraperType) {
 
   async function getFilteredRecords(
     filters: GetFilteredRecordsParamType,
-    query: GetFilteredRecordsQueryType,
+    _query: GetFilteredRecordsQueryType,
   ): Promise<ApiResponse<RecordCategory[]>> {
-    const useCache = query.cache ?? true;
     const filterPath = buildRecordsFilterPath(filters);
     const cacheKey = `records${filterPath}`;
 
-    return scraper.withCache<RecordCategory[]>(
-      { key: cacheKey, ttlSeconds: CACHE_TTL },
-      () => fetchRecordsData(filterPath),
-      useCache,
+    return scraper.withCache<RecordCategory[]>({ key: cacheKey, ttlSeconds: CACHE_TTL }, () =>
+      fetchRecordsData(filterPath),
     );
   }
 

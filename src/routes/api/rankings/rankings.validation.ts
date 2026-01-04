@@ -2,11 +2,6 @@ import { z } from "zod";
 
 import { configuration } from "../../../configuration";
 
-const cacheTransform = z
-  .string()
-  .transform((val) => val === "true")
-  .optional();
-
 export const equipmentEnum = z.enum([
   "raw",
   "wraps",
@@ -38,7 +33,6 @@ export const getRankingsValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
-  cache: cacheTransform,
 });
 
 export const getFilteredRankingsParamValidation = z.object({
@@ -59,7 +53,6 @@ export const getFilteredRankingsQueryValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
-  cache: cacheTransform,
 });
 
 export const getRankValidation = z.object({

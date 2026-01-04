@@ -78,7 +78,6 @@ export function createMiddleware(
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
-      cache: req.query?.cache,
       data: [],
     });
   }
@@ -120,7 +119,6 @@ export function createMiddleware(
     return res.status(statusCode).json({
       status: "fail",
       request_url: req.originalUrl,
-      cache: req.query?.cache,
       message,
       errors: err instanceof ZodError ? err.issues : undefined,
       data: [],
