@@ -11,7 +11,6 @@ import { createCron, type CronType } from "./cron";
 import { createAuthService, type AuthServiceType } from "./routes/auth/auth.service";
 import { createAdminUser, type AdminUserType } from "./utils/admin-user";
 
-// Re-export types for convenience
 export type {
   LoggerType,
   HelpersType,
@@ -24,10 +23,6 @@ export type {
   AuthServiceType,
   AdminUserType,
 };
-
-// ============================================================================
-// AppContext Interface
-// ============================================================================
 
 export interface AppContext {
   db: Knex;
@@ -42,10 +37,6 @@ export interface AppContext {
   authService: AuthServiceType;
   adminUser: AdminUserType;
 }
-
-// ============================================================================
-// Context Creation
-// ============================================================================
 
 let _context: AppContext | null = null;
 
