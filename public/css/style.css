@@ -1001,9 +1001,6 @@
   .text-neutral-600 {
     color: var(--color-neutral-600) !important;
   }
-  .text-neutral-700 {
-    color: var(--color-neutral-700) !important;
-  }
   .text-power {
     color: var(--color-power) !important;
   }
@@ -1161,9 +1158,6 @@
     }
     .hover\:text-power:hover {
       color: var(--color-power) !important;
-    }
-    .hover\:text-power-dark:hover {
-      color: var(--color-power-dark) !important;
     }
     .hover\:text-white:hover {
       color: var(--color-white) !important;
