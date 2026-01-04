@@ -90,11 +90,9 @@ export function createServer(context: AppContext): ServerInfo {
     const addr: string | AddressInfo | null = server.address();
     const port = typeof addr === "string" ? addr : (addr as AddressInfo).port;
 
-    console.log("");
-    console.log("=".repeat(50));
-    console.log(`Server running at http://localhost:${port}`);
-    console.log("=".repeat(50));
-    console.log("");
+    context.logger.info("=".repeat(50));
+    context.logger.info(`Server running at http://localhost:${port}`);
+    context.logger.info("=".repeat(50));
 
     try {
       await context.database.init();
@@ -102,9 +100,9 @@ export function createServer(context: AppContext): ServerInfo {
 
       const mailAvailable = await context.mail.verifyConnection();
       if (mailAvailable) {
-        console.log("Mail service connected (mailpit)");
+        context.logger.info("Mail service connected (mailpit)");
       } else {
-        console.log("Mail service unavailable - emails will not be sent");
+        context.logger.info("Mail service unavailable - emails will not be sent");
       }
 
       await context.adminUser.initializeAdminUser();
