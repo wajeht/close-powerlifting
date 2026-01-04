@@ -46,20 +46,26 @@
     <p class="mb-8 text-center text-neutral-500">
       We did the hard work so you don't have to.
     </p>
-    <div class="grid gap-4 text-center sm:grid-cols-3">
+    <div class="grid gap-4 text-center sm:grid-cols-3" id="stats-grid">
       <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
-        <div class="text-3xl font-bold text-power">3M+</div>
-        <div class="mt-1 text-sm text-neutral-400">Individual lift results</div>
+        <div class="text-3xl font-bold text-power">
+          <span class="counter" data-target="3" data-suffix="M+">0</span>
+        </div>
+        <div class="mt-1 text-sm text-neutral-400">Competition results</div>
         <div class="mt-2 text-xs text-neutral-600">Every squat, bench, deadlift recorded</div>
       </div>
       <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
-        <div class="text-3xl font-bold text-power">1M+</div>
+        <div class="text-3xl font-bold text-power">
+          <span class="counter" data-target="500" data-suffix="K+">0</span>
+        </div>
         <div class="mt-1 text-sm text-neutral-400">Unique athletes</div>
         <div class="mt-2 text-xs text-neutral-600">From local meets to world championships</div>
       </div>
       <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
-        <div class="text-3xl font-bold text-power">100+</div>
-        <div class="mt-1 text-sm text-neutral-400">Federations covered</div>
+        <div class="text-3xl font-bold text-power">
+          <span class="counter" data-target="100" data-suffix="+">0</span>
+        </div>
+        <div class="mt-1 text-sm text-neutral-400">Countries represented</div>
         <div class="mt-2 text-xs text-neutral-600">USAPL, USPA, IPF, WRPF, and more</div>
       </div>
     </div>
@@ -130,3 +136,52 @@
     </p>
   </div>
 </div>
+
+<script>
+  (function() {
+    const counters = document.querySelectorAll('.counter');
+    let animated = false;
+
+    function animateCounter(counter) {
+      const target = parseInt(counter.dataset.target);
+      const suffix = counter.dataset.suffix || '';
+      const duration = 2000;
+      const steps = 60;
+      const stepDuration = duration / steps;
+      let current = 0;
+      const increment = target / steps;
+
+      function updateCounter() {
+        current += increment;
+        if (current >= target) {
+          counter.textContent = target + suffix;
+        } else {
+          counter.textContent = Math.floor(current) + suffix;
+          requestAnimationFrame(() => setTimeout(updateCounter, stepDuration));
+        }
+      }
+
+      updateCounter();
+    }
+
+    function handleIntersection(entries) {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !animated) {
+          animated = true;
+          counters.forEach((counter, index) => {
+            setTimeout(() => animateCounter(counter), index * 150);
+          });
+        }
+      });
+    }
+
+    const observer = new IntersectionObserver(handleIntersection, {
+      threshold: 0.5
+    });
+
+    const statsGrid = document.getElementById('stats-grid');
+    if (statsGrid) {
+      observer.observe(statsGrid);
+    }
+  })();
+</script>
