@@ -17,6 +17,12 @@ export interface AuthServiceType {
     verification_token: string;
   }) => Promise<void>;
   sendWelcomeEmail: (userParams: UserParams) => Promise<string>;
+  sendPasswordResetEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) => Promise<void>;
 }
 
 export function createAuthService(
@@ -103,11 +109,31 @@ export function createAuthService(
     return unhashedKey;
   }
 
+  async function sendPasswordResetEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) {
+    await mail.sendPasswordResetEmail({
+      hostname,
+      email,
+      name,
+      token,
+    });
+  }
+
   return {
     updateUser,
     resetAPIKey,
     resetAdminAPIKey,
     sendVerificationEmail,
     sendWelcomeEmail,
+    sendPasswordResetEmail,
   };
 }

@@ -25,16 +25,7 @@
 
     <nav class="mx-5 rounded-lg border border-neutral-800 bg-neutral-900 px-3 py-8">
       <ul class="flex flex-col gap-5 text-center">
-        <li>
-          <a class="text-neutral-400 hover:text-white" href="/docs/api" target="_blank">Docs</a>
-        </li>
-        <li>
-          <a
-            class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
-            href="/status"
-            >Status</a
-          >
-        </li>
+        <!-- about -->
         <li>
           <a
             class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
@@ -42,6 +33,19 @@
             >About</a
           >
         </li>
+        <!-- status -->
+        <li>
+          <a
+            class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> hover:text-white"
+            href="/status"
+            >Status</a
+          >
+        </li>
+        <!-- docs -->
+        <li>
+          <a class="text-neutral-400 hover:text-white" href="/docs/api" target="_blank">Docs</a>
+        </li>
+        <!-- register -->
         <li class="pt-2">
           <a
             class="rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark"

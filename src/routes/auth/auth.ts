@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import express, { Request, Response } from "express";
 import { z } from "zod";
 
@@ -9,6 +10,14 @@ import { createMiddleware } from "../middleware";
 const registerValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
   name: z.string({ message: "name is required!" }),
+  password: z
+    .string({ message: "password is required!" })
+    .min(8, "password must be at least 8 characters"),
+});
+
+const loginValidation = z.object({
+  email: z.email({ message: "must be a valid email address!" }),
+  password: z.string({ message: "password is required!" }),
 });
 
 const verifyEmailValidation = z.object({
@@ -16,13 +25,48 @@ const verifyEmailValidation = z.object({
   token: z.string({ message: "token is required!" }),
 });
 
-const resetApiKeyValidation = z.object({
+const forgotPasswordValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
 });
 
+const resetPasswordValidation = z
+  .object({
+    email: z.email({ message: "must be a valid email address!" }),
+    token: z.string({ message: "token is required!" }),
+    password: z
+      .string({ message: "password is required!" })
+      .min(8, "password must be at least 8 characters"),
+    confirm_password: z.string({ message: "confirm password is required!" }),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "passwords do not match",
+    path: ["confirm_password"],
+  });
+
+const updateNameValidation = z.object({
+  name: z.string({ message: "name is required!" }).min(1, "name is required"),
+});
+
+const changePasswordValidation = z
+  .object({
+    current_password: z.string({ message: "current password is required!" }),
+    new_password: z
+      .string({ message: "new password is required!" })
+      .min(8, "password must be at least 8 characters"),
+    confirm_password: z.string({ message: "confirm password is required!" }),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "passwords do not match",
+    path: ["confirm_password"],
+  });
+
 type RegisterType = z.infer<typeof registerValidation>;
+type LoginType = z.infer<typeof loginValidation>;
 type VerifyEmailType = z.infer<typeof verifyEmailValidation>;
-type ResetApiKeyType = z.infer<typeof resetApiKeyValidation>;
+type ForgotPasswordType = z.infer<typeof forgotPasswordValidation>;
+type ResetPasswordType = z.infer<typeof resetPasswordValidation>;
+type UpdateNameType = z.infer<typeof updateNameValidation>;
+type ChangePasswordType = z.infer<typeof changePasswordValidation>;
 
 interface GoogleOauthToken {
   access_token: string;
@@ -118,7 +162,7 @@ export function createAuthRouter(context: AppContext) {
     "/register",
     middleware.validationMiddleware({ body: registerValidation }),
     async (req: Request<{}, {}, RegisterType>, res: Response) => {
-      const { email, name } = req.body;
+      const { email, name, password } = req.body;
 
       const found = await context.userRepository.findByEmail(email);
 
@@ -128,10 +172,15 @@ export function createAuthRouter(context: AppContext) {
       }
 
       const { key: token } = await context.helpers.hashKey();
+      const hashedPassword = await bcrypt.hash(
+        password,
+        parseInt(configuration.app.passwordSalt, 10),
+      );
 
       const createdUser = await context.userRepository.create({
         email,
         name,
+        password: hashedPassword,
         verification_token: token,
       });
 
@@ -152,27 +201,270 @@ export function createAuthRouter(context: AppContext) {
     },
   );
 
-  router.get("/reset-api-key", (req: Request, res: Response) => {
-    return res.status(200).render("auth/reset-api-key.html", {
-      path: "/reset-api-key",
-      title: "Reset API Key",
+  router.get("/login", (req: Request, res: Response) => {
+    if (req.session.userId) {
+      return res.redirect("/dashboard");
+    }
+    return res.status(200).render("auth/login.html", {
+      path: "/login",
+      title: "Login",
       messages: req.flash(),
     });
   });
 
   router.post(
-    "/reset-api-key",
-    middleware.validationMiddleware({ body: resetApiKeyValidation }),
-    async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
+    "/login",
+    middleware.validationMiddleware({ body: loginValidation }),
+    async (req: Request<{}, {}, LoginType>, res: Response) => {
+      const { email, password } = req.body;
+
+      const user = await context.userRepository.findByEmail(email);
+
+      if (!user || !user.password) {
+        req.flash("error", "Invalid email or password");
+        return res.redirect("/login");
+      }
+
+      if (!user.verified) {
+        req.flash("error", "Please verify your email first");
+        return res.redirect("/login");
+      }
+
+      const isValid = await bcrypt.compare(password, user.password);
+
+      if (!isValid) {
+        req.flash("error", "Invalid email or password");
+        return res.redirect("/login");
+      }
+
+      req.session.userId = user.id;
+
+      context.logger.info(`User ${user.id} (${user.email}) logged in`);
+
+      return res.redirect("/dashboard");
+    },
+  );
+
+  router.post("/logout", (req: Request, res: Response) => {
+    const userId = req.session.userId;
+    req.session.destroy(() => {
+      context.logger.info(`User ${userId} logged out`);
+      res.redirect("/login");
+    });
+  });
+
+  router.get(
+    "/dashboard",
+    middleware.userAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      const userId = req.session.userId!;
+      const user = await context.userRepository.findById(userId);
+
+      if (!user) {
+        req.session.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
+
+      let stats = null;
+      if (user.admin) {
+        const allUsers = await context.userRepository.findAll();
+        const cacheStats = await context.cache.getStatistics();
+        stats = {
+          totalUsers: allUsers.length,
+          verifiedUsers: allUsers.filter((u) => u.verified).length,
+          unverifiedUsers: allUsers.filter((u) => !u.verified).length,
+          adminUsers: allUsers.filter((u) => u.admin).length,
+          cacheEntries: cacheStats.totalEntries,
+          totalApiCalls: allUsers.reduce((sum, u) => sum + u.api_call_count, 0),
+        };
+      }
+
+      return res.render("auth/dashboard.html", {
+        title: "Dashboard",
+        path: "/dashboard",
+        user,
+        usagePercent,
+        stats,
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
+
+  router.get(
+    "/settings",
+    middleware.userAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      const userId = req.session.userId!;
+      const user = await context.userRepository.findById(userId);
+
+      if (!user) {
+        req.session.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      return res.render("auth/settings.html", {
+        title: "Settings",
+        path: "/settings",
+        user,
+        apiKey: null,
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
+
+  router.post(
+    "/settings",
+    middleware.userAuthorizationMiddleware,
+    middleware.validationMiddleware({ body: updateNameValidation }),
+    async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
+      const userId = req.session.userId!;
+      const { name } = req.body;
+
+      await context.userRepository.updateById(userId, { name });
+
+      context.logger.info(`User ${userId} updated name to ${name}`);
+
+      req.flash("success", "Name updated successfully");
+      return res.redirect("/settings");
+    },
+  );
+
+  router.post(
+    "/settings/regenerate-key",
+    middleware.userAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      const userId = req.session.userId!;
+      const user = await context.userRepository.findById(userId);
+
+      if (!user) {
+        req.session.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      const unhashedKey = await context.authService.sendWelcomeEmail({
+        name: user.name,
+        email: user.email,
+        userId: String(user.id),
+      });
+
+      await context.userRepository.updateById(userId, {
+        api_key_version: (user.api_key_version || 0) + 1,
+      });
+
+      const updatedUser = await context.userRepository.findById(userId);
+
+      context.logger.info(`User ${userId} regenerated API key`);
+
+      req.flash("success", "Your new API key has been generated and sent to your email!");
+
+      return res.render("auth/settings.html", {
+        title: "Settings",
+        path: "/settings",
+        user: updatedUser,
+        apiKey: unhashedKey,
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
+
+  router.post(
+    "/settings/password",
+    middleware.userAuthorizationMiddleware,
+    middleware.validationMiddleware({ body: changePasswordValidation }),
+    async (req: Request<{}, {}, ChangePasswordType>, res: Response) => {
+      const userId = req.session.userId!;
+      const { current_password, new_password } = req.body;
+
+      const user = await context.userRepository.findById(userId);
+
+      if (!user || !user.password) {
+        req.flash("error", "Cannot change password for OAuth accounts");
+        return res.redirect("/settings");
+      }
+
+      const isValid = await bcrypt.compare(current_password, user.password);
+
+      if (!isValid) {
+        req.flash("error", "Current password is incorrect");
+        return res.redirect("/settings");
+      }
+
+      const hashedPassword = await bcrypt.hash(
+        new_password,
+        parseInt(configuration.app.passwordSalt, 10),
+      );
+      await context.userRepository.updateById(userId, { password: hashedPassword });
+
+      context.logger.info(`User ${userId} changed password`);
+
+      req.flash("success", "Password changed successfully");
+      return res.redirect("/settings");
+    },
+  );
+
+  router.post(
+    "/settings/delete",
+    middleware.userAuthorizationMiddleware,
+    async (req: Request, res: Response) => {
+      const userId = req.session.userId!;
+
+      await context.userRepository.softDelete(userId);
+
+      context.logger.info(`User ${userId} deleted their account`);
+
+      req.session.destroy(() => {
+        res.redirect("/login");
+      });
+    },
+  );
+
+  router.get("/forgot-password", (req: Request, res: Response) => {
+    return res.status(200).render("auth/forgot-password.html", {
+      path: "/forgot-password",
+      title: "Forgot Password",
+      messages: req.flash(),
+    });
+  });
+
+  router.post(
+    "/forgot-password",
+    middleware.validationMiddleware({ body: forgotPasswordValidation }),
+    async (req: Request<{}, {}, ForgotPasswordType>, res: Response) => {
       const { email } = req.body;
 
       const foundUser = await context.userRepository.findByEmail(email);
 
       context.logger.info(
-        `Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`,
+        `Password reset requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}`,
       );
 
-      if (foundUser && !foundUser.verified) {
+      if (foundUser && foundUser.verified) {
+        // Generate a reset token and save it
+        const { key: resetToken } = await context.helpers.hashKey();
+        await context.userRepository.updateById(foundUser.id, {
+          verification_token: resetToken,
+        });
+
+        context.logger.info(`Sending password reset email to ${email}`);
+        await context.authService.sendPasswordResetEmail({
+          hostname: context.helpers.getHostName(req),
+          name: foundUser.name,
+          email: foundUser.email,
+          token: resetToken,
+        });
+      } else if (foundUser && !foundUser.verified) {
+        // If not verified, send verification email instead
         context.logger.info(`User ${email} not verified, sending verification email`);
         await context.authService.sendVerificationEmail({
           hostname: context.helpers.getHostName(req),
@@ -180,25 +472,67 @@ export function createAuthRouter(context: AppContext) {
           email: foundUser.email,
           verification_token: foundUser.verification_token!,
         });
-      } else if (foundUser && foundUser.verified && foundUser.admin) {
-        context.logger.info(`User ${email} is admin, resetting admin API key`);
-        await context.authService.resetAdminAPIKey({
-          userId: String(foundUser.id),
-          name: foundUser.name,
-          email: foundUser.email,
-        });
-      } else if (foundUser && foundUser.verified) {
-        context.logger.info(`User ${email} is verified, resetting API key`);
-        await context.authService.resetAPIKey({
-          userId: String(foundUser.id),
-          name: foundUser.name,
-          email: foundUser.email,
-        });
       }
 
-      req.flash("info", "If you have an account with us, we will send you a new api key!");
+      req.flash("info", "If you have an account with us, we'll send you a password reset link.");
 
-      res.redirect("/reset-api-key");
+      res.redirect("/forgot-password");
+    },
+  );
+
+  router.get("/reset-password", (req: Request, res: Response) => {
+    const { token, email } = req.query as { token: string; email: string };
+
+    if (!token || !email) {
+      req.flash("error", "Invalid password reset link.");
+      return res.redirect("/forgot-password");
+    }
+
+    return res.status(200).render("auth/reset-password.html", {
+      path: "/reset-password",
+      title: "Reset Password",
+      token,
+      email,
+      messages: req.flash(),
+    });
+  });
+
+  router.post(
+    "/reset-password",
+    middleware.validationMiddleware({ body: resetPasswordValidation }),
+    async (req: Request<{}, {}, ResetPasswordType>, res: Response) => {
+      const { email, token, password } = req.body;
+
+      const foundUser = await context.userRepository.findByEmail(email);
+
+      if (!foundUser) {
+        req.flash("error", "Invalid password reset link.");
+        return res.redirect("/forgot-password");
+      }
+
+      if (
+        !foundUser.verification_token ||
+        !context.helpers.timingSafeEqual(foundUser.verification_token, token)
+      ) {
+        req.flash("error", "Invalid or expired password reset link.");
+        return res.redirect("/forgot-password");
+      }
+
+      // Hash the new password and update
+      const hashedPassword = await bcrypt.hash(
+        password,
+        parseInt(configuration.app.passwordSalt, 10),
+      );
+
+      await context.userRepository.updateById(foundUser.id, {
+        password: hashedPassword,
+        verification_token: null,
+      });
+
+      context.logger.info(`User ${foundUser.id} (${email}) reset their password`);
+
+      req.flash("success", "Your password has been reset. Please login with your new password.");
+      return res.redirect("/login");
     },
   );
 
@@ -220,8 +554,8 @@ export function createAuthRouter(context: AppContext) {
     }
 
     if (foundUser.verified === true) {
-      req.flash("error", "This e-mail has already been used for verification!");
-      return res.redirect("/register");
+      req.flash("info", "Your email is already verified. Please login.");
+      return res.redirect("/login");
     }
 
     context.authService.sendWelcomeEmail({
@@ -232,10 +566,10 @@ export function createAuthRouter(context: AppContext) {
 
     req.flash(
       "success",
-      "Thank you for verifying your email address. We will send you an API key to your email very shortly!",
+      "Thank you for verifying your email address. We sent you an API key to your email. Please login to access your dashboard.",
     );
 
-    return res.redirect("/register");
+    return res.redirect("/login");
   });
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
@@ -260,10 +594,11 @@ export function createAuthRouter(context: AppContext) {
       throw new UnauthorizedError("Something went wrong while authenticating with Google");
     }
 
-    const found = await context.userRepository.findByEmail(googleUser.email);
+    let user = await context.userRepository.findByEmail(googleUser.email);
 
-    if (!found) {
-      const createdUser = await context.userRepository.create({
+    if (!user) {
+      // Create new user with OAuth
+      user = await context.userRepository.create({
         email: googleUser.email,
         name: googleUser.name,
         verification_token: access_token,
@@ -271,23 +606,22 @@ export function createAuthRouter(context: AppContext) {
         verified_at: new Date().toISOString(),
       });
 
+      // Generate API key and send welcome email
       context.authService.sendWelcomeEmail({
-        name: createdUser.name,
-        email: createdUser.email,
-        userId: String(createdUser.id),
+        name: user.name,
+        email: user.email,
+        userId: String(user.id),
       });
 
-      req.flash("success", "We will send you an API key to your email very shortly!");
-
-      return res.redirect("/register");
+      context.logger.info(`User ${user.id} created via Google OAuth`);
     }
 
-    req.flash(
-      "error",
-      "Email already exist, please click on 'Forgot api key?' to request a new one!",
-    );
+    // Log the user in
+    req.session.userId = user.id;
 
-    return res.redirect("/register");
+    context.logger.info(`User ${user.id} (${user.email}) logged in via Google OAuth`);
+
+    return res.redirect("/dashboard");
   });
 
   router.post(
@@ -370,45 +704,6 @@ export function createAuthRouter(context: AppContext) {
             apiKey: unhashedKey,
           },
         ],
-      });
-    },
-  );
-
-  router.post(
-    "/api/reset-api-key",
-    middleware.apiValidationMiddleware({ body: resetApiKeyValidation }),
-    async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
-      const { email } = req.body;
-
-      const foundUser = await context.userRepository.findByEmail(email);
-
-      if (foundUser && !foundUser.verified) {
-        await context.authService.sendVerificationEmail({
-          hostname: context.helpers.getHostName(req),
-          name: foundUser.name,
-          email: foundUser.email,
-          verification_token: foundUser.verification_token!,
-        });
-      } else if (foundUser && foundUser.verified && foundUser.admin) {
-        await context.authService.resetAdminAPIKey({
-          userId: String(foundUser.id),
-          name: foundUser.name,
-          email: foundUser.email,
-        });
-      } else if (foundUser && foundUser.verified) {
-        await context.authService.resetAPIKey({
-          userId: String(foundUser.id),
-          name: foundUser.name,
-          email: foundUser.email,
-        });
-      }
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message:
-          "If you have an account with us, we will send you a new api key to your email very shortly!",
-        data: [],
       });
     },
   );

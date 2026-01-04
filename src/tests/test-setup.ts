@@ -92,11 +92,11 @@ let testUserId: number;
 
 export function authenticatedRequest() {
   return {
-    get: (url: string) => request(app).get(url).set("x-api-key", testApiKey),
-    post: (url: string) => request(app).post(url).set("x-api-key", testApiKey),
-    put: (url: string) => request(app).put(url).set("x-api-key", testApiKey),
-    patch: (url: string) => request(app).patch(url).set("x-api-key", testApiKey),
-    delete: (url: string) => request(app).delete(url).set("x-api-key", testApiKey),
+    get: (url: string) => request(app).get(url).set("Authorization", `Bearer ${testApiKey}`),
+    post: (url: string) => request(app).post(url).set("Authorization", `Bearer ${testApiKey}`),
+    put: (url: string) => request(app).put(url).set("Authorization", `Bearer ${testApiKey}`),
+    patch: (url: string) => request(app).patch(url).set("Authorization", `Bearer ${testApiKey}`),
+    delete: (url: string) => request(app).delete(url).set("Authorization", `Bearer ${testApiKey}`),
   };
 }
 

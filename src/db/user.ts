@@ -13,6 +13,7 @@ export interface UserRepositoryType {
   update: (email: string, data: UpdateUserInput) => Promise<UserType | undefined>;
   updateById: (id: number, data: UpdateUserInput) => Promise<UserType | undefined>;
   incrementApiCallCount: (id: number) => Promise<UserType | undefined>;
+  setApiCallCount: (id: number, count: number) => Promise<UserType | undefined>;
   resetAllApiCallCounts: () => Promise<void>;
   softDelete: (id: number) => Promise<void>;
 }
@@ -90,6 +91,14 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return findById(id);
   }
 
+  async function setApiCallCount(id: number, count: number): Promise<UserType | undefined> {
+    await knex<UserType>("users").where({ id }).update({
+      api_call_count: count,
+      updated_at: new Date().toISOString(),
+    });
+    return findById(id);
+  }
+
   async function resetAllApiCallCounts(): Promise<void> {
     await knex<UserType>("users").where({ verified: true }).update({ api_call_count: 0 });
   }
@@ -112,6 +121,7 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     update,
     updateById,
     incrementApiCallCount,
+    setApiCallCount,
     resetAllApiCallCounts,
     softDelete,
   };

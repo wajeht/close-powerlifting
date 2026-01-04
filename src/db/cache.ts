@@ -1,12 +1,19 @@
 import type { Knex } from "knex";
 import type { LoggerType } from "../utils/logger";
 
-type CacheEntry = {
+export interface CacheEntry {
   key: string;
   value: string;
   created_at: string;
   updated_at: string;
-};
+}
+
+export interface CacheStatistics {
+  totalEntries: number;
+  oldestEntry: string | null;
+  newestEntry: string | null;
+  keyPatterns: { pattern: string; count: number }[];
+}
 
 export interface CacheType {
   get: (key: string) => Promise<string | null>;
@@ -16,6 +23,8 @@ export interface CacheType {
   keys: (pattern: string) => Promise<string[]>;
   clearAll: () => Promise<void>;
   isReady: () => boolean;
+  getStatistics: () => Promise<CacheStatistics>;
+  getEntries: (pattern: string) => Promise<CacheEntry[]>;
 }
 
 export function createCache(knex: Knex, logger: LoggerType): CacheType {
@@ -66,6 +75,38 @@ export function createCache(knex: Knex, logger: LoggerType): CacheType {
     return knex !== null;
   }
 
+  async function getStatistics(): Promise<CacheStatistics> {
+    const entries = await knex<CacheEntry>("cache").select("key", "created_at", "updated_at");
+
+    const keyPatterns = new Map<string, number>();
+    for (const entry of entries) {
+      const prefix = entry.key.split("-")[0] || "other";
+      keyPatterns.set(prefix, (keyPatterns.get(prefix) || 0) + 1);
+    }
+
+    let oldestEntry: string | null = null;
+    let newestEntry: string | null = null;
+
+    if (entries.length > 0) {
+      oldestEntry = entries.reduce((a, b) => (a.created_at < b.created_at ? a : b)).created_at;
+      newestEntry = entries.reduce((a, b) => (a.updated_at > b.updated_at ? a : b)).updated_at;
+    }
+
+    return {
+      totalEntries: entries.length,
+      oldestEntry,
+      newestEntry,
+      keyPatterns: Array.from(keyPatterns.entries()).map(([pattern, count]) => ({
+        pattern,
+        count,
+      })),
+    };
+  }
+
+  async function getEntries(pattern: string): Promise<CacheEntry[]> {
+    return knex<CacheEntry>("cache").where("key", "like", pattern).select("*");
+  }
+
   return {
     get,
     set,
@@ -74,5 +115,7 @@ export function createCache(knex: Knex, logger: LoggerType): CacheType {
     keys,
     clearAll,
     isReady,
+    getStatistics,
+    getEntries,
   };
 }

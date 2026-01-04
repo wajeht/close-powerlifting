@@ -44,10 +44,14 @@ export function layoutMiddleware(
 
   res.render = function (
     view: string,
-    options?: object,
+    options?: object & { layout?: string | false },
     callback?: (error: Error, html: string) => void,
   ) {
-    const renderOptions = { version, ...options };
+    const renderOptions = { version, ...res.locals, ...options };
+    const layout =
+      (options as { layout?: string | false } | undefined)?.layout === false
+        ? false
+        : (options as { layout?: string } | undefined)?.layout || "_layouts/main.html";
 
     originalRender(view, renderOptions, (renderError: Error, html: string) => {
       if (renderError) {
@@ -55,9 +59,13 @@ export function layoutMiddleware(
         return next(renderError);
       }
 
-      const layoutPath = "./_layouts/main.html";
+      if (!layout) {
+        if (callback) return callback(null as unknown as Error, html);
+        return res.send(html);
+      }
+
       try {
-        const finalHtml = eta.render(layoutPath, { ...renderOptions, body: html });
+        const finalHtml = eta.render(layout, { ...renderOptions, body: html });
         if (callback) return callback(null as unknown as Error, finalHtml);
         res.send(finalHtml);
       } catch (layoutError) {

@@ -8,7 +8,7 @@ describe("GET /api/rankings", () => {
 
     expect(response.status).toBe(401);
     expect(response.body.status).toBe("fail");
-    expect(response.body.message).toContain("authentication");
+    expect(response.body.message).toContain("Authorization");
   });
 
   it("should return rankings data with correct structure", async () => {

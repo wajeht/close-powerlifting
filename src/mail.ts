@@ -25,6 +25,12 @@ export interface MailType {
     name: string;
     percent: number;
   }) => Promise<void>;
+  sendPasswordResetEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) => Promise<void>;
 }
 
 export function createMail(logger: LoggerType): MailType {
@@ -227,6 +233,35 @@ The Close Powerlifting Team`,
     );
   }
 
+  async function sendPasswordResetEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "Reset your password",
+      `Hi ${name},
+
+We received a request to reset your password. Click the link below to set a new password:
+
+${hostname}/reset-password?token=${token}&email=${email}
+
+This link expires in 1 hour.
+
+If you didn't request this, you can safely ignore this email. Your password won't be changed.
+
+Cheers,
+The Close Powerlifting Team`,
+    );
+  }
+
   return {
     sendVerificationEmail,
     sendWelcomeEmail,
@@ -235,5 +270,6 @@ The Close Powerlifting Team`,
     sendContactEmail,
     sendApiLimitResetEmail,
     sendReachingApiLimitEmail,
+    sendPasswordResetEmail,
   };
 }
