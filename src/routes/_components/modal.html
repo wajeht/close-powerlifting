@@ -1,0 +1,24 @@
+<dialog id="<%= it.id %>" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="<%= it.action %>" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('./csrf-input.html') %>
+    <% if (it.hiddenName && it.hiddenValue) { %>
+    <input type="hidden" name="<%= it.hiddenName %>" value="<%= it.hiddenValue %>" />
+    <% } %>
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white"><%= it.title %></h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400"><%~ it.description %></p>
+    <% if (it.input) { %>
+    <%~ it.input %>
+    <% } %>
+    <div class="flex gap-2 justify-end">
+      <%~ include('./button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('./button.html', { text: it.confirmText || 'Confirm', variant: it.confirmVariant || 'primary' }) %>
+    </div>
+  </form>
+</dialog>

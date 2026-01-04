@@ -66,47 +66,24 @@
   </div>
 </div>
 
-<!-- Regenerate Key Confirmation Modal -->
 <% if (it.user.key) { %>
-<dialog id="regenerate-key-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
-  <form action="/settings/regenerate-key" method="post" class="flex flex-col gap-4 w-80">
-    <%~ include('../_components/csrf-input.html') %>
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold text-white">Regenerate API Key</h3>
-      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <p class="text-sm text-neutral-400">This will invalidate your current API key. Any applications using it will stop working.</p>
-    <div class="flex gap-2 justify-end">
-      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
-      <%~ include('../_components/button.html', { text: 'Regenerate' }) %>
-    </div>
-  </form>
-</dialog>
+<%~ include('../_components/modal.html', {
+  id: 'regenerate-key-modal',
+  action: '/settings/regenerate-key',
+  title: 'Regenerate API Key',
+  description: 'This will invalidate your current API key. Any applications using it will stop working.',
+  confirmText: 'Regenerate'
+}) %>
 <% } %>
 
-<!-- Delete Account Confirmation Modal -->
-<dialog id="delete-account-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
-  <form action="/settings/delete" method="post" class="flex flex-col gap-4 w-80">
-    <%~ include('../_components/csrf-input.html') %>
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold text-white">Delete Account</h3>
-      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <p class="text-sm text-neutral-400">Are you sure you want to delete your account? This action cannot be undone.</p>
-    <div class="flex gap-2 justify-end">
-      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
-      <%~ include('../_components/button.html', { text: 'Delete', variant: 'danger' }) %>
-    </div>
-  </form>
-</dialog>
+<%~ include('../_components/modal.html', {
+  id: 'delete-account-modal',
+  action: '/settings/delete',
+  title: 'Delete Account',
+  description: 'Are you sure you want to delete your account? This action cannot be undone.',
+  confirmText: 'Delete',
+  confirmVariant: 'danger'
+}) %>
 
 <script>
 document.querySelectorAll('.open-modal').forEach(function(btn) {

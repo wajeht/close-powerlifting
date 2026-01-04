@@ -33,30 +33,12 @@
 <div class="fade-in animation-delay-4 max-w-2xl">
   <h2 class="mb-4 text-lg font-semibold text-white">System Overview</h2>
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-power"><%= it.stats.totalUsers %></div>
-      <div class="text-neutral-400">Total Users</div>
-    </div>
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-green-500"><%= it.stats.verifiedUsers %></div>
-      <div class="text-neutral-400">Verified Users</div>
-    </div>
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-yellow-500"><%= it.stats.unverifiedUsers %></div>
-      <div class="text-neutral-400">Unverified Users</div>
-    </div>
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-purple-500"><%= it.stats.adminUsers %></div>
-      <div class="text-neutral-400">Admin Users</div>
-    </div>
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-blue-500"><%= it.stats.cacheEntries %></div>
-      <div class="text-neutral-400">Cache Entries</div>
-    </div>
-    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-      <div class="text-3xl font-bold text-orange-500"><%= it.stats.totalApiCalls.toLocaleString() %></div>
-      <div class="text-neutral-400">Total API Calls</div>
-    </div>
+    <%~ include('../_components/stat-card.html', { value: it.stats.totalUsers, label: 'Total Users', color: 'text-power' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.verifiedUsers, label: 'Verified Users', color: 'text-green-500' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.unverifiedUsers, label: 'Unverified Users', color: 'text-yellow-500' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.adminUsers, label: 'Admin Users', color: 'text-purple-500' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.cacheEntries, label: 'Cache Entries', color: 'text-blue-500' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.totalApiCalls.toLocaleString(), label: 'Total API Calls', color: 'text-orange-500' }) %>
   </div>
 </div>
 <% } %>
