@@ -1,5 +1,4 @@
 import request from "supertest";
-import bcrypt from "bcryptjs";
 import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, it } from "vitest";
 
 import { app, knex } from "../../tests/test-setup";
@@ -7,17 +6,15 @@ import { app, knex } from "../../tests/test-setup";
 describe("Auth Routes", () => {
   let testUserId: number;
   const testEmail = "auth-test@example.com";
-  const testPassword = "test-password-123";
+  const testMagicToken = "test-magic-token-123";
   const testName = "Auth Test User";
 
   beforeAll(async () => {
-    const hashedPassword = await bcrypt.hash(testPassword, 10);
-
     const [user] = await knex("users")
       .insert({
         name: testName,
         email: testEmail,
-        password: hashedPassword,
+        verification_token: testMagicToken,
         key: "test-auth-key",
         api_call_count: 50,
         api_call_limit: 100,
@@ -37,12 +34,19 @@ describe("Auth Routes", () => {
       const response = await request(app).get("/login");
 
       expect(response.status).toBe(200);
-      expect(response.text).toContain("Login");
+      expect(response.text).toContain("Get started");
+      expect(response.text).toContain("Continue with Email");
     });
 
     it("should redirect to dashboard if already logged in", async () => {
+      // Reset token for login (also clear any expired timestamp)
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
       const agent = request.agent(app);
-      await agent.post("/login").type("form").send({ email: testEmail, password: testPassword });
+      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
       const response = await agent.get("/login");
 
@@ -52,48 +56,8 @@ describe("Auth Routes", () => {
   });
 
   describe("POST /login", () => {
-    it("should redirect to /dashboard on successful login", async () => {
-      const agent = request.agent(app);
-
-      const response = await agent
-        .post("/login")
-        .type("form")
-        .send({ email: testEmail, password: testPassword });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/dashboard");
-    });
-
-    it("should redirect admin users to /dashboard", async () => {
-      const hashedPassword = await bcrypt.hash("admin-password", 10);
-      const [adminUser] = await knex("users")
-        .insert({
-          name: "Admin User",
-          email: "admin-login-test@example.com",
-          password: hashedPassword,
-          key: "test-admin-login-key",
-          admin: true,
-          verified: true,
-        })
-        .returning("*");
-
-      const agent = request.agent(app);
-      const response = await agent
-        .post("/login")
-        .type("form")
-        .send({ email: "admin-login-test@example.com", password: "admin-password" });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/dashboard");
-
-      await knex("users").where({ id: adminUser.id }).delete();
-    });
-
-    it("should redirect back to login with invalid credentials", async () => {
-      const response = await request(app)
-        .post("/login")
-        .type("form")
-        .send({ email: testEmail, password: "wrong-password" });
+    it("should redirect back to login with info message for valid email", async () => {
+      const response = await request(app).post("/login").type("form").send({ email: testEmail });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -103,19 +67,18 @@ describe("Auth Routes", () => {
       const response = await request(app)
         .post("/login")
         .type("form")
-        .send({ email: "nonexistent@example.com", password: "password" });
+        .send({ email: "nonexistent@example.com" });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
     });
 
     it("should redirect back to login for unverified user", async () => {
-      const hashedPassword = await bcrypt.hash("unverified-password", 10);
       const [unverifiedUser] = await knex("users")
         .insert({
           name: "Unverified User",
           email: "unverified-test@example.com",
-          password: hashedPassword,
+          verification_token: "unverified-token",
           verified: false,
         })
         .returning("*");
@@ -123,7 +86,7 @@ describe("Auth Routes", () => {
       const response = await request(app)
         .post("/login")
         .type("form")
-        .send({ email: "unverified-test@example.com", password: "unverified-password" });
+        .send({ email: "unverified-test@example.com" });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -132,10 +95,64 @@ describe("Auth Routes", () => {
     });
   });
 
+  describe("GET /magic-link", () => {
+    beforeEach(async () => {
+      await knex("users").where({ id: testUserId }).update({ verification_token: testMagicToken });
+    });
+
+    it("should login user with valid magic link", async () => {
+      const agent = request.agent(app);
+      const response = await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/dashboard");
+
+      // Should be able to access dashboard now
+      const dashboardResponse = await agent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(200);
+    });
+
+    it("should reject invalid token", async () => {
+      const response = await request(app).get(`/magic-link?token=wrong-token&email=${testEmail}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should reject missing token", async () => {
+      const response = await request(app).get(`/magic-link?email=${testEmail}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should reject expired magic link", async () => {
+      // Set expired timestamp
+      const expiredTime = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(); // 2 hours ago
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: expiredTime,
+      });
+
+      const response = await request(app).get(
+        `/magic-link?token=${testMagicToken}&email=${testEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+  });
+
   describe("POST /logout", () => {
     it("should logout and redirect to login", async () => {
+      // Reset token for login (also clear any expired timestamp)
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
       const agent = request.agent(app);
-      await agent.post("/login").type("form").send({ email: testEmail, password: testPassword });
+      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
       const response = await agent.post("/logout");
 
@@ -148,56 +165,24 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("GET /register", () => {
-    it("should render registration page", async () => {
-      const response = await request(app).get("/register");
-
-      expect(response.status).toBe(200);
-      expect(response.text).toContain("Get API Key");
-    });
-  });
-
-  describe("POST /register", () => {
+  describe("POST /login - new user registration", () => {
     afterEach(async () => {
-      await knex("users").where({ email: "new-register@example.com" }).delete();
+      await knex("users").where({ email: "new-user@example.com" }).delete();
     });
 
-    it("should create new user and redirect", async () => {
-      const response = await request(app).post("/register").type("form").send({
-        email: "new-register@example.com",
-        name: "New User",
-        password: "newpassword123",
+    it("should create new user and redirect when email does not exist", async () => {
+      const response = await request(app).post("/login").type("form").send({
+        email: "new-user@example.com",
       });
 
       expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/register");
+      expect(response.headers.location).toBe("/login");
 
-      const user = await knex("users").where({ email: "new-register@example.com" }).first();
+      const user = await knex("users").where({ email: "new-user@example.com" }).first();
       expect(user).toBeDefined();
-      expect(user.name).toBe("New User");
-      expect(user.password).toBeDefined();
-    });
-
-    it("should reject duplicate email", async () => {
-      const response = await request(app).post("/register").type("form").send({
-        email: testEmail,
-        name: "Duplicate User",
-        password: "password123",
-      });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/register");
-    });
-
-    it("should reject short password", async () => {
-      const response = await request(app).post("/register").type("form").send({
-        email: "short-password@example.com",
-        name: "Short Password User",
-        password: "short",
-      });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/register");
+      expect(user.name).toBe("New User"); // extracted from email
+      expect(user.verification_token).toBeDefined();
+      expect(user.verified).toBe(0); // SQLite stores booleans as 0/1
     });
   });
 
@@ -230,17 +215,6 @@ describe("Auth Routes", () => {
       expect(response.headers.location).toBe("/login");
     });
 
-    it("should redirect POST /settings/password to login", async () => {
-      const response = await request(app).post("/settings/password").type("form").send({
-        current_password: "test",
-        new_password: "newpassword123",
-        confirm_password: "newpassword123",
-      });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
     it("should redirect POST /settings/delete to login", async () => {
       const response = await request(app).post("/settings/delete");
 
@@ -253,8 +227,14 @@ describe("Auth Routes", () => {
     let agent: ReturnType<typeof request.agent>;
 
     beforeEach(async () => {
+      // Reset token for login (also clear any expired timestamp)
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
       agent = request.agent(app);
-      await agent.post("/login").type("form").send({ email: testEmail, password: testPassword });
+      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
     });
 
     describe("GET /dashboard", () => {
@@ -287,8 +267,14 @@ describe("Auth Routes", () => {
     let agent: ReturnType<typeof request.agent>;
 
     beforeEach(async () => {
+      // Reset token for login (also clear any expired timestamp)
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
       agent = request.agent(app);
-      await agent.post("/login").type("form").send({ email: testEmail, password: testPassword });
+      await agent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
     });
 
     describe("GET /settings", () => {
@@ -318,64 +304,16 @@ describe("Auth Routes", () => {
       });
     });
 
-    describe("POST /settings/password", () => {
-      afterEach(async () => {
-        const hashedPassword = await bcrypt.hash(testPassword, 10);
-        await knex("users").where({ id: testUserId }).update({ password: hashedPassword });
-      });
-
-      it("should change password with valid current password", async () => {
-        const response = await agent.post("/settings/password").type("form").send({
-          current_password: testPassword,
-          new_password: "newpassword123",
-          confirm_password: "newpassword123",
-        });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/settings");
-
-        const user = await knex("users").where({ id: testUserId }).first();
-        const isNewPasswordValid = await bcrypt.compare("newpassword123", user.password);
-        expect(isNewPasswordValid).toBe(true);
-      });
-
-      it("should reject incorrect current password", async () => {
-        const response = await agent.post("/settings/password").type("form").send({
-          current_password: "wrong-password",
-          new_password: "newpassword123",
-          confirm_password: "newpassword123",
-        });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/settings");
-
-        const user = await knex("users").where({ id: testUserId }).first();
-        const isOldPasswordStillValid = await bcrypt.compare(testPassword, user.password);
-        expect(isOldPasswordStillValid).toBe(true);
-      });
-
-      it("should reject mismatched passwords", async () => {
-        const response = await agent.post("/settings/password").type("form").send({
-          current_password: testPassword,
-          new_password: "newpassword123",
-          confirm_password: "differentpassword",
-        });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/settings/password");
-      });
-    });
-
     describe("POST /settings/delete", () => {
       let deleteUserId: number;
+      const deleteMagicToken = "delete-magic-token";
 
       beforeEach(async () => {
-        const hashedPassword = await bcrypt.hash("delete-password", 10);
         const [user] = await knex("users")
           .insert({
             name: "Delete Test User",
             email: "delete-test@example.com",
-            password: hashedPassword,
+            verification_token: deleteMagicToken,
             verified: true,
           })
           .returning("*");
@@ -388,10 +326,9 @@ describe("Auth Routes", () => {
 
       it("should soft delete account and logout", async () => {
         const deleteAgent = request.agent(app);
-        await deleteAgent
-          .post("/login")
-          .type("form")
-          .send({ email: "delete-test@example.com", password: "delete-password" });
+        await deleteAgent.get(
+          `/magic-link?token=${deleteMagicToken}&email=delete-test@example.com`,
+        );
 
         const response = await deleteAgent.post("/settings/delete");
 
@@ -399,7 +336,7 @@ describe("Auth Routes", () => {
         expect(response.headers.location).toBe("/login");
 
         const user = await knex("users").where({ id: deleteUserId }).first();
-        expect(user.deleted_at).not.toBeNull();
+        expect(user.deleted).toBe(1); // SQLite stores booleans as 1/0
       });
     });
   });

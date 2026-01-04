@@ -18,7 +18,6 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  password: string | null;
   api_call_count: number;
   api_key_version: number;
   api_call_limit: number;
@@ -26,6 +25,7 @@ export interface User {
   admin: boolean;
   deleted: boolean;
   verification_token: string | null;
+  magic_link_expires_at: string | null;
   verified: boolean;
   verified_at: string | null;
   created_at: string;

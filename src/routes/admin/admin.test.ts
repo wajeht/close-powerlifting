@@ -1,5 +1,4 @@
 import request from "supertest";
-import bcrypt from "bcryptjs";
 import { describe, expect, beforeAll, afterAll, beforeEach } from "vitest";
 
 import { app, knex } from "../../tests/test-setup";
@@ -8,17 +7,16 @@ describe("Admin Routes", () => {
   let adminUserId: number;
   let regularUserId: number;
   const adminEmail = "admin-test@example.com";
-  const adminPassword = "admin-password-123";
+  const adminMagicToken = "admin-magic-token-123";
   const regularEmail = "regular-test@example.com";
+  const regularMagicToken = "regular-magic-token-456";
 
   beforeAll(async () => {
-    const hashedPassword = await bcrypt.hash(adminPassword, 10);
-
     const [adminUser] = await knex("users")
       .insert({
         name: "Admin Test User",
         email: adminEmail,
-        password: hashedPassword,
+        verification_token: adminMagicToken,
         key: "test-admin-key",
         api_call_count: 0,
         api_call_limit: 500,
@@ -32,11 +30,12 @@ describe("Admin Routes", () => {
       .insert({
         name: "Regular Test User",
         email: regularEmail,
+        verification_token: regularMagicToken,
         key: "test-regular-key",
         api_call_count: 50,
         api_call_limit: 100,
         admin: false,
-        verified: false,
+        verified: true,
       })
       .returning("*");
     regularUserId = regularUser.id;
@@ -125,14 +124,14 @@ describe("Admin Routes", () => {
     let nonAdminAgent: ReturnType<typeof request.agent>;
 
     beforeEach(async () => {
-      const hashedPassword = await bcrypt.hash("regular-password", 10);
-      await knex("users").where({ id: regularUserId }).update({ password: hashedPassword });
+      // Reset the magic token for the test
+      await knex("users")
+        .where({ id: regularUserId })
+        .update({ verification_token: regularMagicToken });
 
       nonAdminAgent = request.agent(app);
-      await nonAdminAgent
-        .post("/login")
-        .type("form")
-        .send({ email: regularEmail, password: "regular-password" });
+      // Login via magic link
+      await nonAdminAgent.get(`/magic-link?token=${regularMagicToken}&email=${regularEmail}`);
     });
 
     it("should redirect GET /admin to login for non-admin user", async () => {
@@ -228,8 +227,14 @@ describe("Admin Routes", () => {
     let agent: ReturnType<typeof request.agent>;
 
     beforeEach(async () => {
+      // Reset the magic token for the test
+      await knex("users")
+        .where({ id: adminUserId })
+        .update({ verification_token: adminMagicToken });
+
       agent = request.agent(app);
-      await agent.post("/login").type("form").send({ email: adminEmail, password: adminPassword });
+      // Login via magic link
+      await agent.get(`/magic-link?token=${adminMagicToken}&email=${adminEmail}`);
     });
 
     describe("GET /admin", () => {

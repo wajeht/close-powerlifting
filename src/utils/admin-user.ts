@@ -1,5 +1,3 @@
-import bcrypt from "bcryptjs";
-
 import { configuration } from "../configuration";
 import type { UserRepositoryType } from "../db/user";
 import type { HelpersType } from "./helpers";
@@ -26,18 +24,12 @@ export function createAdminUser(
         logger.info("admin user does not exist");
         logger.info("attaching admin user");
 
-        const password = helpers.generatePassword();
-        const hashedPassword = await bcrypt.hash(
-          password,
-          parseInt(configuration.app.passwordSalt),
-        );
         const { key: token } = await helpers.hashKey();
 
         const createdAdminUser = await userRepository.create({
           email: configuration.app.adminEmail,
           name: configuration.app.adminName,
           admin: true,
-          password: hashedPassword,
           verification_token: token,
           verified: true,
           verified_at: new Date().toISOString(),
@@ -47,7 +39,7 @@ export function createAdminUser(
         logger.info(``);
         logger.info(`admin user has been created.`);
         logger.info(`email: ${configuration.app.adminEmail}`);
-        logger.info(`A temporary password has been generated and sent to the admin email.`);
+        logger.info(`Admin can log in via magic link sent to this email.`);
         logger.info(``);
         logger.info(``);
 
@@ -60,11 +52,10 @@ export function createAdminUser(
 
         await authService.updateUser(createdAdminUser.email, { key: hashedKey });
 
-        await mail.sendAdminCredentialsEmail({
+        await mail.sendWelcomeEmail({
           email: createdAdminUser.email,
           name: createdAdminUser.name,
-          password,
-          apiKey: unhashedKey,
+          key: unhashedKey,
         });
 
         logger.info(

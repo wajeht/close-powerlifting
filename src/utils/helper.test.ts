@@ -329,3 +329,33 @@ describe("timingSafeEqual", () => {
     expect(helpers.timingSafeEqual(token1, token2)).toBe(true);
   });
 });
+
+describe("extractNameFromEmail", () => {
+  it("extracts name from simple email", () => {
+    expect(helpers.extractNameFromEmail("john@example.com")).toBe("John");
+  });
+
+  it("extracts name with dots", () => {
+    expect(helpers.extractNameFromEmail("john.doe@example.com")).toBe("John Doe");
+  });
+
+  it("extracts name with underscores", () => {
+    expect(helpers.extractNameFromEmail("john_doe@example.com")).toBe("John Doe");
+  });
+
+  it("extracts name with hyphens", () => {
+    expect(helpers.extractNameFromEmail("john-doe@example.com")).toBe("John Doe");
+  });
+
+  it("extracts name with mixed separators", () => {
+    expect(helpers.extractNameFromEmail("john.doe_smith-jr@example.com")).toBe("John Doe Smith Jr");
+  });
+
+  it("capitalizes each word", () => {
+    expect(helpers.extractNameFromEmail("JOHN.DOE@example.com")).toBe("John Doe");
+  });
+
+  it("handles single character parts", () => {
+    expect(helpers.extractNameFromEmail("j.doe@example.com")).toBe("J Doe");
+  });
+});

@@ -6,7 +6,6 @@ export async function up(knex: Knex): Promise<void> {
       table.increments("id").primary();
       table.string("name").notNullable();
       table.string("email").unique().notNullable();
-      table.string("password").nullable();
       table.integer("api_call_count").defaultTo(0);
       table.integer("api_key_version").defaultTo(0);
       table.integer("api_call_limit").defaultTo(500);
@@ -14,6 +13,7 @@ export async function up(knex: Knex): Promise<void> {
       table.boolean("admin").defaultTo(false);
       table.boolean("deleted").defaultTo(false);
       table.string("verification_token").unique().nullable();
+      table.timestamp("magic_link_expires_at").nullable();
       table.boolean("verified").defaultTo(false);
       table.timestamp("verified_at").nullable();
       table.timestamp("created_at").defaultTo(knex.fn.now());
