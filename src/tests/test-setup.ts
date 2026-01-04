@@ -25,7 +25,7 @@ import {
   recordsRawMenHtml,
 } from "../routes/api/records/fixtures";
 
-const logger = createLogger();
+export const logger = createLogger();
 logger.setLevel("SILENT");
 
 const database = createDatabase(logger);

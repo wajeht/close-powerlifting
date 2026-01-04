@@ -256,12 +256,16 @@ export function createMiddleware(
     });
 
     return session({
+      name: configuration.session.name,
       secret: configuration.session.secret,
       resave: false,
       saveUninitialized: false,
       store,
       proxy: configuration.app.env === "production",
       cookie: {
+        path: "/",
+        domain:
+          configuration.app.env === "production" ? `.${configuration.session.domain}` : undefined,
         httpOnly: true,
         secure: configuration.app.env === "production",
         sameSite: "lax",

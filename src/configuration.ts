@@ -29,7 +29,6 @@ export const configuration = {
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
     passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    adminName: process.env.APP_ADMIN_NAME || "",
     xApiKey: process.env.X_API_KEY || "",
     defaultApiCallLimit: 500,
   } as const,
@@ -42,6 +41,7 @@ export const configuration = {
   session: {
     name: process.env.SESSION_NAME || "close-powerlifting",
     secret: requireEnv("SESSION_SECRET", isProduction ? undefined : "dev-session-secret-change-me"),
+    domain: process.env.SESSION_DOMAIN || "localhost",
   } as const,
 
   email: {
@@ -51,15 +51,6 @@ export const configuration = {
     user: process.env.EMAIL_USER || "",
     password: process.env.EMAIL_PASSWORD || "",
     from: process.env.EMAIL_FROM || "noreply@close-powerlifting.local",
-  } as const,
-
-  cookie: {
-    expiration: parseInt(process.env.COOKIE_EXPIRATION || "60000", 10),
-    password: requireEnv(
-      "COOKIE_PASSWORD",
-      isProduction ? undefined : "dev-cookie-password-change-me",
-    ),
-    name: process.env.COOKIE_NAME || "close-powerlifting",
   } as const,
 
   oauth: {

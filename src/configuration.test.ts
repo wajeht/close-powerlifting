@@ -40,6 +40,7 @@ describe.concurrent("config", () => {
     it("has required session settings", () => {
       expect(configuration.session).toHaveProperty("name");
       expect(configuration.session).toHaveProperty("secret");
+      expect(configuration.session).toHaveProperty("domain");
     });
   });
 
@@ -52,14 +53,6 @@ describe.concurrent("config", () => {
 
     it("port is a number", () => {
       expect(typeof configuration.email.port).toBe("number");
-    });
-  });
-
-  describe("cookie", () => {
-    it("has required cookie settings", () => {
-      expect(configuration.cookie).toHaveProperty("expiration");
-      expect(configuration.cookie).toHaveProperty("password");
-      expect(configuration.cookie).toHaveProperty("name");
     });
   });
 
