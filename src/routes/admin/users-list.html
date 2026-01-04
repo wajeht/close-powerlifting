@@ -72,25 +72,14 @@
 </div>
 
 <% for (const user of it.users) { %>
-<dialog id="modal-user-<%= user.id %>" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
-  <form action="/admin/users/<%= user.id %>/api-limit" method="post" class="flex flex-col gap-4 w-80">
-    <%~ include('../_components/csrf-input.html') %>
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold text-white">Update API Limit</h3>
-      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <p class="text-sm text-neutral-400">Set a new API call limit for <span class="text-white"><%= user.name %></span>.</p>
-    <%~ include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }) %>
-    <div class="flex gap-2 justify-end">
-      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
-      <%~ include('../_components/button.html', { text: 'Update Limit' }) %>
-    </div>
-  </form>
-</dialog>
+<%~ include('../_components/modal.html', {
+  id: 'modal-user-' + user.id,
+  action: '/admin/users/' + user.id + '/api-limit',
+  title: 'Update API Limit',
+  description: 'Set a new API call limit for <span class="text-white">' + user.name + '</span>.',
+  input: include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }),
+  confirmText: 'Update Limit'
+}) %>
 <% } %>
 
 <% if (it.pagination.pages > 1) { %>

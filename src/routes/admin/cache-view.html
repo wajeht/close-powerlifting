@@ -59,47 +59,26 @@
   </table>
 </div>
 
-<!-- Clear All Confirmation Modal -->
-<dialog id="clear-all-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
-  <form action="/admin/cache/clear" method="post" class="flex flex-col gap-4 w-80">
-    <%~ include('../_components/csrf-input.html') %>
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold text-white">Clear All Cache</h3>
-      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <p class="text-sm text-neutral-400">Are you sure you want to clear all cache entries? This action cannot be undone.</p>
-    <div class="flex gap-2 justify-end">
-      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
-      <%~ include('../_components/button.html', { text: 'Clear All', variant: 'danger' }) %>
-    </div>
-  </form>
-</dialog>
+<%~ include('../_components/modal.html', {
+  id: 'clear-all-modal',
+  action: '/admin/cache/clear',
+  title: 'Clear All Cache',
+  description: 'Are you sure you want to clear all cache entries? This action cannot be undone.',
+  confirmText: 'Clear All',
+  confirmVariant: 'danger'
+}) %>
 
-<!-- Delete Entry Confirmation Modals -->
 <% for (const entry of it.entries) { %>
-<dialog id="delete-modal-<%= entry.key.replace(/[^a-zA-Z0-9]/g, '-') %>" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
-  <form action="/admin/cache/delete" method="post" class="flex flex-col gap-4 w-80">
-    <%~ include('../_components/csrf-input.html') %>
-    <input type="hidden" name="key" value="<%= entry.key %>" />
-    <div class="flex items-center justify-between">
-      <h3 class="text-lg font-semibold text-white">Delete Cache Entry</h3>
-      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
-    <p class="text-sm text-neutral-400">Delete cache entry <code class="rounded bg-neutral-800 px-1 text-white"><%= entry.key %></code>?</p>
-    <div class="flex gap-2 justify-end">
-      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
-      <%~ include('../_components/button.html', { text: 'Delete', variant: 'danger' }) %>
-    </div>
-  </form>
-</dialog>
+<%~ include('../_components/modal.html', {
+  id: 'delete-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'),
+  action: '/admin/cache/delete',
+  title: 'Delete Cache Entry',
+  description: 'Delete cache entry <code class="rounded bg-neutral-800 px-1 text-white">' + entry.key + '</code>?',
+  hiddenName: 'key',
+  hiddenValue: entry.key,
+  confirmText: 'Delete',
+  confirmVariant: 'danger'
+}) %>
 <% } %>
 
 <script>

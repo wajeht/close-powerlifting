@@ -1,0 +1,9 @@
+<div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50 <%= it.class || '' %>">
+  <div class="text-3xl font-bold <%= it.color || 'text-power' %>">
+    <% if (it.content) { %><%~ it.content %><% } else { %><%= it.value %><% } %>
+  </div>
+  <div class="mt-1 text-neutral-400"><%= it.label %></div>
+  <% if (it.description) { %>
+  <div class="mt-2 text-xs text-neutral-600"><%= it.description %></div>
+  <% } %>
+</div>
