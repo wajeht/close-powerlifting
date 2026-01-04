@@ -48,6 +48,7 @@ export interface MiddlewareType {
     res: Response,
     next: NextFunction,
   ) => Promise<void>;
+  appLocalStateMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
 export function createMiddleware(
@@ -413,6 +414,38 @@ export function createMiddleware(
     }
   }
 
+  const currentYear = new Date().getFullYear();
+
+  async function appLocalStateMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const sessionUser = req.session?.user;
+      let user = null;
+
+      if (sessionUser) {
+        user = (await userRepository.findById(sessionUser.id)) ?? null;
+      }
+
+      // Note: Do NOT call req.flash() here - it consumes the messages!
+      // Flash messages are passed explicitly by routes via messages: req.flash()
+      res.locals.state = {
+        user,
+        currentYear,
+      };
+
+      next();
+    } catch {
+      res.locals.state = {
+        user: null,
+        currentYear,
+      };
+      next();
+    }
+  }
+
   return {
     rateLimitMiddleware,
     authRateLimitMiddleware,
@@ -428,5 +461,6 @@ export function createMiddleware(
     csrfValidationMiddleware,
     sessionAuthenticationMiddleware,
     sessionAdminAuthenticationMiddleware,
+    appLocalStateMiddleware,
   };
 }

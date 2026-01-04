@@ -5,7 +5,6 @@ import { createMiddleware } from "../middleware";
 import { createAdminService } from "./admin.service";
 import {
   userIdParamValidation,
-  updateApiCountValidation,
   updateApiLimitValidation,
   usersQueryValidation,
   cacheKeyValidation,
@@ -63,56 +62,6 @@ export function createAdminRouter(context: AppContext) {
     },
   );
 
-  router.get(
-    "/users/:id",
-    middleware.sessionAdminAuthenticationMiddleware,
-    middleware.validationMiddleware({ params: userIdParamValidation }),
-    async (req: Request, res: Response) => {
-      const id = req.params.id as unknown as number;
-
-      const user = await adminService.getUserById(id);
-
-      if (!user) {
-        req.flash("error", "User not found");
-        return res.redirect("/admin/users");
-      }
-
-      return res.render("admin/user-edit.html", {
-        title: `Edit User: ${user.name}`,
-        path: "/admin/users",
-        editUser: user,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.post(
-    "/users/:id/api-count",
-    middleware.sessionAdminAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    middleware.validationMiddleware({
-      params: userIdParamValidation,
-      body: updateApiCountValidation,
-    }),
-    async (req: Request, res: Response) => {
-      const id = req.params.id as unknown as number;
-      const apiCallCount = req.body.api_call_count as number;
-
-      const user = await adminService.updateUserApiCallCount(id, apiCallCount);
-
-      if (!user) {
-        req.flash("error", "User not found");
-        return res.redirect("/admin/users");
-      }
-
-      context.logger.info(`Admin updated user ${id} api_call_count to ${apiCallCount}`);
-
-      req.flash("success", `API call count updated to ${apiCallCount}`);
-      return res.redirect(`/admin/users/${id}`);
-    },
-  );
-
   router.post(
     "/users/:id/api-limit",
     middleware.sessionAdminAuthenticationMiddleware,
@@ -135,28 +84,7 @@ export function createAdminRouter(context: AppContext) {
       context.logger.info(`Admin updated user ${id} api_call_limit to ${apiCallLimit}`);
 
       req.flash("success", `API call limit updated to ${apiCallLimit}`);
-      return res.redirect(`/admin/users/${id}`);
-    },
-  );
-
-  router.post(
-    "/users/:id/resend-verification",
-    middleware.sessionAdminAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    middleware.validationMiddleware({ params: userIdParamValidation }),
-    async (req: Request, res: Response) => {
-      const id = req.params.id as unknown as number;
-      const hostname = context.helpers.getHostName(req);
-
-      const sent = await adminService.resendVerificationEmail(id, hostname);
-
-      if (sent) {
-        req.flash("success", "Verification email sent");
-      } else {
-        req.flash("error", "Could not send verification email (user may already be verified)");
-      }
-
-      return res.redirect(`/admin/users/${id}`);
+      return res.redirect("/admin/users");
     },
   );
 

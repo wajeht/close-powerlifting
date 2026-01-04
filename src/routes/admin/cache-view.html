@@ -3,7 +3,7 @@
   <p class="mt-2 text-neutral-400">View and manage cached data.</p>
 </header>
 
-<div class="fade-in animation-delay-2 mb-6">
+<div class="fade-in animation-delay-2 mt-6 mb-6">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
@@ -13,10 +13,7 @@
     <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by key...', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search' }) %>
   </form>
-  <form action="/admin/cache/clear" method="post" onsubmit="return confirm('Are you sure you want to clear ALL cache entries?')">
-    <%~ include('../_components/csrf-input.html') %>
-    <%~ include('../_components/button.html', { text: 'Clear All Cache', variant: 'danger' }) %>
-  </form>
+  <button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700" data-modal="clear-all-modal">Clear All Cache</button>
 </div>
 
 <!-- Cache Entries -->
@@ -41,15 +38,15 @@
           <%= entry.value.substring(0, 100) %><%= entry.value.length > 100 ? '...' : '' %>
         </td>
         <td class="p-4">
-          <form action="/admin/cache/delete" method="post" onsubmit="return confirm('Delete this cache entry?')">
-            <%~ include('../_components/csrf-input.html') %>
-            <input type="hidden" name="key" value="<%= entry.key %>" />
-            <button type="submit" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-red-400">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          </form>
+          <button
+            type="button"
+            class="open-modal rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-red-400"
+            data-modal="delete-modal-<%= entry.key.replace(/[^a-zA-Z0-9]/g, '-') %>"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
         </td>
       </tr>
       <% } %>
@@ -61,3 +58,54 @@
     </tbody>
   </table>
 </div>
+
+<!-- Clear All Confirmation Modal -->
+<dialog id="clear-all-modal" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="/admin/cache/clear" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('../_components/csrf-input.html') %>
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white">Clear All Cache</h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400">Are you sure you want to clear all cache entries? This action cannot be undone.</p>
+    <div class="flex gap-2 justify-end">
+      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('../_components/button.html', { text: 'Clear All', variant: 'danger' }) %>
+    </div>
+  </form>
+</dialog>
+
+<!-- Delete Entry Confirmation Modals -->
+<% for (const entry of it.entries) { %>
+<dialog id="delete-modal-<%= entry.key.replace(/[^a-zA-Z0-9]/g, '-') %>" class="fixed inset-0 m-auto h-fit rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form action="/admin/cache/delete" method="post" class="flex flex-col gap-4 w-80">
+    <%~ include('../_components/csrf-input.html') %>
+    <input type="hidden" name="key" value="<%= entry.key %>" />
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white">Delete Cache Entry</h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-neutral-400">Delete cache entry <code class="rounded bg-neutral-800 px-1 text-white"><%= entry.key %></code>?</p>
+    <div class="flex gap-2 justify-end">
+      <%~ include('../_components/button.html', { text: 'Cancel', variant: 'secondary', formmethod: 'dialog', autofocus: true }) %>
+      <%~ include('../_components/button.html', { text: 'Delete', variant: 'danger' }) %>
+    </div>
+  </form>
+</dialog>
+<% } %>
+
+<script>
+document.querySelectorAll('.open-modal').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById(btn.dataset.modal).showModal();
+  });
+});
+</script>

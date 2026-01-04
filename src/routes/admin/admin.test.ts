@@ -61,25 +61,8 @@ describe("Admin Routes", () => {
       expect(response.headers.location).toBe("/login");
     });
 
-    it("should redirect GET /admin/users/:id to login", async () => {
-      const response = await request(app).get("/admin/users/1");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
     it("should redirect GET /admin/cache to login", async () => {
       const response = await request(app).get("/admin/cache");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/users/:id/api-count to login", async () => {
-      const response = await request(app)
-        .post("/admin/users/1/api-count")
-        .type("form")
-        .send({ api_call_count: 999 });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -90,13 +73,6 @@ describe("Admin Routes", () => {
         .post("/admin/users/1/api-limit")
         .type("form")
         .send({ api_call_limit: 999 });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/users/:id/resend-verification to login", async () => {
-      const response = await request(app).post("/admin/users/1/resend-verification");
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -153,19 +129,6 @@ describe("Admin Routes", () => {
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/users/:id/api-count to login for non-admin user", async () => {
-      const response = await nonAdminAgent
-        .post(`/admin/users/${regularUserId}/api-count`)
-        .type("form")
-        .send({ api_call_count: 999 });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-
-      const user = await knex("users").where({ id: regularUserId }).first();
-      expect(user.api_call_count).not.toBe(999);
     });
 
     it("should redirect POST /admin/users/:id/api-limit to login for non-admin user", async () => {
@@ -263,58 +226,10 @@ describe("Admin Routes", () => {
       });
     });
 
-    describe("GET /admin/users/:id", () => {
-      it("should render user edit page", async () => {
-        const response = await agent.get(`/admin/users/${regularUserId}`);
-
-        expect(response.status).toBe(200);
-        expect(response.text).toContain("Edit User");
-        expect(response.text).toContain(regularEmail);
-      });
-
-      it("should redirect with error for non-existent user", async () => {
-        const response = await agent.get("/admin/users/999999");
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/users");
-      });
-    });
-
-    describe("POST /admin/users/:id/api-count", () => {
-      it("should update user api_call_count", async () => {
-        const userPage = await agent.get(`/admin/users/${regularUserId}`);
-        const csrfToken = extractCsrfToken(userPage.text);
-
-        const response = await agent
-          .post(`/admin/users/${regularUserId}/api-count`)
-          .type("form")
-          .send({ api_call_count: 25, _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe(`/admin/users/${regularUserId}`);
-
-        const user = await knex("users").where({ id: regularUserId }).first();
-        expect(user.api_call_count).toBe(25);
-      });
-
-      it("should redirect with error for non-existent user", async () => {
-        const usersPage = await agent.get("/admin/users");
-        const csrfToken = extractCsrfToken(usersPage.text);
-
-        const response = await agent
-          .post("/admin/users/999999/api-count")
-          .type("form")
-          .send({ api_call_count: 10, _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/users");
-      });
-    });
-
     describe("POST /admin/users/:id/api-limit", () => {
       it("should update user api_call_limit", async () => {
-        const userPage = await agent.get(`/admin/users/${regularUserId}`);
-        const csrfToken = extractCsrfToken(userPage.text);
+        const usersPage = await agent.get("/admin/users");
+        const csrfToken = extractCsrfToken(usersPage.text);
 
         const response = await agent
           .post(`/admin/users/${regularUserId}/api-limit`)
@@ -322,7 +237,7 @@ describe("Admin Routes", () => {
           .send({ api_call_limit: 1000, _csrf: csrfToken });
 
         expect(response.status).toBe(302);
-        expect(response.headers.location).toBe(`/admin/users/${regularUserId}`);
+        expect(response.headers.location).toBe("/admin/users");
 
         const user = await knex("users").where({ id: regularUserId }).first();
         expect(user.api_call_limit).toBe(1000);

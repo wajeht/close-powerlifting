@@ -42,14 +42,9 @@
     <!-- bottom section -->
     <div class="mt-8 border-t border-neutral-800 pt-6 text-center text-sm text-neutral-500">
       <span>
-        © <span id="copyright"></span> Close Powerlifting. Made with <span class="text-power">❤️</span> by
+        © <%= state.currentYear %> Close Powerlifting. Made with <span class="text-power">❤️</span> by
         <a class="text-neutral-400 hover:text-power" href="https://github.com/wajeht" target="_blank">@wajeht</a>
       </span>
     </div>
   </div>
 </footer>
-
-<script>
-  const date = new Date().getFullYear();
-  document.getElementById('copyright').innerText = date;
-</script>

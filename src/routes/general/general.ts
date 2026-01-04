@@ -7,6 +7,9 @@ import { createMiddleware } from "../middleware";
 import { createHealthCheckService } from "../api/health-check/health-check.service";
 import { createRankingService } from "../api/rankings/rankings.service";
 
+const RANKINGS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+let rankingsCache: { data: unknown; timestamp: number } | null = null;
+
 export function createGeneralRouter(context: AppContext) {
   const middleware = createMiddleware(
     context.cache,
@@ -26,14 +29,19 @@ export function createGeneralRouter(context: AppContext) {
   const router = express.Router();
 
   router.get("/", async (req: Request, res: Response) => {
-    const rankings = await rankingService.getRankings({
-      current_page: 1,
-      per_page: 5,
-    });
+    const now = Date.now();
+
+    if (!rankingsCache || now - rankingsCache.timestamp > RANKINGS_CACHE_TTL) {
+      const rankings = await rankingService.getRankings({
+        current_page: 1,
+        per_page: 9,
+      });
+      rankingsCache = { data: rankings, timestamp: now };
+    }
 
     return res.status(200).render("general/home.html", {
       path: "/",
-      rankings,
+      rankings: rankingsCache.data,
     });
   });
 

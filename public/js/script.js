@@ -1,1 +1,1 @@
-console.log("script.js");
+// Global utilities - page-specific scripts are inline
