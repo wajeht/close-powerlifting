@@ -1,7 +1,7 @@
-<%~ include('../_components/page-header.html', {
-  title: 'Settings',
-  description: 'Manage your account and API key.'
-}) %>
+<header class="fade-in-heading">
+  <h1 class="text-2xl font-bold text-white">Settings</h1>
+  <p class="mt-2 text-neutral-400">Manage your account and API key.</p>
+</header>
 
 <div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl">
   <%~ include('../_components/flash-message.html') %>
@@ -10,9 +10,7 @@
 <div class="max-w-2xl space-y-6">
   <!-- API Key Section -->
   <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
-    <%~ include('../_components/card-header.html', {
-      title: 'API Key'
-    }) %>
+    <h2 class="text-lg font-semibold text-white">API Key</h2>
 
     <% if (it.user.key) { %>
     <div class="mb-4">
@@ -66,9 +64,7 @@
 
   <!-- Security -->
   <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
-    <%~ include('../_components/card-header.html', {
-      title: 'Security'
-    }) %>
+    <h2 class="text-lg font-semibold text-white">Security</h2>
 
     <form action="/settings/password" method="post" class="space-y-4">
       <%~ include('../_components/inputs/password.html', { label: 'Current Password', name: 'current_password', required: true }) %>
@@ -84,7 +80,8 @@
 
   <!-- Danger Zone -->
   <div class="fade-in animation-delay-6 rounded-lg border border-neutral-800 bg-neutral-900 p-6 flex flex-col gap-4">
-    <%~ include('../_components/card-header.html', { title: 'Danger Zone', description: 'Once you delete your account, there is no going back. Please be certain.' }) %>
+    <h2 class="text-lg font-semibold text-white">Danger Zone</h2>
+    <p class="text-sm text-neutral-400">Once you delete your account, there is no going back. Please be certain.</p>
     <form action="/settings/delete" method="post" onsubmit="return confirm('Are you sure you want to delete your account? This action cannot be undone.')">
       <%~ include('../_components/button.html', { text: 'Delete Account', variant: 'danger' }) %>
     </form>

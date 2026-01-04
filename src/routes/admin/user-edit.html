@@ -14,7 +14,7 @@
 <div class="fade-in animation-delay-3 max-w-2xl space-y-6">
   <!-- User Info -->
   <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <%~ include('../_components/card-header.html', { title: 'User Information' }) %>
+    <h2 class="text-lg font-semibold text-white">User Information</h2>
     <dl class="grid gap-4 sm:grid-cols-2">
       <div>
         <dt class="text-sm text-neutral-400">ID</dt>
@@ -54,7 +54,8 @@
 
   <!-- API Call Count -->
   <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <%~ include('../_components/card-header.html', { title: 'API Call Count', description: 'Current usage: ' + it.editUser.api_call_count + ' / ' + it.editUser.api_call_limit }) %>
+    <h2 class="text-lg font-semibold text-white">API Call Count</h2>
+    <p class="text-sm text-neutral-400">Current usage: <%= it.editUser.api_call_count %> / <%= it.editUser.api_call_limit %></p>
     <form action="/admin/users/<%= it.editUser.id %>/api-count" method="post" class="flex items-end gap-2">
       <%~ include('../_components/inputs/number.html', { name: 'api_call_count', value: it.editUser.api_call_count, min: 0, required: true, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
       <%~ include('../_components/button.html', { text: 'Update Count' }) %>
@@ -63,7 +64,8 @@
 
   <!-- API Call Limit -->
   <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <%~ include('../_components/card-header.html', { title: 'API Call Limit', description: 'Monthly limit for this user.' }) %>
+    <h2 class="text-lg font-semibold text-white">API Call Limit</h2>
+    <p class="text-sm text-neutral-400">Monthly limit for this user.</p>
     <form action="/admin/users/<%= it.editUser.id %>/api-limit" method="post" class="flex items-end gap-2">
       <%~ include('../_components/inputs/number.html', { name: 'api_call_limit', value: it.editUser.api_call_limit, min: 0, required: true, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
       <%~ include('../_components/button.html', { text: 'Update Limit' }) %>
@@ -73,7 +75,8 @@
   <!-- Resend Verification -->
   <% if (!it.editUser.verified) { %>
   <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <%~ include('../_components/card-header.html', { title: 'Verification Email', description: 'This user has not verified their email address.' }) %>
+    <h2 class="text-lg font-semibold text-white">Verification Email</h2>
+    <p class="text-sm text-neutral-400">This user has not verified their email address.</p>
     <form action="/admin/users/<%= it.editUser.id %>/resend-verification" method="post">
       <%~ include('../_components/button.html', { text: 'Resend Verification Email', variant: 'warning' }) %>
     </form>
