@@ -9,11 +9,11 @@ const logger = createLogger();
 logger.setLevel("SILENT");
 
 const database = createDatabase(logger);
-export const db = database.instance;
+export const knex = database.instance;
 
 beforeAll(async () => {
   try {
-    await db.migrate.latest();
+    await knex.migrate.latest();
   } catch (error) {
     console.error("Error setting up test database:", error);
     throw error;
@@ -22,7 +22,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   try {
-    await db.destroy();
+    await knex.destroy();
   } catch (error) {
     console.error("Error cleaning up test database:", error);
     throw error;

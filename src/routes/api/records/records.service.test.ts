@@ -4,8 +4,8 @@ import { createContext } from "../../../context";
 import { createRecordService } from "./records.service";
 import { recordsDefaultHtml, recordsRawHtml, recordsRawMenHtml } from "./fixtures";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 const recordService = createRecordService(scraper);
 
 const defaultDoc = scraper.parseHtml(recordsDefaultHtml);

@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 
-import { config } from "../config";
+import { configuration } from "../configuration";
 import { createContext } from "../context";
-import { db } from "../tests/test-setup";
+import { knex } from "../tests/test-setup";
 import { createMiddleware } from "./middleware";
 
-const ctx = createContext();
+const context = createContext();
 const middleware = createMiddleware(
-  ctx.cache,
-  ctx.userRepository,
-  ctx.mail,
-  ctx.helpers,
-  ctx.logger,
+  context.cache,
+  context.userRepository,
+  context.mail,
+  context.helpers,
+  context.logger,
 );
 
 describe("notFoundHandler", () => {
@@ -151,7 +151,7 @@ describe("handleHostname", () => {
   let next: any;
 
   beforeEach(async () => {
-    await db("cache").del();
+    await knex("cache").del();
 
     req = {
       app: {
@@ -165,7 +165,7 @@ describe("handleHostname", () => {
   });
 
   test("sets hostname from cache if available", async () => {
-    await db("cache").insert({
+    await knex("cache").insert({
       key: "hostname",
       value: "http://cached-hostname.com",
       created_at: new Date().toISOString(),
@@ -181,11 +181,11 @@ describe("handleHostname", () => {
   test("sets hostname using config domain if not in cache", async () => {
     await middleware.hostNameMiddleware(req, res, next);
 
-    expect(req.app.locals.hostname).toBe(config.app.domain);
+    expect(req.app.locals.hostname).toBe(configuration.app.domain);
     expect(next).toHaveBeenCalled();
 
-    const cached = await db("cache").where({ key: "hostname" }).first();
+    const cached = await knex("cache").where({ key: "hostname" }).first();
     expect(cached).toBeDefined();
-    expect(cached.value).toBe(config.app.domain);
+    expect(cached.value).toBe(configuration.app.domain);
   });
 });

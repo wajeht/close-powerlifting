@@ -2,8 +2,10 @@ import request from "supertest";
 import { describe, expect, test } from "vitest";
 
 import { createApp } from "./app";
+import { createContext } from "./context";
 
-const { app } = createApp();
+const context = createContext();
+const { app } = createApp(context);
 
 describe("server", () => {
   test("GET /health-check returns status ok", async () => {

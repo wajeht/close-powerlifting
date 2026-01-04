@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { config } from "../config";
-import { db } from "../tests/test-setup";
+import { configuration } from "../configuration";
+import { knex } from "../tests/test-setup";
 import { createUserRepository } from "../db/user";
 import { createHelper } from "./helpers";
 import { createLogger } from "./logger";
@@ -20,12 +20,12 @@ const mockMail = {
 
 describe("AdminUser", () => {
   beforeEach(async () => {
-    await db("users").del();
+    await knex("users").del();
     vi.clearAllMocks();
   });
 
   afterEach(async () => {
-    await db("users").del();
+    await knex("users").del();
   });
 
   describe("initializeAdminUser", () => {
@@ -33,17 +33,17 @@ describe("AdminUser", () => {
       const logger = createLogger();
       logger.setLevel("SILENT");
       const helpers = createHelper();
-      const userRepository = createUserRepository(db);
+      const userRepository = createUserRepository(knex);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
 
       await adminUser.initializeAdminUser();
 
-      const user = await db("users").where({ email: config.app.adminEmail }).first();
+      const user = await knex("users").where({ email: configuration.app.adminEmail }).first();
 
       expect(user).toBeDefined();
-      expect(user.email).toBe(config.app.adminEmail);
-      expect(user.name).toBe(config.app.adminName);
+      expect(user.email).toBe(configuration.app.adminEmail);
+      expect(user.name).toBe(configuration.app.adminName);
       expect(user.admin).toBe(1); // SQLite stores booleans as 1/0
       expect(user.verified).toBe(1);
       expect(user.password).toBeDefined();
@@ -51,9 +51,9 @@ describe("AdminUser", () => {
     });
 
     it("should not create a new admin user if one already exists", async () => {
-      await db("users").insert({
-        email: config.app.adminEmail,
-        name: config.app.adminName,
+      await knex("users").insert({
+        email: configuration.app.adminEmail,
+        name: configuration.app.adminName,
         admin: true,
         verified: true,
         created_at: new Date().toISOString(),
@@ -63,30 +63,30 @@ describe("AdminUser", () => {
       const logger = createLogger();
       logger.setLevel("SILENT");
       const helpers = createHelper();
-      const userRepository = createUserRepository(db);
+      const userRepository = createUserRepository(knex);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
 
       await adminUser.initializeAdminUser();
 
-      const users = await db("users").where({ email: config.app.adminEmail });
+      const users = await knex("users").where({ email: configuration.app.adminEmail });
       expect(users).toHaveLength(1);
     });
 
     it("should handle errors gracefully", async () => {
-      const originalEmail = config.app.adminEmail;
-      (config.app as any).adminEmail = null;
+      const originalEmail = configuration.app.adminEmail;
+      (configuration.app as any).adminEmail = null;
 
       const logger = createLogger();
       logger.setLevel("SILENT");
       const helpers = createHelper();
-      const userRepository = createUserRepository(db);
+      const userRepository = createUserRepository(knex);
       const authService = createAuthService(userRepository, helpers, mockMail);
       const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
 
       await expect(adminUser.initializeAdminUser()).resolves.not.toThrow();
 
-      (config.app as any).adminEmail = originalEmail;
+      (configuration.app as any).adminEmail = originalEmail;
     });
   });
 });

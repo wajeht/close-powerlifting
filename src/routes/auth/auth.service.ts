@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 
-import { config } from "../../config";
+import { configuration } from "../../configuration";
 import type { UserRepositoryType } from "../../db/user";
 import type { HelpersType } from "../../utils/helpers";
 import type { MailType } from "../../mail";
@@ -44,7 +44,7 @@ export function createAuthService(
   async function resetAdminAPIKey(userParams: UserParams): Promise<void> {
     const { name, email } = userParams;
     const password = helpers.generatePassword();
-    const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
+    const hashedPassword = await bcrypt.hash(password, parseInt(configuration.app.passwordSalt));
 
     const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
       ...userParams,

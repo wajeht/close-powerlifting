@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { z } from "zod";
 
-import { config } from "../../config";
+import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
 import { UnauthorizedError, ValidationError } from "../../error";
 import { createMiddleware } from "../middleware";
@@ -44,13 +44,13 @@ interface GoogleUserResult {
   locale: string;
 }
 
-export function createAuthRouter(ctx: AppContext) {
+export function createAuthRouter(context: AppContext) {
   const middleware = createMiddleware(
-    ctx.cache,
-    ctx.userRepository,
-    ctx.mail,
-    ctx.helpers,
-    ctx.logger,
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
   );
 
   const router = express.Router();
@@ -60,9 +60,9 @@ export function createAuthRouter(ctx: AppContext) {
 
     const params = new URLSearchParams({
       code,
-      client_id: config.oauth.google.clientId,
-      client_secret: config.oauth.google.clientSecret,
-      redirect_uri: config.oauth.google.redirectUrl,
+      client_id: configuration.oauth.google.clientId,
+      client_secret: configuration.oauth.google.clientSecret,
+      redirect_uri: configuration.oauth.google.redirectUrl,
       grant_type: "authorization_code",
     });
 
@@ -77,7 +77,7 @@ export function createAuthRouter(ctx: AppContext) {
 
       return response.json();
     } catch (error: unknown) {
-      ctx.logger.error("Failed to fetch Google Oauth Tokens");
+      context.logger.error("Failed to fetch Google Oauth Tokens");
       throw error;
     }
   }
@@ -101,7 +101,7 @@ export function createAuthRouter(ctx: AppContext) {
 
       return response.json();
     } catch (error: unknown) {
-      ctx.logger.error("Failed to fetch Google User info");
+      context.logger.error("Failed to fetch Google User info");
       throw error;
     }
   }
@@ -120,26 +120,26 @@ export function createAuthRouter(ctx: AppContext) {
     async (req: Request<{}, {}, RegisterType>, res: Response) => {
       const { email, name } = req.body;
 
-      const found = await ctx.userRepository.findByEmail(email);
+      const found = await context.userRepository.findByEmail(email);
 
       if (found) {
         req.flash("error", "Email already exist!");
         return res.redirect("/register");
       }
 
-      const { key: token } = await ctx.helpers.hashKey();
+      const { key: token } = await context.helpers.hashKey();
 
-      const createdUser = await ctx.userRepository.create({
+      const createdUser = await context.userRepository.create({
         email,
         name,
         verification_token: token,
       });
 
-      const hostname = ctx.helpers.getHostName(req);
+      const hostname = context.helpers.getHostName(req);
 
-      ctx.logger.info(`user_id: ${createdUser.id} has registered an account!`);
+      context.logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-      ctx.authService.sendVerificationEmail({
+      context.authService.sendVerificationEmail({
         name,
         email,
         verification_token: token,
@@ -166,30 +166,30 @@ export function createAuthRouter(ctx: AppContext) {
     async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
       const { email } = req.body;
 
-      const foundUser = await ctx.userRepository.findByEmail(email);
+      const foundUser = await context.userRepository.findByEmail(email);
 
-      ctx.logger.info(
+      context.logger.info(
         `Reset API key requested for email: ${email}, found: ${!!foundUser}, verified: ${foundUser?.verified}, admin: ${foundUser?.admin}`,
       );
 
       if (foundUser && !foundUser.verified) {
-        ctx.logger.info(`User ${email} not verified, sending verification email`);
-        await ctx.authService.sendVerificationEmail({
-          hostname: ctx.helpers.getHostName(req),
+        context.logger.info(`User ${email} not verified, sending verification email`);
+        await context.authService.sendVerificationEmail({
+          hostname: context.helpers.getHostName(req),
           name: foundUser.name,
           email: foundUser.email,
           verification_token: foundUser.verification_token!,
         });
       } else if (foundUser && foundUser.verified && foundUser.admin) {
-        ctx.logger.info(`User ${email} is admin, resetting admin API key`);
-        await ctx.authService.resetAdminAPIKey({
+        context.logger.info(`User ${email} is admin, resetting admin API key`);
+        await context.authService.resetAdminAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
         });
       } else if (foundUser && foundUser.verified) {
-        ctx.logger.info(`User ${email} is verified, resetting API key`);
-        await ctx.authService.resetAPIKey({
+        context.logger.info(`User ${email} is verified, resetting API key`);
+        await context.authService.resetAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
@@ -204,7 +204,7 @@ export function createAuthRouter(ctx: AppContext) {
 
   router.get("/verify-email", async (req: Request, res: Response) => {
     const { token, email } = req.query as { token: string; email: string };
-    const foundUser = await ctx.userRepository.findByEmail(email);
+    const foundUser = await context.userRepository.findByEmail(email);
 
     if (!foundUser) {
       req.flash("error", "Something wrong while verifying your account!");
@@ -213,7 +213,7 @@ export function createAuthRouter(ctx: AppContext) {
 
     if (
       !foundUser.verification_token ||
-      !ctx.helpers.timingSafeEqual(foundUser.verification_token, token)
+      !context.helpers.timingSafeEqual(foundUser.verification_token, token)
     ) {
       req.flash("error", "Something wrong while verifying your account!");
       return res.redirect("/register");
@@ -224,7 +224,7 @@ export function createAuthRouter(ctx: AppContext) {
       return res.redirect("/register");
     }
 
-    ctx.authService.sendWelcomeEmail({
+    context.authService.sendWelcomeEmail({
       name: foundUser.name,
       email: foundUser.email,
       userId: String(foundUser.id),
@@ -239,7 +239,7 @@ export function createAuthRouter(ctx: AppContext) {
   });
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
-    res.redirect(ctx.helpers.getGoogleOAuthURL());
+    res.redirect(context.helpers.getGoogleOAuthURL());
   });
 
   router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
@@ -260,10 +260,10 @@ export function createAuthRouter(ctx: AppContext) {
       throw new UnauthorizedError("Something went wrong while authenticating with Google");
     }
 
-    const found = await ctx.userRepository.findByEmail(googleUser.email);
+    const found = await context.userRepository.findByEmail(googleUser.email);
 
     if (!found) {
-      const createdUser = await ctx.userRepository.create({
+      const createdUser = await context.userRepository.create({
         email: googleUser.email,
         name: googleUser.name,
         verification_token: access_token,
@@ -271,7 +271,7 @@ export function createAuthRouter(ctx: AppContext) {
         verified_at: new Date().toISOString(),
       });
 
-      ctx.authService.sendWelcomeEmail({
+      context.authService.sendWelcomeEmail({
         name: createdUser.name,
         email: createdUser.email,
         userId: String(createdUser.id),
@@ -296,25 +296,25 @@ export function createAuthRouter(ctx: AppContext) {
     async (req: Request<{}, {}, RegisterType>, res: Response) => {
       const { email, name } = req.body;
 
-      const found = await ctx.userRepository.findByEmail(email);
+      const found = await context.userRepository.findByEmail(email);
 
       if (found) {
         throw new ValidationError("email already exist");
       }
 
-      const { key: token } = await ctx.helpers.hashKey();
+      const { key: token } = await context.helpers.hashKey();
 
-      const createdUser = await ctx.userRepository.create({
+      const createdUser = await context.userRepository.create({
         email,
         name,
         verification_token: token,
       });
 
-      const hostname = ctx.helpers.getHostName(req);
+      const hostname = context.helpers.getHostName(req);
 
-      ctx.logger.info(`user_id: ${createdUser.id} has registered an account!`);
+      context.logger.info(`user_id: ${createdUser.id} has registered an account!`);
 
-      ctx.authService.sendVerificationEmail({
+      context.authService.sendVerificationEmail({
         name,
         email,
         verification_token: token,
@@ -336,7 +336,7 @@ export function createAuthRouter(ctx: AppContext) {
     async (req: Request<{}, {}, VerifyEmailType>, res: Response) => {
       const { token, email } = req.body;
 
-      const foundUser = await ctx.userRepository.findByEmail(email);
+      const foundUser = await context.userRepository.findByEmail(email);
 
       if (!foundUser) {
         throw new ValidationError("Something wrong while verifying your account!");
@@ -344,7 +344,7 @@ export function createAuthRouter(ctx: AppContext) {
 
       if (
         !foundUser.verification_token ||
-        !ctx.helpers.timingSafeEqual(foundUser.verification_token, token)
+        !context.helpers.timingSafeEqual(foundUser.verification_token, token)
       ) {
         throw new ValidationError("Something wrong while verifying your account!");
       }
@@ -353,7 +353,7 @@ export function createAuthRouter(ctx: AppContext) {
         throw new ValidationError("This account has already been verified!");
       }
 
-      const unhashedKey = await ctx.authService.sendWelcomeEmail({
+      const unhashedKey = await context.authService.sendWelcomeEmail({
         name: foundUser.name,
         email: foundUser.email,
         userId: String(foundUser.id),
@@ -380,23 +380,23 @@ export function createAuthRouter(ctx: AppContext) {
     async (req: Request<{}, {}, ResetApiKeyType>, res: Response) => {
       const { email } = req.body;
 
-      const foundUser = await ctx.userRepository.findByEmail(email);
+      const foundUser = await context.userRepository.findByEmail(email);
 
       if (foundUser && !foundUser.verified) {
-        await ctx.authService.sendVerificationEmail({
-          hostname: ctx.helpers.getHostName(req),
+        await context.authService.sendVerificationEmail({
+          hostname: context.helpers.getHostName(req),
           name: foundUser.name,
           email: foundUser.email,
           verification_token: foundUser.verification_token!,
         });
       } else if (foundUser && foundUser.verified && foundUser.admin) {
-        await ctx.authService.resetAdminAPIKey({
+        await context.authService.resetAdminAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,
         });
       } else if (foundUser && foundUser.verified) {
-        await ctx.authService.resetAPIKey({
+        await context.authService.resetAPIKey({
           userId: String(foundUser.id),
           name: foundUser.name,
           email: foundUser.email,

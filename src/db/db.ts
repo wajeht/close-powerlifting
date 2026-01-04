@@ -19,11 +19,11 @@ export interface DatabaseType {
 }
 
 export function createDatabase(logger: LoggerType): DatabaseType {
-  const db = _createKnexInstance();
+  const knexInstance = _createKnexInstance();
 
   async function init(): Promise<void> {
     try {
-      await db.migrate.latest();
+      await knexInstance.migrate.latest();
       logger.info("Database connection established and migrations applied!");
     } catch (error) {
       logger.error("Database initialization failed!");
@@ -41,7 +41,7 @@ export function createDatabase(logger: LoggerType): DatabaseType {
   }
 
   return {
-    instance: db,
+    instance: knexInstance,
     init,
     stop,
   };

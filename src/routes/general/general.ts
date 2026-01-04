@@ -1,22 +1,26 @@
 import express, { Request, Response } from "express";
 import { z } from "zod";
 
-import { config } from "../../config";
+import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
 import { createMiddleware } from "../middleware";
 import { createHealthCheckService } from "../api/health-check/health-check.service";
 import { createRankingService } from "../api/rankings/rankings.service";
 
-export function createGeneralRouter(ctx: AppContext) {
+export function createGeneralRouter(context: AppContext) {
   const middleware = createMiddleware(
-    ctx.cache,
-    ctx.userRepository,
-    ctx.mail,
-    ctx.helpers,
-    ctx.logger,
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
   );
-  const healthCheckService = createHealthCheckService(ctx.cache, ctx.scraper, ctx.logger);
-  const rankingService = createRankingService(ctx.scraper);
+  const healthCheckService = createHealthCheckService(
+    context.cache,
+    context.scraper,
+    context.logger,
+  );
+  const rankingService = createRankingService(context.scraper);
 
   const router = express.Router();
 
@@ -60,7 +64,7 @@ export function createGeneralRouter(ctx: AppContext) {
     async (req: Request, res: Response) => {
       const { name, email, message } = req.body;
 
-      await ctx.mail.sendContactEmail({ name, email, message });
+      await context.mail.sendContactEmail({ name, email, message });
 
       req.flash("info", "Thanks for reaching out to us. We'll get back to you shortly!");
 
@@ -83,9 +87,9 @@ export function createGeneralRouter(ctx: AppContext) {
   });
 
   router.get("/status", async (req: Request, res: Response) => {
-    const hostname = ctx.helpers.getHostName(req);
+    const hostname = context.helpers.getHostName(req);
     const apiStatuses = await healthCheckService.getAPIStatus({
-      X_API_KEY: config.app.xApiKey,
+      X_API_KEY: configuration.app.xApiKey,
       url: hostname,
     });
 
@@ -105,8 +109,8 @@ export function createGeneralRouter(ctx: AppContext) {
       uptime: process.uptime(),
       timestamp: Date.now(),
       database: "connected",
-      cache: ctx.cache.isReady() ? "connected" : "disconnected",
-      crons: ctx.cron.getStatus().isRunning ? "started" : "stopped",
+      cache: context.cache.isReady() ? "connected" : "disconnected",
+      crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 
@@ -116,8 +120,8 @@ export function createGeneralRouter(ctx: AppContext) {
       uptime: process.uptime(),
       timestamp: Date.now(),
       database: "connected",
-      cache: ctx.cache.isReady() ? "connected" : "disconnected",
-      crons: ctx.cron.getStatus().isRunning ? "started" : "stopped",
+      cache: context.cache.isReady() ? "connected" : "disconnected",
+      crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
   });
 

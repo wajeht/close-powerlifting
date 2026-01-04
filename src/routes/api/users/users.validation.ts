@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 
-const { maxPerPage } = config.pagination;
+const { maxPerPage } = configuration.pagination;
 
 export const getUserValidation = z.object({
   username: z.string(),

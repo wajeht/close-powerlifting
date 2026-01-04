@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 import {
   rankingsDefault,
   rankingsRawMen,
@@ -12,7 +12,7 @@ import {
   rankingsFullFilter,
 } from "./fixtures";
 
-const { defaultPerPage, maxPerPage } = config.pagination;
+const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 describe("rankings service", () => {
   describe("rankings JSON structure", () => {

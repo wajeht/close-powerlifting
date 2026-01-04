@@ -10,13 +10,13 @@ import { createRecordsRouter } from "./records/records";
 import { createStatusRouter } from "./status/status";
 import { createUsersRouter } from "./users/users";
 
-export function createApiRouter(ctx: AppContext) {
+export function createApiRouter(context: AppContext) {
   const middleware = createMiddleware(
-    ctx.cache,
-    ctx.userRepository,
-    ctx.mail,
-    ctx.helpers,
-    ctx.logger,
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
   );
 
   const router = express.Router();
@@ -25,34 +25,34 @@ export function createApiRouter(ctx: AppContext) {
     "/rankings",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    createRankingsRouter(ctx),
+    createRankingsRouter(context),
   );
   router.use(
     "/federations",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    createFederationsRouter(ctx),
+    createFederationsRouter(context),
   );
   router.use(
     "/meets",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    createMeetsRouter(ctx),
+    createMeetsRouter(context),
   );
   router.use(
     "/records",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    createRecordsRouter(ctx),
+    createRecordsRouter(context),
   );
   router.use(
     "/users",
     middleware.authenticationMiddleware,
     middleware.trackAPICallsMiddleware,
-    createUsersRouter(ctx),
+    createUsersRouter(context),
   );
 
-  router.use("/status", createStatusRouter(ctx));
+  router.use("/status", createStatusRouter(context));
   router.use("/health-check", createHealthCheckRouter());
 
   return router;

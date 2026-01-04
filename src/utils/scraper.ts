@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { config } from "../config";
+import { configuration } from "../configuration";
 import { ScraperError } from "../error";
 import type { ApiResponse, Pagination } from "../types";
 import type { CacheType } from "../db/cache";
@@ -46,7 +46,7 @@ export interface ScraperType {
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
   async function fetchHtml(path: string): Promise<string> {
-    const url = `${config.app.baseUrl}${path.startsWith("/") ? path.slice(1) : path}`;
+    const url = `${configuration.app.baseUrl}${path.startsWith("/") ? path.slice(1) : path}`;
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
 
     if (!response.ok) {
@@ -57,7 +57,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
   }
 
   async function fetchJson<T>(path: string): Promise<T> {
-    const url = `${config.app.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const url = `${configuration.app.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
 
     if (!response.ok) {

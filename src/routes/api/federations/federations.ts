@@ -55,15 +55,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function createFederationsRouter(ctx: AppContext) {
+export function createFederationsRouter(context: AppContext) {
   const middleware = createMiddleware(
-    ctx.cache,
-    ctx.userRepository,
-    ctx.mail,
-    ctx.helpers,
-    ctx.logger,
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
   );
-  const federationService = createFederationService(ctx.scraper);
+  const federationService = createFederationService(context.scraper);
 
   const router = express.Router();
 
@@ -94,7 +94,7 @@ export function createFederationsRouter(ctx: AppContext) {
     async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
       const federations = await federationService.getFederations(req.query);
 
-      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -140,7 +140,7 @@ export function createFederationsRouter(ctx: AppContext) {
 
       if (!federations?.data) throw new NotFoundError("The resource cannot be found!");
 
-      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

@@ -2,12 +2,12 @@ import { Application } from "express";
 import expressJSDocSwagger from "express-jsdoc-swagger";
 import type { Options } from "express-jsdoc-swagger";
 
-import { config } from "../config";
+import { configuration } from "../configuration";
 
-let link = `http://localhost:${config.app.port}`;
+let link = `http://localhost:${configuration.app.port}`;
 
-if (config.app.env === "production") {
-  link = config.app.domain;
+if (configuration.app.env === "production") {
+  link = configuration.app.domain;
 }
 
 const swaggerConfig = {
@@ -54,12 +54,13 @@ Responses are cached by default. Add \`?cache=false\` to bypass caching.
       name: "MIT",
       url: "https://github.com/wajeht/close-powerlifting/blob/main/LICENSE",
     },
-    version: config.app.version,
+    version: configuration.app.version,
   },
   servers: [
     {
       url: link,
-      description: config.app.env === "production" ? "Production server" : "Development server",
+      description:
+        configuration.app.env === "production" ? "Production server" : "Development server",
     },
   ],
   security: {
@@ -110,8 +111,9 @@ Responses are cached by default. Add \`?cache=false\` to bypass caching.
     description: "GitHub Repository",
     url: "https://github.com/wajeht/close-powerlifting",
   },
-  baseDir: config.app.env === "production" ? "./dist/src" : "./src",
-  filesPattern: config.app.env === "production" ? ["**/routes/**/*.js"] : ["**/routes/**/*.ts"],
+  baseDir: configuration.app.env === "production" ? "./dist/src" : "./src",
+  filesPattern:
+    configuration.app.env === "production" ? ["**/routes/**/*.js"] : ["**/routes/**/*.ts"],
   swaggerUIPath: "/docs/api",
   exposeSwaggerUI: true,
   exposeApiDocs: true,
@@ -137,6 +139,6 @@ Responses are cached by default. Add \`?cache=false\` to bypass caching.
   },
 } as unknown as Options;
 
-export function expressJSDocSwaggerHandler(app: Application) {
+export function createSwagger(app: Application) {
   expressJSDocSwagger(app)(swaggerConfig);
 }

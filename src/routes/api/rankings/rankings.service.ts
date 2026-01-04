@@ -1,5 +1,5 @@
 import type { ScraperType } from "../../../context";
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import type { RankingRow, RankingsApiResponse, ApiResponse, Pagination } from "../../../types";
 import type {
   GetRankingsType,
@@ -9,7 +9,7 @@ import type {
 } from "./rankings.validation";
 
 const CACHE_TTL = 300;
-const { defaultPerPage } = config.pagination;
+const { defaultPerPage } = configuration.pagination;
 
 function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");

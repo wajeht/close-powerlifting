@@ -49,15 +49,15 @@ import {
  * @property {object[]} data - Empty array
  */
 
-export function createRecordsRouter(ctx: AppContext) {
+export function createRecordsRouter(context: AppContext) {
   const middleware = createMiddleware(
-    ctx.cache,
-    ctx.userRepository,
-    ctx.mail,
-    ctx.helpers,
-    ctx.logger,
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
   );
-  const recordService = createRecordService(ctx.scraper);
+  const recordService = createRecordService(context.scraper);
 
   const router = express.Router();
 
@@ -89,7 +89,7 @@ export function createRecordsRouter(ctx: AppContext) {
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -141,7 +141,7 @@ export function createRecordsRouter(ctx: AppContext) {
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
@@ -189,7 +189,7 @@ export function createRecordsRouter(ctx: AppContext) {
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
-      ctx.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",

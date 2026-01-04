@@ -5,13 +5,13 @@ import { createApiRouter } from "./api/api";
 import { createAuthRouter } from "./auth/auth";
 import { createGeneralRouter } from "./general/general";
 
-export function createMainRouter(ctx: AppContext) {
+export function createMainRouter(context: AppContext) {
   const router = express.Router();
 
-  router.use("/", createGeneralRouter(ctx));
-  router.use("/", createAuthRouter(ctx));
-  router.use("/api/auth", createAuthRouter(ctx));
-  router.use("/api", createApiRouter(ctx));
+  router.use("/", createGeneralRouter(context));
+  router.use("/", createAuthRouter(context));
+  router.use("/api/auth", createAuthRouter(context));
+  router.use("/api", createApiRouter(context));
 
   return router;
 }

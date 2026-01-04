@@ -9,8 +9,8 @@ import {
   meetUspa1969Html,
 } from "./fixtures";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 const meetService = createMeetService(scraper);
 
 const rpsDoc = scraper.parseHtml(meetRps2548Html);

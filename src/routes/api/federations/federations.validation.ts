@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 
-const { maxPerPage } = config.pagination;
+const { maxPerPage } = configuration.pagination;
 
 export const getFederationsValidation = z.object({
   per_page: z

@@ -4,8 +4,8 @@ import { createContext } from "../../../context";
 import { createStatusService } from "./status.service";
 import { statusHtml } from "./fixtures";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 const statusService = createStatusService(scraper);
 
 const statusDoc = scraper.parseHtml(statusHtml);

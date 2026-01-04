@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import { getRankingsValidation, getFilteredRankingsQueryValidation } from "./rankings.validation";
 
-const { maxPerPage } = config.pagination;
+const { maxPerPage } = configuration.pagination;
 
 describe("rankings validation", () => {
   describe("getRankingsValidation", () => {

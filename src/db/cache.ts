@@ -20,9 +20,9 @@ export interface CacheType {
   isReady: () => boolean;
 }
 
-export function createCache(db: Knex, logger: LoggerType): CacheType {
+export function createCache(knex: Knex, logger: LoggerType): CacheType {
   async function get(key: string): Promise<string | null> {
-    const entry = await db<CacheEntry>("cache").where({ key }).first();
+    const entry = await knex<CacheEntry>("cache").where({ key }).first();
 
     if (!entry) {
       return null;
@@ -40,16 +40,16 @@ export function createCache(db: Knex, logger: LoggerType): CacheType {
     const now = new Date().toISOString();
     const expiresAt = ttlSeconds ? new Date(Date.now() + ttlSeconds * 1000).toISOString() : null;
 
-    const existing = await db<CacheEntry>("cache").where({ key }).first();
+    const existing = await knex<CacheEntry>("cache").where({ key }).first();
 
     if (existing) {
-      await db<CacheEntry>("cache").where({ key }).update({
+      await knex<CacheEntry>("cache").where({ key }).update({
         value,
         expires_at: expiresAt,
         updated_at: now,
       });
     } else {
-      await db<CacheEntry>("cache").insert({
+      await knex<CacheEntry>("cache").insert({
         key,
         value,
         expires_at: expiresAt,
@@ -60,22 +60,22 @@ export function createCache(db: Knex, logger: LoggerType): CacheType {
   }
 
   async function del(key: string): Promise<void> {
-    await db<CacheEntry>("cache").where({ key }).delete();
+    await knex<CacheEntry>("cache").where({ key }).delete();
   }
 
   async function delPattern(pattern: string): Promise<number> {
-    const result = await db<CacheEntry>("cache").where("key", "like", pattern).delete();
+    const result = await knex<CacheEntry>("cache").where("key", "like", pattern).delete();
     return result;
   }
 
   async function keys(pattern: string): Promise<string[]> {
-    const entries = await db<CacheEntry>("cache").where("key", "like", pattern).select("key");
+    const entries = await knex<CacheEntry>("cache").where("key", "like", pattern).select("key");
     return entries.map((e) => e.key);
   }
 
   async function clearExpired(): Promise<number> {
     const now = new Date().toISOString();
-    const result = await db<CacheEntry>("cache")
+    const result = await knex<CacheEntry>("cache")
       .whereNotNull("expires_at")
       .where("expires_at", "<", now)
       .delete();
@@ -84,12 +84,12 @@ export function createCache(db: Knex, logger: LoggerType): CacheType {
   }
 
   async function clearAll(): Promise<void> {
-    await db<CacheEntry>("cache").delete();
+    await knex<CacheEntry>("cache").delete();
     logger.info("Cleared all cache entries");
   }
 
   function isReady(): boolean {
-    return db !== null;
+    return knex !== null;
   }
 
   return {

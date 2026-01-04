@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-import { config } from "./config";
+import { configuration } from "./configuration";
 import type { LoggerType } from "./utils/logger";
 
 export interface MailType {
@@ -29,16 +29,16 @@ export interface MailType {
 
 export function createMail(logger: LoggerType): MailType {
   const transporter = nodemailer.createTransport({
-    host: config.email.host,
-    port: config.email.port,
-    secure: config.email.secure,
+    host: configuration.email.host,
+    port: configuration.email.port,
+    secure: configuration.email.secure,
     auth:
-      config.email.user && config.email.password
-        ? { user: config.email.user, pass: config.email.password }
+      configuration.email.user && configuration.email.password
+        ? { user: configuration.email.user, pass: configuration.email.password }
         : undefined,
   });
 
-  const from = `"Close Powerlifting" <${config.email.from}>`;
+  const from = `"Close Powerlifting" <${configuration.email.from}>`;
 
   async function send(to: string, subject: string, text: string): Promise<void> {
     try {
@@ -170,7 +170,7 @@ The Close Powerlifting Team`,
     message: string;
   }): Promise<void> {
     await send(
-      config.email.user,
+      configuration.email.user,
       `Contact Request from ${email}`,
       `New message from ${name} <${email}>
 

@@ -1,5 +1,5 @@
 import type { ScraperType } from "../../../context";
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import type { Meet, ApiResponse, Pagination } from "../../../types";
 import type {
   GetFederationsType,
@@ -8,7 +8,7 @@ import type {
 } from "./federations.validation";
 
 const CACHE_TTL = 3600;
-const { defaultPerPage } = config.pagination;
+const { defaultPerPage } = configuration.pagination;
 
 type FederationMeet = Meet;
 

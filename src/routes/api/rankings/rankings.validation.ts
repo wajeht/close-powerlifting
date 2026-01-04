@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 
 const cacheTransform = z
   .string()
@@ -27,7 +27,7 @@ export const sortEnum = z.enum([
 ]);
 export const eventEnum = z.enum(["full-power", "push-pull", "squat", "bench", "deadlift"]);
 
-const { maxPerPage } = config.pagination;
+const { maxPerPage } = configuration.pagination;
 
 export const getRankingsValidation = z.object({
   per_page: z

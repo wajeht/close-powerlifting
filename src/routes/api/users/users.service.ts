@@ -1,5 +1,5 @@
 import type { ScraperType } from "../../../context";
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import type {
   UserProfile,
   PersonalBest,
@@ -10,7 +10,7 @@ import type {
 import type { GetUserType, GetUsersType } from "./users.validation";
 
 const CACHE_TTL = 1800;
-const { defaultPerPage } = config.pagination;
+const { defaultPerPage } = configuration.pagination;
 
 function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");

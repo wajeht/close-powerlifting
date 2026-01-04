@@ -4,7 +4,7 @@ import session from "express-session";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { z, ZodError } from "zod";
 
-import { config } from "../config";
+import { configuration } from "../configuration";
 import type { CacheType } from "../db/cache";
 import type { UserRepositoryType } from "../db/user";
 import type { MailType } from "../mail";
@@ -59,7 +59,7 @@ export function createMiddleware(
         }
         return res.render("general/rate-limit.html", { title: "Rate Limited" });
       },
-      skip: () => config.app.env !== "production",
+      skip: () => configuration.app.env !== "production",
     });
   }
 
@@ -95,7 +95,7 @@ export function createMiddleware(
       statusCode = err.statusCode;
       message = err.message;
     } else if (err instanceof Error) {
-      message = config.app.env === "development" ? err.stack || err.message : message;
+      message = configuration.app.env === "development" ? err.stack || err.message : message;
     }
 
     const isApiRoute = req.url.includes("/api/");
@@ -103,7 +103,7 @@ export function createMiddleware(
 
     if (!isApiRoute && !isHealthcheck) {
       const showStack =
-        config.app.env === "development" && statusCode >= 500 && err instanceof Error;
+        configuration.app.env === "development" && statusCode >= 500 && err instanceof Error;
       return res.status(statusCode).render("general/error.html", {
         title: "Error",
         statusCode,
@@ -186,7 +186,7 @@ export function createMiddleware(
       }
 
       try {
-        const decoded = jwt.verify(token, config.app.jwtSecret) as JwtPayload;
+        const decoded = jwt.verify(token, configuration.app.jwtSecret) as JwtPayload;
 
         req.user = {
           id: decoded.id,
@@ -247,12 +247,12 @@ export function createMiddleware(
 
   function sessionMiddleware() {
     return session({
-      secret: config.session.secret,
+      secret: configuration.session.secret,
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: config.app.env === "production",
+        secure: configuration.app.env === "production",
         sameSite: "lax",
         maxAge: 24 * 60 * 60 * 1000, // 24 hours
       },

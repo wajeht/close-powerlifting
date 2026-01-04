@@ -25,7 +25,7 @@ export type {
 };
 
 export interface AppContext {
-  db: Knex;
+  knex: Knex;
   database: DatabaseType;
   logger: LoggerType;
   helpers: HelpersType;
@@ -48,17 +48,17 @@ export function createContext(): AppContext {
   const logger = createLogger();
   const helpers = createHelper();
   const database = createDatabase(logger);
-  const db = database.instance;
-  const cache = createCache(db, logger);
+  const knex = database.instance;
+  const cache = createCache(knex, logger);
   const mail = createMail(logger);
-  const userRepository = createUserRepository(db);
+  const userRepository = createUserRepository(knex);
   const scraper = createScraper(cache, logger);
   const authService = createAuthService(userRepository, helpers, mail);
   const cron = createCron(cache, userRepository, mail, logger);
   const adminUser = createAdminUser(userRepository, helpers, authService, mail, logger);
 
   _context = {
-    db,
+    knex,
     database,
     logger,
     helpers,

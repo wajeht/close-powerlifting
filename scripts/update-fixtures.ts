@@ -1,7 +1,7 @@
 import { writeFileSync } from "fs";
 import { join } from "path";
 
-import { config } from "../src/config";
+import { configuration } from "../src/configuration";
 import { createLogger } from "../src/utils/logger";
 
 const logger = createLogger();
@@ -57,7 +57,7 @@ const fixtures: FixtureConfig[] = [
 ];
 
 async function fetchFixture(fixture: FixtureConfig): Promise<void> {
-  const baseUrl = config.app.baseUrl.replace(/\/$/, "");
+  const baseUrl = configuration.app.baseUrl.replace(/\/$/, "");
   const url = `${baseUrl}${fixture.url}`;
   const filePath = join(FIXTURES_BASE, fixture.path);
 
@@ -76,12 +76,12 @@ async function fetchFixture(fixture: FixtureConfig): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  if (!config.app.baseUrl) {
+  if (!configuration.app.baseUrl) {
     logger.error("BASE_URL environment variable is required");
     process.exit(1);
   }
 
-  logger.info(`Updating fixtures from ${config.app.baseUrl}`);
+  logger.info(`Updating fixtures from ${configuration.app.baseUrl}`);
 
   const results = await Promise.allSettled(fixtures.map(fetchFixture));
 
@@ -92,11 +92,11 @@ async function main(): Promise<void> {
 
   if (failed.length > 0) {
     logger.error("Failed fixtures:");
-    failed.forEach((r) => {
+    for (const r of failed) {
       if (r.status === "rejected") {
         logger.error(`  - ${r.reason}`);
       }
-    });
+    }
     process.exit(1);
   }
 

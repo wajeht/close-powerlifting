@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
 import { createUserService } from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 const userService = createUserService(scraper);
-const { defaultPerPage, maxPerPage } = config.pagination;
+const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 const kristyDoc = scraper.parseHtml(userKristyHawkinsHtml);
 const johnDoc = scraper.parseHtml(userJohnHaackHtml);

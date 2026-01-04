@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
 
-import { config } from "../../../config";
+import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
 import { createFederationService } from "./federations.service";
 import { mlistHtml, mlistUsaplHtml, mlistUsapl2024Html } from "./fixtures";
 
-const ctx = createContext();
-const scraper = ctx.scraper;
+const context = createContext();
+const scraper = context.scraper;
 const federationService = createFederationService(scraper);
-const { defaultPerPage, maxPerPage } = config.pagination;
+const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 const mlistDoc = scraper.parseHtml(mlistHtml);
 const mlistUsaplDoc = scraper.parseHtml(mlistUsaplHtml);

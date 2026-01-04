@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, test } from "vitest";
 
 import { createContext } from "../context";
 
-const ctx = createContext();
-const helpers = ctx.helpers;
-const scraper = ctx.scraper;
+const context = createContext();
+const helpers = context.helpers;
+const scraper = context.scraper;
 
 describe("tableToJson", () => {
   let table: any;

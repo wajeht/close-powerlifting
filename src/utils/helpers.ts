@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
 
-import { config } from "../config";
+import { configuration } from "../configuration";
 import type { UserParams } from "../types";
 
 export interface HelpersType {
@@ -19,12 +19,12 @@ export interface HelpersType {
 
 export function createHelper(): HelpersType {
   function getHostName(req: Request): string {
-    if (config.app.env === "development") {
+    if (configuration.app.env === "development") {
       const protocol = req.protocol;
       const hostname = req.get("host");
       return `${protocol}://${hostname}`;
     }
-    return config.app.domain;
+    return configuration.app.domain;
   }
 
   async function hashKey(): Promise<{ key: string; hashedKey: string }> {
@@ -46,17 +46,17 @@ export function createHelper(): HelpersType {
       issuer: "Close Powerlifting",
     };
 
-    const salt = parseInt(config.app.passwordSalt, 10);
+    const salt = parseInt(configuration.app.passwordSalt, 10);
 
     if (admin) {
-      const key = jwt.sign(keyOptions, config.app.jwtSecret);
+      const key = jwt.sign(keyOptions, configuration.app.jwtSecret);
       return {
         unhashedKey: key,
         hashedKey: await bcrypt.hash(key, salt),
       };
     }
 
-    const key = jwt.sign(keyOptions, config.app.jwtSecret, { expiresIn: "3m" });
+    const key = jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "3m" });
     return {
       unhashedKey: key,
       hashedKey: await bcrypt.hash(key, salt),
@@ -78,8 +78,8 @@ export function createHelper(): HelpersType {
     const rootUrl = "https://accounts.google.com/o/oauth2/v2/auth";
 
     const options = {
-      redirect_uri: config.oauth.google.redirectUrl,
-      client_id: config.oauth.google.clientId,
+      redirect_uri: configuration.oauth.google.redirectUrl,
+      client_id: configuration.oauth.google.clientId,
       access_type: "offline",
       response_type: "code",
       prompt: "consent",

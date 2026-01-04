@@ -1,13 +1,13 @@
-import { createLogger } from "./utils/logger";
+import { createContext } from "./context";
 import { createServer, closeServer, ServerInfo } from "./app";
 
-const logger = createLogger();
+const context = createContext();
 
 async function gracefulShutdown(signal: string, serverInfo: ServerInfo): Promise<void> {
-  logger.info(`Received ${signal}, shutting down gracefully.`);
+  context.logger.info(`Received ${signal}, shutting down gracefully.`);
 
   setTimeout(() => {
-    logger.error("Could not close connections in time, forcefully shutting down");
+    context.logger.error("Could not close connections in time, forcefully shutting down");
     process.exit(1);
   }, 10000).unref();
 
@@ -15,27 +15,27 @@ async function gracefulShutdown(signal: string, serverInfo: ServerInfo): Promise
     await closeServer(serverInfo);
     process.exit(0);
   } catch (error) {
-    logger.error("Error during shutdown", error);
+    context.logger.error("Error during shutdown", error);
     process.exit(1);
   }
 }
 
 function handleWarning(warning: Error): void {
-  logger.warn(`Process warning: ${warning.name} - ${warning.message}`);
+  context.logger.warn(`Process warning: ${warning.name} - ${warning.message}`);
 }
 
 function handleUncaughtException(error: Error, origin: string): void {
-  logger.error(`Uncaught Exception: ${origin}`, error);
+  context.logger.error(`Uncaught Exception: ${origin}`, error);
   process.exit(1);
 }
 
 function handleUnhandledRejection(reason: unknown): void {
-  logger.error("Unhandled Rejection", reason);
+  context.logger.error("Unhandled Rejection", reason);
   process.exit(1);
 }
 
 async function main(): Promise<void> {
-  const serverInfo = createServer();
+  const serverInfo = createServer(context);
   process.title = "close-powerlifting";
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));
@@ -48,6 +48,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: Error) => {
-  logger.error("Failed to start server", error);
+  context.logger.error("Failed to start server", error);
   process.exit(1);
 });

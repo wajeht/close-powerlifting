@@ -1,6 +1,6 @@
 import cron, { ScheduledTask } from "node-cron";
 
-import { config } from "./config";
+import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
 import type { MailType } from "./mail";
@@ -60,7 +60,7 @@ export function createCron(
     try {
       logger.info("cron job started: sendReachingApiLimitEmail");
 
-      const targetCount = Math.floor(config.app.defaultApiCallLimit * 0.7);
+      const targetCount = Math.floor(configuration.app.defaultApiCallLimit * 0.7);
       const users = await userRepository.findByApiCallCount(targetCount);
 
       for (const user of users) {

@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 
-import { config } from "../config";
+import { configuration } from "../configuration";
 import type { UserRepositoryType } from "../db/user";
 import type { HelpersType } from "./helpers";
 import type { AuthServiceType } from "../routes/auth/auth.service";
@@ -20,19 +20,22 @@ export function createAdminUser(
 ): AdminUserType {
   async function initializeAdminUser() {
     try {
-      const found = await userRepository.findByEmail(config.app.adminEmail);
+      const found = await userRepository.findByEmail(configuration.app.adminEmail);
 
       if (!found) {
         logger.info("admin user does not exist");
         logger.info("attaching admin user");
 
         const password = helpers.generatePassword();
-        const hashedPassword = await bcrypt.hash(password, parseInt(config.app.passwordSalt));
+        const hashedPassword = await bcrypt.hash(
+          password,
+          parseInt(configuration.app.passwordSalt),
+        );
         const { key: token } = await helpers.hashKey();
 
         const createdAdminUser = await userRepository.create({
-          email: config.app.adminEmail,
-          name: config.app.adminName,
+          email: configuration.app.adminEmail,
+          name: configuration.app.adminName,
           admin: true,
           password: hashedPassword,
           verification_token: token,
@@ -43,7 +46,7 @@ export function createAdminUser(
         logger.info(``);
         logger.info(``);
         logger.info(`admin user has been created.`);
-        logger.info(`email: ${config.app.adminEmail}`);
+        logger.info(`email: ${configuration.app.adminEmail}`);
         logger.info(`A temporary password has been generated and sent to the admin email.`);
         logger.info(``);
         logger.info(``);
@@ -65,7 +68,7 @@ export function createAdminUser(
         });
 
         logger.info(
-          `admin user: ${config.app.adminEmail} - ${config.app.adminEmail} has been attached!`,
+          `admin user: ${configuration.app.adminEmail} - ${configuration.app.adminEmail} has been attached!`,
         );
 
         return;

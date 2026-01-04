@@ -18,7 +18,7 @@ function requireEnv(name: string, defaultValue?: string): string {
   return value || defaultValue || "";
 }
 
-export const config = {
+export const configuration = {
   app: {
     port: parseInt(process.env.APP_PORT || "80", 10),
     env,
