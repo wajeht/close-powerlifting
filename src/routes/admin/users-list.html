@@ -4,12 +4,12 @@
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<form action="/admin/users" method="get" class="fade-in animation-delay-3 mb-6">
-  <div class="flex gap-2">
-    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email...', value: it.search, class: 'flex-1 rounded-md bg-neutral-800 px-3 py-2 text-neutral-100 placeholder-neutral-500 outline-none focus:ring-2 focus:ring-neutral-600' }) %>
+<div class="fade-in animation-delay-3 mb-6 flex flex-wrap items-center gap-4">
+  <form action="/admin/users" method="get" class="flex flex-1 gap-2">
+    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email...', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search' }) %>
-  </div>
-</form>
+  </form>
+</div>
 
 <div class="fade-in animation-delay-4 overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
   <table class="w-full text-left">
@@ -44,6 +44,11 @@
           <span class="rounded-full bg-purple-900/50 px-2 py-1 text-xs text-purple-400">Admin</span>
           <% } %>
         </td>
+      </tr>
+      <% } %>
+      <% if (it.users.length === 0) { %>
+      <tr>
+        <td colspan="7" class="p-8 text-center text-neutral-400">No users found.</td>
       </tr>
       <% } %>
     </tbody>

@@ -1,4 +1,4 @@
-import type { CacheType, CacheStatistics, CacheEntry } from "../../db/cache";
+import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
 import type { AuthServiceType } from "../auth/auth.service";
 import type { User, Pagination } from "../../types";
@@ -14,10 +14,8 @@ export interface AdminServiceType {
   updateUserApiCallCount: (userId: number, count: number) => Promise<User | undefined>;
   updateUserApiCallLimit: (userId: number, limit: number) => Promise<User | undefined>;
   resendVerificationEmail: (userId: number, hostname: string) => Promise<boolean>;
-  getCacheStatistics: () => Promise<CacheStatistics>;
   getCacheEntries: (pattern: string) => Promise<CacheEntry[]>;
   clearAllCache: () => Promise<void>;
-  clearCacheByPattern: (pattern: string) => Promise<number>;
   deleteCacheEntry: (key: string) => Promise<void>;
   getDashboardStats: () => Promise<DashboardStats>;
 }
@@ -109,10 +107,6 @@ export function createAdminService(
     return true;
   }
 
-  async function getCacheStatistics(): Promise<CacheStatistics> {
-    return cache.getStatistics();
-  }
-
   async function getCacheEntries(pattern: string): Promise<CacheEntry[]> {
     return cache.getEntries(pattern);
   }
@@ -120,12 +114,6 @@ export function createAdminService(
   async function clearAllCache(): Promise<void> {
     await cache.clearAll();
     logger.info("Admin cleared all cache entries");
-  }
-
-  async function clearCacheByPattern(pattern: string): Promise<number> {
-    const count = await cache.delPattern(pattern);
-    logger.info(`Admin cleared ${count} cache entries matching pattern: ${pattern}`);
-    return count;
   }
 
   async function deleteCacheEntry(key: string): Promise<void> {
@@ -157,10 +145,8 @@ export function createAdminService(
     updateUserApiCallCount,
     updateUserApiCallLimit,
     resendVerificationEmail,
-    getCacheStatistics,
     getCacheEntries,
     clearAllCache,
-    clearCacheByPattern,
     deleteCacheEntry,
     getDashboardStats,
   };

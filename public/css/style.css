@@ -513,9 +513,6 @@
   .mt-24 {
     margin-top: calc(var(--spacing) * 24) !important;
   }
-  .mt-auto {
-    margin-top: auto !important;
-  }
   .mb-1 {
     margin-bottom: calc(var(--spacing) * 1) !important;
   }
@@ -575,9 +572,6 @@
   }
   .h-10 {
     height: calc(var(--spacing) * 10) !important;
-  }
-  .h-32 {
-    height: calc(var(--spacing) * 32) !important;
   }
   .h-\[900px\] {
     height: 900px !important;
@@ -659,9 +653,6 @@
   }
   .list-disc {
     list-style-type: disc !important;
-  }
-  .grid-cols-1 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
   }
   .flex-col {
     flex-direction: column !important;
@@ -759,9 +750,6 @@
   }
   .overflow-x-auto {
     overflow-x: auto !important;
-  }
-  .overflow-y-auto {
-    overflow-y: auto !important;
   }
   .rounded {
     border-radius: 0.25rem !important;
@@ -1412,9 +1400,6 @@
   @media (min-width: 64rem) {
     .lg\:grid-cols-3 {
       grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    }
-    .lg\:grid-cols-4 {
-      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     }
     .lg\:text-6xl {
       font-size: var(--text-6xl) !important;

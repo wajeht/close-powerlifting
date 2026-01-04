@@ -4,49 +4,12 @@
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<!-- Cache Statistics -->
-<div class="fade-in animation-delay-3 mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <div class="text-sm text-neutral-400">Total Entries</div>
-    <div class="mt-auto text-3xl font-bold text-power"><%= it.stats.totalEntries %></div>
-  </div>
-  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <div class="text-sm text-neutral-400">Oldest Entry</div>
-    <div class="mt-auto text-sm font-bold text-white">
-      <% if (it.stats.oldestEntry) { %>
-      <%= new Date(it.stats.oldestEntry).toLocaleString() %>
-      <% } else { %>
-      N/A
-      <% } %>
-    </div>
-  </div>
-  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <div class="text-sm text-neutral-400">Newest Entry</div>
-    <div class="mt-auto text-sm font-bold text-white">
-      <% if (it.stats.newestEntry) { %>
-      <%= new Date(it.stats.newestEntry).toLocaleString() %>
-      <% } else { %>
-      N/A
-      <% } %>
-    </div>
-  </div>
-  <div class="flex h-32 flex-col rounded-lg border border-neutral-800 bg-neutral-900 p-6">
-    <div class="text-sm text-neutral-400">Key Patterns <span class="text-neutral-500">(<%= it.stats.keyPatterns.length %>)</span></div>
-    <div class="mt-2 flex-1 overflow-y-auto">
-      <div class="flex flex-wrap gap-2">
-        <% for (const kp of it.stats.keyPatterns) { %>
-        <span class="rounded bg-neutral-800 px-2 py-1 text-xs text-white"><%= kp.pattern %>: <%= kp.count %></span>
-        <% } %>
-        <% if (it.stats.keyPatterns.length === 0) { %>
-        <span class="text-sm text-neutral-500">No patterns found</span>
-        <% } %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Clear Actions -->
-<div class="fade-in animation-delay-4 mb-8">
+<!-- Search and Actions -->
+<div class="fade-in animation-delay-3 mb-6 flex flex-wrap items-center gap-4">
+  <form action="/admin/cache" method="get" class="flex flex-1 gap-2">
+    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by key...', value: it.search }) %>
+    <%~ include('../_components/button.html', { text: 'Search' }) %>
+  </form>
   <form action="/admin/cache/clear" method="post" onsubmit="return confirm('Are you sure you want to clear ALL cache entries?')">
     <%~ include('../_components/button.html', { text: 'Clear All Cache', variant: 'danger' }) %>
   </form>
