@@ -9,7 +9,12 @@ import { createContext } from "../context";
 import { createDatabase } from "../db/db";
 import { createLogger } from "../utils/logger";
 
-import { rankingsDefault } from "../routes/api/rankings/fixtures";
+import {
+  rankingsDefault,
+  rankingsRawMen,
+  rankingsRawWomen75,
+  rankingsFullFilter,
+} from "../routes/api/rankings/fixtures";
 import { mlistHtml, mlistUsaplHtml } from "../routes/api/federations/fixtures";
 import { statusHtml } from "../routes/api/status/fixtures";
 import { userJohnHaackHtml } from "../routes/api/users/fixtures";
@@ -29,6 +34,21 @@ export const knex = database.instance;
 const context = createContext();
 
 vi.spyOn(context.scraper, "fetchJson").mockImplementation(async (path: string) => {
+  if (path.includes("raw") && path.includes("women") && path.includes("75")) {
+    return rankingsRawWomen75;
+  }
+  if (path.includes("raw") && path.includes("men")) {
+    return rankingsRawMen;
+  }
+  if (path.includes("raw") && path.includes("women")) {
+    return rankingsRawWomen75;
+  }
+  if (path.includes("raw")) {
+    return rankingsRawMen;
+  }
+  if (path.includes("wraps")) {
+    return rankingsDefault;
+  }
   if (path.includes("rankings")) {
     return rankingsDefault;
   }

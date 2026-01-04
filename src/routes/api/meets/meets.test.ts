@@ -7,19 +7,63 @@ describe("GET /api/meets/:meet", () => {
     const response = await unauthenticatedRequest().get("/api/meets/uspa/1969");
 
     expect(response.status).toBe(401);
+    expect(response.body.status).toBe("fail");
   });
 
-  test("should return 200 for valid meet", async () => {
+  test("should return meet data with correct structure", async () => {
     const response = await authenticatedRequest().get("/api/meets/uspa/1969");
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("The resource was returned successfully!");
+    expect(response.body.request_url).toBe("/api/meets/uspa/1969");
+    expect(response.body).toHaveProperty("cache");
     expect(response.body).toHaveProperty("data");
+  });
+
+  test("should return meet with title and results", async () => {
+    const response = await authenticatedRequest().get("/api/meets/uspa/1969");
+    const data = response.body.data;
+
+    expect(data).toHaveProperty("title");
+    expect(data).toHaveProperty("results");
+    expect(Array.isArray(data.results)).toBe(true);
+  });
+
+  test("should return meet with date and location", async () => {
+    const response = await authenticatedRequest().get("/api/meets/uspa/1969");
+    const data = response.body.data;
+
+    expect(data).toHaveProperty("date");
+    expect(data).toHaveProperty("location");
+    expect(typeof data.date).toBe("string");
+    expect(typeof data.location).toBe("string");
+  });
+
+  test("should return meet results with lifter data", async () => {
+    const response = await authenticatedRequest().get("/api/meets/uspa/1969");
+    const results = response.body.data.results;
+
+    expect(results.length).toBeGreaterThan(0);
+
+    const lifter = results[0];
+    expect(lifter).toHaveProperty("rank");
+    expect(lifter).toHaveProperty("lifter");
+    expect(lifter).toHaveProperty("sex");
+    expect(lifter).toHaveProperty("equip");
+    expect(lifter).toHaveProperty("class");
+    expect(lifter).toHaveProperty("weight");
+    expect(lifter).toHaveProperty("squat");
+    expect(lifter).toHaveProperty("bench");
+    expect(lifter).toHaveProperty("deadlift");
+    expect(lifter).toHaveProperty("total");
+    expect(lifter).toHaveProperty("dots");
   });
 
   test("should return 404 for non-existent meet", async () => {
     const response = await authenticatedRequest().get("/api/meets/fake/99999999");
 
     expect(response.status).toBe(404);
+    expect(response.body.status).toBe("fail");
   });
 });
