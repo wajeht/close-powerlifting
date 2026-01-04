@@ -13,7 +13,7 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-white">API Key</h2>
       <% if (it.user.key) { %>
-      <span class="rounded-full bg-blue-900/50 px-2 py-1 text-xs text-blue-400">v<%= it.user.api_key_version %></span>
+      <%~ include('../_components/badge.html', { text: 'v' + it.user.api_key_version, variant: 'info' }) %>
       <% } %>
     </div>
 
@@ -38,9 +38,9 @@
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-white">Account</h2>
       <% if (it.user.verified) { %>
-      <span class="rounded-full bg-green-900/50 px-2 py-1 text-xs text-green-400">Verified</span>
+      <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
       <% } else { %>
-      <span class="rounded-full bg-yellow-900/50 px-2 py-1 text-xs text-yellow-400">Unverified</span>
+      <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
       <% } %>
     </div>
 

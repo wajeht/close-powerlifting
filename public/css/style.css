@@ -906,6 +906,14 @@
       background-color: color-mix(in oklab, var(--color-power) 10%, transparent) !important;
     }
   }
+  .bg-power\/50 {
+    background-color: #dc262680 !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-power\/50 {
+      background-color: color-mix(in oklab, var(--color-power) 50%, transparent) !important;
+    }
+  }
   .bg-purple-900\/50 {
     background-color: #59168b80 !important;
   }

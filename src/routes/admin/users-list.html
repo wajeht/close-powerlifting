@@ -36,16 +36,16 @@
         <td class="p-4 text-neutral-300"><%= user.email %></td>
         <td class="p-4">
           <% if (user.verified) { %>
-          <span class="rounded-full bg-green-900/50 px-2 py-1 text-xs text-green-400">Verified</span>
+          <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
           <% } else { %>
-          <span class="rounded-full bg-yellow-900/50 px-2 py-1 text-xs text-yellow-400">Unverified</span>
+          <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
           <% } %>
         </td>
         <td class="p-4 text-neutral-300"><%= user.api_call_count %></td>
         <td class="p-4 text-neutral-300"><%= user.api_call_limit %></td>
         <td class="p-4">
           <% if (user.admin) { %>
-          <span class="rounded-full bg-purple-900/50 px-2 py-1 text-xs text-purple-400">Admin</span>
+          <%~ include('../_components/badge.html', { text: 'Admin', variant: 'admin' }) %>
           <% } %>
         </td>
         <td class="p-4">
