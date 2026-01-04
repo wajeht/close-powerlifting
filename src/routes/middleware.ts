@@ -1,7 +1,9 @@
+import { ConnectSessionKnexStore } from "connect-session-knex";
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import type { Knex } from "knex";
 import { z, ZodError } from "zod";
 
 import { configuration } from "../configuration";
@@ -42,6 +44,7 @@ export function createMiddleware(
   mail: MailType,
   helpers: HelpersType,
   logger: LoggerType,
+  knex: Knex,
 ): MiddlewareType {
   function rateLimitMiddleware() {
     return rateLimit({
@@ -245,15 +248,24 @@ export function createMiddleware(
   }
 
   function sessionMiddleware() {
+    const store = new ConnectSessionKnexStore({
+      knex,
+      tableName: "sessions",
+      createTable: true,
+      cleanupInterval: 3600000, // 1 hour
+    });
+
     return session({
       secret: configuration.session.secret,
       resave: false,
       saveUninitialized: false,
+      store,
+      proxy: configuration.app.env === "production",
       cookie: {
         httpOnly: true,
         secure: configuration.app.env === "production",
         sameSite: "lax",
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       },
     });
   }

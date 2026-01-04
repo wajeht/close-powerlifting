@@ -100,6 +100,7 @@ export function createUsersRouter(context: AppContext) {
     context.mail,
     context.helpers,
     context.logger,
+    context.knex,
   );
   const userService = createUserService(context.scraper);
 

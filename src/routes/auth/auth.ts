@@ -52,6 +52,7 @@ export function createAuthRouter(context: AppContext) {
     context.mail,
     context.helpers,
     context.logger,
+    context.knex,
   );
 
   const router = express.Router();

@@ -63,6 +63,7 @@ export function createMeetsRouter(context: AppContext) {
     context.mail,
     context.helpers,
     context.logger,
+    context.knex,
   );
   const meetService = createMeetService(context.scraper);
 

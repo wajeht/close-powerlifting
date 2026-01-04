@@ -28,6 +28,7 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
     context.mail,
     context.helpers,
     context.logger,
+    context.knex,
   );
 
   const app = express();

@@ -14,6 +14,7 @@ export function createGeneralRouter(context: AppContext) {
     context.mail,
     context.helpers,
     context.logger,
+    context.knex,
   );
   const healthCheckService = createHealthCheckService(
     context.cache,
