@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect } from "vitest";
 
 import { configuration } from "../../../configuration";
 import { getRankingsValidation, getFilteredRankingsQueryValidation } from "./rankings.validation";

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect } from "vitest";
 
 import { unauthenticatedRequest } from "../../../tests/test-setup";
 

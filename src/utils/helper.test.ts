@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect } from "vitest";
 
 import { createContext } from "../context";
 
