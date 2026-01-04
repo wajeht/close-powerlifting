@@ -88,14 +88,25 @@ export function createServer(context: AppContext): ServerInfo {
 
   server.on("listening", async () => {
     const addr: string | AddressInfo | null = server.address();
-    const bind: string =
-      typeof addr === "string" ? "pipe " + addr : "port " + (addr as AddressInfo).port;
+    const port = typeof addr === "string" ? addr : (addr as AddressInfo).port;
 
-    context.logger.info(`Server is listening on ${bind}`);
+    console.log("");
+    console.log("=".repeat(50));
+    console.log(`Server running at http://localhost:${port}`);
+    console.log("=".repeat(50));
+    console.log("");
 
     try {
       await context.database.init();
       context.cron.start();
+
+      const mailAvailable = await context.mail.verifyConnection();
+      if (mailAvailable) {
+        console.log("Mail service connected (mailpit)");
+      } else {
+        console.log("Mail service unavailable - emails will not be sent");
+      }
+
       await context.adminUser.initializeAdminUser();
     } catch (error) {
       context.logger.error((error as any).message);
