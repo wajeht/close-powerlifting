@@ -1016,9 +1016,6 @@
       color: color-mix(in oklab, var(--color-power) 80%, transparent) !important;
     }
   }
-  .text-slate-50 {
-    color: var(--color-slate-50) !important;
-  }
   .text-white {
     color: var(--color-white) !important;
   }
@@ -1137,14 +1134,6 @@
   @media (hover: hover) {
     .hover\:border-power:hover {
       border-color: var(--color-power) !important;
-    }
-    .hover\:border-power\/30:hover {
-      border-color: #dc26264d !important;
-    }
-    @supports (color: color-mix(in lab, red, red)) {
-      .hover\:border-power\/30:hover {
-        border-color: color-mix(in oklab, var(--color-power) 30%, transparent) !important;
-      }
     }
     .hover\:border-power\/50:hover {
       border-color: #dc262680 !important;
