@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
       table.integer("api_call_count").defaultTo(0);
       table.integer("api_key_version").defaultTo(0);
       table.integer("api_call_limit").defaultTo(500);
-      table.string("key").nullable();
+      table.string("api_key").nullable();
       table.boolean("admin").defaultTo(false);
       table.boolean("deleted").defaultTo(false);
       table.string("verification_token").unique().nullable();

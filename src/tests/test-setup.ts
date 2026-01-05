@@ -143,13 +143,13 @@ beforeAll(async () => {
 
   if (existingUser) {
     testUserId = existingUser.id;
-    await knex("users").where({ id: existingUser.id }).update({ key: hashedKey });
+    await knex("users").where({ id: existingUser.id }).update({ api_key: hashedKey });
   } else {
     const [user] = await knex("users")
       .insert({
         name: "Test User",
         email: "test@example.com",
-        key: hashedKey,
+        api_key: hashedKey,
         api_call_count: 0,
         api_call_limit: 500,
         admin: false,
