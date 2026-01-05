@@ -22,9 +22,9 @@
     <thead class="border-b border-neutral-800 text-neutral-400">
       <tr>
         <th class="p-4">Key</th>
+        <th class="p-4">Value Preview</th>
         <th class="p-4">Created</th>
         <th class="p-4">Updated</th>
-        <th class="p-4">Value Preview</th>
         <th class="p-4"></th>
       </tr>
     </thead>
@@ -32,11 +32,11 @@
       <% for (const entry of it.entries) { %>
       <tr class="hover:bg-neutral-800/50">
         <td class="p-4 font-mono text-sm text-white"><%= entry.key %></td>
-        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.created_at).toLocaleString() %></td>
-        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.updated_at).toLocaleString() %></td>
         <td class="max-w-xs truncate p-4 text-sm text-neutral-400" title="<%= entry.value.substring(0, 200) %>">
           <%= entry.value.substring(0, 100) %><%= entry.value.length > 100 ? '...' : '' %>
         </td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.created_at).toLocaleString() %></td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.updated_at).toLocaleString() %></td>
         <td class="p-4">
           <button
             type="button"
