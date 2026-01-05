@@ -84,6 +84,9 @@ export function createRecordsRouter(context: AppContext) {
    */
   router.get(
     "/",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
     async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
       const records = await recordService.getRecords({});
@@ -125,6 +128,9 @@ export function createRecordsRouter(context: AppContext) {
    */
   router.get(
     "/:equipment",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation.pick({ equipment: true }),
       query: getFilteredRecordsQueryValidation,
@@ -178,6 +184,9 @@ export function createRecordsRouter(context: AppContext) {
    */
   router.get(
     "/:equipment/:sex",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation,
       query: getFilteredRecordsQueryValidation,

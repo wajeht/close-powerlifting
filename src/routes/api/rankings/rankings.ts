@@ -102,6 +102,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ query: getRankingsValidation }),
     async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
       const rankings = await rankingService.getRankings(req.query);
@@ -143,6 +146,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true }),
       query: getFilteredRankingsQueryValidation,
@@ -196,6 +202,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment/:sex",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true }),
       query: getFilteredRankingsQueryValidation,
@@ -250,6 +259,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -309,6 +321,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -370,6 +385,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year/:event",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -433,6 +451,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation,
       query: getFilteredRankingsQueryValidation,
@@ -477,6 +498,9 @@ export function createRankingsRouter(context: AppContext) {
    */
   router.get(
     "/:rank",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ params: getRankValidation }),
     async (req: Request<GetRankType, {}, {}>, res: Response) => {
       const rank = await rankingService.getRank(req.params);

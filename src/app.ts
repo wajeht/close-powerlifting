@@ -75,7 +75,7 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
     .use(layoutMiddleware)
     .use(middleware.csrfMiddleware)
     .use(middleware.appLocalStateMiddleware)
-    .use(middleware.rateLimitMiddleware())
+    .use(middleware.rateLimitMiddleware)
     .use(createMainRouter(context));
 
   createSwagger(app);

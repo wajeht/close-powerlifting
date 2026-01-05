@@ -92,6 +92,9 @@ export function createMeetsRouter(context: AppContext) {
    */
   router.get(
     "/*meet",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getMeetParamValidation,
       query: getMeetQueryValidation,

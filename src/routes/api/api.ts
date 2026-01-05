@@ -1,7 +1,6 @@
 import express from "express";
 
 import type { AppContext } from "../../context";
-import { createMiddleware } from "../middleware";
 import { createFederationsRouter } from "./federations/federations";
 import { createHealthCheckRouter } from "./health-check/health-check";
 import { createMeetsRouter } from "./meets/meets";
@@ -11,53 +10,13 @@ import { createStatusRouter } from "./status/status";
 import { createUsersRouter } from "./users/users";
 
 export function createApiRouter(context: AppContext) {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.mail,
-    context.helpers,
-    context.logger,
-    context.knex,
-  );
-
   const router = express.Router();
 
-  router.use(
-    "/rankings",
-    middleware.rateLimitMiddleware(),
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    createRankingsRouter(context),
-  );
-  router.use(
-    "/federations",
-    middleware.rateLimitMiddleware(),
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    createFederationsRouter(context),
-  );
-  router.use(
-    "/meets",
-    middleware.rateLimitMiddleware(),
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    createMeetsRouter(context),
-  );
-  router.use(
-    "/records",
-    middleware.rateLimitMiddleware(),
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    createRecordsRouter(context),
-  );
-  router.use(
-    "/users",
-    middleware.rateLimitMiddleware(),
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    createUsersRouter(context),
-  );
-
+  router.use("/rankings", createRankingsRouter(context));
+  router.use("/federations", createFederationsRouter(context));
+  router.use("/meets", createMeetsRouter(context));
+  router.use("/records", createRecordsRouter(context));
+  router.use("/users", createUsersRouter(context));
   router.use("/status", createStatusRouter(context));
   router.use("/health-check", createHealthCheckRouter());
 

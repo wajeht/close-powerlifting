@@ -91,6 +91,9 @@ export function createFederationsRouter(context: AppContext) {
    */
   router.get(
     "/",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ query: getFederationsValidation }),
     async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
       const federations = await federationService.getFederations(req.query);
@@ -132,6 +135,9 @@ export function createFederationsRouter(context: AppContext) {
    */
   router.get(
     "/:federation",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({
       params: getFederationsParamValidation,
       query: getFederationsQueryValidation,
