@@ -6,27 +6,20 @@ on:
   pull_request:
 
 env:
-  PORT: 80
-  ENV: "testing"
-  DOMAIN: "localhost"
-  FRONTEND_ORIGIN: "http://localhost:8080"
+  APP_PORT: 80
+  APP_ENV: "testing"
+  APP_DOMAIN: "localhost"
+  APP_PASSWORD_SALT: 10
+  APP_JWT_SECRET: "test-jwt-secret"
+  APP_ADMIN_EMAIL: "test@gmail.com"
 
-  PASSWORD_SALT: 5
-  JWT_SECRET: "yeahhhhhhhhhhh"
-
-  ADMIN_EMAIL: "test@gmail.com"
-  ADMIN_NAME: "test"
-
-  COOKIE_EXPIRATION: 60000
-  COOKIE_PASSWORD: "cookie password"
-  COOKIE_NAME: "what is this cookie name"
-
-  SESSION_SECRET: "something someting"
-  SESSION_NAME: "something cool"
+  SESSION_SECRET: "test-session-secret"
+  SESSION_NAME: "close-powerlifting"
+  SESSION_DOMAIN: "localhost"
 
   GOOGLE_CLIENT_ID: ""
   GOOGLE_CLIENT_SECRET: ""
-  GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/google/redirect"
+  GOOGLE_OAUTH_REDIRECT_URL: "http://localhost/oauth/google/redirect"
 
   API_URL: "https://www.openpowerlifting.org/api"
   BASE_URL: "https://www.openpowerlifting.org/"
@@ -34,8 +27,10 @@ env:
 
   EMAIL_HOST: "localhost"
   EMAIL_PORT: 1025
-  EMAIL_AUTH_EMAIL: ""
-  EMAIL_AUTH_PASS: ""
+  EMAIL_SECURE: "false"
+  EMAIL_USER: ""
+  EMAIL_PASSWORD: ""
+  EMAIL_FROM: "noreply@close-powerlifting.local"
 
 jobs:
   format:
