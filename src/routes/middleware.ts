@@ -22,8 +22,8 @@ type RequestValidators = {
 };
 
 export interface MiddlewareType {
-  rateLimitMiddleware: () => ReturnType<typeof rateLimit>;
-  authRateLimitMiddleware: () => ReturnType<typeof rateLimit>;
+  rateLimitMiddleware: ReturnType<typeof rateLimit>;
+  authRateLimitMiddleware: ReturnType<typeof rateLimit>;
   notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   errorMiddleware: (err: unknown, req: Request, res: Response, next: NextFunction) => void;
   validationMiddleware: (
@@ -59,50 +59,46 @@ export function createMiddleware(
   logger: LoggerType,
   knex: Knex,
 ): MiddlewareType {
-  function rateLimitMiddleware() {
-    return rateLimit({
-      windowMs: 60 * 60 * 1000, // 60 minutes
-      max: 50, // Limit each IP to 50 requests per `window`
-      standardHeaders: true,
-      legacyHeaders: false,
-      validate: { trustProxy: false },
-      message: (req: Request, res: Response) => {
-        if (req.get("Content-Type") === "application/json") {
-          return res.json({
-            status: "fail",
-            request_url: req.originalUrl,
-            message: "Too many requests, please try again later?",
-            data: [],
-          });
-        }
-        return res.render("general/rate-limit.html", { title: "Rate Limited" });
-      },
-      skip: () => configuration.app.env !== "production",
-    });
-  }
+  const rateLimitMiddleware = rateLimit({
+    windowMs: 60 * 60 * 1000, // 60 minutes
+    max: 50, // Limit each IP to 50 requests per `window`
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { trustProxy: false },
+    message: (req: Request, res: Response) => {
+      if (req.get("Content-Type") === "application/json") {
+        return res.json({
+          status: "fail",
+          request_url: req.originalUrl,
+          message: "Too many requests, please try again later?",
+          data: [],
+        });
+      }
+      return res.render("general/rate-limit.html", { title: "Rate Limited" });
+    },
+    skip: () => configuration.app.env !== "production",
+  });
 
-  function authRateLimitMiddleware() {
-    return rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 10, // Limit each IP to 10 auth requests per window
-      standardHeaders: true,
-      legacyHeaders: false,
-      validate: { trustProxy: false },
-      message: (req: Request, res: Response) => {
-        if (req.get("Content-Type") === "application/json") {
-          return res.json({
-            status: "fail",
-            request_url: req.originalUrl,
-            message: "Too many authentication attempts, please try again later.",
-            data: [],
-          });
-        }
-        req.flash("error", "Too many authentication attempts. Please try again in 15 minutes.");
-        return res.redirect("/login");
-      },
-      skip: () => configuration.app.env !== "production",
-    });
-  }
+  const authRateLimitMiddleware = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 auth requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: { trustProxy: false },
+    message: (req: Request, res: Response) => {
+      if (req.get("Content-Type") === "application/json") {
+        return res.json({
+          status: "fail",
+          request_url: req.originalUrl,
+          message: "Too many authentication attempts, please try again later.",
+          data: [],
+        });
+      }
+      req.flash("error", "Too many authentication attempts. Please try again in 15 minutes.");
+      return res.redirect("/login");
+    },
+    skip: () => configuration.app.env !== "production",
+  });
 
   function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
     const isApiPrefix = req.url.match(/\/api\//g);

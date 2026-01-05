@@ -11,7 +11,6 @@ export function createMainRouter(context: AppContext) {
 
   router.use("/", createGeneralRouter(context));
   router.use("/", createAuthRouter(context));
-  router.use("/api/auth", createAuthRouter(context));
   router.use("/api", createApiRouter(context));
   router.use("/admin", createAdminRouter(context));
 

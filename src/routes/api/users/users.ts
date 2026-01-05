@@ -131,6 +131,9 @@ export function createUsersRouter(context: AppContext) {
    */
   router.get(
     "/",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ query: getUsersValidation }),
     async (req: Request<GetUsersType, {}, {}>, res: Response) => {
       if (req.query.search) {
@@ -177,6 +180,9 @@ export function createUsersRouter(context: AppContext) {
    */
   router.get(
     "/:username",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ params: getUserValidation }),
     async (req: Request<GetUserType, {}, {}>, res: Response) => {
       const user = await userService.getUser(req.params);

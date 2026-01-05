@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
-import { UnauthorizedError, ValidationError } from "../../error";
+import { UnauthorizedError } from "../../error";
 import { createMiddleware } from "../middleware";
 
 const MAGIC_LINK_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -12,17 +12,11 @@ const loginValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
 });
 
-const magicLinkValidation = z.object({
-  email: z.email({ message: "must be a valid email address!" }),
-  token: z.string({ message: "token is required!" }),
-});
-
 const updateNameValidation = z.object({
   name: z.string({ message: "name is required!" }).min(1, "name is required"),
 });
 
 type LoginType = z.infer<typeof loginValidation>;
-type MagicLinkType = z.infer<typeof magicLinkValidation>;
 type UpdateNameType = z.infer<typeof updateNameValidation>;
 
 interface GoogleOauthToken {
@@ -121,7 +115,7 @@ export function createAuthRouter(context: AppContext) {
 
   router.post(
     "/login",
-    middleware.authRateLimitMiddleware(),
+    middleware.authRateLimitMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: loginValidation }),
     async (req: Request<{}, {}, LoginType>, res: Response) => {
@@ -516,133 +510,6 @@ export function createAuthRouter(context: AppContext) {
 
     return res.redirect("/dashboard");
   });
-
-  router.post(
-    "/api/login",
-    middleware.authRateLimitMiddleware(),
-    middleware.apiValidationMiddleware({ body: loginValidation }),
-    async (req: Request<{}, {}, LoginType>, res: Response) => {
-      const { email } = req.body;
-      const hostname = context.helpers.getHostName(req);
-
-      let user = await context.userRepository.findByEmail(email);
-
-      // Create new user if doesn't exist
-      if (!user) {
-        const { key: token } = await context.helpers.hashKey();
-        const name = context.helpers.extractNameFromEmail(email);
-
-        user = await context.userRepository.create({
-          email,
-          name,
-          verification_token: token,
-        });
-
-        context.logger.info(`user_id: ${user.id} has registered an account!`);
-
-        context.authService.sendVerificationEmail({
-          name,
-          email,
-          verification_token: token,
-          hostname,
-        });
-
-        res.status(200).json({
-          status: "success",
-          request_url: req.originalUrl,
-          message: "If this email is registered, you will receive an email shortly.",
-          data: [],
-        });
-        return;
-      }
-
-      if (!user.verified) {
-        context.authService.sendVerificationEmail({
-          name: user.name,
-          email: user.email,
-          verification_token: user.verification_token!,
-          hostname,
-        });
-
-        res.status(200).json({
-          status: "success",
-          request_url: req.originalUrl,
-          message: "If this email is registered, you will receive an email shortly.",
-          data: [],
-        });
-        return;
-      }
-
-      // Generate magic link for existing verified users
-      const { key: token } = await context.helpers.hashKey();
-      const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MS).toISOString();
-
-      await context.userRepository.updateById(user.id, {
-        verification_token: token,
-        magic_link_expires_at: expiresAt,
-      });
-
-      context.authService.sendMagicLinkEmail({
-        name: user.name,
-        email: user.email,
-        token,
-        hostname,
-      });
-
-      context.logger.info(`Magic link sent to ${user.email}`);
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "If this email is registered, you will receive an email shortly.",
-        data: [],
-      });
-    },
-  );
-
-  router.post(
-    "/api/verify-email",
-    middleware.apiValidationMiddleware({ body: magicLinkValidation }),
-    async (req: Request<{}, {}, MagicLinkType>, res: Response) => {
-      const { token, email } = req.body;
-
-      const foundUser = await context.userRepository.findByEmail(email);
-
-      if (!foundUser) {
-        throw new ValidationError("Something wrong while verifying your account!");
-      }
-
-      if (
-        !foundUser.verification_token ||
-        !context.helpers.timingSafeEqual(foundUser.verification_token, token)
-      ) {
-        throw new ValidationError("Something wrong while verifying your account!");
-      }
-
-      if (foundUser.verified) {
-        throw new ValidationError("This account has already been verified!");
-      }
-
-      const unhashedKey = await context.authService.sendWelcomeEmail({
-        name: foundUser.name,
-        email: foundUser.email,
-        userId: String(foundUser.id),
-      });
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message:
-          "Thank you for verifying your email address. You can use the following key to access our api or we will send you an API key to your email very shortly!",
-        data: [
-          {
-            email,
-            apiKey: unhashedKey,
-          },
-        ],
-      });
-    },
-  );
 
   return router;
 }
