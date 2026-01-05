@@ -35,7 +35,7 @@ export interface ScraperType {
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
   async function fetchHtml(path: string): Promise<string> {
-    const url = `${configuration.app.baseUrl}${path.startsWith("/") ? path.slice(1) : path}`;
+    const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
 
     if (!response.ok) {
@@ -46,7 +46,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
   }
 
   async function fetchJson<T>(path: string): Promise<T> {
-    const url = `${configuration.app.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const url = `${configuration.openpowerlifting.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
     const response = await fetch(url, { headers: DEFAULT_HEADERS });
 
     if (!response.ok) {

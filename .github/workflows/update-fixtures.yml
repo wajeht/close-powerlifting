@@ -87,10 +87,9 @@ jobs:
       SESSION_NAME: "something cool"
       GOOGLE_CLIENT_ID: ""
       GOOGLE_CLIENT_SECRET: ""
-      GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/api/auth/oauth/google/redirect"
-      API_URL: "https://www.openpowerlifting.org/api"
-      BASE_URL: "https://www.openpowerlifting.org/"
-      X_API_KEY: ""
+      GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/oauth/google/redirect"
+      OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
+      APP_API_KEY: ""
       EMAIL_HOST: "localhost"
       EMAIL_PORT: 1025
       EMAIL_AUTH_EMAIL: ""

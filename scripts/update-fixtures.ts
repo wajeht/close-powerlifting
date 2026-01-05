@@ -86,8 +86,7 @@ const fixtures: FixtureConfig[] = [
 ];
 
 async function fetchFixture(fixture: FixtureConfig): Promise<void> {
-  const baseUrl = configuration.app.baseUrl.replace(/\/$/, "");
-  const url = `${baseUrl}${fixture.url}`;
+  const url = `${configuration.openpowerlifting.baseUrl}${fixture.url}`;
   const filePath = join(FIXTURES_BASE, fixture.path);
 
   logger.info(`Fetching: ${url}`);
@@ -105,12 +104,12 @@ async function fetchFixture(fixture: FixtureConfig): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  if (!configuration.app.baseUrl) {
-    logger.error("BASE_URL environment variable is required");
+  if (!configuration.openpowerlifting.baseUrl) {
+    logger.error("OPENPOWERLIFTING_URL environment variable is required");
     process.exit(1);
   }
 
-  logger.info(`Updating fixtures from ${configuration.app.baseUrl}`);
+  logger.info(`Updating fixtures from ${configuration.openpowerlifting.baseUrl}`);
 
   const results = await Promise.allSettled(fixtures.map(fetchFixture));
 

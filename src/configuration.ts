@@ -18,18 +18,22 @@ function requireEnv(name: string, defaultValue?: string): string {
   return value || defaultValue || "";
 }
 
+function normalizeUrl(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+const openpowerliftingUrl = normalizeUrl(process.env.OPENPOWERLIFTING_URL || "");
+
 export const configuration = {
   app: {
     port: parseInt(process.env.APP_PORT || "80", 10),
     env,
     version: packageJson.version,
     domain: process.env.APP_DOMAIN || "localhost",
-    apiUrl: process.env.API_URL || "",
-    baseUrl: process.env.BASE_URL || "",
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
     passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    apiKey: process.env.API_KEY || "",
+    apiKey: process.env.APP_API_KEY || "",
     defaultApiCallLimit: 500,
   } as const,
 
@@ -59,5 +63,10 @@ export const configuration = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       redirectUrl: process.env.GOOGLE_OAUTH_REDIRECT_URL || "",
     },
+  } as const,
+
+  openpowerlifting: {
+    baseUrl: openpowerliftingUrl,
+    apiUrl: `${openpowerliftingUrl}/api`,
   } as const,
 } as const;
