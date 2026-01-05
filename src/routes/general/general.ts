@@ -63,7 +63,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get("/status", async (req: Request, res: Response) => {
     const hostname = context.helpers.getHostName(req);
     const apiStatuses = await healthCheckService.getAPIStatus({
-      X_API_KEY: configuration.app.xApiKey,
+      apiKey: configuration.app.apiKey,
       url: hostname,
     });
 

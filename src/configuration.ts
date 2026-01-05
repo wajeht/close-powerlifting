@@ -29,7 +29,7 @@ export const configuration = {
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
     passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    xApiKey: process.env.X_API_KEY || "",
+    apiKey: process.env.API_KEY || "",
     defaultApiCallLimit: 500,
   } as const,
 
