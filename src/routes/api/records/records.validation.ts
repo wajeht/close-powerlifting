@@ -1,13 +1,6 @@
 import { z } from "zod";
 
-export const recordsEquipmentEnum = z.enum([
-  "raw",
-  "wraps",
-  "raw-wraps",
-  "single-ply",
-  "multi-ply",
-  "unlimited",
-]);
+export const recordsEquipmentEnum = z.enum(["raw", "wraps", "unlimited"]);
 export const recordsSexEnum = z.enum(["men", "women"]);
 
 export const getRecordsValidation = z.object({});

@@ -112,7 +112,7 @@ export function createRecordsRouter(context: AppContext) {
    * @description Returns records filtered by equipment category
    * @security BearerAuth
    * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,unlimited
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RecordsResponse} 200 - Filtered records
    * @return {ErrorResponse} 401 - Unauthorized
@@ -167,7 +167,7 @@ export function createRecordsRouter(context: AppContext) {
    * @description Returns records filtered by equipment category and sex
    * @security BearerAuth
    * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {boolean} cache.query - Use cached data (default true)
    * @return {RecordsResponse} 200 - Filtered records
