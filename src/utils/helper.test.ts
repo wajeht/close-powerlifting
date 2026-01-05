@@ -199,6 +199,20 @@ describe.concurrent("generateAPIKey", () => {
     expect(key1).not.toEqual(key2);
   });
 
+  it("expires in 90 days for regular users", () => {
+    const apiKey = helpers.generateAPIKey({
+      userId: "1",
+      email: "test@test.com",
+      name: "Test User",
+    });
+
+    const payload = JSON.parse(atob(apiKey.split(".")[1]!));
+    const expiresInSeconds = payload.exp - payload.iat;
+    const ninetyDaysInSeconds = 90 * 24 * 60 * 60;
+
+    expect(expiresInSeconds).toBe(ninetyDaysInSeconds);
+  });
+
   describe("when admin flag is passed", () => {
     it("returns an API key", () => {
       const apiKey = helpers.generateAPIKey({
@@ -209,6 +223,22 @@ describe.concurrent("generateAPIKey", () => {
       });
       expect(apiKey).toBeDefined();
       expect(typeof apiKey).toBe("string");
+    });
+
+    it("expires in 1 year for admin users", () => {
+      const apiKey = helpers.generateAPIKey({
+        userId: "1",
+        email: "admin@test.com",
+        name: "Admin User",
+        admin: true,
+      });
+
+      const payload = JSON.parse(atob(apiKey.split(".")[1]!));
+      const expiresInSeconds = payload.exp - payload.iat;
+      // JWT library uses 365.25 days for "1y" to account for leap years
+      const oneYearInSeconds = 365.25 * 24 * 60 * 60;
+
+      expect(expiresInSeconds).toBe(oneYearInSeconds);
     });
   });
 });

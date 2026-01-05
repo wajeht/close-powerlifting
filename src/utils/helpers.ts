@@ -44,7 +44,7 @@ export function createHelper(): HelpersType {
       return jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "1y" });
     }
 
-    return jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "3m" });
+    return jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "90d" });
   }
 
   function timingSafeEqual(a: string, b: string): boolean {
