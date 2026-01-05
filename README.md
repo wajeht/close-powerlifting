@@ -25,10 +25,6 @@ Full API documentation available at [close-powerlifting.jaw.dev/docs/api](https:
 All endpoints except `/api/status` and `/api/health-check` require an API key:
 
 ```bash
-# Using x-api-key header
-curl -H "x-api-key: YOUR_API_KEY" https://close-powerlifting.jaw.dev/api/rankings
-
-# Using Bearer token
 curl -H "Authorization: Bearer YOUR_API_KEY" https://close-powerlifting.jaw.dev/api/rankings
 ```
 
@@ -37,7 +33,7 @@ Request an API key at [close-powerlifting.jaw.dev](https://close-powerlifting.ja
 ## 📦 Example Response
 
 ```bash
-curl -H "x-api-key: YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1"
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1"
 ```
 
 ```json
