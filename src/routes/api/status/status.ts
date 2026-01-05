@@ -31,7 +31,6 @@ import { getStatusValidation, GetStatusType } from "./status.validation";
  * @property {string} status - Response status
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
- * @property {boolean} cache - Whether data was cached
  * @property {StatusData} data - Status data
  */
 
@@ -52,31 +51,32 @@ export function createStatusRouter(context: AppContext) {
    * GET /api/status
    * @tags Status
    * @summary Get data source status and statistics
-   * @description Returns information about the OpenPowerlifting data source including server version, total meets tracked, and status of all federations. This endpoint does not require authentication.
-   * @param {boolean} cache.query - Use cached data (default true)
+   * @description Returns information about the OpenPowerlifting data source including server version, total meets tracked, and status of all federations.
+   * @security BearerAuth
    * @return {StatusResponse} 200 - Status information
    * @example response - 200 - Success response
    * {
    *   "status": "success",
    *   "request_url": "/api/status",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": {"server_version": "abc123", "meets": "50000", "federations": []}
    * }
    */
   router.get(
     "/",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
     middleware.apiValidationMiddleware({ query: getStatusValidation }),
     async (req: Request<{}, {}, GetStatusType>, res: Response) => {
       const status = await statusService.getStatus({});
 
-      context.logger.info(`user_id: ${req?.user?.id} has called ${req.originalUrl}`);
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
 
       res.status(200).json({
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: status.cache,
         data: status.data,
       });
     },
