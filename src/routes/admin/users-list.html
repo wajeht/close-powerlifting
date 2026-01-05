@@ -24,7 +24,8 @@
         <th class="p-4">Status</th>
         <th class="p-4">API Calls</th>
         <th class="p-4">Limit</th>
-        <th class="p-4">Admin</th>
+        <th class="p-4">Created</th>
+        <th class="p-4">Updated</th>
         <th class="p-4"></th>
       </tr>
     </thead>
@@ -43,11 +44,8 @@
         </td>
         <td class="p-4 text-neutral-300"><%= user.api_call_count %></td>
         <td class="p-4 text-neutral-300"><%= user.api_call_limit %></td>
-        <td class="p-4">
-          <% if (user.admin) { %>
-          <%~ include('../_components/badge.html', { text: 'Admin', variant: 'admin' }) %>
-          <% } %>
-        </td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(user.created_at).toLocaleString() %></td>
+        <td class="p-4 text-sm text-neutral-300"><%= new Date(user.updated_at).toLocaleString() %></td>
         <td class="p-4">
           <button
             type="button"
