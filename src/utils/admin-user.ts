@@ -24,7 +24,7 @@ export function createAdminUser(
         logger.info("admin user does not exist");
         logger.info("attaching admin user");
 
-        const { key: token } = await helpers.hashKey();
+        const token = helpers.generateToken();
 
         const createdAdminUser = await userRepository.create({
           email: configuration.app.adminEmail,

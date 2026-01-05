@@ -127,7 +127,7 @@ export function createAuthRouter(context: AppContext) {
       let user = await context.userRepository.findByEmail(email);
 
       if (!user) {
-        const { key: token } = await context.helpers.hashKey();
+        const token = context.helpers.generateToken();
         const name = context.helpers.extractNameFromEmail(email);
 
         user = await context.userRepository.create({
@@ -160,7 +160,7 @@ export function createAuthRouter(context: AppContext) {
         return res.redirect("/login");
       }
 
-      const { key: token } = await context.helpers.hashKey();
+      const token = context.helpers.generateToken();
       const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MS).toISOString();
 
       await context.userRepository.updateById(user.id, {

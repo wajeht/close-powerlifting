@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { beforeEach, describe, expect } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { createContext } from "../context";
 
@@ -154,18 +154,23 @@ describe.concurrent("stripHtml", () => {
   });
 });
 
-describe.concurrent("hashKey", () => {
-  it("returns a hashed key", async () => {
-    const { key, hashedKey } = await helpers.hashKey();
-    expect(key).toBeDefined();
-    expect(hashedKey).toBeDefined();
+describe.concurrent("generateToken", () => {
+  it("returns a token", () => {
+    const token = helpers.generateToken();
+    expect(token).toBeDefined();
+    expect(typeof token).toBe("string");
   });
 
-  it("returns a different key and hashed key each time", async () => {
-    const { key: key1, hashedKey: hashedKey1 } = await helpers.hashKey();
-    const { key: key2, hashedKey: hashedKey2 } = await helpers.hashKey();
-    expect(key1).not.toEqual(key2);
-    expect(hashedKey1).not.toEqual(hashedKey2);
+  it("returns a different token each time", () => {
+    const token1 = helpers.generateToken();
+    const token2 = helpers.generateToken();
+    expect(token1).not.toEqual(token2);
+  });
+
+  it("returns a valid UUID format", () => {
+    const token = helpers.generateToken();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    expect(token).toMatch(uuidRegex);
   });
 });
 

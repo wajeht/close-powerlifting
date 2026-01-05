@@ -1,4 +1,3 @@
-import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { Request } from "express";
 import jwt from "jsonwebtoken";
@@ -8,7 +7,7 @@ import type { UserParams } from "../types";
 
 export interface HelpersType {
   getHostName: (req: Request) => string;
-  hashKey: () => Promise<{ key: string; hashedKey: string }>;
+  generateToken: () => string;
   generateAPIKey: (userParams: UserParams & { admin?: boolean }) => string;
   timingSafeEqual: (a: string, b: string) => boolean;
   getGoogleOAuthURL: (state: string) => string;
@@ -26,10 +25,8 @@ export function createHelper(): HelpersType {
     return configuration.app.domain;
   }
 
-  async function hashKey(): Promise<{ key: string; hashedKey: string }> {
-    const key = crypto.randomUUID();
-    const hashedKey = await bcrypt.hash(key, 12);
-    return { key, hashedKey };
+  function generateToken(): string {
+    return crypto.randomUUID();
   }
 
   function generateAPIKey(userParams: UserParams & { admin?: boolean }): string {
@@ -92,7 +89,7 @@ export function createHelper(): HelpersType {
 
   return {
     getHostName,
-    hashKey,
+    generateToken,
     generateAPIKey,
     timingSafeEqual,
     generateOAuthState,
