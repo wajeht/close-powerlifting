@@ -42,7 +42,6 @@ export function createFederationService(scraper: ScraperType) {
 
     return {
       data: paginatedData,
-      cache: result.cache,
       pagination: scraper.calculatePagination(allData.length, current_page, per_page),
     };
   }

@@ -122,7 +122,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     try {
       const cached = await cache.get(key);
       if (cached) {
-        return { data: JSON.parse(cached) as T, cache: true };
+        return { data: JSON.parse(cached) as T };
       }
     } catch (error) {
       logger.warn(`Cache read error for ${key}: ${error}`);
@@ -135,10 +135,10 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
         logger.warn(`Cache write error for ${key}: ${error}`);
       });
 
-      return { data, cache: false };
+      return { data };
     } catch (error) {
       logScraperError(error, key);
-      return { data: null, cache: false };
+      return { data: null };
     }
   }
 

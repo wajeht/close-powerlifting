@@ -22,7 +22,18 @@ import { meetUspa1969Html } from "../routes/api/meets/fixtures";
 import {
   recordsDefaultHtml,
   recordsRawHtml,
+  recordsWrapsHtml,
+  recordsSingleHtml,
+  recordsMultiHtml,
+  recordsUnlimitedHtml,
+  recordsAllTestedHtml,
   recordsRawMenHtml,
+  recordsRawWomenHtml,
+  recordsUnlimitedWpClassesHtml,
+  recordsRawIpfClassesHtml,
+  recordsRawExpandedClassesHtml,
+  recordsUnlimitedWpClassesWomenHtml,
+  recordsRawIpfClassesMenHtml,
 } from "../routes/api/records/fixtures";
 
 export const logger = createLogger();
@@ -71,13 +82,56 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string) =
   if (path.includes("uspa/1969") || path.includes("m/uspa/1969")) {
     return meetUspa1969Html;
   }
-  if (path.includes("records") && path.includes("raw") && path.includes("men")) {
-    return recordsRawMenHtml;
-  }
-  if (path.includes("records") && path.includes("raw")) {
-    return recordsRawHtml;
-  }
   if (path.includes("records")) {
+    // Most specific first: Equipment + Weight Class + Sex
+    if (path.includes("ipf-classes") && path.includes("men")) {
+      return recordsRawIpfClassesMenHtml;
+    }
+    if (path.includes("wp-classes") && path.includes("women")) {
+      return recordsUnlimitedWpClassesWomenHtml;
+    }
+
+    // Equipment + Weight Class
+    if (path.includes("wp-classes")) {
+      return recordsUnlimitedWpClassesHtml;
+    }
+    if (path.includes("ipf-classes")) {
+      return recordsRawIpfClassesHtml;
+    }
+    if (path.includes("expanded-classes")) {
+      return recordsRawExpandedClassesHtml;
+    }
+    if (path.includes("para-classes")) {
+      return recordsUnlimitedWpClassesHtml;
+    }
+
+    // Equipment + Sex combinations
+    if (path.includes("raw") && (path.includes("/men") || path.endsWith("men"))) {
+      return recordsRawMenHtml;
+    }
+    if (path.includes("raw") && (path.includes("/women") || path.endsWith("women"))) {
+      return recordsRawWomenHtml;
+    }
+
+    // Equipment only
+    if (path.includes("single")) {
+      return recordsSingleHtml;
+    }
+    if (path.includes("multi")) {
+      return recordsMultiHtml;
+    }
+    if (path.includes("all-tested")) {
+      return recordsAllTestedHtml;
+    }
+    if (path.includes("unlimited")) {
+      return recordsUnlimitedHtml;
+    }
+    if (path.includes("wraps")) {
+      return recordsWrapsHtml;
+    }
+    if (path.includes("raw")) {
+      return recordsRawHtml;
+    }
     return recordsDefaultHtml;
   }
 

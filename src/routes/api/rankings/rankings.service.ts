@@ -73,12 +73,11 @@ export function createRankingService(scraper: ScraperType) {
     );
 
     if (!result.data) {
-      return { data: null, cache: result.cache };
+      return { data: null };
     }
 
     return {
       data: result.data.rows,
-      cache: result.cache,
       pagination: scraper.calculatePagination(result.data.totalLength, current_page, per_page),
     };
   }
@@ -151,12 +150,11 @@ export function createRankingService(scraper: ScraperType) {
     );
 
     if (!result.data) {
-      return { data: null, cache: result.cache };
+      return { data: null };
     }
 
     return {
       data: result.data.rows,
-      cache: result.cache,
       pagination: scraper.calculatePagination(result.data.totalLength, currentPage, perPage),
     };
   }

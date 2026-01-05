@@ -76,11 +76,10 @@ export function createUserService(scraper: ScraperType) {
     current_page = 1,
   }: GetUsersType): Promise<{
     data: RankingRow[] | null;
-    cache: boolean;
     pagination?: SearchPagination;
   }> {
     if (!search) {
-      return { data: null, cache: false };
+      return { data: null };
     }
 
     try {
@@ -99,14 +98,13 @@ export function createUserService(scraper: ScraperType) {
 
       return {
         data: rows,
-        cache: false,
         pagination: {
           per_page,
           current_page,
         },
       };
     } catch {
-      return { data: null, cache: false };
+      return { data: null };
     }
   }
 

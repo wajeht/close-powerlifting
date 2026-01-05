@@ -53,7 +53,6 @@ export type UserParams = {
 
 export interface ApiResponse<T> {
   data: T | null;
-  cache: boolean;
   pagination?: Pagination;
 }
 

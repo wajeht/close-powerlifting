@@ -31,14 +31,44 @@ const ROUTES = [
   // Meets
   { path: "/api/meets/uspa/1969", requiresAuth: true },
 
-  // Records
+  // Records - All equipment types
   { path: "/api/records", requiresAuth: true },
   { path: "/api/records/raw", requiresAuth: true },
+  { path: "/api/records/wraps", requiresAuth: true },
+  { path: "/api/records/single", requiresAuth: true },
+  { path: "/api/records/multi", requiresAuth: true },
+  { path: "/api/records/unlimited", requiresAuth: true },
+  { path: "/api/records/all-tested", requiresAuth: true },
+
+  // Records - Equipment + Sex
   { path: "/api/records/raw/men", requiresAuth: true },
   { path: "/api/records/raw/women", requiresAuth: true },
-  { path: "/api/records/wraps", requiresAuth: true },
   { path: "/api/records/wraps/men", requiresAuth: true },
-  { path: "/api/records/unlimited", requiresAuth: true },
+  { path: "/api/records/wraps/women", requiresAuth: true },
+  { path: "/api/records/single/men", requiresAuth: true },
+  { path: "/api/records/single/women", requiresAuth: true },
+  { path: "/api/records/multi/men", requiresAuth: true },
+  { path: "/api/records/multi/women", requiresAuth: true },
+  { path: "/api/records/unlimited/men", requiresAuth: true },
+  { path: "/api/records/unlimited/women", requiresAuth: true },
+  { path: "/api/records/all-tested/men", requiresAuth: true },
+  { path: "/api/records/all-tested/women", requiresAuth: true },
+
+  // Records - Equipment + Weight Class
+  { path: "/api/records/raw/expanded-classes", requiresAuth: true },
+  { path: "/api/records/raw/ipf-classes", requiresAuth: true },
+  { path: "/api/records/unlimited/wp-classes", requiresAuth: true },
+  { path: "/api/records/unlimited/para-classes", requiresAuth: true },
+
+  // Records - Equipment + Weight Class + Sex
+  { path: "/api/records/raw/ipf-classes/men", requiresAuth: true },
+  { path: "/api/records/raw/ipf-classes/women", requiresAuth: true },
+  { path: "/api/records/raw/expanded-classes/men", requiresAuth: true },
+  { path: "/api/records/raw/expanded-classes/women", requiresAuth: true },
+  { path: "/api/records/unlimited/wp-classes/men", requiresAuth: true },
+  { path: "/api/records/unlimited/wp-classes/women", requiresAuth: true },
+  { path: "/api/records/unlimited/para-classes/men", requiresAuth: true },
+  { path: "/api/records/unlimited/para-classes/women", requiresAuth: true },
 
   // Users
   { path: "/api/users?search=haack", requiresAuth: true },

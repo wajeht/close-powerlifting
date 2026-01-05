@@ -1,9 +1,13 @@
 import type { ScraperType } from "../../../context";
+import { NotFoundError, ValidationError } from "../../../error";
 import type { RecordCategory, ApiResponse } from "../../../types";
-import type {
-  GetRecordsType,
-  GetFilteredRecordsParamType,
-  GetFilteredRecordsQueryType,
+import {
+  recordsEquipmentEnum,
+  recordsWeightClassEnum,
+  recordsSexEnum,
+  type GetRecordsType,
+  type GetFilteredRecordsParamType,
+  type GetFilteredRecordsQueryType,
 } from "./records.validation";
 
 export function createRecordService(scraper: ScraperType) {
@@ -39,8 +43,36 @@ export function createRecordService(scraper: ScraperType) {
   function buildRecordsFilterPath(filters: GetFilteredRecordsParamType): string {
     const parts: string[] = [];
     if (filters.equipment) parts.push(filters.equipment);
+    if (filters.weight_class) parts.push(filters.weight_class);
     if (filters.sex) parts.push(filters.sex);
     return parts.length > 0 ? `/${parts.join("/")}` : "";
+  }
+
+  function validateEquipment(equipment: string): GetFilteredRecordsParamType["equipment"] {
+    const result = recordsEquipmentEnum.safeParse(equipment);
+    if (!result.success) {
+      throw new ValidationError("Invalid equipment parameter!");
+    }
+    return result.data;
+  }
+
+  function parseSexOrWeightClass(
+    equipment: string,
+    sexOrWeightClass: string,
+  ): GetFilteredRecordsParamType {
+    const validEquipment = validateEquipment(equipment);
+
+    const sexResult = recordsSexEnum.safeParse(sexOrWeightClass);
+    if (sexResult.success) {
+      return { equipment: validEquipment, sex: sexResult.data };
+    }
+
+    const weightClassResult = recordsWeightClassEnum.safeParse(sexOrWeightClass);
+    if (weightClassResult.success) {
+      return { equipment: validEquipment, weight_class: weightClassResult.data };
+    }
+
+    throw new NotFoundError("Invalid sex or weight class parameter!");
   }
 
   async function getFilteredRecords(
@@ -57,5 +89,6 @@ export function createRecordService(scraper: ScraperType) {
     parseRecordsHtml,
     getRecords,
     getFilteredRecords,
+    parseSexOrWeightClass,
   };
 }

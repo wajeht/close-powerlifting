@@ -32,10 +32,39 @@ const fixtures: FixtureConfig[] = [
     path: "rankings/fixtures/rankings-full-filter.json",
   },
 
-  // Records (HTML)
+  // Records (HTML) - Equipment types
   { url: "/records", path: "records/fixtures/records-default.html" },
   { url: "/records/raw", path: "records/fixtures/records-raw.html" },
+  { url: "/records/wraps", path: "records/fixtures/records-wraps.html" },
+  { url: "/records/single", path: "records/fixtures/records-single.html" },
+  { url: "/records/multi", path: "records/fixtures/records-multi.html" },
+  { url: "/records/unlimited", path: "records/fixtures/records-unlimited.html" },
+  { url: "/records/all-tested", path: "records/fixtures/records-all-tested.html" },
+
+  // Records (HTML) - Equipment + Sex
   { url: "/records/raw/men", path: "records/fixtures/records-raw-men.html" },
+  { url: "/records/raw/women", path: "records/fixtures/records-raw-women.html" },
+
+  // Records (HTML) - Equipment + Weight Class
+  {
+    url: "/records/unlimited/wp-classes",
+    path: "records/fixtures/records-unlimited-wp-classes.html",
+  },
+  { url: "/records/raw/ipf-classes", path: "records/fixtures/records-raw-ipf-classes.html" },
+  {
+    url: "/records/raw/expanded-classes",
+    path: "records/fixtures/records-raw-expanded-classes.html",
+  },
+
+  // Records (HTML) - Equipment + Weight Class + Sex
+  {
+    url: "/records/unlimited/wp-classes/women",
+    path: "records/fixtures/records-unlimited-wp-classes-women.html",
+  },
+  {
+    url: "/records/raw/ipf-classes/men",
+    path: "records/fixtures/records-raw-ipf-classes-men.html",
+  },
 
   // Meets (HTML)
   { url: "/m/rps/2548", path: "meets/fixtures/meet-rps-2548.html" },

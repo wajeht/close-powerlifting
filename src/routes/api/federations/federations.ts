@@ -85,7 +85,6 @@ export function createFederationsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/federations",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"federation": "IPF", "meetname": "World Championships"}]
    * }
    */
@@ -104,7 +103,6 @@ export function createFederationsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: federations?.cache,
         data: federations?.data,
         pagination: federations?.pagination,
       });
@@ -129,7 +127,6 @@ export function createFederationsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/federations/ipf",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"meetname": "World Championships", "date": "2024-06-15"}]
    * }
    */
@@ -153,7 +150,6 @@ export function createFederationsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: federations?.cache,
         data: federations?.data,
       });
     },

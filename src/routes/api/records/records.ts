@@ -8,45 +8,44 @@ import {
   getRecordsValidation,
   getFilteredRecordsParamValidation,
   getFilteredRecordsQueryValidation,
-  GetRecordsType,
-  GetFilteredRecordsParamType,
-  GetFilteredRecordsQueryType,
+  type GetRecordsType,
+  type GetFilteredRecordsParamType,
+  type GetFilteredRecordsQueryType,
 } from "./records.validation";
 
 /**
- * Record entry
+ * Record entry representing a single powerlifting record
  * @typedef {object} RecordEntry
+ * @property {string} weightclass - Weight class (e.g., "90", "100+")
  * @property {string} lifter - Record holder name
- * @property {string} weight_class - Weight class
- * @property {string} lift - Lift amount
- * @property {string} date - Date of record
- * @property {string} meet - Meet where record was set
+ * @property {string} lift - Lift amount in lbs/kg
+ * @property {string} date - Date record was set (YYYY-MM-DD)
+ * @property {string} federation - Federation where record was set
  */
 
 /**
- * Record category
+ * Record category grouping records by lift type
  * @typedef {object} RecordCategory
- * @property {string} title - Category title (e.g., "Men's Raw Squat")
- * @property {RecordEntry[]} records - Records in this category
+ * @property {string} title - Category title (e.g., "Men's Raw Squat", "Women's Unlimited Bench")
+ * @property {RecordEntry[]} records - Array of records in this category
  */
 
 /**
- * Records response
+ * Successful records response
  * @typedef {object} RecordsResponse
- * @property {string} status - Response status
- * @property {string} request_url - Request URL
- * @property {string} message - Response message
- * @property {boolean} cache - Whether data was cached
- * @property {RecordCategory[]} data - Record categories
+ * @property {string} status - Response status ("success")
+ * @property {string} request_url - Original request URL
+ * @property {string} message - Success message
+ * @property {RecordCategory[]} data - Array of record categories
  */
 
 /**
- * Error response
- * @typedef {object} ErrorResponse
- * @property {string} status - Response status (fail)
- * @property {string} request_url - Request URL
- * @property {string} message - Error message
- * @property {object[]} data - Empty array
+ * Error response for failed requests
+ * @typedef {object} RecordsErrorResponse
+ * @property {string} status - Response status ("fail")
+ * @property {string} request_url - Original request URL
+ * @property {string} message - Error message describing the failure
+ * @property {object[]} errors - Validation errors (for 400 responses)
  */
 
 export function createRecordsRouter(context: AppContext) {
@@ -66,20 +65,24 @@ export function createRecordsRouter(context: AppContext) {
    * GET /api/records
    * @tags Records
    * @summary Get all powerlifting records
-   * @description Returns all-time powerlifting records organized by category
+   * @description Returns all-time powerlifting world records organized by category (lift type and sex). Records are grouped into categories like "Men's Raw Squat", "Women's Unlimited Deadlift", etc.
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {boolean} cache.query - Use cached data (default true)
-   * @return {RecordsResponse} 200 - All records by category
-   * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 404 - Records not found
+   * @return {RecordsResponse} 200 - All records organized by category
+   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {RecordsErrorResponse} 404 - Records not found
    * @example response - 200 - Success response
    * {
    *   "status": "success",
    *   "request_url": "/api/records",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
-   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   *   "data": [
+   *     {
+   *       "title": "Men's Raw Squat",
+   *       "records": [
+   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
+   *       ]
+   *     }
+   *   ]
    * }
    */
   router.get(
@@ -99,7 +102,6 @@ export function createRecordsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: records?.cache,
         data: records?.data,
       });
     },
@@ -108,22 +110,27 @@ export function createRecordsRouter(context: AppContext) {
   /**
    * GET /api/records/{equipment}
    * @tags Records
-   * @summary Get records filtered by equipment
-   * @description Returns records filtered by equipment category
+   * @summary Get records filtered by equipment type
+   * @description Returns powerlifting records filtered by equipment category. Equipment types correspond to different levels of supportive gear allowed in competition.
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,unlimited
-   * @param {boolean} cache.query - Use cached data (default true)
-   * @return {RecordsResponse} 200 - Filtered records
-   * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 404 - Records not found
-   * @example response - 200 - Success response
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
+   * @return {RecordsResponse} 200 - Records filtered by equipment
+   * @return {RecordsErrorResponse} 400 - Invalid equipment parameter
+   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {RecordsErrorResponse} 404 - Records not found
+   * @example response - 200 - Success response for raw records
    * {
    *   "status": "success",
    *   "request_url": "/api/records/raw",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
-   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   *   "data": [
+   *     {
+   *       "title": "Men's Raw Squat",
+   *       "records": [
+   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
+   *       ]
+   *     }
+   *   ]
    * }
    */
   router.get(
@@ -154,36 +161,118 @@ export function createRecordsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: records?.cache,
         data: records?.data,
       });
     },
   );
 
   /**
-   * GET /api/records/{equipment}/{sex}
+   * GET /api/records/{equipment}/{sex_or_weight_class}
    * @tags Records
-   * @summary Get records filtered by equipment and sex
-   * @description Returns records filtered by equipment category and sex
+   * @summary Get records filtered by equipment and sex or weight class
+   * @description Returns records filtered by equipment and either sex (men/women) or weight class system. Weight class systems include: expanded-classes (more weight divisions), ipf-classes (IPF standard), para-classes (Paralympic), wp-classes (World Powerlifting).
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,unlimited
-   * @param {string} sex.path.required - Sex - enum:men,women
-   * @param {boolean} cache.query - Use cached data (default true)
-   * @return {RecordsResponse} 200 - Filtered records
-   * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 404 - Records not found
-   * @example response - 200 - Success response
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
+   * @param {string} sex_or_weight_class.path.required - Either sex (men, women) or weight class system (expanded-classes, ipf-classes, para-classes, wp-classes)
+   * @return {RecordsResponse} 200 - Records filtered by equipment and sex/weight class
+   * @return {RecordsErrorResponse} 400 - Invalid equipment parameter
+   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {RecordsErrorResponse} 404 - Invalid sex or weight class parameter
+   * @example response - 200 - Success response filtered by sex
    * {
    *   "status": "success",
    *   "request_url": "/api/records/raw/men",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
-   *   "data": [{"title": "Men's Raw Squat", "records": []}]
+   *   "data": [
+   *     {
+   *       "title": "Men's Raw Squat",
+   *       "records": [
+   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
+   *       ]
+   *     }
+   *   ]
+   * }
+   * @example response - 200 - Success response filtered by weight class system
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/records/unlimited/wp-classes",
+   *   "message": "The resource was returned successfully!",
+   *   "data": [
+   *     {
+   *       "title": "Men's Unlimited Squat",
+   *       "records": [
+   *         {"weightclass": "120+", "lifter": "Blaine Sumner", "lift": "1102", "date": "2023-03-04", "federation": "WP"}
+   *       ]
+   *     }
+   *   ]
    * }
    */
   router.get(
-    "/:equipment/:sex",
+    "/:equipment/:sex_or_weight_class",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    async (
+      req: Request<
+        { equipment: string; sex_or_weight_class: string },
+        {},
+        {},
+        GetFilteredRecordsQueryType
+      >,
+      res: Response,
+      next,
+    ) => {
+      try {
+        const { equipment, sex_or_weight_class } = req.params;
+        const filters = recordService.parseSexOrWeightClass(equipment, sex_or_weight_class);
+        const records = await recordService.getFilteredRecords(filters, req.query);
+
+        if (!records?.data) throw new NotFoundError("The resource cannot be found!");
+
+        context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+        res.status(200).json({
+          status: "success",
+          request_url: req.originalUrl,
+          message: "The resource was returned successfully!",
+          data: records?.data,
+        });
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+
+  /**
+   * GET /api/records/{equipment}/{weight_class}/{sex}
+   * @tags Records
+   * @summary Get records filtered by equipment, weight class system, and sex
+   * @description Returns records filtered by all three criteria: equipment category, weight class system, and sex. This is the most specific filtering option available.
+   * @security BearerAuth
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
+   * @param {string} weight_class.path.required - Weight class system - enum:expanded-classes,ipf-classes,para-classes,wp-classes
+   * @param {string} sex.path.required - Sex - enum:men,women
+   * @return {RecordsResponse} 200 - Records filtered by all criteria
+   * @return {RecordsErrorResponse} 400 - Invalid equipment, weight class, or sex parameter
+   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {RecordsErrorResponse} 404 - Records not found
+   * @example response - 200 - Success response for women's unlimited WP-class records
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/records/unlimited/wp-classes/women",
+   *   "message": "The resource was returned successfully!",
+   *   "data": [
+   *     {
+   *       "title": "Women's Unlimited Squat",
+   *       "records": [
+   *         {"weightclass": "84+", "lifter": "April Mathis", "lift": "854", "date": "2022-11-12", "federation": "WP"}
+   *       ]
+   *     }
+   *   ]
+   * }
+   */
+  router.get(
+    "/:equipment/:weight_class/:sex",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -205,7 +294,6 @@ export function createRecordsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: records?.cache,
         data: records?.data,
       });
     },

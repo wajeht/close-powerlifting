@@ -86,7 +86,6 @@ export function createMeetsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/meets/uspa/1969",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": {"title": "2024 USPA Nationals", "results": []}
    * }
    */
@@ -110,7 +109,6 @@ export function createMeetsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: result.cache,
         data: result.data,
       });
     },

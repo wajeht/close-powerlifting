@@ -20,7 +20,6 @@ describe("GET /api/federations", () => {
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("The resource was returned successfully!");
     expect(response.body.request_url).toBe("/api/federations");
-    expect(response.body).toHaveProperty("cache");
     expect(response.body).toHaveProperty("data");
     expect(response.body).toHaveProperty("pagination");
   });

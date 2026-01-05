@@ -21,7 +21,6 @@ describe("GET /api/rankings", () => {
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("The resource was returned successfully!");
     expect(response.body.request_url).toBe("/api/rankings");
-    expect(response.body).toHaveProperty("cache");
     expect(response.body).toHaveProperty("data");
     expect(response.body).toHaveProperty("pagination");
   });
@@ -180,7 +179,6 @@ describe("GET /api/rankings/filter/:equipment/:sex/:weight_class", () => {
 
     expect(response.body).toHaveProperty("data");
     expect(response.body).toHaveProperty("pagination");
-    expect(response.body).toHaveProperty("cache");
   });
 });
 

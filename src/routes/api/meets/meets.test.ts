@@ -20,7 +20,6 @@ describe("GET /api/meets/:meet", () => {
     expect(response.body.status).toBe("success");
     expect(response.body.message).toBe("The resource was returned successfully!");
     expect(response.body.request_url).toBe("/api/meets/uspa/1969");
-    expect(response.body).toHaveProperty("cache");
     expect(response.body).toHaveProperty("data");
   });
 

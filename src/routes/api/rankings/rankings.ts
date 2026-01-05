@@ -50,7 +50,6 @@ import {
  * @property {string} status - Response status
  * @property {string} request_url - Request URL
  * @property {string} message - Response message
- * @property {boolean} cache - Whether data was cached
  * @property {RankingEntry[]} data - Array of ranking entries
  * @property {Pagination} pagination - Pagination info
  */
@@ -95,7 +94,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings?current_page=1&per_page=100",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}],
    *   "pagination": {"current_page": 1, "per_page": 100, "items": 3000000}
    * }
@@ -115,7 +113,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -140,7 +137,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "equipment": "Raw", "dots": 617.45}]
    * }
    */
@@ -170,7 +166,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -196,7 +191,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw/men",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "sex": "M", "dots": 617.45}]
    * }
    */
@@ -226,7 +220,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -253,7 +246,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw/men/100",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "weight_class_kg": "100", "dots": 617.45}]
    * }
    */
@@ -287,7 +279,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -315,7 +306,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw/men/100/2024",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "date": "2024-06-15", "dots": 617.45}]
    * }
    */
@@ -350,7 +340,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -379,7 +368,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "total_kg": 950, "dots": 617.45}]
    * }
    */
@@ -415,7 +403,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
@@ -445,7 +432,6 @@ export function createRankingsRouter(context: AppContext) {
    *   "status": "success",
    *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
    *   "message": "The resource was returned successfully!",
-   *   "cache": true,
    *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}]
    * }
    */
@@ -470,7 +456,6 @@ export function createRankingsRouter(context: AppContext) {
         status: "success",
         request_url: req.originalUrl,
         message: "The resource was returned successfully!",
-        cache: rankings?.cache,
         data: rankings?.data,
         pagination: rankings?.pagination,
       });
