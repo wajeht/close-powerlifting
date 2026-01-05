@@ -43,19 +43,19 @@ export function createAdminUser(
         logger.info(``);
         logger.info(``);
 
-        const { hashedKey, unhashedKey } = await helpers.generateAPIKey({
+        const apiKey = helpers.generateAPIKey({
           name: createdAdminUser.name,
           userId: String(createdAdminUser.id),
           email: createdAdminUser.email,
           admin: true,
         });
 
-        await authService.updateUser(createdAdminUser.email, { api_key: hashedKey });
+        await authService.updateUser(createdAdminUser.email, { api_key: apiKey });
 
         await mail.sendWelcomeEmail({
           email: createdAdminUser.email,
           name: createdAdminUser.name,
-          key: unhashedKey,
+          key: apiKey,
         });
 
         logger.info(

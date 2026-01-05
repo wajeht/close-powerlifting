@@ -170,41 +170,40 @@ describe.concurrent("hashKey", () => {
 });
 
 describe.concurrent("generateAPIKey", () => {
-  it("returns a hashed key", async () => {
-    const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
+  it("returns an API key", () => {
+    const apiKey = helpers.generateAPIKey({
       userId: "1",
       email: "test@test.com",
       name: "Test User",
     });
-    expect(unhashedKey).toBeDefined();
-    expect(hashedKey).toBeDefined();
+    expect(apiKey).toBeDefined();
+    expect(typeof apiKey).toBe("string");
   });
 
-  it("returns a different key and hashed key each time", async () => {
-    const { unhashedKey: key1, hashedKey: hashedKey1 } = await helpers.generateAPIKey({
+  it("returns a different key each time for different users", () => {
+    const key1 = helpers.generateAPIKey({
       userId: "1",
       email: "1test@test.com",
       name: "1Test User",
     });
-    const { unhashedKey: key2, hashedKey: hashedKey2 } = await helpers.generateAPIKey({
+    const key2 = helpers.generateAPIKey({
       userId: "2",
       email: "2test@test.com",
       name: "2Test User",
     });
     expect(key1).not.toEqual(key2);
-    expect(hashedKey1).not.toEqual(hashedKey2);
   });
 
   describe("when admin flag is passed", () => {
-    it("returns a hashed key", async () => {
-      const { unhashedKey, hashedKey } = await helpers.generateAPIKey({
+    it("returns an API key", () => {
+      const apiKey = helpers.generateAPIKey({
         userId: "1",
         email: "",
         name: "",
         admin: true,
       });
-      expect(unhashedKey).toBeDefined();
-      expect(hashedKey).toBeDefined();
+      expect(apiKey).toBeDefined();
+      expect(typeof apiKey).toBe("string");
     });
   });
 });

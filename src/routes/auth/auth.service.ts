@@ -51,10 +51,10 @@ export function createAuthService(
   async function sendWelcomeEmail(userParams: UserParams) {
     const { email } = userParams;
 
-    const { unhashedKey, hashedKey } = await helpers.generateAPIKey(userParams);
+    const apiKey = helpers.generateAPIKey(userParams);
 
     const verified = await updateUser(email, {
-      api_key: hashedKey,
+      api_key: apiKey,
       verified: true,
       verified_at: new Date().toISOString(),
     });
@@ -62,10 +62,10 @@ export function createAuthService(
     await mail.sendWelcomeEmail({
       email,
       name: verified!.name!,
-      key: unhashedKey,
+      key: apiKey,
     });
 
-    return unhashedKey;
+    return apiKey;
   }
 
   async function sendMagicLinkEmail({

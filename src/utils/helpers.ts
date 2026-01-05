@@ -9,9 +9,7 @@ import type { UserParams } from "../types";
 export interface HelpersType {
   getHostName: (req: Request) => string;
   hashKey: () => Promise<{ key: string; hashedKey: string }>;
-  generateAPIKey: (
-    userParams: UserParams & { admin?: boolean },
-  ) => Promise<{ unhashedKey: string; hashedKey: string }>;
+  generateAPIKey: (userParams: UserParams & { admin?: boolean }) => string;
   timingSafeEqual: (a: string, b: string) => boolean;
   getGoogleOAuthURL: (state: string) => string;
   generateOAuthState: () => string;
@@ -34,9 +32,7 @@ export function createHelper(): HelpersType {
     return { key, hashedKey };
   }
 
-  async function generateAPIKey(
-    userParams: UserParams & { admin?: boolean },
-  ): Promise<{ unhashedKey: string; hashedKey: string }> {
+  function generateAPIKey(userParams: UserParams & { admin?: boolean }): string {
     const { userId, name, email, admin } = userParams;
 
     const keyOptions = {
@@ -47,21 +43,11 @@ export function createHelper(): HelpersType {
       issuer: "Close Powerlifting",
     };
 
-    const salt = parseInt(configuration.app.passwordSalt, 10);
-
     if (admin) {
-      const key = jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "1y" });
-      return {
-        unhashedKey: key,
-        hashedKey: await bcrypt.hash(key, salt),
-      };
+      return jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "1y" });
     }
 
-    const key = jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "3m" });
-    return {
-      unhashedKey: key,
-      hashedKey: await bcrypt.hash(key, salt),
-    };
+    return jwt.sign(keyOptions, configuration.app.jwtSecret, { expiresIn: "3m" });
   }
 
   function timingSafeEqual(a: string, b: string): boolean {

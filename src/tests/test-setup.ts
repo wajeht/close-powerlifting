@@ -130,26 +130,24 @@ beforeAll(async () => {
     throw error;
   }
 
-  const { unhashedKey, hashedKey } = await context.helpers.generateAPIKey({
+  testApiKey = context.helpers.generateAPIKey({
     userId: 999,
     name: "Test User",
     email: "test@example.com",
     admin: true,
   });
 
-  testApiKey = unhashedKey;
-
   const existingUser = await knex("users").where({ email: "test@example.com" }).first();
 
   if (existingUser) {
     testUserId = existingUser.id;
-    await knex("users").where({ id: existingUser.id }).update({ api_key: hashedKey });
+    await knex("users").where({ id: existingUser.id }).update({ api_key: testApiKey });
   } else {
     const [user] = await knex("users")
       .insert({
         name: "Test User",
         email: "test@example.com",
-        api_key: hashedKey,
+        api_key: testApiKey,
         api_call_count: 0,
         api_call_limit: 500,
         admin: false,
