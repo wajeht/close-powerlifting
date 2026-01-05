@@ -624,4 +624,205 @@ describe("Auth Routes", () => {
       await knex("users").where({ id: testUserId }).update({ name: testName });
     });
   });
+
+  describe("Session isolation", () => {
+    it("should not share sessions between different agents", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent1 = createUnauthenticatedSessionAgent();
+      const sessionAgent2 = createUnauthenticatedSessionAgent();
+
+      // Login with agent 1
+      await sessionAgent1.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      // Agent 1 should be logged in
+      const dashboard1 = await sessionAgent1.get("/dashboard");
+      expect(dashboard1.status).toBe(200);
+
+      // Agent 2 should NOT be logged in
+      const dashboard2 = await sessionAgent2.get("/dashboard");
+      expect(dashboard2.status).toBe(302);
+      expect(dashboard2.headers.location).toBe("/login");
+    });
+
+    it("should not affect other sessions when one logs out", async () => {
+      // Create two users for isolation test
+      const [user2] = await knex("users")
+        .insert({
+          name: "Session Test User 2",
+          email: "session-test-2@example.com",
+          verification_token: "session-token-2",
+          verified: true,
+        })
+        .returning("*");
+
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent1 = createUnauthenticatedSessionAgent();
+      const sessionAgent2 = createUnauthenticatedSessionAgent();
+
+      // Login both agents
+      await sessionAgent1.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+      await sessionAgent2.get(`/magic-link?token=session-token-2&email=session-test-2@example.com`);
+
+      // Both should be logged in
+      const dashboard1Before = await sessionAgent1.get("/dashboard");
+      expect(dashboard1Before.status).toBe(200);
+      const dashboard2Before = await sessionAgent2.get("/dashboard");
+      expect(dashboard2Before.status).toBe(200);
+
+      // Logout agent 1
+      const dashboardPage = await sessionAgent1.get("/dashboard");
+      const csrfToken = extractCsrfToken(dashboardPage.text);
+      await sessionAgent1.post("/logout").type("form").send({ _csrf: csrfToken });
+
+      // Agent 1 should be logged out
+      const dashboard1After = await sessionAgent1.get("/dashboard");
+      expect(dashboard1After.status).toBe(302);
+
+      // Agent 2 should still be logged in
+      const dashboard2After = await sessionAgent2.get("/dashboard");
+      expect(dashboard2After.status).toBe(200);
+
+      await knex("users").where({ id: user2.id }).delete();
+    });
+  });
+
+  describe("Session destruction", () => {
+    it("should clear session cookie after logout", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      // Verify logged in
+      const dashboardBefore = await sessionAgent.get("/dashboard");
+      expect(dashboardBefore.status).toBe(200);
+
+      // Logout
+      const dashboardPage = await sessionAgent.get("/dashboard");
+      const csrfToken = extractCsrfToken(dashboardPage.text);
+      await sessionAgent.post("/logout").type("form").send({ _csrf: csrfToken });
+
+      // All protected routes should redirect
+      const dashboardAfter = await sessionAgent.get("/dashboard");
+      expect(dashboardAfter.status).toBe(302);
+      expect(dashboardAfter.headers.location).toBe("/login");
+
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.status).toBe(302);
+      expect(settingsAfter.headers.location).toBe("/login");
+    });
+
+    it("should destroy session when user is deleted from database during active session", async () => {
+      const [tempUser] = await knex("users")
+        .insert({
+          name: "Destroy Session User",
+          email: "destroy-session@example.com",
+          verification_token: "destroy-token",
+          verified: true,
+        })
+        .returning("*");
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=destroy-token&email=destroy-session@example.com`);
+
+      // Verify logged in
+      const dashboardBefore = await sessionAgent.get("/dashboard");
+      expect(dashboardBefore.status).toBe(200);
+
+      // Hard delete user
+      await knex("users").where({ id: tempUser.id }).delete();
+
+      // Session should be destroyed on next request
+      const dashboardAfter = await sessionAgent.get("/dashboard");
+      expect(dashboardAfter.status).toBe(302);
+      expect(dashboardAfter.headers.location).toBe("/login");
+
+      // Settings should also redirect
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.status).toBe(302);
+      expect(settingsAfter.headers.location).toBe("/login");
+    });
+  });
+
+  describe("Flash messages", () => {
+    it("should show flash message when already logged in user visits login page", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      // Visit login page while logged in - should redirect
+      const loginResponse = await sessionAgent.get("/login");
+      expect(loginResponse.status).toBe(302);
+      expect(loginResponse.headers.location).toBe("/dashboard");
+
+      // Follow redirect to dashboard and check for flash message
+      const dashboardResponse = await sessionAgent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(200);
+      expect(dashboardResponse.text).toContain("already logged in");
+    });
+
+    it("should show success flash after updating name", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+
+      // Update name and follow redirect
+      const updateResponse = await sessionAgent
+        .post("/settings")
+        .type("form")
+        .send({ name: "Flash Test Name", _csrf: csrfToken });
+
+      expect(updateResponse.status).toBe(302);
+
+      // Check flash message on redirected page
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.text).toContain("updated successfully");
+
+      await knex("users").where({ id: testUserId }).update({ name: testName });
+    });
+
+    it("should show success flash after regenerating API key", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+
+      const response = await sessionAgent
+        .post("/settings/regenerate-key")
+        .type("form")
+        .send({ _csrf: csrfToken });
+
+      expect(response.status).toBe(200);
+      expect(response.text).toContain("generated");
+      expect(response.text).toContain("email");
+    });
+  });
 });

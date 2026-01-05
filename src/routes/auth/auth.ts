@@ -104,8 +104,10 @@ export function createAuthRouter(context: AppContext) {
 
   router.get("/login", (req: Request, res: Response) => {
     if (req.session.user) {
+      req.flash("info", "You are already logged in.");
       return res.redirect("/dashboard");
     }
+
     return res.status(200).render("auth/login.html", {
       path: "/login",
       title: "Login",
@@ -124,7 +126,6 @@ export function createAuthRouter(context: AppContext) {
 
       let user = await context.userRepository.findByEmail(email);
 
-      // Create new user if doesn't exist
       if (!user) {
         const { key: token } = await context.helpers.hashKey();
         const name = context.helpers.extractNameFromEmail(email);
@@ -149,7 +150,6 @@ export function createAuthRouter(context: AppContext) {
       }
 
       if (!user.verified) {
-        // Resend verification email for unverified users
         context.authService.sendVerificationEmail({
           name: user.name,
           email: user.email,
@@ -160,7 +160,6 @@ export function createAuthRouter(context: AppContext) {
         return res.redirect("/login");
       }
 
-      // Generate magic link token for existing verified users
       const { key: token } = await context.helpers.hashKey();
       const expiresAt = new Date(Date.now() + MAGIC_LINK_EXPIRY_MS).toISOString();
 
@@ -219,7 +218,6 @@ export function createAuthRouter(context: AppContext) {
       return res.redirect("/login");
     }
 
-    // Check if magic link has expired
     if (user.magic_link_expires_at) {
       const expiresAt = new Date(user.magic_link_expires_at);
       if (expiresAt < new Date()) {
@@ -228,13 +226,11 @@ export function createAuthRouter(context: AppContext) {
       }
     }
 
-    // Clear the magic link token after successful use
     await context.userRepository.updateById(user.id, {
       verification_token: null,
       magic_link_expires_at: null,
     });
 
-    // Log the user in
     req.session.user = {
       id: user.id,
       email: user.email,
@@ -242,9 +238,11 @@ export function createAuthRouter(context: AppContext) {
       admin: Boolean(user.admin),
     };
 
-    context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
-
-    return res.redirect("/dashboard");
+    req.session.save(() => {
+      req.flash("info", "You have been logged in.");
+      context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
+      res.redirect("/dashboard");
+    });
   });
 
   router.get(
@@ -307,7 +305,6 @@ export function createAuthRouter(context: AppContext) {
         title: "Settings",
         path: "/settings",
         user,
-        apiKey: null,
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
       });
@@ -350,7 +347,7 @@ export function createAuthRouter(context: AppContext) {
         return;
       }
 
-      const unhashedKey = await context.authService.sendWelcomeEmail({
+      await context.authService.sendWelcomeEmail({
         name: user.name,
         email: user.email,
         userId: String(user.id),
@@ -370,7 +367,6 @@ export function createAuthRouter(context: AppContext) {
         title: "Settings",
         path: "/settings",
         user: updatedUser,
-        apiKey: unhashedKey,
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
       });
