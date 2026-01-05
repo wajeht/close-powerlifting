@@ -80,9 +80,7 @@
     --color-red-400: oklch(70.4% 0.191 22.216);
     --color-red-600: oklch(57.7% 0.245 27.325);
     --color-red-700: oklch(50.5% 0.213 27.518);
-    --color-orange-500: oklch(70.5% 0.213 47.604);
     --color-yellow-400: oklch(85.2% 0.199 91.936);
-    --color-yellow-500: oklch(79.5% 0.184 86.047);
     --color-yellow-600: oklch(68.1% 0.162 75.834);
     --color-yellow-700: oklch(55.4% 0.135 66.442);
     --color-yellow-900: oklch(42.1% 0.095 57.708);
@@ -94,7 +92,6 @@
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-blue-900: oklch(37.9% 0.146 265.522);
     --color-purple-400: oklch(71.4% 0.203 305.504);
-    --color-purple-500: oklch(62.7% 0.265 303.9);
     --color-purple-900: oklch(38.1% 0.176 304.987);
     --color-neutral-100: oklch(97% 0 0);
     --color-neutral-300: oklch(87% 0 0);
@@ -925,9 +922,6 @@
   .bg-red-600 {
     background-color: var(--color-red-600) !important;
   }
-  .bg-yellow-500 {
-    background-color: var(--color-yellow-500) !important;
-  }
   .bg-yellow-600 {
     background-color: var(--color-yellow-600) !important;
   }
@@ -1129,14 +1123,8 @@
   .text-blue-400 {
     color: var(--color-blue-400) !important;
   }
-  .text-blue-500 {
-    color: var(--color-blue-500) !important;
-  }
   .text-green-400 {
     color: var(--color-green-400) !important;
-  }
-  .text-green-500 {
-    color: var(--color-green-500) !important;
   }
   .text-neutral-100 {
     color: var(--color-neutral-100) !important;
@@ -1153,9 +1141,6 @@
   .text-neutral-600 {
     color: var(--color-neutral-600) !important;
   }
-  .text-orange-500 {
-    color: var(--color-orange-500) !important;
-  }
   .text-power {
     color: var(--color-power) !important;
   }
@@ -1170,9 +1155,6 @@
   .text-purple-400 {
     color: var(--color-purple-400) !important;
   }
-  .text-purple-500 {
-    color: var(--color-purple-500) !important;
-  }
   .text-red-400 {
     color: var(--color-red-400) !important;
   }
@@ -1181,9 +1163,6 @@
   }
   .text-yellow-400 {
     color: var(--color-yellow-400) !important;
-  }
-  .text-yellow-500 {
-    color: var(--color-yellow-500) !important;
   }
   .capitalize {
     text-transform: capitalize !important;
