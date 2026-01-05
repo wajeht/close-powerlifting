@@ -67,6 +67,14 @@ curl -H "Authorization: Bearer YOUR_API_KEY" "https://close-powerlifting.jaw.dev
 - See [DEVELOPMENT](./docs/getting-started.md) for `development` guide.
 - See [CONTRIBUTION](./docs/contribution.md) for `contribution` guide.
 
+## 📊 Data Attribution
+
+This project uses data from the [OpenPowerlifting](https://www.openpowerlifting.org) project, a community service to create a permanent, open archive of the world's powerlifting data.
+
+All competition data is contributed to the **Public Domain**. You can download a copy of the raw data at [data.openpowerlifting.org](https://data.openpowerlifting.org).
+
+If you find this API useful, please consider [supporting OpenPowerlifting](https://www.patreon.com/join/openpowerlifting).
+
 ## 📜 License
 
 Distributed under the MIT License © [wajeht](https://github.com/wajeht). See [LICENSE](./LICENSE) for more information.
