@@ -50,7 +50,7 @@ export function createAdminUser(
           admin: true,
         });
 
-        await authService.updateUser(createdAdminUser.email, { key: hashedKey });
+        await authService.updateUser(createdAdminUser.email, { api_key: hashedKey });
 
         await mail.sendWelcomeEmail({
           email: createdAdminUser.email,

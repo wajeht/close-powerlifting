@@ -43,7 +43,7 @@ describe("AdminUser", () => {
       expect(user.name).toBe(helpers.extractNameFromEmail(configuration.app.adminEmail));
       expect(user.admin).toBe(1); // SQLite stores booleans as 1/0
       expect(user.verified).toBe(1);
-      expect(user.key).toBeDefined();
+      expect(user.api_key).toBeDefined();
     });
 
     it("should not create a new admin user if one already exists", async () => {

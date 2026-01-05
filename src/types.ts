@@ -29,7 +29,7 @@ export interface User {
   api_call_count: number;
   api_key_version: number;
   api_call_limit: number;
-  key: string | null;
+  api_key: string | null;
   admin: boolean;
   deleted: boolean;
   verification_token: string | null;

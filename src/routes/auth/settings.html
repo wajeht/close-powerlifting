@@ -12,14 +12,14 @@
   <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-6 gap-4 flex flex-col">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-white">API Key</h2>
-      <% if (it.user.key) { %>
+      <% if (it.user.api_key) { %>
       <%~ include('../_components/badge.html', { text: 'v' + it.user.api_key_version, variant: 'info' }) %>
       <% } %>
     </div>
 
-    <% if (it.user.key) { %>
+    <% if (it.user.api_key) { %>
     <p class="text-sm text-neutral-400">Authenticate requests using the <code class="rounded bg-neutral-800 px-1">Authorization: Bearer</code> header.</p>
-    <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.key, readonly: true }) %>
+    <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.api_key, readonly: true }) %>
     <div class="flex gap-2">
       <button type="button" class="open-modal rounded-md bg-power px-4 py-2 font-medium text-white transition-all hover:bg-power-dark" data-modal="regenerate-key-modal">Regenerate API Key</button>
       <%~ include('../_components/button.html', { text: 'Copy', variant: 'secondary', type: 'button', id: 'copy-btn' }) %>
@@ -66,7 +66,7 @@
   </div>
 </div>
 
-<% if (it.user.key) { %>
+<% if (it.user.api_key) { %>
 <%~ include('../_components/modal.html', {
   id: 'regenerate-key-modal',
   action: '/settings/regenerate-key',

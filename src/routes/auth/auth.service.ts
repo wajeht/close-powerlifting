@@ -54,7 +54,7 @@ export function createAuthService(
     const { unhashedKey, hashedKey } = await helpers.generateAPIKey(userParams);
 
     const verified = await updateUser(email, {
-      key: hashedKey,
+      api_key: hashedKey,
       verified: true,
       verified_at: new Date().toISOString(),
     });

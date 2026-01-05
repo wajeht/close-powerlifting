@@ -20,7 +20,7 @@ describe("Auth Routes", () => {
         name: testName,
         email: testEmail,
         verification_token: testMagicToken,
-        key: "test-auth-key",
+        api_key: "test-auth-key",
         api_call_count: 50,
         api_call_limit: 100,
         admin: false,
@@ -280,7 +280,7 @@ describe("Auth Routes", () => {
     describe("POST /settings/regenerate-key", () => {
       it("should regenerate API key", async () => {
         const beforeUser = await knex("users").where({ id: testUserId }).first();
-        const beforeKey = beforeUser.key;
+        const beforeKey = beforeUser.api_key;
 
         const settingsPage = await sessionAgent.get("/settings");
         const csrfToken = extractCsrfToken(settingsPage.text);
@@ -293,7 +293,7 @@ describe("Auth Routes", () => {
         expect(response.status).toBe(200);
 
         const afterUser = await knex("users").where({ id: testUserId }).first();
-        expect(afterUser.key).not.toBe(beforeKey);
+        expect(afterUser.api_key).not.toBe(beforeKey);
       });
     });
   });
