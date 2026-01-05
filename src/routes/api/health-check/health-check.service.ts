@@ -5,7 +5,7 @@ export function createHealthCheckService(
   scraper: ScraperType,
   logger: LoggerType,
 ) {
-  async function getAPIStatus({ X_API_KEY, url }: { X_API_KEY: string; url: string }) {
+  async function getAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
     const fetchStatus = async () => {
       const routes = [
         // Rankings
@@ -43,7 +43,7 @@ export function createHealthCheckService(
       ];
 
       const promises = await Promise.allSettled(
-        routes.map((r) => scraper.fetchWithAuth(url, r, X_API_KEY)),
+        routes.map((r) => scraper.fetchWithAuth(url, r, apiKey)),
       );
 
       const data = promises.map((p, i) => {
