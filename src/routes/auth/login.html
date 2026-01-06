@@ -22,7 +22,7 @@
     </div>
 
     <% if (state.env === 'production') { %>
-      <div class="cf-turnstile" data-sitekey="<%~ state.cloudflareTurnstileSiteKey %>" data-theme="dark"></div>
+      <div class="cf-turnstile" data-sitekey="<%~ state.cloudflareTurnstileSiteKey %>" data-theme="dark" data-size="flexible"></div>
     <% } %>
 
     <%~ include('../_components/button.html', { text: 'Continue with Email' }) %>
