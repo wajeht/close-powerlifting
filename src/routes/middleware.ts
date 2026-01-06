@@ -60,6 +60,7 @@ export interface MiddlewareType {
     maxAgeSeconds?: number,
   ) => (req: Request, res: Response, next: NextFunction) => void;
   apiCacheControlMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  turnstileMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
 export function createMiddleware(
@@ -438,6 +439,8 @@ export function createMiddleware(
       res.locals.state = {
         user,
         currentYear,
+        env: configuration.app.env,
+        cloudflareTurnstileSiteKey: configuration.cloudflare.turnstileSiteKey,
       };
 
       next();
@@ -445,6 +448,8 @@ export function createMiddleware(
       res.locals.state = {
         user: null,
         currentYear,
+        env: configuration.app.env,
+        cloudflareTurnstileSiteKey: configuration.cloudflare.turnstileSiteKey,
       };
       next();
     }
@@ -460,6 +465,38 @@ export function createMiddleware(
   function apiCacheControlMiddleware(_req: Request, res: Response, next: NextFunction): void {
     res.set("Cache-Control", `private, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
     next();
+  }
+
+  async function turnstileMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      if (configuration.app.env !== "production") {
+        logger.info("Turnstile: skipping in non-production environment");
+        return next();
+      }
+
+      if (req.method === "GET") {
+        return next();
+      }
+
+      const token = req.body["cf-turnstile-response"];
+      if (!token) {
+        req.flash("error", "Turnstile verification failed: Missing token");
+        return res.redirect("back");
+      }
+
+      const ip = (req.headers["cf-connecting-ip"] as string) || req.ip;
+      await helpers.verifyTurnstileToken(token, ip);
+
+      next();
+    } catch (error) {
+      logger.error(error as Error);
+      req.flash("error", "Turnstile verification failed. Please try again.");
+      return res.redirect("back");
+    }
   }
 
   return {
@@ -480,5 +517,6 @@ export function createMiddleware(
     appLocalStateMiddleware,
     cacheControlMiddleware,
     apiCacheControlMiddleware,
+    turnstileMiddleware,
   };
 }

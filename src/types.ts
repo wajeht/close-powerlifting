@@ -170,3 +170,12 @@ export interface RecordCategory {
   title: string;
   records: Record<string, string>[];
 }
+
+export interface TurnstileVerifyResponse {
+  success: boolean;
+  "error-codes"?: string[];
+  challenge_ts?: string;
+  hostname?: string;
+  action?: string;
+  cdata?: string;
+}

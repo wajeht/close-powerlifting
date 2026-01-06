@@ -41,6 +41,9 @@
   />
   <link rel="stylesheet" href="/css/style.css?v=<%= version.style %>" />
   <script src="/js/script.js?v=<%= version.script %>" defer></script>
+  <% if (state.env === 'production') { %>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+  <% } %>
   <script type="speculationrules">
     {
         "prerender": [{

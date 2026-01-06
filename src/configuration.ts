@@ -68,4 +68,9 @@ export const configuration = {
     baseUrl: openpowerliftingUrl,
     apiUrl: `${openpowerliftingUrl}/api`,
   } as const,
+
+  cloudflare: {
+    turnstileSiteKey: process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || "",
+    turnstileSecretKey: process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || "",
+  } as const,
 } as const;

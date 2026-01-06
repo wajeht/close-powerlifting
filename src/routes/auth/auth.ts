@@ -48,6 +48,7 @@ export function createAuthRouter(context: AppContext) {
   router.post(
     "/login",
     middleware.authRateLimitMiddleware,
+    middleware.turnstileMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: loginValidation }),
     async (req: Request<{}, {}, LoginType>, res: Response) => {

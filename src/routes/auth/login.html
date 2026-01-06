@@ -21,6 +21,10 @@
       </label>
     </div>
 
+    <% if (state.env === 'production') { %>
+      <div class="cf-turnstile" data-sitekey="<%~ state.cloudflareTurnstileSiteKey %>" data-theme="dark"></div>
+    <% } %>
+
     <%~ include('../_components/button.html', { text: 'Continue with Email' }) %>
   </form>
 
