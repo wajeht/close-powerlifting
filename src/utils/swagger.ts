@@ -18,7 +18,7 @@ const swaggerConfig = {
 REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org), which updates multiple times daily with new meet results.
 
 ## Getting Started
-1. Register at [close-powerlifting.com](https://close-powerlifting.com/register)
+1. Register at [close-powerlifting.jaw.dev](https://close-powerlifting.jaw.dev/register)
 2. Copy your API key from the dashboard
 3. Include the key in your requests as a Bearer token
 
@@ -32,7 +32,7 @@ Authorization: Bearer YOUR_API_KEY
 
 Example using JavaScript fetch:
 \`\`\`javascript
-const response = await fetch('https://close-powerlifting.com/api/rankings', {
+const response = await fetch('https://close-powerlifting.jaw.dev/api/rankings', {
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY'
   }
