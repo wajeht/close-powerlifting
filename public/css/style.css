@@ -1427,10 +1427,6 @@
       font-size: var(--text-5xl) !important;
       line-height: var(--tw-leading, var(--text-5xl--line-height)) !important;
     }
-    .sm\:text-sm {
-      font-size: var(--text-sm) !important;
-      line-height: var(--tw-leading, var(--text-sm--line-height)) !important;
-    }
   }
   @media (min-width: 48rem) {
     .md\:block {

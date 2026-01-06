@@ -10,7 +10,7 @@
 <div class="max-w-2xl space-y-6">
   <!-- API Key Section -->
   <div class="fade-in animation-delay-3 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 gap-4 flex flex-col">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
       <h2 class="text-base font-semibold text-white md:text-lg">API Key</h2>
       <% if (it.user.api_key) { %>
       <%~ include('../_components/badge.html', { text: 'v' + it.user.api_key_version, variant: 'info' }) %>
@@ -20,7 +20,7 @@
     <% if (it.user.api_key) { %>
     <p class="text-sm text-neutral-400">Authenticate requests using the <code class="rounded bg-neutral-800 px-1">Authorization: Bearer</code> header.</p>
     <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.api_key, readonly: true }) %>
-    <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+    <div class="grid grid-cols-2 gap-2 pt-2 sm:flex sm:flex-wrap sm:justify-end">
       <button type="button" id="copy-btn" class="rounded-md bg-neutral-700 px-3 py-2 text-sm font-medium text-white transition-all sm:min-w-52 hover:bg-neutral-600 md:px-4 md:text-base">Copy</button>
       <button type="button" class="open-modal rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark sm:min-w-52 md:px-4 md:text-base" data-modal="regenerate-key-modal">Regenerate API Key</button>
     </div>
@@ -35,7 +35,7 @@
 
   <!-- Account -->
   <div class="fade-in animation-delay-4 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 gap-4 flex flex-col">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
       <h2 class="text-base font-semibold text-white md:text-lg">Account</h2>
       <% if (it.user.verified) { %>
       <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
@@ -43,6 +43,7 @@
       <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
       <% } %>
     </div>
+    <p class="text-sm text-neutral-400">Member since <%= new Date(it.user.created_at).toLocaleDateString() %></p>
 
     <form action="/settings" method="post" class="space-y-4">
       <%~ include('../_components/csrf-input.html') %>
@@ -51,8 +52,7 @@
         <label class="text-sm text-neutral-400">Email</label>
         <div class="rounded-md bg-neutral-800/50 px-3 py-2 text-neutral-400"><%= it.user.email %></div>
       </div>
-      <div class="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-end">
-        <span class="text-xs text-neutral-500 sm:text-sm">Member since <%= new Date(it.user.created_at).toLocaleDateString() %></span>
+      <div class="flex pt-2 sm:justify-end">
         <button type="submit" class="rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark w-full sm:w-auto sm:min-w-52 md:px-4 md:text-base">Save Changes</button>
       </div>
     </form>
@@ -62,7 +62,7 @@
   <div class="fade-in animation-delay-5 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 flex flex-col gap-4">
     <h2 class="text-base font-semibold text-white md:text-lg">Danger Zone</h2>
     <p class="text-sm text-neutral-400">Once you delete your account, there is no going back. Please be certain.</p>
-    <div class="flex sm:justify-end">
+    <div class="flex pt-2 sm:justify-end">
       <button type="button" class="open-modal w-full rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark sm:w-auto sm:min-w-52 md:px-4 md:text-base" data-modal="delete-account-modal">Delete Account</button>
     </div>
   </div>
