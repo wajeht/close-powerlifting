@@ -452,9 +452,6 @@
   .z-\[100\] {
     z-index: 100 !important;
   }
-  .order-2 {
-    order: 2 !important;
-  }
   .container {
     width: 100% !important;
   }
@@ -1384,9 +1381,6 @@
     --tw-ring-color: var(--color-neutral-600) !important;
   }
   @media (min-width: 40rem) {
-    .sm\:order-1 {
-      order: 1 !important;
-    }
     .sm\:block {
       display: block !important;
     }
@@ -1425,6 +1419,9 @@
     }
     .sm\:justify-between {
       justify-content: space-between !important;
+    }
+    .sm\:justify-end {
+      justify-content: flex-end !important;
     }
     .sm\:text-5xl {
       font-size: var(--text-5xl) !important;
