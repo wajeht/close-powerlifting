@@ -15,7 +15,12 @@ const swaggerConfig = {
     title: "Close Powerlifting API",
     description: `
 ## Overview
-REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org).
+REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org), which updates multiple times daily with new meet results.
+
+## Getting Started
+1. Register at [close-powerlifting.com](https://close-powerlifting.com/register)
+2. Copy your API key from the dashboard
+3. Include the key in your requests as a Bearer token
 
 ## Authentication
 All API endpoints (except \`/api/health-check\`) require authentication via API key.
@@ -40,21 +45,6 @@ if (!response.ok) {
 const data = await response.json();
 \`\`\`
 
-## Rate Limits
-- **Monthly quota**: 500 requests per month (resets on the 1st)
-- **Per-IP limit**: 50 requests per hour
-- **Auth endpoints**: 10 requests per 15 minutes
-
-## Pagination
-Endpoints returning lists support pagination via query parameters:
-- \`per_page\`: Results per page (default: 100, max: 500)
-- \`current_page\`: Page number (default: 1)
-
-## Caching
-- **Server cache**: Responses are cached indefinitely until manually cleared by admins
-- **API browser cache**: \`private, max-age=3600\` (1 hour)
-- **View pages browser cache**: \`public, max-age=86400\` (24 hours)
-
 ## Response Format
 All responses follow this structure:
 \`\`\`json
@@ -76,12 +66,27 @@ Errors return \`status: "fail"\` with appropriate HTTP codes:
 | 404 | Not Found - Resource doesn't exist |
 | 422 | Validation Error - Invalid parameters |
 | 429 | Rate Limited - Too many requests |
+
+## Pagination
+Endpoints returning lists support pagination via query parameters:
+- \`per_page\`: Results per page (default: 100, max: 500)
+- \`current_page\`: Page number (default: 1)
+
+## Rate Limits
+- **Monthly quota**: 500 requests per month (resets on the 1st)
+- **Per-IP limit**: 50 requests per hour
+- **Auth endpoints**: 10 requests per 15 minutes
+
+## Caching
+- **Server cache**: Responses are cached indefinitely until manually cleared by admins
+- **API browser cache**: \`private, max-age=3600\` (1 hour)
+- **View pages browser cache**: \`public, max-age=86400\` (24 hours)
     `,
     termsOfService: `${link}/terms`,
     contact: {
       name: "API Support",
       url: `${link}/contact`,
-      email: configuration.email.from,
+      email: "github@jaw.dev",
     },
     license: {
       name: "MIT",
@@ -100,8 +105,7 @@ Errors return \`status: "fail"\` with appropriate HTTP codes:
     BearerAuth: {
       type: "http",
       scheme: "bearer",
-      bearerFormat: "JWT",
-      description: "Enter your API key",
+      description: "Enter your API key obtained from registration",
     },
   },
   tags: [
