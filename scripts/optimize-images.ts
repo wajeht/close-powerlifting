@@ -3,6 +3,9 @@ import path from "path";
 
 import sharp from "sharp";
 
+import { createLogger } from "../src/utils/logger";
+
+const logger = createLogger();
 const IMG_DIR = path.join(__dirname, "..", "public", "img");
 
 interface OptimizationResult {
@@ -39,7 +42,6 @@ async function optimizeImage(filePath: string): Promise<OptimizationResult | nul
 
   const optimizedSize = optimizedBuffer.length;
 
-  // Only save if we actually reduced the size
   if (optimizedSize < originalSize) {
     fs.writeFileSync(filePath, optimizedBuffer);
   }
@@ -56,7 +58,7 @@ async function optimizeImage(filePath: string): Promise<OptimizationResult | nul
 }
 
 async function main() {
-  console.log("Optimizing images in public/img/...\n");
+  logger.info("Optimizing images in public/img/...");
 
   const files = fs.readdirSync(IMG_DIR).filter((file) => {
     const ext = path.extname(file).toLowerCase();
@@ -64,7 +66,7 @@ async function main() {
   });
 
   if (files.length === 0) {
-    console.log("No images found to optimize.");
+    logger.warn("No images found to optimize.");
     return;
   }
 
@@ -78,33 +80,33 @@ async function main() {
     }
   }
 
-  // Print results table
-  console.log("File".padEnd(30) + "Original".padEnd(12) + "Optimized".padEnd(12) + "Savings");
-  console.log("-".repeat(70));
+  const header = "File".padEnd(30) + "Original".padEnd(12) + "Optimized".padEnd(12) + "Savings";
+  const divider = "-".repeat(70);
 
-  for (const result of results) {
-    console.log(
+  const rows = results.map(
+    (result) =>
       result.file.padEnd(30) +
-        formatBytes(result.originalSize).padEnd(12) +
-        formatBytes(result.optimizedSize).padEnd(12) +
-        result.savings,
-    );
-  }
+      formatBytes(result.originalSize).padEnd(12) +
+      formatBytes(result.optimizedSize).padEnd(12) +
+      result.savings,
+  );
 
   const totalOriginal = results.reduce((sum, r) => sum + r.originalSize, 0);
   const totalOptimized = results.reduce((sum, r) => sum + r.optimizedSize, 0);
   const totalSavings = totalOriginal - totalOptimized;
 
-  console.log("-".repeat(70));
-  console.log(
+  const totalRow =
     "Total".padEnd(30) +
-      formatBytes(totalOriginal).padEnd(12) +
-      formatBytes(totalOptimized).padEnd(12) +
-      `${formatBytes(totalSavings)} (${((totalSavings / totalOriginal) * 100).toFixed(1)}%)`,
-  );
+    formatBytes(totalOriginal).padEnd(12) +
+    formatBytes(totalOptimized).padEnd(12) +
+    `${formatBytes(totalSavings)} (${((totalSavings / totalOriginal) * 100).toFixed(1)}%)`;
+
+  const table = [header, divider, ...rows, divider, totalRow].join("\n");
+
+  logger.box("Image Optimization Results", table);
 }
 
 main().catch((error) => {
-  console.error("Failed to optimize images:", error);
+  logger.error(error);
   process.exit(1);
 });
