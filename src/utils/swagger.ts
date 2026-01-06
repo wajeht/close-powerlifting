@@ -25,10 +25,35 @@ Include your API key as a Bearer token:
 Authorization: Bearer YOUR_API_KEY
 \`\`\`
 
+Example using JavaScript fetch:
+\`\`\`javascript
+const response = await fetch('https://close-powerlifting.com/api/rankings', {
+  headers: {
+    'Authorization': 'Bearer YOUR_API_KEY'
+  }
+});
+
+if (!response.ok) {
+  throw new Error('API error: ' + response.status);
+}
+
+const data = await response.json();
+\`\`\`
+
 ## Rate Limits
 - **Monthly quota**: 500 requests per month (resets on the 1st)
 - **Per-IP limit**: 50 requests per hour
 - **Auth endpoints**: 10 requests per 15 minutes
+
+## Pagination
+Endpoints returning lists support pagination via query parameters:
+- \`per_page\`: Results per page (default: 100, max: 500)
+- \`current_page\`: Page number (default: 1)
+
+## Caching
+- **Server cache**: Responses are cached indefinitely until manually cleared by admins
+- **API browser cache**: \`private, max-age=3600\` (1 hour)
+- **View pages browser cache**: \`public, max-age=86400\` (24 hours)
 
 ## Response Format
 All responses follow this structure:
@@ -41,6 +66,16 @@ All responses follow this structure:
   "pagination": {...}
 }
 \`\`\`
+
+## Error Responses
+Errors return \`status: "fail"\` with appropriate HTTP codes:
+| Code | Description |
+|------|-------------|
+| 401 | Unauthorized - Invalid or missing API key |
+| 403 | Forbidden - Access denied |
+| 404 | Not Found - Resource doesn't exist |
+| 422 | Validation Error - Invalid parameters |
+| 429 | Rate Limited - Too many requests |
     `,
     termsOfService: `${link}/terms`,
     contact: {
