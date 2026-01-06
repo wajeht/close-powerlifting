@@ -35,7 +35,7 @@ function handleUnhandledRejection(reason: unknown): void {
 }
 
 async function main(): Promise<void> {
-  const serverInfo = createServer(context);
+  const serverInfo = await createServer(context);
   process.title = "close-powerlifting";
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));

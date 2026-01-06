@@ -139,7 +139,7 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string) =
   throw new ScraperError(`Not found: ${path}`, 404, path);
 });
 
-export const { app } = createApp(context);
+export const { app } = await createApp(context);
 
 export let testApiKey: string;
 let testUserId: number;

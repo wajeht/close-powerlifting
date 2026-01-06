@@ -1,5 +1,4 @@
 import { Application } from "express";
-import expressJSDocSwagger from "express-jsdoc-swagger";
 import type { Options } from "express-jsdoc-swagger";
 
 import { configuration } from "../configuration";
@@ -170,6 +169,15 @@ Endpoints returning lists support pagination via query parameters:
   },
 } as unknown as Options;
 
-export function createSwagger(app: Application) {
+export async function createSwagger(app: Application) {
+  if (configuration.app.env === "testing") {
+    return;
+  }
+
+  const expressJSDocSwaggerModule = await import("express-jsdoc-swagger");
+  const expressJSDocSwagger = expressJSDocSwaggerModule.default as unknown as (
+    app: Application,
+  ) => (options: Options) => void;
+
   expressJSDocSwagger(app)(swaggerConfig);
 }

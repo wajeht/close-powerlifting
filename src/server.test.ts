@@ -5,7 +5,7 @@ import { createApp } from "./app";
 import { createContext } from "./context";
 
 const context = createContext();
-const { app } = createApp(context);
+const { app } = await createApp(context);
 
 describe("server", () => {
   it("GET /health-check returns status ok", async () => {

@@ -21,7 +21,9 @@ export interface ServerInfo {
   context: AppContext;
 }
 
-export function createApp(context: AppContext): { app: Express; context: AppContext } {
+export async function createApp(
+  context: AppContext,
+): Promise<{ app: Express; context: AppContext }> {
   const middleware = createMiddleware(
     context.cache,
     context.userRepository,
@@ -80,15 +82,15 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
     .use(middleware.rateLimitMiddleware)
     .use(createMainRouter(context));
 
-  createSwagger(app);
+  await createSwagger(app);
 
   app.use(middleware.notFoundMiddleware).use(middleware.errorMiddleware);
 
   return { app, context: context };
 }
 
-export function createServer(context: AppContext): ServerInfo {
-  const { app } = createApp(context);
+export async function createServer(context: AppContext): Promise<ServerInfo> {
+  const { app } = await createApp(context);
 
   const server: Server = app.listen(configuration.app.port);
 
