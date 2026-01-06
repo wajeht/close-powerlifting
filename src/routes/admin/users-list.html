@@ -19,9 +19,7 @@
     <thead class="border-b border-neutral-800 text-neutral-400">
       <tr>
         <th class="p-4">ID</th>
-        <th class="p-4">Name</th>
-        <th class="p-4">Email</th>
-        <th class="p-4">Status</th>
+        <th class="p-4">User</th>
         <th class="p-4">API Calls</th>
         <th class="p-4">Limit</th>
         <th class="p-4">Created</th>
@@ -33,14 +31,16 @@
       <% for (const user of it.users) { %>
       <tr class="hover:bg-neutral-800/50">
         <td class="p-4 text-neutral-400"><%= user.id %></td>
-        <td class="p-4 text-white"><%= user.name %></td>
-        <td class="p-4 text-neutral-300"><%= user.email %></td>
         <td class="p-4">
-          <% if (user.verified) { %>
-          <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
-          <% } else { %>
-          <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
-          <% } %>
+          <div class="flex items-center gap-2">
+            <span class="text-white"><%= user.name %></span>
+            <% if (user.verified) { %>
+            <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
+            <% } else { %>
+            <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
+            <% } %>
+          </div>
+          <a href="mailto:<%= user.email %>" class="text-sm text-neutral-400 hover:text-white"><%= user.email %></a>
         </td>
         <td class="p-4 text-neutral-300"><%= user.api_call_count %></td>
         <td class="p-4 text-neutral-300"><%= user.api_call_limit %></td>
@@ -62,7 +62,7 @@
       <% } %>
       <% if (it.users.length === 0) { %>
       <tr>
-        <td colspan="8" class="p-8 text-center text-neutral-400">No users found.</td>
+        <td colspan="7" class="p-8 text-center text-neutral-400">No users found.</td>
       </tr>
       <% } %>
     </tbody>
