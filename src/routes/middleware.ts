@@ -77,7 +77,8 @@ export function createMiddleware(
     standardHeaders: true,
     legacyHeaders: false,
     validate: { trustProxy: false },
-    message: (req: Request, res: Response) => {
+    handler: (req: Request, res: Response) => {
+      res.status(429);
       if (req.get("Content-Type") === "application/json") {
         return res.json({
           status: "fail",
@@ -97,7 +98,8 @@ export function createMiddleware(
     standardHeaders: true,
     legacyHeaders: false,
     validate: { trustProxy: false },
-    message: (req: Request, res: Response) => {
+    handler: (req: Request, res: Response) => {
+      res.status(429);
       if (req.get("Content-Type") === "application/json") {
         return res.json({
           status: "fail",
