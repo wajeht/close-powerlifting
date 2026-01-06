@@ -17,16 +17,23 @@ let knexConfig: Knex.Config = {
     directory: path.resolve(__dirname, "seeds"),
   },
   pool: {
-    min: 0,
-    max: 1,
+    // WAL mode allows multiple concurrent readers, so increase pool size
+    // for better read concurrency. Writes are still serialized by SQLite.
+    min: 1,
+    max: 4,
     acquireTimeoutMillis: 30000,
     idleTimeoutMillis: 30000,
     afterCreate: (conn: any, cb: (err: Error | null, conn: any) => void) => {
-      conn.pragma("journal_mode = WAL");
-      conn.pragma("busy_timeout = 120000");
-      conn.pragma("cache_size = -500000");
-      conn.pragma("mmap_size = 1073741824");
-      conn.pragma("wal_autocheckpoint = 4000");
+      // SQLite performance optimizations
+      // See: https://sqlite.org/pragma.html
+      conn.pragma("journal_mode = WAL"); // Write-Ahead Logging for better concurrency
+      conn.pragma("busy_timeout = 120000"); // Wait up to 2 minutes if database is locked
+      conn.pragma("cache_size = -500000"); // 500MB cache size (negative = KB)
+      conn.pragma("mmap_size = 1073741824"); // 1GB memory-mapped I/O
+      conn.pragma("wal_autocheckpoint = 4000"); // Checkpoint every 4000 pages
+      conn.pragma("synchronous = NORMAL"); // Good balance of speed and durability for WAL mode
+      conn.pragma("temp_store = MEMORY"); // Store temp tables in memory
+      conn.pragma("foreign_keys = ON"); // Enforce foreign key constraints
       cb(null, conn);
     },
   },
