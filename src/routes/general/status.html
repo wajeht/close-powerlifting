@@ -7,7 +7,7 @@
     </p>
   </header>
 
-  <section class="flex flex-col gap-4">
+  <section class="flex flex-col gap-6">
     <% if (allGood) { %>
     <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
       <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -30,22 +30,29 @@
     </div>
     <% } %>
 
-    <% apiStatuses.forEach(function(item, index) { %>
-    <article class="fade-in animation-delay-3 flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
-      <div class="flex gap-4 text-neutral-400">
-        <div class="font-bold text-white"><%= item.method %></div>
-        <div class="overflow-scroll rounded bg-neutral-800 px-2 font-mono"><%= item.url %></div>
+    <% routeGroups.forEach(function(group) { %>
+    <div class="fade-in animation-delay-3 flex flex-col gap-3">
+      <h2 class="text-lg font-semibold text-white"><%= group.name %></h2>
+      <div class="flex flex-col gap-2">
+        <% group.routes.forEach(function(item) { %>
+        <article class="flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
+          <div class="flex gap-4 text-neutral-400">
+            <div class="font-bold text-white"><%= item.method %></div>
+            <div class="overflow-scroll rounded bg-neutral-800 px-2 font-mono"><%= item.url %></div>
+          </div>
+          <div class="flex gap-1 text-sm">
+            <% if (item.status) { %>
+            <span class="text-green-400">Available</span>
+            <% } else { %>
+            <span class="text-power">Unavailable</span>
+            <% } %>
+            <div class="text-neutral-500">as of</div>
+            <div class="text-neutral-400"><%= item.date %></div>
+          </div>
+        </article>
+        <% }); %>
       </div>
-      <div class="flex gap-1 text-sm">
-        <% if (item.status) { %>
-        <span class="text-green-400">Available</span>
-        <% } else { %>
-        <span class="text-power">Unavailable</span>
-        <% } %>
-        <div class="text-neutral-500">as of</div>
-        <div class="text-neutral-400"><%= item.date %></div>
-      </div>
-    </article>
+    </div>
     <% }); %>
   </section>
 </div>

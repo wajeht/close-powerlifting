@@ -94,17 +94,19 @@ export function createGeneralRouter(context: AppContext) {
     middleware.cacheControlMiddleware(ONE_HOUR_SECONDS),
     async (req: Request, res: Response) => {
       const hostname = context.helpers.getHostName(req);
-      const apiStatuses = await healthCheckService.getAPIStatus({
+      const routeGroups = await healthCheckService.getAPIStatus({
         apiKey: configuration.app.apiKey,
         url: hostname,
       });
 
-      const allGood = apiStatuses.every((item: { status: boolean }) => item.status);
+      const allGood = routeGroups.every((group: { routes: { status: boolean }[] }) =>
+        group.routes.every((route) => route.status),
+      );
 
       return res.status(200).render("general/status.html", {
         path: "/status",
         title: "Status",
-        apiStatuses,
+        routeGroups,
         allGood,
       });
     },

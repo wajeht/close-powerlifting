@@ -1,5 +1,57 @@
 import type { CacheType, ScraperType, LoggerType } from "../../../context";
 
+interface RouteStatus {
+  status: boolean;
+  method: string;
+  url: string;
+  date: string;
+}
+
+interface RouteGroup {
+  name: string;
+  routes: RouteStatus[];
+}
+
+interface RouteDefinition {
+  group: string;
+  path: string;
+}
+
+const ROUTE_DEFINITIONS: RouteDefinition[] = [
+  // Rankings
+  { group: "Rankings", path: "/api/rankings" },
+  { group: "Rankings", path: "/api/rankings/1" },
+  { group: "Rankings", path: "/api/rankings?current_page=1&per_page=100" },
+  { group: "Rankings", path: "/api/rankings/filter/raw" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-dots" },
+
+  // Federations
+  { group: "Federations", path: "/api/federations" },
+  { group: "Federations", path: "/api/federations?current_page=1&per_page=100" },
+  { group: "Federations", path: "/api/federations/ipf" },
+  { group: "Federations", path: "/api/federations/ipf?year=2020" },
+
+  // Meets
+  { group: "Meets", path: "/api/meets/uspa/1969" },
+
+  // Records
+  { group: "Records", path: "/api/records" },
+  { group: "Records", path: "/api/records/raw" },
+  { group: "Records", path: "/api/records/raw/men" },
+
+  // Users
+  { group: "Users", path: "/api/users/johnhaack" },
+  { group: "Users", path: "/api/users?search=haack" },
+
+  // Public (no auth)
+  { group: "Public", path: "/api/status" },
+  { group: "Public", path: "/api/health-check" },
+];
+
 export function createHealthCheckService(
   cache: CacheType,
   scraper: ScraperType,
@@ -7,58 +59,44 @@ export function createHealthCheckService(
 ) {
   async function getAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
     const fetchStatus = async () => {
-      const routes = [
-        // Rankings
-        "/api/rankings",
-        "/api/rankings/1",
-        "/api/rankings?current_page=1&per_page=100",
-        "/api/rankings/filter/raw",
-        "/api/rankings/filter/raw/men",
-        "/api/rankings/filter/raw/men/100",
-        "/api/rankings/filter/raw/men/100/2024",
-        "/api/rankings/filter/raw/men/100/2024/full-power",
-        "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
-
-        // Federations
-        "/api/federations",
-        "/api/federations?current_page=1&per_page=100",
-        "/api/federations/ipf",
-        "/api/federations/ipf?year=2020",
-
-        // Meets
-        "/api/meets/uspa/1969",
-
-        // Records
-        "/api/records",
-        "/api/records/raw",
-        "/api/records/raw/men",
-
-        // Users
-        "/api/users/johnhaack",
-        "/api/users?search=haack",
-
-        // Public (no auth)
-        "/api/status",
-        "/api/health-check",
-      ];
-
       const promises = await Promise.allSettled(
-        routes.map((r) => scraper.fetchWithAuth(url, r, apiKey)),
+        ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
       );
 
-      const data = promises.map((p, i) => {
-        const fulfilled = p.status === "fulfilled";
-        const result = fulfilled ? p.value : null;
+      const groupOrder = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
+      const groupMap = new Map<string, RouteStatus[]>();
 
-        return {
-          status: fulfilled && result?.ok,
+      for (const groupName of groupOrder) {
+        groupMap.set(groupName, []);
+      }
+
+      ROUTE_DEFINITIONS.forEach((routeDefinition, i) => {
+        const promise = promises[i];
+        const isFulfilled = promise != null && promise.status === "fulfilled";
+        const result = isFulfilled
+          ? (promise as PromiseFulfilledResult<{ ok: boolean; url: string; date: string | null }>)
+              .value
+          : null;
+
+        const routeStatus: RouteStatus = {
+          status: Boolean(isFulfilled && result?.ok),
           method: "GET",
-          url: routes[i],
+          url: routeDefinition.path,
           date: result?.date || new Date().toISOString(),
         };
+
+        groupMap.get(routeDefinition.group)?.push(routeStatus);
       });
 
-      return data;
+      const groups: RouteGroup[] = [];
+      for (const groupName of groupOrder) {
+        const routes = groupMap.get(groupName);
+        if (routes != null && routes.length > 0) {
+          groups.push({ name: groupName, routes });
+        }
+      }
+
+      return groups;
     };
 
     const cacheKey = `close-powerlifting-global-status-call-cache`;
