@@ -18,6 +18,7 @@ export function createAdminRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
 
   const adminService = createAdminService(

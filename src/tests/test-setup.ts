@@ -184,24 +184,16 @@ beforeAll(async () => {
     throw error;
   }
 
-  testApiKey = context.helpers.generateAPIKey({
-    userId: 999,
-    name: "Test User",
-    email: "test@example.com",
-    admin: true,
-  });
-
   const existingUser = await knex("users").where({ email: "test@example.com" }).first();
 
   if (existingUser) {
     testUserId = existingUser.id;
-    await knex("users").where({ id: existingUser.id }).update({ api_key: testApiKey });
   } else {
     const [user] = await knex("users")
       .insert({
         name: "Test User",
         email: "test@example.com",
-        api_key: testApiKey,
+        api_key_version: 1,
         api_call_count: 0,
         api_call_limit: 500,
         admin: false,
@@ -209,6 +201,19 @@ beforeAll(async () => {
       .returning("*");
     testUserId = user.id;
   }
+
+  testApiKey = context.authService.generateKey({
+    userId: String(testUserId),
+    name: "Test User",
+    email: "test@example.com",
+    apiKeyVersion: 1,
+    admin: true,
+  });
+
+  await knex("users").where({ id: testUserId }).update({
+    api_key: testApiKey,
+    api_key_version: 1,
+  });
 });
 
 afterAll(async () => {

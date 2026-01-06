@@ -4,8 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createContext } from "../context";
 
 const context = createContext();
-const helpers = context.helpers;
 const scraper = context.scraper;
+const authService = context.authService;
+const helpers = context.helpers;
 
 describe.concurrent("tableToJson", () => {
   let table: any;
@@ -154,7 +155,7 @@ describe.concurrent("stripHtml", () => {
   });
 });
 
-describe.concurrent("generateToken", () => {
+describe.concurrent("helpers.generateToken", () => {
   it("returns a token", () => {
     const token = helpers.generateToken();
     expect(token).toBeDefined();
@@ -174,36 +175,40 @@ describe.concurrent("generateToken", () => {
   });
 });
 
-describe.concurrent("generateAPIKey", () => {
+describe.concurrent("authService.generateKey", () => {
   it("returns an API key", () => {
-    const apiKey = helpers.generateAPIKey({
+    const apiKey = authService.generateKey({
       userId: "1",
       email: "test@test.com",
       name: "Test User",
+      apiKeyVersion: 1,
     });
     expect(apiKey).toBeDefined();
     expect(typeof apiKey).toBe("string");
   });
 
   it("returns a different key each time for different users", () => {
-    const key1 = helpers.generateAPIKey({
+    const key1 = authService.generateKey({
       userId: "1",
       email: "1test@test.com",
       name: "1Test User",
+      apiKeyVersion: 1,
     });
-    const key2 = helpers.generateAPIKey({
+    const key2 = authService.generateKey({
       userId: "2",
       email: "2test@test.com",
       name: "2Test User",
+      apiKeyVersion: 1,
     });
     expect(key1).not.toEqual(key2);
   });
 
   it("expires in 90 days for regular users", () => {
-    const apiKey = helpers.generateAPIKey({
+    const apiKey = authService.generateKey({
       userId: "1",
       email: "test@test.com",
       name: "Test User",
+      apiKeyVersion: 1,
     });
 
     const payload = JSON.parse(atob(apiKey.split(".")[1]!));
@@ -213,12 +218,25 @@ describe.concurrent("generateAPIKey", () => {
     expect(expiresInSeconds).toBe(ninetyDaysInSeconds);
   });
 
+  it("includes apiKeyVersion in the payload", () => {
+    const apiKey = authService.generateKey({
+      userId: "1",
+      email: "test@test.com",
+      name: "Test User",
+      apiKeyVersion: 5,
+    });
+
+    const payload = JSON.parse(atob(apiKey.split(".")[1]!));
+    expect(payload.apiKeyVersion).toBe(5);
+  });
+
   describe("when admin flag is passed", () => {
     it("returns an API key", () => {
-      const apiKey = helpers.generateAPIKey({
+      const apiKey = authService.generateKey({
         userId: "1",
         email: "",
         name: "",
+        apiKeyVersion: 1,
         admin: true,
       });
       expect(apiKey).toBeDefined();
@@ -226,10 +244,11 @@ describe.concurrent("generateAPIKey", () => {
     });
 
     it("expires in 1 year for admin users", () => {
-      const apiKey = helpers.generateAPIKey({
+      const apiKey = authService.generateKey({
         userId: "1",
         email: "admin@test.com",
         name: "Admin User",
+        apiKeyVersion: 1,
         admin: true,
       });
 
@@ -330,7 +349,7 @@ describe.concurrent("calculatePagination", () => {
   });
 });
 
-describe.concurrent("timingSafeEqual", () => {
+describe.concurrent("helpers.timingSafeEqual", () => {
   it("returns true for equal strings", () => {
     expect(helpers.timingSafeEqual("test", "test")).toBe(true);
   });
@@ -364,7 +383,7 @@ describe.concurrent("timingSafeEqual", () => {
   });
 });
 
-describe.concurrent("extractNameFromEmail", () => {
+describe.concurrent("helpers.extractNameFromEmail", () => {
   it("extracts name from simple email", () => {
     expect(helpers.extractNameFromEmail("john@example.com")).toBe("John");
   });

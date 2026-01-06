@@ -42,6 +42,7 @@ export function createStatusRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
   const statusService = createStatusService(context.scraper);
 

@@ -7,11 +7,10 @@ export async function up(knex: Knex): Promise<void> {
       table.string("name").notNullable();
       table.string("email").unique().notNullable();
       table.integer("api_call_count").defaultTo(0);
-      table.integer("api_key_version").defaultTo(0);
+      table.integer("api_key_version").defaultTo(1);
       table.integer("api_call_limit").defaultTo(500);
       table.string("api_key").nullable();
       table.boolean("admin").defaultTo(false);
-      table.boolean("deleted").defaultTo(false);
       table.string("verification_token").unique().nullable();
       table.timestamp("magic_link_expires_at").nullable();
       table.boolean("verified").defaultTo(false);

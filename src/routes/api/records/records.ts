@@ -56,6 +56,7 @@ export function createRecordsRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
   const recordService = createRecordService(context.scraper);
 

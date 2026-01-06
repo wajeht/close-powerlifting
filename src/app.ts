@@ -29,6 +29,7 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
 
   const app = express();
@@ -47,8 +48,8 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
       }),
     )
     .use(compression())
-    .use(express.json())
-    .use(express.urlencoded({ extended: true }))
+    .use(express.json({ limit: "10kb" }))
+    .use(express.urlencoded({ limit: "10kb", extended: true }))
     .use(
       helmet({
         contentSecurityPolicy: {

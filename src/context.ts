@@ -53,9 +53,9 @@ export function createContext(): AppContext {
   const mail = createMail(logger);
   const userRepository = createUserRepository(knex);
   const scraper = createScraper(cache, logger);
-  const authService = createAuthService(userRepository, helpers, mail);
+  const authService = createAuthService(userRepository, mail, logger);
   const cron = createCron(cache, userRepository, mail, logger, scraper);
-  const adminUser = createAdminUser(userRepository, helpers, authService, mail, logger);
+  const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
 
   _context = {
     knex,

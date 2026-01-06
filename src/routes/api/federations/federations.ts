@@ -63,6 +63,7 @@ export function createFederationsRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
   const federationService = createFederationService(context.scraper);
 

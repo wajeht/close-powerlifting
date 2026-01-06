@@ -12,44 +12,42 @@ export interface UserRepositoryType {
   create: (data: CreateUserInput) => Promise<UserType>;
   update: (email: string, data: UpdateUserInput) => Promise<UserType | undefined>;
   updateById: (id: number, data: UpdateUserInput) => Promise<UserType | undefined>;
+  consumeToken: (userId: number, expectedToken: string) => Promise<boolean>;
   incrementApiCallCount: (id: number) => Promise<UserType | undefined>;
   setApiCallCount: (id: number, count: number) => Promise<UserType | undefined>;
   resetAllApiCallCounts: () => Promise<void>;
-  softDelete: (id: number) => Promise<void>;
+  delete: (id: number) => Promise<void>;
 }
 
 export function createUserRepository(knex: Knex): UserRepositoryType {
   async function findById(id: number): Promise<UserType | undefined> {
-    return knex<UserType>("users").where({ id, deleted: false }).first();
+    return knex<UserType>("users").where({ id }).first();
   }
 
   async function findByEmail(email: string): Promise<UserType | undefined> {
-    return knex<UserType>("users").where({ email, deleted: false }).first();
+    return knex<UserType>("users").where({ email }).first();
   }
 
   async function findByVerificationToken(token: string): Promise<UserType | undefined> {
-    return knex<UserType>("users").where({ verification_token: token, deleted: false }).first();
+    return knex<UserType>("users").where({ verification_token: token }).first();
   }
 
   async function findOne(where: Partial<UserType>): Promise<UserType | undefined> {
-    return knex<UserType>("users")
-      .where({ ...where, deleted: false })
-      .first();
+    return knex<UserType>("users").where(where).first();
   }
 
   async function findAll(where: Partial<UserType> = {}): Promise<UserType[]> {
-    return knex<UserType>("users").where({ ...where, deleted: false });
+    return knex<UserType>("users").where(where);
   }
 
   async function findVerified(): Promise<UserType[]> {
-    return knex<UserType>("users").where({ verified: true, deleted: false });
+    return knex<UserType>("users").where({ verified: true });
   }
 
   async function findByApiCallCount(count: number): Promise<UserType[]> {
     return knex<UserType>("users").where({
       api_call_count: count,
       verified: true,
-      deleted: false,
     });
   }
 
@@ -86,6 +84,20 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return findById(id);
   }
 
+  async function consumeToken(userId: number, expectedToken: string): Promise<boolean> {
+    const updatedCount = await knex<UserType>("users")
+      .where({
+        id: userId,
+        verification_token: expectedToken,
+      })
+      .update({
+        verification_token: null,
+        magic_link_expires_at: null,
+        updated_at: new Date().toISOString(),
+      });
+    return updatedCount > 0;
+  }
+
   async function incrementApiCallCount(id: number): Promise<UserType | undefined> {
     await knex<UserType>("users").where({ id }).increment("api_call_count", 1);
     return findById(id);
@@ -103,10 +115,8 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     await knex<UserType>("users").where({ verified: true }).update({ api_call_count: 0 });
   }
 
-  async function softDelete(id: number): Promise<void> {
-    await knex<UserType>("users")
-      .where({ id })
-      .update({ deleted: true, updated_at: new Date().toISOString() });
+  async function deleteUser(id: number): Promise<void> {
+    await knex<UserType>("users").where({ id }).delete();
   }
 
   return {
@@ -120,9 +130,10 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     create,
     update,
     updateById,
+    consumeToken,
     incrementApiCallCount,
     setApiCallCount,
     resetAllApiCallCounts,
-    softDelete,
+    delete: deleteUser,
   };
 }

@@ -31,7 +31,6 @@ export interface User {
   api_call_limit: number;
   api_key: string | null;
   admin: boolean;
-  deleted: boolean;
   verification_token: string | null;
   magic_link_expires_at: string | null;
   verified: boolean;
@@ -49,6 +48,7 @@ export type UserParams = {
   userId: string;
   name: string;
   email: string;
+  apiKeyVersion: number;
 };
 
 export interface ApiResponse<T> {

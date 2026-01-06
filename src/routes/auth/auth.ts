@@ -1,12 +1,12 @@
 import express, { Request, Response } from "express";
 import { z } from "zod";
 
-import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
 import { UnauthorizedError } from "../../error";
 import { createMiddleware } from "../middleware";
 
 const MAGIC_LINK_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+const VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const loginValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
@@ -19,26 +19,6 @@ const updateNameValidation = z.object({
 type LoginType = z.infer<typeof loginValidation>;
 type UpdateNameType = z.infer<typeof updateNameValidation>;
 
-interface GoogleOauthToken {
-  access_token: string;
-  id_token: string;
-  expires_in: number;
-  refresh_token: string;
-  token_type: string;
-  scope: string;
-}
-
-interface GoogleUserResult {
-  id: string;
-  email: string;
-  verified_email: boolean;
-  name: string;
-  given_name: string;
-  family_name: string;
-  picture: string;
-  locale: string;
-}
-
 export function createAuthRouter(context: AppContext) {
   const middleware = createMiddleware(
     context.cache,
@@ -47,60 +27,10 @@ export function createAuthRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
 
   const router = express.Router();
-
-  async function getGoogleOauthToken({ code }: { code: string }): Promise<GoogleOauthToken> {
-    const url = "https://oauth2.googleapis.com/token";
-
-    const params = new URLSearchParams({
-      code,
-      client_id: configuration.oauth.google.clientId,
-      client_secret: configuration.oauth.google.clientSecret,
-      redirect_uri: configuration.oauth.google.redirectUrl,
-      grant_type: "authorization_code",
-    });
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: params.toString(),
-      });
-
-      return response.json();
-    } catch (error: unknown) {
-      context.logger.error("Failed to fetch Google Oauth Tokens");
-      throw error;
-    }
-  }
-
-  async function getGoogleUser({
-    id_token,
-    access_token,
-  }: {
-    id_token: string;
-    access_token: string;
-  }): Promise<GoogleUserResult> {
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${access_token}`,
-        {
-          headers: {
-            Authorization: `Bearer ${id_token}`,
-          },
-        },
-      );
-
-      return response.json();
-    } catch (error: unknown) {
-      context.logger.error("Failed to fetch Google User info");
-      throw error;
-    }
-  }
 
   router.get("/login", (req: Request, res: Response) => {
     if (req.session.user) {
@@ -129,11 +59,15 @@ export function createAuthRouter(context: AppContext) {
       if (!user) {
         const token = context.helpers.generateToken();
         const name = context.helpers.extractNameFromEmail(email);
+        const verificationExpiresAt = new Date(
+          Date.now() + VERIFICATION_TOKEN_EXPIRY_MS,
+        ).toISOString();
 
         user = await context.userRepository.create({
           email,
           name,
           verification_token: token,
+          magic_link_expires_at: verificationExpiresAt,
         });
 
         context.logger.info(`user_id: ${user.id} has registered an account!`);
@@ -150,10 +84,20 @@ export function createAuthRouter(context: AppContext) {
       }
 
       if (!user.verified) {
+        const newToken = context.helpers.generateToken();
+        const verificationExpiresAt = new Date(
+          Date.now() + VERIFICATION_TOKEN_EXPIRY_MS,
+        ).toISOString();
+
+        await context.userRepository.updateById(user.id, {
+          verification_token: newToken,
+          magic_link_expires_at: verificationExpiresAt,
+        });
+
         context.authService.sendVerificationEmail({
           name: user.name,
           email: user.email,
-          verification_token: user.verification_token!,
+          verification_token: newToken,
           hostname,
         });
         req.flash("info", "If this email is registered, you will receive an email shortly.");
@@ -190,60 +134,76 @@ export function createAuthRouter(context: AppContext) {
     });
   });
 
-  router.get("/magic-link", async (req: Request, res: Response) => {
-    const { token, email } = req.query as { token: string; email: string };
+  router.get(
+    "/magic-link",
+    middleware.authRateLimitMiddleware,
+    async (req: Request, res: Response) => {
+      const { token, email } = req.query as { token: string; email: string };
 
-    if (!token || !email) {
-      req.flash("error", "Invalid magic link.");
-      return res.redirect("/login");
-    }
-
-    const user = await context.userRepository.findByEmail(email);
-
-    if (!user) {
-      req.flash("error", "Invalid magic link.");
-      return res.redirect("/login");
-    }
-
-    if (!user.verified) {
-      req.flash("error", "Please verify your email first.");
-      return res.redirect("/login");
-    }
-
-    if (
-      !user.verification_token ||
-      !context.helpers.timingSafeEqual(user.verification_token, token)
-    ) {
-      req.flash("error", "Invalid or expired magic link.");
-      return res.redirect("/login");
-    }
-
-    if (user.magic_link_expires_at) {
-      const expiresAt = new Date(user.magic_link_expires_at);
-      if (expiresAt < new Date()) {
-        req.flash("error", "Magic link has expired. Please request a new one.");
+      if (!token || !email) {
+        req.flash("error", "Invalid magic link.");
         return res.redirect("/login");
       }
-    }
 
-    await context.userRepository.updateById(user.id, {
-      verification_token: null,
-      magic_link_expires_at: null,
-    });
+      const user = await context.userRepository.findByEmail(email);
 
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      admin: Boolean(user.admin),
-    };
+      if (!user) {
+        req.flash("error", "Invalid magic link.");
+        return res.redirect("/login");
+      }
 
-    req.session.save(() => {
-      req.flash("info", "You have been logged in.");
-      context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
-      res.redirect("/dashboard");
-    });
-  });
+      if (!user.verified) {
+        req.flash("error", "Please verify your email first.");
+        return res.redirect("/login");
+      }
+
+      if (
+        !user.verification_token ||
+        !context.helpers.timingSafeEqual(user.verification_token, token)
+      ) {
+        req.flash("error", "Invalid or expired magic link.");
+        return res.redirect("/login");
+      }
+
+      if (user.magic_link_expires_at) {
+        const expiresAt = new Date(user.magic_link_expires_at);
+        if (expiresAt < new Date()) {
+          req.flash("error", "Magic link has expired. Please request a new one.");
+          return res.redirect("/login");
+        }
+      }
+
+      const tokenConsumed = await context.userRepository.consumeToken(
+        user.id,
+        user.verification_token,
+      );
+      if (!tokenConsumed) {
+        req.flash("error", "This magic link has already been used. Please request a new one.");
+        return res.redirect("/login");
+      }
+
+      req.session.regenerate((err) => {
+        if (err) {
+          context.logger.error(err);
+          req.flash("error", "Login failed. Please try again.");
+          return res.redirect("/login");
+        }
+
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          admin: Boolean(user.admin),
+        };
+
+        req.session.save(() => {
+          req.flash("info", "You have been logged in.");
+          context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
+          res.redirect("/dashboard");
+        });
+      });
+    },
+  );
 
   router.get(
     "/dashboard",
@@ -320,10 +280,16 @@ export function createAuthRouter(context: AppContext) {
       const sessionUser = req.session.user!;
       const { name } = req.body;
 
-      await context.userRepository.updateById(sessionUser.id, { name });
+      const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
 
-      // Update session with new name
-      req.session.user!.name = name;
+      if (updatedUser) {
+        req.session.user = {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          name: updatedUser.name,
+          admin: Boolean(updatedUser.admin),
+        };
+      }
 
       context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
 
@@ -347,19 +313,9 @@ export function createAuthRouter(context: AppContext) {
         return;
       }
 
-      await context.authService.sendWelcomeEmail({
-        name: user.name,
-        email: user.email,
-        userId: String(user.id),
-      });
-
-      await context.userRepository.updateById(sessionUser.id, {
-        api_key_version: (user.api_key_version || 0) + 1,
-      });
+      await context.authService.regenerateKey(sessionUser.id);
 
       const updatedUser = await context.userRepository.findById(sessionUser.id);
-
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) regenerated API key`);
 
       req.flash("success", "Your new API key has been generated and sent to your email!");
 
@@ -380,7 +336,7 @@ export function createAuthRouter(context: AppContext) {
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
 
-      await context.userRepository.softDelete(sessionUser.id);
+      await context.userRepository.delete(sessionUser.id);
 
       context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) deleted their account`);
 
@@ -390,61 +346,88 @@ export function createAuthRouter(context: AppContext) {
     },
   );
 
-  router.get("/verify-email", async (req: Request, res: Response) => {
-    const { token, email } = req.query as { token: string; email: string };
-    const foundUser = await context.userRepository.findByEmail(email);
+  router.get(
+    "/verify-email",
+    middleware.authRateLimitMiddleware,
+    async (req: Request, res: Response) => {
+      const { token, email } = req.query as { token: string; email: string };
+      const foundUser = await context.userRepository.findByEmail(email);
 
-    if (!foundUser) {
-      req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/login");
-    }
+      if (!foundUser) {
+        req.flash("error", "Something wrong while verifying your account!");
+        return res.redirect("/login");
+      }
 
-    if (
-      !foundUser.verification_token ||
-      !context.helpers.timingSafeEqual(foundUser.verification_token, token)
-    ) {
-      req.flash("error", "Something wrong while verifying your account!");
-      return res.redirect("/login");
-    }
+      if (
+        !foundUser.verification_token ||
+        !context.helpers.timingSafeEqual(foundUser.verification_token, token)
+      ) {
+        req.flash("error", "Something wrong while verifying your account!");
+        return res.redirect("/login");
+      }
 
-    if (foundUser.verified) {
-      req.flash("info", "Your email is already verified. Please login.");
-      return res.redirect("/login");
-    }
+      if (foundUser.magic_link_expires_at) {
+        const expiresAt = new Date(foundUser.magic_link_expires_at);
+        if (expiresAt < new Date()) {
+          req.flash(
+            "error",
+            "Verification link has expired. Please request a new one by logging in.",
+          );
+          return res.redirect("/login");
+        }
+      }
 
-    await context.authService.sendWelcomeEmail({
-      name: foundUser.name,
-      email: foundUser.email,
-      userId: String(foundUser.id),
-    });
+      if (foundUser.verified) {
+        req.flash("info", "Your email is already verified. Please login.");
+        return res.redirect("/login");
+      }
 
-    // Clear verification token after successful verification
-    await context.userRepository.updateById(foundUser.id, {
-      verification_token: null,
-    });
+      const tokenConsumed = await context.userRepository.consumeToken(
+        foundUser.id,
+        foundUser.verification_token,
+      );
+      if (!tokenConsumed) {
+        req.flash("error", "This verification link has already been used. Please login.");
+        return res.redirect("/login");
+      }
 
-    // Log the user in automatically
-    req.session.user = {
-      id: foundUser.id,
-      email: foundUser.email,
-      name: foundUser.name,
-      admin: Boolean(foundUser.admin),
-    };
+      await context.authService.sendWelcomeEmail({
+        name: foundUser.name,
+        email: foundUser.email,
+        userId: String(foundUser.id),
+        apiKeyVersion: foundUser.api_key_version || 1,
+      });
 
-    context.logger.info(`User ${foundUser.id} (${foundUser.email}) verified and logged in`);
+      req.session.regenerate((err) => {
+        if (err) {
+          context.logger.error(err);
+          req.flash("success", "Your email has been verified! Please login.");
+          return res.redirect("/login");
+        }
 
-    req.flash(
-      "success",
-      "Your email has been verified! Your API key has been sent to your email. You can also view it in Settings.",
-    );
+        req.session.user = {
+          id: foundUser.id,
+          email: foundUser.email,
+          name: foundUser.name,
+          admin: Boolean(foundUser.admin),
+        };
 
-    return res.redirect("/dashboard");
-  });
+        req.session.save(() => {
+          context.logger.info(`User ${foundUser.id} (${foundUser.email}) verified and logged in`);
+          req.flash(
+            "success",
+            "Your email has been verified! Your API key has been sent to your email. You can also view it in Settings.",
+          );
+          res.redirect("/dashboard");
+        });
+      });
+    },
+  );
 
   router.get("/oauth/google", async (req: Request, res: Response) => {
-    const state = context.helpers.generateOAuthState();
+    const state = context.authService.generateOAuthState();
     req.session.oauthState = state;
-    res.redirect(context.helpers.getGoogleOAuthURL(state));
+    res.redirect(context.authService.getGoogleOAuthURL(state));
   });
 
   router.get("/oauth/google/redirect", async (req: Request, res: Response) => {
@@ -455,15 +438,19 @@ export function createAuthRouter(context: AppContext) {
       throw new UnauthorizedError("Something went wrong while authenticating with Google");
     }
 
-    if (!state || !req.session.oauthState || state !== req.session.oauthState) {
+    if (
+      !state ||
+      !req.session.oauthState ||
+      !context.helpers.timingSafeEqual(req.session.oauthState, state)
+    ) {
       delete req.session.oauthState;
       throw new UnauthorizedError("Invalid OAuth state - please try again");
     }
     delete req.session.oauthState;
 
-    const { id_token, access_token } = await getGoogleOauthToken({ code });
+    const { id_token, access_token } = await context.authService.getGoogleOAuthToken({ code });
 
-    const googleUser = await getGoogleUser({
+    const googleUser = await context.authService.getGoogleUser({
       id_token,
       access_token,
     });
@@ -475,36 +462,41 @@ export function createAuthRouter(context: AppContext) {
     let user = await context.userRepository.findByEmail(googleUser.email);
 
     if (!user) {
-      // Create new user with OAuth
       user = await context.userRepository.create({
         email: googleUser.email,
         name: googleUser.name,
-        verification_token: access_token,
         verified: true,
         verified_at: new Date().toISOString(),
       });
 
-      // Generate API key and send welcome email
-      context.authService.sendWelcomeEmail({
+      await context.authService.sendWelcomeEmail({
         name: user.name,
         email: user.email,
         userId: String(user.id),
+        apiKeyVersion: user.api_key_version || 1,
       });
 
       context.logger.info(`User ${user.id} created via Google OAuth`);
     }
 
-    // Log the user in
-    req.session.user = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      admin: Boolean(user.admin),
-    };
+    req.session.regenerate((err) => {
+      if (err) {
+        context.logger.error(err);
+        throw new UnauthorizedError("Login failed. Please try again.");
+      }
 
-    context.logger.info(`User ${user.id} (${user.email}) logged in via Google OAuth`);
+      req.session.user = {
+        id: user!.id,
+        email: user!.email,
+        name: user!.name,
+        admin: Boolean(user!.admin),
+      };
 
-    return res.redirect("/dashboard");
+      req.session.save(() => {
+        context.logger.info(`User ${user!.id} (${user!.email}) logged in via Google OAuth`);
+        res.redirect("/dashboard");
+      });
+    });
   });
 
   return router;

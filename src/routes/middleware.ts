@@ -3,7 +3,6 @@ import { csrfSync } from "csrf-sync";
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import session from "express-session";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import type { Knex } from "knex";
 import { z, ZodError } from "zod";
 
@@ -11,6 +10,7 @@ import { configuration } from "../configuration";
 import type { CacheType } from "../db/cache";
 import type { UserRepositoryType } from "../db/user";
 import type { MailType } from "../mail";
+import type { AuthServiceType } from "./auth/auth.service";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
@@ -32,7 +32,7 @@ export interface MiddlewareType {
   apiValidationMiddleware: (
     validators: RequestValidators,
   ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
@@ -58,6 +58,7 @@ export function createMiddleware(
   helpers: HelpersType,
   logger: LoggerType,
   knex: Knex,
+  authService: AuthServiceType,
 ): MiddlewareType {
   const rateLimitMiddleware = rateLimit({
     windowMs: 60 * 60 * 1000, // 60 minutes
@@ -204,7 +205,7 @@ export function createMiddleware(
     };
   }
 
-  function apiAuthenticationMiddleware(req: Request, res: Response, next: NextFunction) {
+  async function apiAuthenticationMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
       let token: string = "";
 
@@ -219,17 +220,11 @@ export function createMiddleware(
       }
       token = req.headers.authorization.split(" ")[1] as string;
 
-      try {
-        const decoded = jwt.verify(token, configuration.app.jwtSecret) as JwtPayload;
-
-        req.user = {
-          id: decoded.id,
-          name: decoded.name,
-          email: decoded.email,
-        };
-      } catch {
-        throw new UnauthorizedError("Invalid signature!");
+      const validatedUser = await authService.validateKey(token);
+      if (!validatedUser) {
+        throw new UnauthorizedError("Invalid or revoked API key!");
       }
+      req.user = validatedUser;
 
       next();
     } catch (e) {

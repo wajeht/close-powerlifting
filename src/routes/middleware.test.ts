@@ -14,6 +14,7 @@ const middleware = createMiddleware(
   context.helpers,
   context.logger,
   knex,
+  context.authService,
 );
 
 describe("notFoundHandler", () => {

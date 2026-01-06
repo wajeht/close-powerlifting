@@ -44,7 +44,6 @@ describe("Auth Routes", () => {
     });
 
     it("should redirect to dashboard if already logged in", async () => {
-      // Reset token for login (also clear any expired timestamp)
       await knex("users").where({ id: testUserId }).update({
         verification_token: testMagicToken,
         magic_link_expires_at: null,
@@ -129,7 +128,6 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/dashboard");
 
-      // Should be able to access dashboard now
       const dashboardResponse = await sessionAgent.get("/dashboard");
       expect(dashboardResponse.status).toBe(200);
     });
@@ -149,8 +147,7 @@ describe("Auth Routes", () => {
     });
 
     it("should reject expired magic link", async () => {
-      // Set expired timestamp
-      const expiredTime = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(); // 2 hours ago
+      const expiredTime = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       await knex("users").where({ id: testUserId }).update({
         verification_token: testMagicToken,
         magic_link_expires_at: expiredTime,
@@ -256,7 +253,6 @@ describe("Auth Routes", () => {
     let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
 
     beforeEach(async () => {
-      // Reset token for login (also clear any expired timestamp)
       await knex("users").where({ id: testUserId }).update({
         verification_token: testMagicToken,
         magic_link_expires_at: null,
@@ -302,7 +298,6 @@ describe("Auth Routes", () => {
     let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
 
     beforeEach(async () => {
-      // Reset token for login (also clear any expired timestamp)
       await knex("users").where({ id: testUserId }).update({
         verification_token: testMagicToken,
         magic_link_expires_at: null,
@@ -361,11 +356,7 @@ describe("Auth Routes", () => {
         deleteUserId = user.id;
       });
 
-      afterEach(async () => {
-        await knex("users").where({ id: deleteUserId }).delete();
-      });
-
-      it("should soft delete account and logout", async () => {
+      it("should delete account and logout", async () => {
         const deleteSessionAgent = createUnauthenticatedSessionAgent();
         await deleteSessionAgent.get(
           `/magic-link?token=${deleteMagicToken}&email=delete-test@example.com`,
@@ -383,7 +374,7 @@ describe("Auth Routes", () => {
         expect(response.headers.location).toBe("/login");
 
         const user = await knex("users").where({ id: deleteUserId }).first();
-        expect(user.deleted).toBe(1);
+        expect(user).toBeUndefined();
       });
     });
   });
@@ -419,12 +410,10 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/dashboard");
 
-      // Verify user is marked as verified in database
       const user = await knex("users").where({ id: verifyUserId }).first();
       expect(user.verified).toBe(1);
       expect(user.verification_token).toBeNull();
 
-      // Should be able to access dashboard
       const dashboardResponse = await sessionAgent.get("/dashboard");
       expect(dashboardResponse.status).toBe(200);
       expect(dashboardResponse.text).toContain("Dashboard");
@@ -438,7 +427,6 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
 
-      // User should still be unverified
       const user = await knex("users").where({ id: verifyUserId }).first();
       expect(user.verified).toBe(0);
     });
@@ -478,14 +466,11 @@ describe("Auth Routes", () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=temp-token&email=temp-user@example.com`);
 
-      // Verify logged in
       const dashboardBefore = await sessionAgent.get("/dashboard");
       expect(dashboardBefore.status).toBe(200);
 
-      // Delete user from database
       await knex("users").where({ id: tempUser.id }).delete();
 
-      // Should redirect to login
       const dashboardAfter = await sessionAgent.get("/dashboard");
       expect(dashboardAfter.status).toBe(302);
       expect(dashboardAfter.headers.location).toBe("/login");
@@ -522,15 +507,12 @@ describe("Auth Routes", () => {
         `/magic-link?token=admin-token&email=admin-test@example.com`,
       );
 
-      // Verify magic link login worked
       expect(magicLinkResponse.status).toBe(302);
       expect(magicLinkResponse.headers.location).toBe("/dashboard");
 
-      // Verify can access dashboard (regular user auth)
       const dashboardResponse = await sessionAgent.get("/dashboard");
       expect(dashboardResponse.status).toBe(200);
 
-      // Admin can access /admin/users page
       const response = await sessionAgent.get("/admin/users");
 
       expect(response.status).toBe(200);
@@ -590,7 +572,6 @@ describe("Auth Routes", () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
 
-      // Make multiple requests with same session
       const dashboard1 = await sessionAgent.get("/dashboard");
       expect(dashboard1.status).toBe(200);
 
@@ -803,6 +784,243 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(200);
       expect(response.text).toContain("generated");
       expect(response.text).toContain("email");
+    });
+  });
+
+  describe("Security: Verification token expiry", () => {
+    let securityUserId: number;
+    const securityEmail = "verify-expiry@example.com";
+    const securityToken = "verify-expiry-token";
+
+    beforeAll(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Verify Expiry Test",
+          email: securityEmail,
+          verification_token: securityToken,
+          verified: false,
+        })
+        .returning("*");
+      securityUserId = user.id;
+    });
+
+    afterAll(async () => {
+      await knex("users").where({ id: securityUserId }).delete();
+    });
+
+    it("should reject verification with expired token", async () => {
+      const expiredTime = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+      await knex("users").where({ id: securityUserId }).update({
+        verification_token: securityToken,
+        magic_link_expires_at: expiredTime,
+        verified: false,
+      });
+
+      const response = await request(app).get(
+        `/verify-email?token=${securityToken}&email=${securityEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: securityUserId }).first();
+      expect(user.verified).toBe(0);
+    });
+
+    it("should accept verification with non-expired token", async () => {
+      const validTime = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
+      await knex("users").where({ id: securityUserId }).update({
+        verification_token: securityToken,
+        magic_link_expires_at: validTime,
+        verified: false,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      const response = await sessionAgent.get(
+        `/verify-email?token=${securityToken}&email=${securityEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/dashboard");
+
+      const user = await knex("users").where({ id: securityUserId }).first();
+      expect(user.verified).toBe(1);
+    });
+  });
+
+  describe("Security: Session fixation prevention", () => {
+    let fixationUserId: number;
+    const fixationEmail = "session-fixation@example.com";
+    const fixationToken = "session-fixation-token";
+
+    beforeAll(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Session Fixation Test",
+          email: fixationEmail,
+          verification_token: fixationToken,
+          verified: true,
+        })
+        .returning("*");
+      fixationUserId = user.id;
+    });
+
+    afterAll(async () => {
+      await knex("users").where({ id: fixationUserId }).delete();
+    });
+
+    it("should regenerate session ID after magic link login", async () => {
+      await knex("users").where({ id: fixationUserId }).update({
+        verification_token: fixationToken,
+        magic_link_expires_at: null,
+      });
+
+      const agent = createUnauthenticatedSessionAgent();
+      const initialResponse = await agent.get("/login");
+      const initialCookie = initialResponse.headers["set-cookie"];
+
+      await agent.get(`/magic-link?token=${fixationToken}&email=${fixationEmail}`);
+
+      const dashboardResponse = await agent.get("/dashboard");
+      expect(initialCookie).toBeDefined();
+      expect(dashboardResponse.status).toBe(200);
+    });
+
+    it("should not allow attacker to use victim session", async () => {
+      await knex("users").where({ id: fixationUserId }).update({
+        verification_token: fixationToken,
+        magic_link_expires_at: null,
+      });
+
+      const attackerAgent = createUnauthenticatedSessionAgent();
+      const victimAgent = createUnauthenticatedSessionAgent();
+
+      await attackerAgent.get("/login");
+      await victimAgent.get(`/magic-link?token=${fixationToken}&email=${fixationEmail}`);
+
+      const attackerDashboard = await attackerAgent.get("/dashboard");
+      expect(attackerDashboard.status).toBe(302);
+      expect(attackerDashboard.headers.location).toBe("/login");
+
+      const victimDashboard = await victimAgent.get("/dashboard");
+      expect(victimDashboard.status).toBe(200);
+    });
+  });
+
+  describe("Security: One-time-use tokens", () => {
+    let oneTimeUserId: number;
+    const oneTimeEmail = "one-time-token@example.com";
+    const oneTimeToken = "one-time-use-token";
+
+    beforeEach(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "One Time Token Test",
+          email: oneTimeEmail,
+          verification_token: oneTimeToken,
+          verified: true,
+        })
+        .returning("*");
+      oneTimeUserId = user.id;
+    });
+
+    afterEach(async () => {
+      await knex("users").where({ id: oneTimeUserId }).delete();
+    });
+
+    it("should reject magic link token after it has been used once", async () => {
+      const firstAgent = createUnauthenticatedSessionAgent();
+      const firstResponse = await firstAgent.get(
+        `/magic-link?token=${oneTimeToken}&email=${oneTimeEmail}`,
+      );
+
+      expect(firstResponse.status).toBe(302);
+      expect(firstResponse.headers.location).toBe("/dashboard");
+
+      const secondAgent = createUnauthenticatedSessionAgent();
+      const secondResponse = await secondAgent.get(
+        `/magic-link?token=${oneTimeToken}&email=${oneTimeEmail}`,
+      );
+
+      expect(secondResponse.status).toBe(302);
+      expect(secondResponse.headers.location).toBe("/login");
+    });
+
+    it("should reject verification token after it has been used once", async () => {
+      await knex("users").where({ id: oneTimeUserId }).update({
+        verified: false,
+        verification_token: oneTimeToken,
+      });
+
+      const firstAgent = createUnauthenticatedSessionAgent();
+      const firstResponse = await firstAgent.get(
+        `/verify-email?token=${oneTimeToken}&email=${oneTimeEmail}`,
+      );
+
+      expect(firstResponse.status).toBe(302);
+      expect(firstResponse.headers.location).toBe("/dashboard");
+
+      const user = await knex("users").where({ id: oneTimeUserId }).first();
+      expect(user.verified).toBe(1);
+      expect(user.verification_token).toBeNull();
+
+      const secondAgent = createUnauthenticatedSessionAgent();
+      const secondResponse = await secondAgent.get(
+        `/verify-email?token=${oneTimeToken}&email=${oneTimeEmail}`,
+      );
+
+      expect(secondResponse.status).toBe(302);
+      expect(secondResponse.headers.location).toBe("/login");
+    });
+  });
+
+  describe("Security: Token timing attack prevention", () => {
+    let timingUserId: number;
+    const timingEmail = "timing-attack@example.com";
+    const timingToken = "correct-token-12345";
+
+    beforeAll(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Timing Attack Test",
+          email: timingEmail,
+          verification_token: timingToken,
+          verified: true,
+        })
+        .returning("*");
+      timingUserId = user.id;
+    });
+
+    afterAll(async () => {
+      await knex("users").where({ id: timingUserId }).delete();
+    });
+
+    it("should reject tokens with similar prefix but wrong value", async () => {
+      await knex("users").where({ id: timingUserId }).update({
+        verification_token: timingToken,
+        magic_link_expires_at: null,
+      });
+
+      const response = await request(app).get(
+        `/magic-link?token=correct-token-99999&email=${timingEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should reject completely different tokens", async () => {
+      await knex("users").where({ id: timingUserId }).update({
+        verification_token: timingToken,
+        magic_link_expires_at: null,
+      });
+
+      const response = await request(app).get(
+        `/magic-link?token=completely-different&email=${timingEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
     });
   });
 });

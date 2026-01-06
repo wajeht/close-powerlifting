@@ -1,8 +1,8 @@
 import { configuration } from "../configuration";
 import type { UserRepositoryType } from "../db/user";
-import type { HelpersType } from "./helpers";
 import type { AuthServiceType } from "../routes/auth/auth.service";
 import type { MailType } from "../mail";
+import type { HelpersType } from "./helpers";
 import type { LoggerType } from "./logger";
 
 export interface AdminUserType {
@@ -11,8 +11,8 @@ export interface AdminUserType {
 
 export function createAdminUser(
   userRepository: UserRepositoryType,
-  helpers: HelpersType,
   authService: AuthServiceType,
+  helpers: HelpersType,
   mail: MailType,
   logger: LoggerType,
 ): AdminUserType {
@@ -43,10 +43,11 @@ export function createAdminUser(
         logger.info(``);
         logger.info(``);
 
-        const apiKey = helpers.generateAPIKey({
+        const apiKey = authService.generateKey({
           name: createdAdminUser.name,
           userId: String(createdAdminUser.id),
           email: createdAdminUser.email,
+          apiKeyVersion: createdAdminUser.api_key_version || 1,
           admin: true,
         });
 

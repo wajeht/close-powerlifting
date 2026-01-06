@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { configuration } from "../configuration";
 import { knex, logger } from "../tests/test-setup";
 import { createUserRepository } from "../db/user";
-import { createHelper } from "./helpers";
 import { createAdminUser } from "./admin-user";
 import { createAuthService } from "../routes/auth/auth.service";
+import { createHelper } from "./helpers";
 
 const mockMail = {
   verifyConnection: vi.fn().mockResolvedValue(true),
@@ -29,10 +29,10 @@ describe("AdminUser", () => {
 
   describe("initializeAdminUser", () => {
     it("should create a new admin user if one does not exist", async () => {
-      const helpers = createHelper();
       const userRepository = createUserRepository(knex);
-      const authService = createAuthService(userRepository, helpers, mockMail);
-      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
+      const authService = createAuthService(userRepository, mockMail, logger);
+      const helpers = createHelper();
+      const adminUser = createAdminUser(userRepository, authService, helpers, mockMail, logger);
 
       await adminUser.initializeAdminUser();
 
@@ -47,6 +47,8 @@ describe("AdminUser", () => {
     });
 
     it("should not create a new admin user if one already exists", async () => {
+      const userRepository = createUserRepository(knex);
+      const authService = createAuthService(userRepository, mockMail, logger);
       const helpers = createHelper();
 
       await knex("users").insert({
@@ -57,9 +59,8 @@ describe("AdminUser", () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
-      const userRepository = createUserRepository(knex);
-      const authService = createAuthService(userRepository, helpers, mockMail);
-      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
+
+      const adminUser = createAdminUser(userRepository, authService, helpers, mockMail, logger);
 
       await adminUser.initializeAdminUser();
 
@@ -71,10 +72,10 @@ describe("AdminUser", () => {
       const originalEmail = configuration.app.adminEmail;
       (configuration.app as any).adminEmail = null;
 
-      const helpers = createHelper();
       const userRepository = createUserRepository(knex);
-      const authService = createAuthService(userRepository, helpers, mockMail);
-      const adminUser = createAdminUser(userRepository, helpers, authService, mockMail, logger);
+      const authService = createAuthService(userRepository, mockMail, logger);
+      const helpers = createHelper();
+      const adminUser = createAdminUser(userRepository, authService, helpers, mockMail, logger);
 
       await expect(adminUser.initializeAdminUser()).resolves.not.toThrow();
 

@@ -71,6 +71,7 @@ export function createRankingsRouter(context: AppContext) {
     context.helpers,
     context.logger,
     context.knex,
+    context.authService,
   );
   const rankingService = createRankingService(context.scraper);
 
