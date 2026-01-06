@@ -18,7 +18,7 @@ const swaggerConfig = {
 REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org).
 
 ## Authentication
-All API endpoints (except \`/api/status\` and \`/api/health-check\`) require authentication via API key.
+All API endpoints (except \`/api/health-check\`) require authentication via API key.
 
 Include your API key as a Bearer token:
 \`\`\`
@@ -26,8 +26,9 @@ Authorization: Bearer YOUR_API_KEY
 \`\`\`
 
 ## Rate Limits
-- **Free tier**: 500 requests per month
-- Rate limits reset on the 1st of each month
+- **Monthly quota**: 500 requests per month (resets on the 1st)
+- **Per-IP limit**: 50 requests per hour
+- **Auth endpoints**: 10 requests per 15 minutes
 
 ## Response Format
 All responses follow this structure:
@@ -91,7 +92,7 @@ All responses follow this structure:
     },
     {
       name: "Status",
-      description: "Data source status and statistics (no auth required)",
+      description: "Data source status and statistics",
     },
     {
       name: "Health Check",
