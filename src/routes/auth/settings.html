@@ -19,10 +19,9 @@
 
     <% if (it.user.api_key) { %>
     <p class="text-sm text-neutral-400">Authenticate requests using the <code class="rounded bg-neutral-800 px-1">Authorization: Bearer</code> header.</p>
-    <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.api_key, readonly: true }) %>
-    <div class="grid grid-cols-2 gap-2 pt-2 sm:flex sm:flex-wrap sm:justify-end">
-      <button type="button" id="copy-btn" class="rounded-md bg-neutral-700 px-3 py-2 text-sm font-medium text-white transition-all sm:min-w-52 hover:bg-neutral-600 md:px-4 md:text-base">Copy</button>
-      <button type="button" class="open-modal rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark sm:min-w-52 md:px-4 md:text-base" data-modal="regenerate-key-modal">Regenerate API Key</button>
+    <%~ include('../_components/inputs/revealable.html', { id: 'api-key-input', value: it.user.api_key, readonly: true, copyable: true }) %>
+    <div class="flex pt-2">
+      <button type="button" class="open-modal rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark w-full sm:w-auto sm:min-w-52 md:px-4 md:text-base" data-modal="regenerate-key-modal">Regenerate API Key</button>
     </div>
     <% } else { %>
     <p class="text-sm text-neutral-400">Generate an API key to start making authenticated requests.</p>
@@ -88,19 +87,9 @@
 }) %>
 
 <script>
-document.querySelectorAll('.open-modal').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.getElementById(btn.dataset.modal).showModal();
+document.querySelectorAll('.open-modal').forEach(function(button) {
+  button.addEventListener('click', function() {
+    document.getElementById(button.dataset.modal).showModal();
   });
 });
-
-var copyBtn = document.getElementById('copy-btn');
-var apiKeyInput = document.getElementById('api-key-input');
-if (copyBtn && apiKeyInput) {
-  copyBtn.addEventListener('click', function() {
-    navigator.clipboard.writeText(apiKeyInput.value);
-    copyBtn.textContent = 'Copied!';
-    setTimeout(function() { copyBtn.textContent = 'Copy'; }, 2000);
-  });
-}
 </script>
