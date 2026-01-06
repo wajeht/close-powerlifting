@@ -39,7 +39,8 @@
     "db:seed:run": "tsx ./node_modules/knex/bin/cli.js seed:run --knexfile=./src/db/knexfile.ts",
     "rmds": "find . -name '.DS_Store' -delete",
     "update:fixtures": "tsx ./scripts/update-fixtures.ts",
-    "generate:og": "tsx ./scripts/generate-og-image.ts"
+    "generate:og": "tsx ./scripts/generate-og-image.ts",
+    "optimize:images": "tsx ./scripts/optimize-images.ts"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
