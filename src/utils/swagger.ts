@@ -86,7 +86,7 @@ Endpoints returning lists support pagination via query parameters:
     contact: {
       name: "API Support",
       url: `${link}/contact`,
-      email: "github@jaw.dev",
+      email: configuration.email.from,
     },
     license: {
       name: "MIT",
