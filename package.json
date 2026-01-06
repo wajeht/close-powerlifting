@@ -38,7 +38,8 @@
     "db:seed:make": "tsx ./node_modules/knex/bin/cli.js seed:make --knexfile=./src/db/knexfile.ts",
     "db:seed:run": "tsx ./node_modules/knex/bin/cli.js seed:run --knexfile=./src/db/knexfile.ts",
     "rmds": "find . -name '.DS_Store' -delete",
-    "update:fixtures": "tsx ./scripts/update-fixtures.ts"
+    "update:fixtures": "tsx ./scripts/update-fixtures.ts",
+    "generate:og": "tsx ./scripts/generate-og-image.ts"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
@@ -84,6 +85,8 @@
     "html-minifier-terser": "^7.2.0",
     "oxfmt": "^0.21.0",
     "oxlint": "^1.36.0",
+    "satori": "^0.18.3",
+    "sharp": "^0.34.5",
     "supertest": "^7.0.0",
     "terser": "^5.44.1",
     "tsx": "^4.19.2",
