@@ -37,6 +37,9 @@ export interface User {
   verified_at: string | null;
   created_at: string;
   updated_at: string;
+  pending_email: string | null;
+  pending_email_token: string | null;
+  pending_email_expires_at: string | null;
 }
 
 export type CreateUserInput = Pick<User, "name" | "email"> &
