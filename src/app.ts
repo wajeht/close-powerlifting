@@ -58,10 +58,16 @@ export async function createApp(
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
+            scriptSrc: [
+              "'self'",
+              "'unsafe-inline'",
+              "https://static.cloudflareinsights.com",
+              "https://challenges.cloudflare.com",
+            ],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'", "https://cloudflareinsights.com"],
+            frameSrc: ["https://challenges.cloudflare.com"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             frameAncestors: ["'self'"],

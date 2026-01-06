@@ -482,10 +482,12 @@ export function createMiddleware(
         return next();
       }
 
+      const redirectUrl = req.get("referer") || "/login";
+
       const token = req.body["cf-turnstile-response"];
       if (!token) {
         req.flash("error", "Turnstile verification failed: Missing token");
-        return res.redirect("back");
+        return res.redirect(redirectUrl);
       }
 
       const ip = (req.headers["cf-connecting-ip"] as string) || req.ip;
@@ -494,8 +496,9 @@ export function createMiddleware(
       next();
     } catch (error) {
       logger.error(error as Error);
+      const redirectUrl = req.get("referer") || "/login";
       req.flash("error", "Turnstile verification failed. Please try again.");
-      return res.redirect("back");
+      return res.redirect(redirectUrl);
     }
   }
 
