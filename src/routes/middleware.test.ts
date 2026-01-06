@@ -344,6 +344,115 @@ describe("CSRF Protection", () => {
   });
 });
 
+describe("cacheControlMiddleware", () => {
+  describe("unit tests", () => {
+    let req: any;
+    let res: any;
+    let next: any;
+
+    beforeEach(() => {
+      req = {};
+      res = {
+        set: vi.fn(),
+      };
+      next = vi.fn();
+    });
+
+    it("should set Cache-Control header with default max-age of 1 day", () => {
+      const cacheMiddleware = middleware.cacheControlMiddleware();
+      cacheMiddleware(req, res, next);
+
+      expect(res.set).toHaveBeenCalledWith(
+        "Cache-Control",
+        "public, max-age=86400, stale-while-revalidate=60",
+      );
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should set Cache-Control header with custom max-age", () => {
+      const cacheMiddleware = middleware.cacheControlMiddleware(3600);
+      cacheMiddleware(req, res, next);
+
+      expect(res.set).toHaveBeenCalledWith(
+        "Cache-Control",
+        "public, max-age=3600, stale-while-revalidate=60",
+      );
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("should set Cache-Control header with 0 max-age", () => {
+      const cacheMiddleware = middleware.cacheControlMiddleware(0);
+      cacheMiddleware(req, res, next);
+
+      expect(res.set).toHaveBeenCalledWith(
+        "Cache-Control",
+        "public, max-age=0, stale-while-revalidate=60",
+      );
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe("integration tests", () => {
+    it("should set Cache-Control header on homepage", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "public, max-age=86400, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on about page", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/about");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "public, max-age=86400, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on terms page", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/terms");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "public, max-age=86400, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on privacy page", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/privacy");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "public, max-age=86400, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set shorter Cache-Control header on status page", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/status");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "public, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+
+    it("should NOT set Cache-Control header on login page", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/login");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBeUndefined();
+    });
+  });
+});
+
 describe("appLocalStateMiddleware", () => {
   describe("currentYear", () => {
     it("should render footer with current year", async () => {

@@ -15,6 +15,8 @@ import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
 
+const ONE_DAY_SECONDS = 86400;
+
 type RequestValidators = {
   params?: z.ZodTypeAny;
   body?: z.ZodTypeAny;
@@ -49,6 +51,9 @@ export interface MiddlewareType {
     next: NextFunction,
   ) => Promise<void>;
   appLocalStateMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  cacheControlMiddleware: (
+    maxAgeSeconds?: number,
+  ) => (req: Request, res: Response, next: NextFunction) => void;
 }
 
 export function createMiddleware(
@@ -437,6 +442,13 @@ export function createMiddleware(
     }
   }
 
+  function cacheControlMiddleware(maxAgeSeconds: number = ONE_DAY_SECONDS) {
+    return (_req: Request, res: Response, next: NextFunction): void => {
+      res.set("Cache-Control", `public, max-age=${maxAgeSeconds}, stale-while-revalidate=60`);
+      next();
+    };
+  }
+
   return {
     rateLimitMiddleware,
     authRateLimitMiddleware,
@@ -453,5 +465,6 @@ export function createMiddleware(
     sessionAuthenticationMiddleware,
     sessionAdminAuthenticationMiddleware,
     appLocalStateMiddleware,
+    cacheControlMiddleware,
   };
 }
