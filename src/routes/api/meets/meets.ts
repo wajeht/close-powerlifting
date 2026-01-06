@@ -95,6 +95,7 @@ export function createMeetsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getMeetParamValidation,
       query: getMeetQueryValidation,

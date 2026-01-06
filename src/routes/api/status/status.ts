@@ -68,6 +68,7 @@ export function createStatusRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getStatusValidation }),
     async (req: Request<{}, {}, GetStatusType>, res: Response) => {
       const status = await statusService.getStatus({});

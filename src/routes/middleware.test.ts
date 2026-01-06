@@ -3,7 +3,11 @@ import { ZodError } from "zod";
 
 import { configuration } from "../configuration";
 import { createContext } from "../context";
-import { knex, createUnauthenticatedSessionAgent } from "../tests/test-setup";
+import {
+  knex,
+  createUnauthenticatedSessionAgent,
+  createAuthenticatedApiAgent,
+} from "../tests/test-setup";
 import { createMiddleware } from "./middleware";
 
 const context = createContext();
@@ -450,6 +454,118 @@ describe("cacheControlMiddleware", () => {
       expect(response.status).toBe(200);
       expect(response.headers["cache-control"]).toBeUndefined();
     });
+  });
+});
+
+describe("apiCacheControlMiddleware", () => {
+  describe("unit tests", () => {
+    let req: any;
+    let res: any;
+    let next: any;
+
+    beforeEach(() => {
+      req = {};
+      res = {
+        set: vi.fn(),
+      };
+      next = vi.fn();
+    });
+
+    it("should set private Cache-Control header with 1 hour max-age", () => {
+      middleware.apiCacheControlMiddleware(req, res, next);
+
+      expect(res.set).toHaveBeenCalledWith(
+        "Cache-Control",
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+      expect(next).toHaveBeenCalled();
+    });
+  });
+
+  describe("integration tests", () => {
+    it("should set Cache-Control header on API health-check endpoint", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const response = await agent.get("/api/health-check");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+
+    it("should NOT set Cache-Control header on unauthenticated API endpoints", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      // Cache middleware runs after authentication, so 401 responses won't have cache header
+      const response = await agent.get("/api/status");
+
+      expect(response.status).toBe(401);
+      // Cache middleware runs after auth, so header is not set on 401 responses
+      expect(response.headers["cache-control"]).toBeUndefined();
+    });
+
+    it("should set Cache-Control header on authenticated /api/rankings endpoint", async () => {
+      const agent = createAuthenticatedApiAgent();
+      const response = await agent.get("/api/rankings?per_page=1");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on authenticated /api/status endpoint", async () => {
+      const agent = createAuthenticatedApiAgent();
+      const response = await agent.get("/api/status");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on authenticated /api/federations endpoint", async () => {
+      const agent = createAuthenticatedApiAgent();
+      const response = await agent.get("/api/federations?per_page=1");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+
+    it("should set Cache-Control header on authenticated /api/records endpoint", async () => {
+      const agent = createAuthenticatedApiAgent();
+      const response = await agent.get("/api/records");
+
+      expect(response.status).toBe(200);
+      expect(response.headers["cache-control"]).toBe(
+        "private, max-age=3600, stale-while-revalidate=60",
+      );
+    });
+  });
+});
+
+describe("ETag support", () => {
+  it("should include ETag header on responses", async () => {
+    const agent = createUnauthenticatedSessionAgent();
+    const response = await agent.get("/about");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["etag"]).toBeDefined();
+  });
+
+  it("should return 304 Not Modified when ETag matches", async () => {
+    const agent = createUnauthenticatedSessionAgent();
+
+    // First request to get the ETag
+    const firstResponse = await agent.get("/about");
+    expect(firstResponse.status).toBe(200);
+    const etag = firstResponse.headers["etag"];
+    expect(etag).toBeDefined();
+
+    // Second request with If-None-Match header
+    const secondResponse = await agent.get("/about").set("If-None-Match", etag);
+    expect(secondResponse.status).toBe(304);
   });
 });
 

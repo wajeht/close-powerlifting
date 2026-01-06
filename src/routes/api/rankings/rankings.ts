@@ -104,6 +104,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getRankingsValidation }),
     async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
       const rankings = await rankingService.getRankings(req.query);
@@ -146,6 +147,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true }),
       query: getFilteredRankingsQueryValidation,
@@ -200,6 +202,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true }),
       query: getFilteredRankingsQueryValidation,
@@ -255,6 +258,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -315,6 +319,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -377,6 +382,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
         equipment: true,
@@ -441,6 +447,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation,
       query: getFilteredRankingsQueryValidation,
@@ -487,6 +494,7 @@ export function createRankingsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ params: getRankValidation }),
     async (req: Request<GetRankType, {}, {}>, res: Response) => {
       const rank = await rankingService.getRank(req.params);

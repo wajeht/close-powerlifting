@@ -1,5 +1,8 @@
 import express, { Request, Response } from "express";
 
+import type { AppContext } from "../../../context";
+import { createMiddleware } from "../../middleware";
+
 /**
  * Health check response
  * @typedef {object} HealthCheckResponse
@@ -9,7 +12,17 @@ import express, { Request, Response } from "express";
  * @property {object[]} data - Empty array (reserved for future use)
  */
 
-export function createHealthCheckRouter() {
+export function createHealthCheckRouter(context: AppContext) {
+  const middleware = createMiddleware(
+    context.cache,
+    context.userRepository,
+    context.mail,
+    context.helpers,
+    context.logger,
+    context.knex,
+    context.authService,
+  );
+
   const router = express.Router();
 
   /**
@@ -26,7 +39,7 @@ export function createHealthCheckRouter() {
    *   "data": []
    * }
    */
-  router.get("/", async (req: Request, res: Response) => {
+  router.get("/", middleware.apiCacheControlMiddleware, async (req: Request, res: Response) => {
     const data: unknown[] = [];
 
     res.status(200).json({

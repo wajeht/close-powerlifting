@@ -15,7 +15,12 @@ import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
 
+// View pages (static content): 24 hours - content rarely changes
 const ONE_DAY_SECONDS = 86400;
+// API responses: 1 hour - OpenPowerlifting data updates multiple times daily,
+// but users don't need real-time data. Server-side scraper cache is the primary
+// cache layer; browser cache is secondary to reduce redundant requests.
+const ONE_HOUR_SECONDS = 3600;
 
 type RequestValidators = {
   params?: z.ZodTypeAny;
@@ -54,6 +59,7 @@ export interface MiddlewareType {
   cacheControlMiddleware: (
     maxAgeSeconds?: number,
   ) => (req: Request, res: Response, next: NextFunction) => void;
+  apiCacheControlMiddleware: (req: Request, res: Response, next: NextFunction) => void;
 }
 
 export function createMiddleware(
@@ -449,6 +455,11 @@ export function createMiddleware(
     };
   }
 
+  function apiCacheControlMiddleware(_req: Request, res: Response, next: NextFunction): void {
+    res.set("Cache-Control", `private, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
+    next();
+  }
+
   return {
     rateLimitMiddleware,
     authRateLimitMiddleware,
@@ -466,5 +477,6 @@ export function createMiddleware(
     sessionAdminAuthenticationMiddleware,
     appLocalStateMiddleware,
     cacheControlMiddleware,
+    apiCacheControlMiddleware,
   };
 }

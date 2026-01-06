@@ -18,7 +18,7 @@ export function createApiRouter(context: AppContext) {
   router.use("/records", createRecordsRouter(context));
   router.use("/users", createUsersRouter(context));
   router.use("/status", createStatusRouter(context));
-  router.use("/health-check", createHealthCheckRouter());
+  router.use("/health-check", createHealthCheckRouter(context));
 
   return router;
 }

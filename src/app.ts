@@ -37,6 +37,7 @@ export function createApp(context: AppContext): { app: Express; context: AppCont
   app
     .disable("x-powered-by")
     .set("trust proxy", 1)
+    .set("etag", "strong")
     .use(middleware.hostNameMiddleware)
     .use(cookieParser())
     .use(flash())

@@ -91,6 +91,7 @@ export function createRecordsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
     async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
       const records = await recordService.getRecords({});
@@ -139,6 +140,7 @@ export function createRecordsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation.pick({ equipment: true }),
       query: getFilteredRecordsQueryValidation,
@@ -213,6 +215,7 @@ export function createRecordsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     async (
       req: Request<
         { equipment: string; sex_or_weight_class: string },
@@ -277,6 +280,7 @@ export function createRecordsRouter(context: AppContext) {
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation,
       query: getFilteredRecordsQueryValidation,
