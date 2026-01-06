@@ -1,6 +1,6 @@
 <button
   type="<%= it.type || 'submit' %>"
-  class="rounded-md px-4 py-2 font-medium text-white transition-all <%= it.variant === 'danger' ? 'bg-red-600 hover:bg-red-700' : it.variant === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' : it.variant === 'secondary' ? 'bg-neutral-700 hover:bg-neutral-600' : 'bg-power hover:bg-power-dark' %>"
+  class="rounded-md px-3 py-2 text-sm font-medium text-white transition-all md:px-4 md:text-base <%= it.fullWidthMobile ? 'w-full sm:w-auto' : '' %> <%= it.variant === 'danger' ? 'bg-power hover:bg-power-dark' : it.variant === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700' : it.variant === 'secondary' ? 'bg-neutral-700 hover:bg-neutral-600' : 'bg-power hover:bg-power-dark' %>"
   <% if (it.id) { %>id="<%= it.id %>"<% } %>
   <% if (it.formmethod) { %>formmethod="<%= it.formmethod %>"<% } %>
   <% if (it.autofocus) { %>autofocus<% } %>

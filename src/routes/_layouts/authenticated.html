@@ -5,25 +5,42 @@
   <body class="flex min-h-screen flex-col bg-black text-neutral-500">
     <%~ include('../_components/header.html') %>
 
-    <main id="main" class="flex-1 px-5 py-16">
-      <div class="mx-auto flex max-w-7xl gap-8">
-        <aside class="w-48 shrink-0 border-r border-neutral-800 pr-6">
-          <nav class="flex flex-col gap-2">
-            <a href="/dashboard" class="rounded-md px-3 py-2 <%= it.path === '/dashboard' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Dashboard</a>
-            <a href="/settings" class="rounded-md px-3 py-2 <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
-            <% if (it.user && it.user.admin) { %>
-            <a href="/admin/users" class="rounded-md px-3 py-2 <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
-            <a href="/admin/cache" class="rounded-md px-3 py-2 <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
-            <% } %>
-          </nav>
-          <form action="/logout" method="post" class="mt-8">
+    <main id="main" class="flex-1 px-5 py-8 md:py-16">
+      <div class="mx-auto max-w-7xl">
+        <!-- Mobile navigation -->
+        <nav class="mb-6 flex flex-wrap gap-2 md:hidden">
+          <a href="/dashboard" class="rounded-md px-3 py-2 text-sm <%= it.path === '/dashboard' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Dashboard</a>
+          <a href="/settings" class="rounded-md px-3 py-2 text-sm <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
+          <% if (it.user && it.user.admin) { %>
+          <a href="/admin/users" class="rounded-md px-3 py-2 text-sm <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
+          <a href="/admin/cache" class="rounded-md px-3 py-2 text-sm <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
+          <% } %>
+          <form action="/logout" method="post" class="contents">
             <%~ include('../_components/csrf-input.html') %>
-            <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-neutral-400 hover:bg-neutral-800 hover:text-white">Logout</button>
+            <button type="submit" class="rounded-md px-3 py-2 text-sm text-neutral-400 hover:bg-neutral-800 hover:text-white">Logout</button>
           </form>
-        </aside>
+        </nav>
 
-        <div class="flex-1">
-          <%~ body %>
+        <div class="flex gap-8">
+          <!-- Desktop sidebar -->
+          <aside class="hidden w-48 shrink-0 border-r border-neutral-800 pr-6 md:block">
+            <nav class="flex flex-col gap-2">
+              <a href="/dashboard" class="rounded-md px-3 py-2 <%= it.path === '/dashboard' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Dashboard</a>
+              <a href="/settings" class="rounded-md px-3 py-2 <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
+              <% if (it.user && it.user.admin) { %>
+              <a href="/admin/users" class="rounded-md px-3 py-2 <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
+              <a href="/admin/cache" class="rounded-md px-3 py-2 <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
+              <% } %>
+            </nav>
+            <form action="/logout" method="post" class="mt-8">
+              <%~ include('../_components/csrf-input.html') %>
+              <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-neutral-400 hover:bg-neutral-800 hover:text-white">Logout</button>
+            </form>
+          </aside>
+
+          <div class="min-w-0 flex-1">
+            <%~ body %>
+          </div>
         </div>
       </div>
     </main>

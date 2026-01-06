@@ -1,15 +1,15 @@
 <header class="fade-in-heading">
-  <h1 class="text-2xl font-bold text-white">Manage Users</h1>
-  <p class="mt-2 text-neutral-400">View and manage user accounts.</p>
+  <h1 class="text-xl font-bold text-white md:text-2xl">Manage Users</h1>
+  <p class="mt-2 text-sm text-neutral-400 md:text-base">View and manage user accounts.</p>
 </header>
 
 <div class="fade-in animation-delay-2 mt-6 mb-6">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<div class="fade-in animation-delay-3 mb-6 flex flex-wrap items-center gap-4">
-  <form action="/admin/users" method="get" class="flex flex-1 gap-2">
-    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email...', value: it.search }) %>
+<div class="fade-in animation-delay-3 mb-6">
+  <form action="/admin/users" method="get" class="flex gap-2">
+    <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search' }) %>
   </form>
 </div>
