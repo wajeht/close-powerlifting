@@ -11,9 +11,9 @@
 <div class="fade-in animation-delay-3 mb-6 flex flex-wrap items-center gap-4">
   <form action="/admin/cache" method="get" class="flex flex-1 gap-2">
     <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by key...', value: it.search }) %>
-    <%~ include('../_components/button.html', { text: 'Search' }) %>
+    <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
   </form>
-  <button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700" data-modal="clear-all-modal">Clear All Cache</button>
+  <button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700 sm:min-w-52" data-modal="clear-all-modal">Clear All Cache</button>
 </div>
 
 <!-- Cache Entries -->
@@ -82,9 +82,9 @@
 <% } %>
 
 <script>
-document.querySelectorAll('.open-modal').forEach(function(btn) {
-  btn.addEventListener('click', function() {
-    document.getElementById(btn.dataset.modal).showModal();
+document.querySelectorAll('.open-modal').forEach(function(button) {
+  button.addEventListener('click', function() {
+    document.getElementById(button.dataset.modal).showModal();
   });
 });
 </script>
