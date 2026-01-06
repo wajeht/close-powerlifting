@@ -94,8 +94,9 @@ export function createGeneralRouter(context: AppContext) {
     middleware.cacheControlMiddleware(ONE_HOUR_SECONDS),
     async (req: Request, res: Response) => {
       const hostname = context.helpers.getHostName(req);
+      const adminUser = await context.userRepository.findByEmail(configuration.app.adminEmail);
       const routeGroups = await healthCheckService.getAPIStatus({
-        apiKey: configuration.app.apiKey,
+        apiKey: adminUser?.api_key || "",
         url: hostname,
       });
 

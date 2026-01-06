@@ -1,8 +1,8 @@
-import { configuration } from "../src/configuration";
 import { createLogger } from "../src/utils/logger";
 
 const logger = createLogger();
 
+const API_KEY = process.env.API_KEY || process.argv[2] || "";
 const BASE_URL = "https://close-powerlifting.jaw.dev";
 
 const ROUTES = [
@@ -87,7 +87,7 @@ async function testRoute(route: { path: string; requiresAuth: boolean }): Promis
   const headers: Record<string, string> = {};
 
   if (route.requiresAuth) {
-    headers["Authorization"] = `Bearer ${configuration.app.apiKey}`;
+    headers["Authorization"] = `Bearer ${API_KEY}`;
   }
 
   try {
@@ -111,6 +111,12 @@ async function testRoute(route: { path: string; requiresAuth: boolean }): Promis
 }
 
 async function main() {
+  if (!API_KEY) {
+    logger.error("Usage: API_KEY=<your-api-key> npx tsx scripts/test-api-call.ts");
+    logger.error("   or: npx tsx scripts/test-api-call.ts <your-api-key>");
+    process.exit(1);
+  }
+
   logger.info("Starting API tests against production server...");
   logger.info(`Base URL: ${BASE_URL}`);
   logger.info(`Testing ${ROUTES.length} routes\n`);
