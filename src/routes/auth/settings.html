@@ -47,10 +47,7 @@
     <form action="/settings" method="post" class="space-y-4">
       <%~ include('../_components/csrf-input.html') %>
       <%~ include('../_components/inputs/text.html', { label: 'Name', name: 'name', value: it.user.name, required: true }) %>
-      <div class="flex flex-col gap-2">
-        <label class="text-sm text-neutral-400">Email</label>
-        <div class="rounded-md bg-neutral-800/50 px-3 py-2 text-neutral-400"><%= it.user.email %></div>
-      </div>
+      <%~ include('../_components/inputs/text.html', { label: 'Email', name: 'email', value: it.user.email, required: true }) %>
       <div class="flex pt-2 sm:justify-end">
         <button type="submit" class="rounded-md bg-power px-3 py-2 text-sm font-medium text-white transition-all hover:bg-power-dark w-full sm:w-auto sm:min-w-52 md:px-4 md:text-base">Save Changes</button>
       </div>
