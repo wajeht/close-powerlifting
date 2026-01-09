@@ -18,22 +18,22 @@ An intuitive REST API for the OpenPowerlifting database.
 | `/api/status`       | Data source status and statistics (no auth required)        |
 | `/api/health-check` | API health monitoring (no auth required)                    |
 
-Full API documentation available at [close-powerlifting.jaw.dev/docs/api](https://close-powerlifting.jaw.dev/docs/api)
+Full API documentation available at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api)
 
 ## 🔐 Authentication
 
 All endpoints except `/api/status` and `/api/health-check` require an API key:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" https://close-powerlifting.jaw.dev/api/rankings
+curl -H "Authorization: Bearer YOUR_API_KEY" https://closepowerlifting.com/api/rankings
 ```
 
-Request an API key at [close-powerlifting.jaw.dev](https://close-powerlifting.jaw.dev)
+Request an API key at [closepowerlifting.com](https://closepowerlifting.com)
 
 ## 📦 Example Response
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" "https://close-powerlifting.jaw.dev/api/rankings?per_page=100&current_page=1"
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/rankings?per_page=100&current_page=1"
 ```
 
 ```json
