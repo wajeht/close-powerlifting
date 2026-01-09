@@ -6,12 +6,21 @@ import type { UserRepositoryType } from "./db/user";
 import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
-import type { RankingsApiResponse } from "./types";
+import type {
+  RankingsApiResponse,
+  Meet,
+  MeetData,
+  MeetResult,
+  RecordCategory,
+  UserProfile,
+  PersonalBest,
+  CompetitionResult,
+} from "./types";
 import { transformRankingRow } from "./routes/api/rankings/rankings.service";
 
-const RANKINGS_PAGES_TO_REFRESH = 10;
-
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
+
+const INTERNAL_CACHE_KEYS = ["hostname", "close-powerlifting-global-status-call-cache"];
 
 export interface CronType {
   start: () => void;
@@ -64,120 +73,258 @@ export function createCron(
     }
   }
 
+  function parseStatusHtml(doc: Document): {
+    server_version: string;
+    meets: string;
+    federations: Record<string, string>[];
+  } {
+    const textContent = scraper.getElementByClass(doc, "text-content");
+    if (!textContent) {
+      throw new Error("Could not find text-content element on status page");
+    }
+
+    let serverVersion = "";
+    const h2s = textContent.querySelectorAll("h2");
+    for (const h2 of h2s) {
+      if (h2.textContent?.includes("Server Version")) {
+        const p = h2.nextElementSibling;
+        const link = p?.querySelector("a");
+        const href = link?.getAttribute("href") || "";
+        const match = href.match(/commits\/([a-f0-9]+)/);
+        serverVersion = match?.[1] ?? "";
+        break;
+      }
+    }
+
+    let meetsInfo = "";
+    for (const h2 of h2s) {
+      if (h2.textContent?.includes("Meets")) {
+        let sibling = h2.nextSibling;
+        while (sibling) {
+          if (sibling.nodeType === 3) {
+            const text = sibling.textContent?.trim() || "";
+            if (text.includes("Tracking")) {
+              meetsInfo = text;
+              break;
+            }
+          }
+          if (sibling.nodeType === 1) break;
+          sibling = sibling.nextSibling;
+        }
+        break;
+      }
+    }
+
+    const table = textContent.querySelector("table");
+    const federations = scraper.tableToJson(table);
+
+    return {
+      server_version: serverVersion,
+      meets: meetsInfo,
+      federations,
+    };
+  }
+
+  function parseRecordsHtml(doc: Document): RecordCategory[] {
+    const recordCols = doc.getElementsByClassName("records-col");
+    const data: RecordCategory[] = [];
+
+    for (const col of recordCols) {
+      const heading = col.querySelector("h2, h3");
+      const table = col.querySelector("table");
+
+      if (heading && table) {
+        data.push({
+          title: heading.textContent?.trim() || "",
+          records: scraper.tableToJson<Record<string, string>>(table),
+        });
+      }
+    }
+
+    return data;
+  }
+
+  function parseMeetHtml(doc: Document): MeetData {
+    const h1 = doc.querySelector("h1#meet");
+    const title = h1?.textContent?.trim() || "";
+
+    const p = h1?.nextElementSibling;
+    const dateLocationText = p?.textContent?.trim().split("\n")[0] || "";
+    const [date, ...locationParts] = dateLocationText.split(",").map((s) => s.trim());
+    const location = locationParts.join(", ");
+
+    const table = doc.querySelector("table");
+    const results = scraper.tableToJson(table) as MeetResult[];
+
+    return {
+      title,
+      date: date || "",
+      location: location || "",
+      results,
+    };
+  }
+
+  function parseUserProfileHtml(doc: Document, username: string): UserProfile {
+    const mixedContent = scraper.getElementByClass(doc, "mixed-content");
+    if (!mixedContent) {
+      throw new Error(`User profile not found: ${username}`);
+    }
+
+    const h1 = mixedContent.querySelector("h1");
+    const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
+    const name = nameSpan?.textContent?.trim() || username;
+
+    const h1Text = h1?.textContent || "";
+    const sexMatch = h1Text.match(/\(([MF])\)/);
+    const sex = sexMatch?.[1] ?? "";
+
+    const igLink = h1?.querySelector("a.instagram");
+    const igHref = igLink?.getAttribute("href") || "";
+    const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
+    const instagram = igMatch?.[1] ?? "";
+
+    const tables = mixedContent.querySelectorAll("table");
+    const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
+    const competitionResults = tables[1] ? scraper.tableToJson<CompetitionResult>(tables[1]) : [];
+
+    return {
+      name,
+      username,
+      sex,
+      instagram,
+      instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
+      personal_best: personalBest,
+      competition_results: competitionResults,
+    };
+  }
+
+  async function refreshCacheKey(key: string): Promise<void> {
+    // Status
+    if (key === "status") {
+      const html = await scraper.fetchHtml("/status");
+      const doc = scraper.parseHtml(html);
+      const data = parseStatusHtml(doc);
+      await cache.set(key, JSON.stringify(data));
+      return;
+    }
+
+    // Federations list
+    if (key === "federations-list") {
+      const html = await scraper.fetchHtml("/mlist");
+      const doc = scraper.parseHtml(html);
+      const table = doc.querySelector("table");
+      const data = scraper.tableToJson(table) as Meet[];
+      await cache.set(key, JSON.stringify(data));
+      return;
+    }
+
+    // Federation (with optional year): federation-{fed} or federation-{fed}-{year}
+    if (key.startsWith("federation-")) {
+      const remainder = key.replace("federation-", "");
+      // Check if ends with -YYYY (4 digit year)
+      const yearMatch = remainder.match(/-(\d{4})$/);
+      let federation: string;
+      let year: string | undefined;
+
+      if (yearMatch) {
+        year = yearMatch[1];
+        federation = remainder.slice(0, -5); // Remove -YYYY
+      } else {
+        federation = remainder;
+      }
+
+      const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
+      const html = await scraper.fetchHtml(path);
+      const doc = scraper.parseHtml(html);
+      const table = doc.querySelector("table");
+      const data = scraper.tableToJson(table) as Meet[];
+      await cache.set(key, JSON.stringify(data));
+      return;
+    }
+
+    // Meet: meet-{meetCode}
+    if (key.startsWith("meet-")) {
+      const meetCode = key.replace("meet-", "");
+      const html = await scraper.fetchHtml(`/m/${meetCode}`);
+      const doc = scraper.parseHtml(html);
+      const data = parseMeetHtml(doc);
+      await cache.set(key, JSON.stringify({ data }));
+      return;
+    }
+
+    // Records: records or records/{filterPath}
+    if (key === "records" || key.startsWith("records/")) {
+      const filterPath = key === "records" ? "" : key.replace("records", "");
+      const html = await scraper.fetchHtml(`/records${filterPath}`);
+      const doc = scraper.parseHtml(html);
+      const data = parseRecordsHtml(doc);
+      await cache.set(key, JSON.stringify({ data }));
+      return;
+    }
+
+    // User: user-{username}
+    if (key.startsWith("user-")) {
+      const username = key.replace("user-", "");
+      const html = await scraper.fetchHtml(`/u/${username}`);
+      const doc = scraper.parseHtml(html);
+      const data = parseUserProfileHtml(doc, username);
+      await cache.set(key, JSON.stringify({ data }));
+      return;
+    }
+
+    // Rankings: rankings-{page}-{perPage} or rankings/{filterPath}-{page}-{perPage}
+    if (key.startsWith("rankings")) {
+      // Parse the key to extract filterPath, page, and perPage
+      // Format: rankings-{page}-{perPage} or rankings/{filterPath}-{page}-{perPage}
+      const lastDashIdx = key.lastIndexOf("-");
+      const secondLastDashIdx = key.lastIndexOf("-", lastDashIdx - 1);
+
+      if (lastDashIdx === -1 || secondLastDashIdx === -1) {
+        logger.warn(`refreshCacheKey: invalid rankings key format: ${key}`);
+        return;
+      }
+
+      const perPage = parseInt(key.substring(lastDashIdx + 1), 10);
+      const page = parseInt(key.substring(secondLastDashIdx + 1, lastDashIdx), 10);
+      const prefix = key.substring(0, secondLastDashIdx);
+
+      if (isNaN(page) || isNaN(perPage)) {
+        logger.warn(`refreshCacheKey: invalid page/perPage in key: ${key}`);
+        return;
+      }
+
+      // prefix is either "rankings" or "rankings/{filterPath}"
+      const filterPath = prefix === "rankings" ? "" : prefix.replace("rankings", "");
+      const start = page === 1 ? 0 : (page - 1) * perPage;
+      const end = start + perPage;
+      const query = `start=${start}&end=${end}&lang=en&units=lbs`;
+      const response = await scraper.fetchJson<RankingsApiResponse>(
+        `/rankings${filterPath}?${query}`,
+      );
+      const data = {
+        rows: response.rows.map(transformRankingRow),
+        totalLength: response.total_length,
+      };
+      await cache.set(key, JSON.stringify(data));
+      return;
+    }
+
+    logger.warn(`refreshCacheKey: unknown key type: ${key}`);
+  }
+
   async function refreshCacheTask() {
     const startTime = Date.now();
     logger.info("cron job started: refreshCache");
 
+    const allKeys = await cache.keys("%");
+    const keysToRefresh = allKeys.filter((key) => !INTERNAL_CACHE_KEYS.includes(key));
+
+    logger.info(`refreshCache: found ${keysToRefresh.length} keys to refresh`);
+
     const results: RefreshResult[] = [];
-    const { defaultPerPage } = configuration.pagination;
 
-    // 1. Refresh status
-    results.push(
-      await refreshEndpoint("status", async () => {
-        const html = await scraper.fetchHtml("/status");
-        const doc = scraper.parseHtml(html);
-        const textContent = scraper.getElementByClass(doc, "text-content");
-        if (!textContent) {
-          throw new Error("Could not find text-content element on status page");
-        }
-
-        let serverVersion = "";
-        const h2s = textContent.querySelectorAll("h2");
-        for (const h2 of h2s) {
-          if (h2.textContent?.includes("Server Version")) {
-            const p = h2.nextElementSibling;
-            const link = p?.querySelector("a");
-            const href = link?.getAttribute("href") || "";
-            const match = href.match(/commits\/([a-f0-9]+)/);
-            serverVersion = match?.[1] ?? "";
-            break;
-          }
-        }
-
-        let meetsInfo = "";
-        for (const h2 of h2s) {
-          if (h2.textContent?.includes("Meets")) {
-            let sibling = h2.nextSibling;
-            while (sibling) {
-              if (sibling.nodeType === 3) {
-                const text = sibling.textContent?.trim() || "";
-                if (text.includes("Tracking")) {
-                  meetsInfo = text;
-                  break;
-                }
-              }
-              if (sibling.nodeType === 1) break;
-              sibling = sibling.nextSibling;
-            }
-            break;
-          }
-        }
-
-        const table = textContent.querySelector("table");
-        const federations = scraper.tableToJson(table);
-
-        const statusData = {
-          server_version: serverVersion,
-          meets: meetsInfo,
-          federations,
-        };
-
-        await cache.set("status", JSON.stringify(statusData));
-      }),
-    );
-    await delay(REFRESH_DELAY_MS);
-
-    // 2. Refresh federations list
-    results.push(
-      await refreshEndpoint("federations", async () => {
-        const html = await scraper.fetchHtml("/mlist");
-        const doc = scraper.parseHtml(html);
-        const table = doc.querySelector("table");
-        const federationsList = scraper.tableToJson(table);
-        await cache.set("federations-list", JSON.stringify(federationsList));
-      }),
-    );
-    await delay(REFRESH_DELAY_MS);
-
-    // 3. Refresh records
-    results.push(
-      await refreshEndpoint("records", async () => {
-        const html = await scraper.fetchHtml("/records");
-        const doc = scraper.parseHtml(html);
-        const recordCols = doc.getElementsByClassName("records-col");
-        const recordsData: Array<{ title: string; records: Record<string, string>[] }> = [];
-
-        for (const col of recordCols) {
-          const heading = col.querySelector("h2, h3");
-          const table = col.querySelector("table");
-
-          if (heading && table) {
-            recordsData.push({
-              title: heading.textContent?.trim() || "",
-              records: scraper.tableToJson<Record<string, string>>(table),
-            });
-          }
-        }
-
-        await cache.set("records", JSON.stringify(recordsData));
-      }),
-    );
-    await delay(REFRESH_DELAY_MS);
-
-    // 4. Refresh rankings pages 1-10
-    for (let page = 1; page <= RANKINGS_PAGES_TO_REFRESH; page++) {
-      results.push(
-        await refreshEndpoint(`rankings-page-${page}`, async () => {
-          const query = scraper.buildPaginationQuery(page, defaultPerPage);
-          const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
-          const cacheKey = `rankings-${page}-${defaultPerPage}`;
-          const data = {
-            rows: response.rows.map(transformRankingRow),
-            totalLength: response.total_length,
-          };
-          await cache.set(cacheKey, JSON.stringify(data));
-        }),
-      );
+    for (const key of keysToRefresh) {
+      results.push(await refreshEndpoint(key, () => refreshCacheKey(key)));
       await delay(REFRESH_DELAY_MS);
     }
 
