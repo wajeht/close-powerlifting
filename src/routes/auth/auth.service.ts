@@ -260,7 +260,7 @@ export function createAuthService(
 
       return response.json();
     } catch (error: unknown) {
-      logger.error("Failed to fetch Google OAuth Tokens");
+      logger.error("Failed to fetch Google OAuth Tokens", { error });
       throw error;
     }
   }
