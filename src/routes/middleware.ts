@@ -187,7 +187,8 @@ export function createMiddleware(
           req.body = await validators.body.parseAsync(req.body);
         }
         if (validators.query) {
-          await validators.query.parseAsync(req.query);
+          const parsed = await validators.query.parseAsync(req.query);
+          Object.assign(req.query, parsed);
         }
         next();
       } catch (error) {
@@ -210,7 +211,8 @@ export function createMiddleware(
           req.body = await validators.body.parseAsync(req.body);
         }
         if (validators.query) {
-          await validators.query.parseAsync(req.query);
+          const parsed = await validators.query.parseAsync(req.query);
+          Object.assign(req.query, parsed);
         }
         next();
       } catch (error) {

@@ -42,7 +42,6 @@ export function createAdminService(
       search?: string;
     } = {},
   ): Promise<{ users: User[]; pagination: Pagination }> {
-    const page = options.page || 1;
     const limit = options.limit || 20;
 
     let allUsers = await userRepository.findAll();
@@ -57,7 +56,8 @@ export function createAdminService(
     }
 
     const total = allUsers.length;
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const page = Math.min(Math.max(1, options.page || 1), totalPages);
     const offset = (page - 1) * limit;
     const users = allUsers.slice(offset, offset + limit);
 
