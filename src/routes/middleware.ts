@@ -437,6 +437,7 @@ export function createMiddleware(
       // Note: Do NOT call req.flash() here - it consumes the messages!
       // Flash messages are passed explicitly by routes via messages: req.flash()
       res.locals.state = {
+        domain: configuration.app.domain,
         user,
         currentYear,
         env: configuration.app.env,
