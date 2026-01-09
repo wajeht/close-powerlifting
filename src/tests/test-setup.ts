@@ -139,6 +139,14 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string) =
   throw new ScraperError(`Not found: ${path}`, 404, path);
 });
 
+vi.spyOn(context.mail, "sendVerificationEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendMagicLinkEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendWelcomeEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendContactEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendApiLimitResetEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockResolvedValue();
+vi.spyOn(context.mail, "verifyConnection").mockResolvedValue(true);
+
 export const { app } = await createApp(context);
 
 export let testApiKey: string;
