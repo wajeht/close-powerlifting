@@ -28,6 +28,10 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return knex<UserType>("users").where({ email }).first();
   }
 
+  async function findByPendingEmailToken(token: string): Promise<UserType | undefined> {
+    return knex<UserType>("users").where({ pending_email_token: token }).first();
+  }
+
   async function findByVerificationToken(token: string): Promise<UserType | undefined> {
     return knex<UserType>("users").where({ verification_token: token }).first();
   }

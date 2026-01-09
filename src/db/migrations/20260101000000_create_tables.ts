@@ -21,6 +21,10 @@ export async function up(knex: Knex): Promise<void> {
       table.index("email");
       table.index("verification_token");
       table.index("verified");
+
+      table.string("pending_email").nullable();
+      table.string("pending_email_token").nullable();
+      table.timestamp("pending_email_expires_at").nullable();
     });
   }
 

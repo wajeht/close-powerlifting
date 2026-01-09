@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { z } from "zod";
+import { email, z } from "zod";
 
 import type { AppContext } from "../../context";
 import { UnauthorizedError } from "../../error";
@@ -14,6 +14,7 @@ const loginValidation = z.object({
 
 const updateNameValidation = z.object({
   name: z.string({ message: "name is required!" }).min(1, "name is required"),
+  email: z.string().email().optional(),
 });
 
 type LoginType = z.infer<typeof loginValidation>;
@@ -279,7 +280,8 @@ export function createAuthRouter(context: AppContext) {
     middleware.validationMiddleware({ body: updateNameValidation }),
     async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
       const sessionUser = req.session.user!;
-      const { name } = req.body;
+      const { name, email: newEmail } = req.body;
+      const hostname = context.helpers.getHostName(req);
 
       const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
 
@@ -294,7 +296,46 @@ export function createAuthRouter(context: AppContext) {
 
       context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
 
-      req.flash("success", "Name updated successfully");
+      // Handle email change if new email is provided and different from current
+      if (newEmail && newEmail !== sessionUser.email) {
+        // Check if new email is already in use
+        const existingUser = await context.userRepository.findByEmail(newEmail);
+        if (existingUser) {
+          req.flash("error", "This email address is already in use");
+          return res.redirect("/settings");
+        }
+
+        // Generate verification token for email change
+        const token = context.helpers.generateToken();
+        const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
+
+        // Store pending email details
+        await context.userRepository.updateById(sessionUser.id, {
+          pending_email: newEmail,
+          pending_email_token: token,
+          pending_email_expires_at: expiresAt,
+        });
+
+        // Send verification email to new address
+        context.authService.sendVerificationEmail({
+          name: updatedUser?.name || sessionUser.name,
+          email: newEmail,
+          verification_token: token,
+          hostname,
+        });
+
+        context.logger.info(
+          `User ${sessionUser.id} (${sessionUser.email}) requested email change to ${newEmail}`,
+        );
+
+        req.flash(
+          "info",
+          "A verification link has been sent to your new email address. Please verify it to complete the email change.",
+        );
+      } else {
+        req.flash("success", "Name updated successfully");
+      }
+
       return res.redirect("/settings");
     },
   );
@@ -421,6 +462,58 @@ export function createAuthRouter(context: AppContext) {
           );
           res.redirect("/dashboard");
         });
+      });
+    },
+  );
+
+  router.get(
+    "/verify-email-change",
+    middleware.authRateLimitMiddleware,
+    async (req: Request, res: Response) => {
+      const { token } = req.query as { token: string };
+
+      if (!token) {
+        req.flash("error", "Invalid verification link");
+        return res.redirect("/login");
+      }
+
+      const foundUser = await context.userRepository.findByPendingEmailToken(token);
+
+      if (!foundUser) {
+        req.flash("error", "Invalid verification link");
+        return res.redirect("/login");
+      }
+
+      if (!foundUser.pending_email_expires_at) {
+        req.flash("error", "Invalid verification link");
+        return res.redirect("/login");
+      }
+
+      const expiresAt = new Date(foundUser.pending_email_expires_at);
+      if (expiresAt < new Date()) {
+        req.flash(
+          "error",
+          "Verification link has expired. Please request a new one from your settings.",
+        );
+        return res.redirect("/login");
+      }
+
+      // Update email and clear pending fields
+      await context.userRepository.updateById(foundUser.id, {
+        email: foundUser.pending_email,
+        pending_email: null,
+        pending_email_token: null,
+        pending_email_expires_at: null,
+      });
+
+      context.logger.info(
+        `User ${foundUser.id} verified email change from ${foundUser.email} to ${foundUser.pending_email}`,
+      );
+
+      // Destroy session
+      req.session.destroy(() => {
+        req.flash("success", "Your email has been successfully updated. Please login with your new email address.");
+        res.redirect("/login");
       });
     },
   );
