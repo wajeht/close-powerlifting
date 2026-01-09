@@ -42,7 +42,7 @@ export function createAdminService(
       search?: string;
     } = {},
   ): Promise<{ users: User[]; pagination: Pagination }> {
-    const limit = options.limit || 20;
+    const limit = options.limit || 10;
 
     let allUsers = await userRepository.findAll();
 
