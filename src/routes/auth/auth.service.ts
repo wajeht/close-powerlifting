@@ -245,6 +245,10 @@ export function createAuthService(
       grant_type: "authorization_code",
     });
 
+    logger.info("Google OAuth token request", {
+      redirectUri: configuration.oauth.google.redirectUrl,
+    });
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -255,6 +259,11 @@ export function createAuthService(
       });
 
       if (!response.ok) {
+        const errorBody = await response.text();
+        logger.error("Google OAuth token error response", {
+          status: response.status,
+          body: errorBody,
+        });
         throw new Error("Failed to fetch Google OAuth Tokens", { cause: response.statusText });
       }
 
