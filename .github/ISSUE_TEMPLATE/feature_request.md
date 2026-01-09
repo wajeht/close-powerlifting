@@ -1,9 +1,9 @@
 ---
 name: Feature request
 about: Suggest a new feature or endpoint
-title: '[Feature]: '
-labels: 'enhancement'
-assignees: 'wajeht'
+title: "[Feature]: "
+labels: "enhancement"
+assignees: "wajeht"
 ---
 
 **Is your feature request related to a problem? Please describe.**

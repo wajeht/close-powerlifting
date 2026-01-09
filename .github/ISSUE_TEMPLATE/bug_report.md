@@ -1,9 +1,9 @@
 ---
 name: Bug report
 about: Report a bug with the API or website
-title: '[Bug]: '
-labels: 'bug'
-assignees: 'wajeht'
+title: "[Bug]: "
+labels: "bug"
+assignees: "wajeht"
 ---
 
 **Describe the bug**
