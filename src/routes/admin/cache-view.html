@@ -62,13 +62,13 @@
 <% if (it.pagination.pages > 1) { %>
 <div class="fade-in animation-delay-6 mt-6 flex items-center justify-center gap-2">
   <% if (it.pagination.current_page > 1) { %>
-  <a href="/admin/cache?page=<%= it.pagination.current_page - 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <a href="/admin/cache?page=<%= it.pagination.current_page - 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
   <% } %>
   <span class="px-4 text-neutral-400">
     Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
   </span>
   <% if (it.pagination.current_page < it.pagination.pages) { %>
-  <a href="/admin/cache?page=<%= it.pagination.current_page + 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <a href="/admin/cache?page=<%= it.pagination.current_page + 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
   <% } %>
 </div>
 <% } %>
@@ -83,11 +83,12 @@
 }) %>
 
 <% for (const entry of it.entries) { %>
+<% const escapedKey = entry.key.split('&').join('&amp;').split(String.fromCharCode(60)).join('&lt;').split(String.fromCharCode(62)).join('&gt;').split('"').join('&quot;'); %>
 <%~ include('../_components/modal.html', {
   id: 'delete-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'),
   action: '/admin/cache/delete',
   title: 'Delete Cache Entry',
-  description: 'Delete cache entry <code class="rounded bg-neutral-800 px-1 text-white">' + entry.key + '</code>?',
+  description: 'Delete cache entry <code class="rounded bg-neutral-800 px-1 text-white">' + escapedKey + '</code>?',
   hiddenName: 'key',
   hiddenValue: entry.key,
   confirmText: 'Delete',

@@ -1,0 +1,115 @@
+<header class="fade-in-heading">
+  <div class="flex items-center gap-4">
+    <a href="/admin/users" class="text-neutral-400 hover:text-white">
+      <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+    <h1 class="text-xl font-bold text-white md:text-2xl">User Details</h1>
+  </div>
+  <p class="mt-2 text-sm text-neutral-400 md:text-base">View user information and API call history.</p>
+</header>
+
+<div class="fade-in animation-delay-2 mt-6 mb-6">
+  <%~ include('../_components/flash-message.html') %>
+</div>
+
+<!-- User Info Card -->
+<div class="fade-in animation-delay-3 mb-6 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6">
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <p class="text-sm text-neutral-400">Name</p>
+      <p class="text-white"><%= it.viewedUser.name %></p>
+    </div>
+    <div>
+      <p class="text-sm text-neutral-400">Email</p>
+      <p class="text-white"><%= it.viewedUser.email %></p>
+    </div>
+    <div>
+      <p class="text-sm text-neutral-400">API Calls</p>
+      <p class="text-white"><%= it.viewedUser.api_call_count %> / <%= it.viewedUser.api_call_limit %></p>
+    </div>
+    <div>
+      <p class="text-sm text-neutral-400">Status</p>
+      <% if (it.viewedUser.verified) { %>
+      <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
+      <% } else { %>
+      <%~ include('../_components/badge.html', { text: 'Unverified', variant: 'warning' }) %>
+      <% } %>
+    </div>
+    <div>
+      <p class="text-sm text-neutral-400">Created</p>
+      <p class="text-neutral-300 text-sm"><%= new Date(it.viewedUser.created_at).toLocaleString() %></p>
+    </div>
+    <div>
+      <p class="text-sm text-neutral-400">Admin</p>
+      <p class="text-white"><%= it.viewedUser.admin ? 'Yes' : 'No' %></p>
+    </div>
+  </div>
+</div>
+
+<!-- API Call History -->
+<div class="fade-in animation-delay-4">
+  <h2 class="mb-4 text-base font-semibold text-white md:text-lg">API Call History</h2>
+
+  <div class="mb-6">
+    <form action="/admin/users/<%= it.viewedUser.id %>" method="get" class="flex gap-2">
+      <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by endpoint, method, or status', value: it.search }) %>
+      <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
+    </form>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+    <table class="w-full text-left">
+      <thead class="border-b border-neutral-800 text-neutral-400">
+        <tr>
+          <th class="p-4">Endpoint</th>
+          <th class="p-4">Status</th>
+          <th class="p-4">Time</th>
+          <th class="p-4">IP</th>
+          <th class="p-4">When</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-800">
+        <% for (const call of it.calls) { %>
+        <tr class="hover:bg-neutral-800/50">
+          <td class="p-4 font-mono text-sm text-neutral-300 max-w-sm truncate" title="<%= call.endpoint %>">
+            <span class="text-neutral-500"><%= call.method %></span> <%= call.endpoint %>
+          </td>
+          <td class="p-4">
+            <% if (call.status_code < 300) { %>
+            <span class="text-green-400"><%= call.status_code %></span>
+            <% } else if (call.status_code < 400) { %>
+            <span class="text-yellow-400"><%= call.status_code %></span>
+            <% } else { %>
+            <span class="text-red-400"><%= call.status_code %></span>
+            <% } %>
+          </td>
+          <td class="p-4 text-sm text-neutral-400"><%= call.response_time_ms %>ms</td>
+          <td class="p-4 text-sm text-neutral-400"><%= call.ip_address || '-' %></td>
+          <td class="p-4 text-sm text-neutral-300"><%= new Date(call.created_at).toLocaleString() %></td>
+        </tr>
+        <% } %>
+        <% if (it.calls.length === 0) { %>
+        <tr>
+          <td colspan="5" class="p-8 text-center text-neutral-400">No API calls recorded.</td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% if (it.pagination.pages > 1) { %>
+<div class="fade-in animation-delay-5 mt-6 flex items-center justify-center gap-2">
+  <% if (it.pagination.current_page > 1) { %>
+  <a href="/admin/users/<%= it.viewedUser.id %>?page=<%= it.pagination.current_page - 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <% } %>
+  <span class="px-4 text-neutral-400">
+    Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
+  </span>
+  <% if (it.pagination.current_page < it.pagination.pages) { %>
+  <a href="/admin/users/<%= it.viewedUser.id %>?page=<%= it.pagination.current_page + 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <% } %>
+</div>
+<% } %>
