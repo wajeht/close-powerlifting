@@ -2,7 +2,6 @@ import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
 import type { AuthServiceType } from "../auth/auth.service";
 import type { User, Pagination } from "../../types";
-import type { HelpersType } from "../../utils/helpers";
 import type { LoggerType } from "../../utils/logger";
 
 export interface AdminServiceType {
@@ -10,6 +9,7 @@ export interface AdminServiceType {
     page?: number;
     limit?: number;
     search?: string;
+    order?: "asc" | "desc";
   }) => Promise<{ users: User[]; pagination: Pagination }>;
   getUserById: (id: number) => Promise<User | undefined>;
   updateUserApiCallCount: (userId: number, count: number) => Promise<User | undefined>;
@@ -19,6 +19,7 @@ export interface AdminServiceType {
     page?: number;
     limit?: number;
     search?: string;
+    order?: "asc" | "desc";
   }) => Promise<{ entries: CacheEntry[]; pagination: Pagination }>;
   clearAllCache: () => Promise<void>;
   deleteCacheEntry: (key: string) => Promise<void>;
@@ -34,11 +35,27 @@ export interface DashboardStats {
   totalApiCalls: number;
 }
 
+function buildPagination(total: number, page: number, limit: number): Pagination {
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const offset = (currentPage - 1) * limit;
+
+  return {
+    items: total,
+    pages: totalPages,
+    per_page: limit,
+    current_page: currentPage,
+    last_page: totalPages,
+    first_page: 1,
+    from: total > 0 ? offset + 1 : 0,
+    to: Math.min(offset + limit, total),
+  };
+}
+
 export function createAdminService(
   userRepository: UserRepositoryType,
   cache: CacheType,
   authService: AuthServiceType,
-  helpers: HelpersType,
   logger: LoggerType,
 ): AdminServiceType {
   async function getAllUsers(
@@ -46,20 +63,24 @@ export function createAdminService(
       page?: number;
       limit?: number;
       search?: string;
+      order?: "asc" | "desc";
     } = {},
   ): Promise<{ users: User[]; pagination: Pagination }> {
-    let allUsers = await userRepository.findAll();
+    const limit = options.limit || 10;
+    const order = options.order || "desc";
 
-    if (options.search) {
-      const searchLower = options.search.toLowerCase();
-      allUsers = allUsers.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchLower) ||
-          user.email.toLowerCase().includes(searchLower),
-      );
-    }
+    const total = await userRepository.count({}, options.search);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
 
-    const { items: users, pagination } = helpers.paginate(allUsers, options);
+    const users = await userRepository.findAll({
+      search: options.search,
+      orderBy: "created_at",
+      order,
+      limit,
+      offset,
+    });
+
     return { users, pagination };
   }
 
@@ -99,12 +120,25 @@ export function createAdminService(
       page?: number;
       limit?: number;
       search?: string;
+      order?: "asc" | "desc";
     } = {},
   ): Promise<{ entries: CacheEntry[]; pagination: Pagination }> {
+    const limit = options.limit || 10;
+    const order = options.order || "desc";
     const pattern = options.search ? `%${options.search}%` : "%";
-    const allEntries = await cache.getEntries(pattern);
 
-    const { items: entries, pagination } = helpers.paginate(allEntries, options);
+    const total = await cache.countEntries(pattern);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const entries = await cache.getEntries({
+      pattern,
+      orderBy: "updated_at",
+      order,
+      limit,
+      offset,
+    });
+
     return { entries, pagination };
   }
 

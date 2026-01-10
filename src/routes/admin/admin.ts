@@ -26,7 +26,6 @@ export function createAdminRouter(context: AppContext) {
     context.userRepository,
     context.cache,
     context.authService,
-    context.helpers,
     context.logger,
   );
 
