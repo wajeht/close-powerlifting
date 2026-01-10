@@ -1,12 +1,22 @@
 import type { Knex } from "knex";
 import type { User as UserType, CreateUserInput, UpdateUserInput } from "../types";
 
+export interface FindAllOptions {
+  where?: Partial<UserType>;
+  search?: string;
+  orderBy?: keyof UserType;
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
 export interface UserRepositoryType {
   findById: (id: number) => Promise<UserType | undefined>;
   findByEmail: (email: string) => Promise<UserType | undefined>;
   findByVerificationToken: (token: string) => Promise<UserType | undefined>;
   findOne: (where: Partial<UserType>) => Promise<UserType | undefined>;
-  findAll: (where?: Partial<UserType>) => Promise<UserType[]>;
+  findAll: (options?: FindAllOptions) => Promise<UserType[]>;
+  count: (where?: Partial<UserType>, search?: string) => Promise<number>;
   findVerified: () => Promise<UserType[]>;
   findByApiCallCount: (count: number) => Promise<UserType[]>;
   create: (data: CreateUserInput) => Promise<UserType>;
@@ -36,8 +46,40 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return knex<UserType>("users").where(where).first();
   }
 
-  async function findAll(where: Partial<UserType> = {}): Promise<UserType[]> {
-    return knex<UserType>("users").where(where);
+  async function findAll(options: FindAllOptions = {}): Promise<UserType[]> {
+    let query = knex<UserType>("users").where(options.where || {});
+    if (options.search) {
+      const searchPattern = `%${options.search.toLowerCase()}%`;
+      query = query.andWhere(function () {
+        this.whereRaw("LOWER(name) LIKE ?", [searchPattern]).orWhereRaw("LOWER(email) LIKE ?", [
+          searchPattern,
+        ]);
+      });
+    }
+    if (options.orderBy) {
+      query = query.orderBy(options.orderBy, options.order || "asc");
+    }
+    if (options.limit != null) {
+      query = query.limit(options.limit);
+    }
+    if (options.offset != null) {
+      query = query.offset(options.offset);
+    }
+    return query;
+  }
+
+  async function count(where: Partial<UserType> = {}, search?: string): Promise<number> {
+    let query = knex<UserType>("users").where(where);
+    if (search) {
+      const searchPattern = `%${search.toLowerCase()}%`;
+      query = query.andWhere(function () {
+        this.whereRaw("LOWER(name) LIKE ?", [searchPattern]).orWhereRaw("LOWER(email) LIKE ?", [
+          searchPattern,
+        ]);
+      });
+    }
+    const result = await query.count("* as count").first<{ count: number }>();
+    return Number(result?.count || 0);
   }
 
   async function findVerified(): Promise<UserType[]> {
@@ -125,6 +167,7 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     findByVerificationToken,
     findOne,
     findAll,
+    count,
     findVerified,
     findByApiCallCount,
     create,
