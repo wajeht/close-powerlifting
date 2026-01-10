@@ -9,6 +9,7 @@ import {
   usersQueryValidation,
   cacheKeyValidation,
   cacheQueryValidation,
+  userHistoryQueryValidation,
 } from "./admin.validation";
 
 export function createAdminRouter(context: AppContext) {
@@ -20,6 +21,7 @@ export function createAdminRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const adminService = createAdminService(
@@ -27,6 +29,7 @@ export function createAdminRouter(context: AppContext) {
     context.cache,
     context.authService,
     context.logger,
+    context.apiCallLogRepository,
   );
 
   const router = express.Router();
@@ -87,6 +90,39 @@ export function createAdminRouter(context: AppContext) {
 
       req.flash("success", `API call limit updated to ${apiCallLimit}`);
       return res.redirect("/admin/users");
+    },
+  );
+
+  router.get(
+    "/users/:id",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.validationMiddleware({
+      params: userIdParamValidation,
+      query: userHistoryQueryValidation,
+    }),
+    async (req: Request, res: Response) => {
+      const id = req.params.id as unknown as number;
+      const page = req.query.page as number | undefined;
+      const search = req.query.search as string | undefined;
+
+      const user = await adminService.getUserById(id);
+      if (!user) {
+        req.flash("error", "User not found");
+        return res.redirect("/admin/users");
+      }
+
+      const { calls, pagination } = await adminService.getUserApiCallHistory(id, { page, search });
+
+      return res.render("admin/user-details.html", {
+        title: `User: ${user.name}`,
+        path: "/admin/users",
+        viewedUser: user,
+        calls,
+        pagination,
+        search: search || "",
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
     },
   );
 

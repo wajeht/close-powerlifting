@@ -38,9 +38,18 @@ export const cacheQueryValidation = z.object({
   search: z.string().optional(),
 });
 
+export const userHistoryQueryValidation = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Math.max(1, parseInt(value, 10)) : 1)),
+  search: z.string().optional(),
+});
+
 export type UserIdParamType = z.infer<typeof userIdParamValidation>;
 export type UpdateApiCountType = z.infer<typeof updateApiCountValidation>;
 export type UpdateApiLimitType = z.infer<typeof updateApiLimitValidation>;
 export type UsersQueryType = z.infer<typeof usersQueryValidation>;
 export type CacheKeyType = z.infer<typeof cacheKeyValidation>;
 export type CacheQueryType = z.infer<typeof cacheQueryValidation>;
+export type UserHistoryQueryType = z.infer<typeof userHistoryQueryValidation>;
