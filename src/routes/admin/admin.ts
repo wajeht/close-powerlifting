@@ -30,6 +30,7 @@ export function createAdminRouter(context: AppContext) {
     context.authService,
     context.logger,
     context.apiCallLogRepository,
+    context.helpers,
   );
 
   const router = express.Router();
@@ -89,6 +90,26 @@ export function createAdminRouter(context: AppContext) {
       context.logger.info(`Admin updated user ${id} api_call_limit to ${apiCallLimit}`);
 
       req.flash("success", `API call limit updated to ${apiCallLimit}`);
+      return res.redirect("/admin/users");
+    },
+  );
+
+  router.post(
+    "/users/:id/resend-verification",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    middleware.validationMiddleware({ params: userIdParamValidation }),
+    async (req: Request, res: Response) => {
+      const id = req.params.id as unknown as number;
+      const hostname = context.helpers.getHostName(req);
+
+      const success = await adminService.resendVerificationEmail(id, hostname);
+
+      if (!success) {
+        req.flash("error", "Could not resend verification email");
+      } else {
+        req.flash("success", "Verification email sent");
+      }
       return res.redirect("/admin/users");
     },
   );

@@ -4,7 +4,10 @@ import type { ApiCallLogRepositoryType } from "../../db/api-call-log";
 import type { AuthServiceType } from "../auth/auth.service";
 import type { User, Pagination, ApiCallLog } from "../../types";
 import type { LoggerType } from "../../utils/logger";
+import type { HelpersType } from "../../utils/helpers";
 import { buildPagination } from "../../utils/helpers";
+
+const VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export interface AdminServiceType {
   getAllUsers: (options?: {
@@ -47,6 +50,7 @@ export function createAdminService(
   authService: AuthServiceType,
   logger: LoggerType,
   apiCallLogRepository: ApiCallLogRepositoryType,
+  helpers: HelpersType,
 ): AdminServiceType {
   async function getAllUsers(
     options: {
@@ -110,15 +114,23 @@ export function createAdminService(
   async function resendVerificationEmail(userId: number, hostname: string): Promise<boolean> {
     const user = await userRepository.findById(userId);
 
-    if (!user || user.verified || !user.verification_token) {
+    if (!user || user.verified) {
       return false;
     }
+
+    const newToken = helpers.generateToken();
+    const verificationExpiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
+
+    await userRepository.updateById(user.id, {
+      verification_token: newToken,
+      magic_link_expires_at: verificationExpiresAt,
+    });
 
     await authService.sendVerificationEmail({
       hostname,
       name: user.name,
       email: user.email,
-      verification_token: user.verification_token,
+      verification_token: newToken,
     });
 
     logger.info(`Admin resent verification email to user ${user.id} (${user.email})`);
