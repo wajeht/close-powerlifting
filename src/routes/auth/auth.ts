@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { UnauthorizedError } from "../../error";
+import { buildPagination } from "../../utils/helpers";
 import { createMiddleware } from "../middleware";
 
 const MAGIC_LINK_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -231,9 +232,8 @@ export function createAuthRouter(context: AppContext) {
         sessionUser.id,
         search || undefined,
       );
-      const totalPages = Math.max(1, Math.ceil(totalCalls / limit));
-      const currentPage = Math.min(page, totalPages);
-      const offset = (currentPage - 1) * limit;
+      const callsPagination = buildPagination(totalCalls, page, limit);
+      const offset = (callsPagination.current_page - 1) * limit;
 
       const recentCalls = await context.apiCallLogRepository.findByUserId(sessionUser.id, {
         search: search || undefined,
@@ -242,17 +242,6 @@ export function createAuthRouter(context: AppContext) {
         orderBy: "created_at",
         order: "desc",
       });
-
-      const callsPagination = {
-        items: totalCalls,
-        pages: totalPages,
-        per_page: limit,
-        current_page: currentPage,
-        last_page: totalPages,
-        first_page: 1,
-        from: totalCalls > 0 ? offset + 1 : 0,
-        to: Math.min(offset + limit, totalCalls),
-      };
 
       let stats = null;
       if (user.admin) {

@@ -4,6 +4,7 @@ import type { ApiCallLogRepositoryType } from "../../db/api-call-log";
 import type { AuthServiceType } from "../auth/auth.service";
 import type { User, Pagination, ApiCallLog } from "../../types";
 import type { LoggerType } from "../../utils/logger";
+import { buildPagination } from "../../utils/helpers";
 
 export interface AdminServiceType {
   getAllUsers: (options?: {
@@ -38,23 +39,6 @@ export interface DashboardStats {
   adminUsers: number;
   cacheEntries: number;
   totalApiCalls: number;
-}
-
-function buildPagination(total: number, page: number, limit: number): Pagination {
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const currentPage = Math.min(Math.max(1, page), totalPages);
-  const offset = (currentPage - 1) * limit;
-
-  return {
-    items: total,
-    pages: totalPages,
-    per_page: limit,
-    current_page: currentPage,
-    last_page: totalPages,
-    first_page: 1,
-    from: total > 0 ? offset + 1 : 0,
-    to: Math.min(offset + limit, total),
-  };
 }
 
 export function createAdminService(

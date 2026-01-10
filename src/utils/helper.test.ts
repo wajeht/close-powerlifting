@@ -2,6 +2,7 @@ import { JSDOM } from "jsdom";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { createContext } from "../context";
+import { buildPagination } from "./helpers";
 
 const context = createContext();
 const scraper = context.scraper;
@@ -410,5 +411,142 @@ describe.concurrent("helpers.extractNameFromEmail", () => {
 
   it("handles single character parts", () => {
     expect(helpers.extractNameFromEmail("j.doe@example.com")).toBe("J Doe");
+  });
+});
+
+describe.concurrent("buildPagination", () => {
+  it("returns correct pagination for first page", () => {
+    const result = buildPagination(100, 1, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 1,
+      last_page: 10,
+      first_page: 1,
+      from: 1,
+      to: 10,
+    });
+  });
+
+  it("returns correct pagination for middle page", () => {
+    const result = buildPagination(100, 5, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 5,
+      last_page: 10,
+      first_page: 1,
+      from: 41,
+      to: 50,
+    });
+  });
+
+  it("returns correct pagination for last page", () => {
+    const result = buildPagination(100, 10, 10);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 10,
+      per_page: 10,
+      current_page: 10,
+      last_page: 10,
+      first_page: 1,
+      from: 91,
+      to: 100,
+    });
+  });
+
+  it("handles partial last page", () => {
+    const result = buildPagination(95, 10, 10);
+
+    expect(result).toEqual({
+      items: 95,
+      pages: 10,
+      per_page: 10,
+      current_page: 10,
+      last_page: 10,
+      first_page: 1,
+      from: 91,
+      to: 95,
+    });
+  });
+
+  it("clamps page to max when exceeding total pages", () => {
+    const result = buildPagination(50, 100, 10);
+
+    expect(result.current_page).toBe(5);
+    expect(result.pages).toBe(5);
+  });
+
+  it("clamps page to 1 when page is zero or negative", () => {
+    const resultZero = buildPagination(50, 0, 10);
+    const resultNegative = buildPagination(50, -5, 10);
+
+    expect(resultZero.current_page).toBe(1);
+    expect(resultNegative.current_page).toBe(1);
+  });
+
+  it("handles empty results", () => {
+    const result = buildPagination(0, 1, 10);
+
+    expect(result).toEqual({
+      items: 0,
+      pages: 1,
+      per_page: 10,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      from: 0,
+      to: 0,
+    });
+  });
+
+  it("handles single item", () => {
+    const result = buildPagination(1, 1, 10);
+
+    expect(result).toEqual({
+      items: 1,
+      pages: 1,
+      per_page: 10,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      from: 1,
+      to: 1,
+    });
+  });
+
+  it("handles custom limit", () => {
+    const result = buildPagination(100, 2, 25);
+
+    expect(result).toEqual({
+      items: 100,
+      pages: 4,
+      per_page: 25,
+      current_page: 2,
+      last_page: 4,
+      first_page: 1,
+      from: 26,
+      to: 50,
+    });
+  });
+
+  it("handles items less than limit", () => {
+    const result = buildPagination(5, 1, 10);
+
+    expect(result).toEqual({
+      items: 5,
+      pages: 1,
+      per_page: 10,
+      current_page: 1,
+      last_page: 1,
+      first_page: 1,
+      from: 1,
+      to: 5,
+    });
   });
 });
