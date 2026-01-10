@@ -8,7 +8,7 @@
 </div>
 
 <!-- Usage Section -->
-<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 flex flex-col gap-4">
+<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 flex flex-col gap-4  max-w-2xl">
   <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
     <h2 class="text-base font-semibold text-white md:text-lg">API Usage</h2>
     <% if (it.user.admin) { %>
@@ -37,7 +37,7 @@
 
 <% if (it.user.admin && it.stats) { %>
 <!-- Admin: System Overview -->
-<div class="fade-in animation-delay-4 mb-8">
+<div class="fade-in animation-delay-4 mb-8 max-w-2xl">
   <h2 class="mb-4 text-base font-semibold text-white md:text-lg">System Overview</h2>
   <div class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
     <%~ include('../_components/stat-card.html', { value: it.stats.totalUsers, label: 'Total Users', color: 'text-white' }) %>
