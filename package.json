@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^12.6.0",
     "compression": "^1.7.5",
     "concurrently": "^9.1.2",
     "connect-flash": "^0.1.1",
@@ -65,7 +65,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.12",
     "tailwindcss": "^4.1.18",
-    "zod": "^4.3.4"
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
@@ -79,16 +79,16 @@
     "@types/jsdom": "^27.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node-cron": "^3.0.11",
-    "@types/nodemailer": "^7.0.4",
+    "@types/nodemailer": "^7.0.5",
     "@types/supertest": "^6.0.2",
     "@typescript/native-preview": "^7.0.0-dev.20260101.1",
     "@vitest/coverage-v8": "^4.0.16",
     "html-minifier-terser": "^7.2.0",
-    "oxfmt": "^0.21.0",
-    "oxlint": "^1.36.0",
+    "oxfmt": "^0.23.0",
+    "oxlint": "^1.38.0",
     "satori": "^0.18.3",
     "sharp": "^0.34.5",
-    "supertest": "^7.0.0",
+    "supertest": "^7.2.2",
     "terser": "^5.44.1",
     "tsx": "^4.19.2",
     "vitest": "^4.0.16"
