@@ -34,6 +34,7 @@ export const configuration = {
     passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
     defaultApiCallLimit: 500,
+    apiCallLogRetentionDays: parseInt(process.env.API_CALL_LOG_RETENTION_DAYS || "90", 10),
   } as const,
 
   pagination: {
