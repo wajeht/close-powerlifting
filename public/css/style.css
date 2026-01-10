@@ -77,6 +77,7 @@
     --font-mono:
       ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
       monospace;
+    --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-400: oklch(70.4% 0.191 22.216);
     --color-red-600: oklch(57.7% 0.245 27.325);
     --color-red-700: oklch(50.5% 0.213 27.518);
@@ -449,6 +450,9 @@
   .top-1\/2 {
     top: 50% !important;
   }
+  .right-0 {
+    right: calc(var(--spacing) * 0) !important;
+  }
   .right-2 {
     right: calc(var(--spacing) * 2) !important;
   }
@@ -457,6 +461,9 @@
   }
   .-z-10 {
     z-index: calc(10 * -1) !important;
+  }
+  .z-10 {
+    z-index: 10 !important;
   }
   .z-50 {
     z-index: 50 !important;
@@ -557,6 +564,9 @@
   .mb-10 {
     margin-bottom: calc(var(--spacing) * 10) !important;
   }
+  .block {
+    display: block !important;
+  }
   .contents {
     display: contents !important;
   }
@@ -623,6 +633,9 @@
   .w-10 {
     width: calc(var(--spacing) * 10) !important;
   }
+  .w-44 {
+    width: calc(var(--spacing) * 44) !important;
+  }
   .w-48 {
     width: calc(var(--spacing) * 48) !important;
   }
@@ -681,6 +694,9 @@
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,)
       var(--tw-skew-y,) !important;
   }
+  .cursor-not-allowed {
+    cursor: not-allowed !important;
+  }
   .cursor-pointer {
     cursor: pointer !important;
   }
@@ -689,6 +705,9 @@
   }
   .list-disc {
     list-style-type: disc !important;
+  }
+  .list-none {
+    list-style-type: none !important;
   }
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -941,6 +960,9 @@
   }
   .bg-red-600 {
     background-color: var(--color-red-600) !important;
+  }
+  .bg-transparent {
+    background-color: #0000 !important;
   }
   .bg-yellow-600 {
     background-color: var(--color-yellow-600) !important;
@@ -1261,6 +1283,12 @@
     --tw-outline-style: none !important;
     outline-style: none !important;
   }
+  .group-open\:bg-neutral-800:is(:where(.group):is([open], :popover-open, :open) *) {
+    background-color: var(--color-neutral-800) !important;
+  }
+  .group-open\:text-white:is(:where(.group):is([open], :popover-open, :open) *) {
+    color: var(--color-white) !important;
+  }
   @media (hover: hover) {
     .group-hover\:border-neutral-300:is(:where(.group):hover *) {
       border-color: var(--color-neutral-300) !important;
@@ -1324,17 +1352,14 @@
     .hover\:text-blue-300:hover {
       color: var(--color-blue-300) !important;
     }
-    .hover\:text-blue-400:hover {
-      color: var(--color-blue-400) !important;
-    }
     .hover\:text-neutral-300:hover {
       color: var(--color-neutral-300) !important;
     }
     .hover\:text-power:hover {
       color: var(--color-power) !important;
     }
-    .hover\:text-red-400:hover {
-      color: var(--color-red-400) !important;
+    .hover\:text-red-300:hover {
+      color: var(--color-red-300) !important;
     }
     .hover\:text-white:hover {
       color: var(--color-white) !important;
@@ -1453,6 +1478,9 @@
       font-size: var(--text-6xl) !important;
       line-height: var(--tw-leading, var(--text-6xl--line-height)) !important;
     }
+  }
+  .\[\&\:\:-webkit-details-marker\]\:hidden::-webkit-details-marker {
+    display: none !important;
   }
   .\[\&\:\:-webkit-search-cancel-button\]\:hidden::-webkit-search-cancel-button {
     display: none !important;
