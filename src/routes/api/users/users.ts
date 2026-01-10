@@ -102,6 +102,7 @@ export function createUsersRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
   const userService = createUserService(context.scraper);
 

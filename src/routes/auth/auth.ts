@@ -28,6 +28,7 @@ export function createAuthRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const router = express.Router();
@@ -222,6 +223,37 @@ export function createAuthRouter(context: AppContext) {
 
       const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
 
+      const page = req.query.page ? Math.max(1, parseInt(req.query.page as string, 10)) : 1;
+      const search = (req.query.search as string) || "";
+      const limit = 10;
+
+      const totalCalls = await context.apiCallLogRepository.countByUserId(
+        sessionUser.id,
+        search || undefined,
+      );
+      const totalPages = Math.max(1, Math.ceil(totalCalls / limit));
+      const currentPage = Math.min(page, totalPages);
+      const offset = (currentPage - 1) * limit;
+
+      const recentCalls = await context.apiCallLogRepository.findByUserId(sessionUser.id, {
+        search: search || undefined,
+        limit,
+        offset,
+        orderBy: "created_at",
+        order: "desc",
+      });
+
+      const callsPagination = {
+        items: totalCalls,
+        pages: totalPages,
+        per_page: limit,
+        current_page: currentPage,
+        last_page: totalPages,
+        first_page: 1,
+        from: totalCalls > 0 ? offset + 1 : 0,
+        to: Math.min(offset + limit, totalCalls),
+      };
+
       let stats = null;
       if (user.admin) {
         const allUsers = await context.userRepository.findAll();
@@ -241,6 +273,9 @@ export function createAuthRouter(context: AppContext) {
         path: "/dashboard",
         user,
         usagePercent,
+        recentCalls,
+        callsPagination,
+        search,
         stats,
         messages: req.flash(),
         layout: "_layouts/authenticated.html",

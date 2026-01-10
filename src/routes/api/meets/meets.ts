@@ -65,6 +65,7 @@ export function createMeetsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
   const meetService = createMeetService(context.scraper);
 
