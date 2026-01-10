@@ -669,16 +669,16 @@ describe("cron", () => {
 
   describe("cleanupOldApiCallLogs task", () => {
     it("should call deleteOlderThan with correct cutoff date", async () => {
-      vi.setSystemTime(new Date("2024-03-15T00:00:00Z"));
+      const mockDate = new Date("2024-03-15T12:00:00Z");
+      vi.setSystemTime(mockDate);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.cleanupOldApiCallLogs();
 
       expect(apiCallLogRepository.deleteOlderThan).toHaveBeenCalledWith(expect.any(Date));
       const callArg = vi.mocked(apiCallLogRepository.deleteOlderThan).mock.calls[0][0];
-      expect(callArg.getFullYear()).toBe(2023);
-      expect(callArg.getMonth()).toBe(11); // Dec (0-indexed)
-      expect(callArg.getDate()).toBe(15);
+      const daysDiff = Math.round((mockDate.getTime() - callArg.getTime()) / (1000 * 60 * 60 * 24));
+      expect(daysDiff).toBe(90);
     });
 
     it("should log completion with deleted count when logs deleted", async () => {
