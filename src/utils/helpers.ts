@@ -2,7 +2,24 @@ import crypto from "crypto";
 import { Request } from "express";
 
 import { configuration } from "../configuration";
-import type { TurnstileVerifyResponse } from "../types";
+import type { Pagination, TurnstileVerifyResponse } from "../types";
+
+export function buildPagination(total: number, page: number, limit: number): Pagination {
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const offset = (currentPage - 1) * limit;
+
+  return {
+    items: total,
+    pages: totalPages,
+    per_page: limit,
+    current_page: currentPage,
+    last_page: totalPages,
+    first_page: 1,
+    from: total > 0 ? offset + 1 : 0,
+    to: Math.min(offset + limit, total),
+  };
+}
 
 export interface HelpersType {
   getHostName: (req: Request) => string;
