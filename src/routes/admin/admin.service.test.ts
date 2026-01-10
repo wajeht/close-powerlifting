@@ -10,6 +10,8 @@ const adminService = createAdminService(
   context.cache,
   context.authService,
   context.logger,
+  context.apiCallLogRepository,
+  context.helpers,
 );
 
 describe("AdminService", () => {
@@ -162,6 +164,55 @@ describe("AdminService", () => {
 
       expect(result.entries.length).toBe(1);
       expect(result.entries[0].key).toBe("admin-test-old");
+    });
+  });
+
+  describe("resendVerificationEmail", () => {
+    let testUserId: number;
+
+    afterEach(async () => {
+      if (testUserId) {
+        await knex("users").where("id", testUserId).delete();
+      }
+    });
+
+    it("returns false for non-existent user", async () => {
+      const result = await adminService.resendVerificationEmail(999999, "localhost");
+      expect(result).toBe(false);
+    });
+
+    it("returns false for already verified user", async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Verified User",
+          email: "verified-resend@example.com",
+          verified: true,
+        })
+        .returning("*");
+      testUserId = user.id;
+
+      const result = await adminService.resendVerificationEmail(user.id, "localhost");
+      expect(result).toBe(false);
+    });
+
+    it("generates new token and returns true for unverified user", async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Unverified User",
+          email: "unverified-resend@example.com",
+          verified: false,
+          verification_token: "old-token",
+        })
+        .returning("*");
+      testUserId = user.id;
+
+      const result = await adminService.resendVerificationEmail(user.id, "localhost");
+
+      expect(result).toBe(true);
+
+      const updatedUser = await knex("users").where("id", user.id).first();
+      expect(updatedUser.verification_token).not.toBe("old-token");
+      expect(updatedUser.magic_link_expires_at).not.toBeNull();
     });
   });
 });
