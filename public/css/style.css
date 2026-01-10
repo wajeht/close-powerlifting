@@ -413,6 +413,17 @@
   .pointer-events-none {
     pointer-events: none !important;
   }
+  .sr-only {
+    clip-path: inset(50%) !important;
+    white-space: nowrap !important;
+    border-width: 0 !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    position: absolute !important;
+    overflow: hidden !important;
+  }
   .absolute {
     position: absolute !important;
   }
@@ -1047,8 +1058,14 @@
   .pr-6 {
     padding-right: calc(var(--spacing) * 6) !important;
   }
+  .pr-8 {
+    padding-right: calc(var(--spacing) * 8) !important;
+  }
   .pr-10 {
     padding-right: calc(var(--spacing) * 10) !important;
+  }
+  .pl-3 {
+    padding-left: calc(var(--spacing) * 3) !important;
   }
   .text-center {
     text-align: center !important;
@@ -1365,9 +1382,6 @@
     .sm\:min-w-52 {
       min-width: calc(var(--spacing) * 52) !important;
     }
-    .sm\:flex-1 {
-      flex: 1 !important;
-    }
     .sm\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     }
@@ -1435,6 +1449,9 @@
       font-size: var(--text-6xl) !important;
       line-height: var(--tw-leading, var(--text-6xl--line-height)) !important;
     }
+  }
+  .\[\&\:\:-webkit-search-cancel-button\]\:hidden::-webkit-search-cancel-button {
+    display: none !important;
   }
 }
 @property --tw-translate-x {
