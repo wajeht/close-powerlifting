@@ -33,7 +33,7 @@
         <td class="p-4 text-neutral-400"><%= user.id %></td>
         <td class="p-4">
           <div class="flex items-center gap-2">
-            <span class="text-white"><%= user.name %></span>
+            <a href="/admin/users/<%= user.id %>" class="text-white hover:text-power"><%= user.name %></a>
             <% if (user.verified) { %>
             <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
             <% } else { %>
@@ -70,11 +70,12 @@
 </div>
 
 <% for (const user of it.users) { %>
+<% const escapedName = user.name.split('&').join('&amp;').split(String.fromCharCode(60)).join('&lt;').split(String.fromCharCode(62)).join('&gt;').split('"').join('&quot;'); %>
 <%~ include('../_components/modal.html', {
   id: 'modal-user-' + user.id,
   action: '/admin/users/' + user.id + '/api-limit',
   title: 'Update API Limit',
-  description: 'Set a new API call limit for <span class="text-white">' + user.name + '</span>.',
+  description: 'Set a new API call limit for <span class="text-white">' + escapedName + '</span>.',
   input: include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }),
   confirmText: 'Update Limit'
 }) %>
@@ -83,13 +84,13 @@
 <% if (it.pagination.pages > 1) { %>
 <div class="fade-in animation-delay-5 mt-6 flex items-center justify-center gap-2">
   <% if (it.pagination.current_page > 1) { %>
-  <a href="/admin/users?page=<%= it.pagination.current_page - 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <a href="/admin/users?page=<%= it.pagination.current_page - 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
   <% } %>
   <span class="px-4 text-neutral-400">
     Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
   </span>
   <% if (it.pagination.current_page < it.pagination.pages) { %>
-  <a href="/admin/users?page=<%= it.pagination.current_page + 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <a href="/admin/users?page=<%= it.pagination.current_page + 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
   <% } %>
 </div>
 <% } %>

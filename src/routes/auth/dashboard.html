@@ -3,12 +3,12 @@
   <p class="mt-2 text-sm text-neutral-400 md:text-base">View your API usage statistics.</p>
 </header>
 
-<div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl">
+<div class="fade-in animation-delay-2 mt-6 mb-6">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
 <!-- Usage Section -->
-<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 max-w-2xl flex flex-col gap-4">
+<div class="fade-in animation-delay-3 mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-4 md:p-6 flex flex-col gap-4">
   <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
     <h2 class="text-base font-semibold text-white md:text-lg">API Usage</h2>
     <% if (it.user.admin) { %>
@@ -37,7 +37,7 @@
 
 <% if (it.user.admin && it.stats) { %>
 <!-- Admin: System Overview -->
-<div class="fade-in animation-delay-4 max-w-2xl">
+<div class="fade-in animation-delay-4 mb-8">
   <h2 class="mb-4 text-base font-semibold text-white md:text-lg">System Overview</h2>
   <div class="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3">
     <%~ include('../_components/stat-card.html', { value: it.stats.totalUsers, label: 'Total Users', color: 'text-white' }) %>
@@ -48,4 +48,70 @@
     <%~ include('../_components/stat-card.html', { value: it.stats.totalApiCalls.toLocaleString(), label: 'Total API Calls', color: 'text-white' }) %>
   </div>
 </div>
+<% } %>
+
+<!-- Recent API Calls Section -->
+<% if (it.callsPagination.items > 0 || it.search) { %>
+<div class="fade-in animation-delay-5">
+  <h2 class="mb-4 text-base font-semibold text-white md:text-lg">Recent API Calls</h2>
+
+  <div class="mb-6">
+    <form action="/dashboard" method="get" class="flex gap-2">
+      <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by endpoint, method, or status', value: it.search }) %>
+      <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
+    </form>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+    <table class="w-full text-left">
+      <thead class="border-b border-neutral-800 text-neutral-400">
+        <tr>
+          <th class="p-4">Endpoint</th>
+          <th class="p-4">Status</th>
+          <th class="p-4">Time</th>
+          <th class="p-4">When</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-800">
+        <% for (const call of it.recentCalls) { %>
+        <tr class="hover:bg-neutral-800/50">
+          <td class="p-4 font-mono text-sm text-neutral-300 max-w-xs truncate" title="<%= call.endpoint %>">
+            <span class="text-neutral-500"><%= call.method %></span> <%= call.endpoint %>
+          </td>
+          <td class="p-4">
+            <% if (call.status_code < 300) { %>
+            <span class="text-green-400"><%= call.status_code %></span>
+            <% } else if (call.status_code < 400) { %>
+            <span class="text-yellow-400"><%= call.status_code %></span>
+            <% } else { %>
+            <span class="text-red-400"><%= call.status_code %></span>
+            <% } %>
+          </td>
+          <td class="p-4 text-sm text-neutral-400"><%= call.response_time_ms %>ms</td>
+          <td class="p-4 text-sm text-neutral-300"><%= new Date(call.created_at).toLocaleString() %></td>
+        </tr>
+        <% } %>
+        <% if (it.recentCalls.length === 0) { %>
+        <tr>
+          <td colspan="4" class="p-8 text-center text-neutral-400">No API calls found.</td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<% if (it.callsPagination.pages > 1) { %>
+<div class="fade-in animation-delay-6 mt-6 flex items-center justify-center gap-2">
+  <% if (it.callsPagination.current_page > 1) { %>
+  <a href="/dashboard?page=<%= it.callsPagination.current_page - 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <% } %>
+  <span class="px-4 text-neutral-400">
+    Page <%= it.callsPagination.current_page %> of <%= it.callsPagination.pages %>
+  </span>
+  <% if (it.callsPagination.current_page < it.callsPagination.pages) { %>
+  <a href="/dashboard?page=<%= it.callsPagination.current_page + 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <% } %>
+</div>
+<% } %>
 <% } %>
