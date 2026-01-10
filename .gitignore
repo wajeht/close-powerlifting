@@ -104,8 +104,6 @@ src/templates/tempCodeRunnerFile.js
 src/public/css/style.css
 mongo-volume
 mongo-data
-.vscode
-.claude
 
 /test-results/
 /playwright-report/
@@ -122,7 +120,13 @@ src/db/sqlite/test.sqlite
 src/db/sqlite/test.sqlite-shm
 src/db/sqlite/test.sqlite-wal
 NetrwTreeListing
-.cursorrules
+
+# IDE/Editor
 .vscode
+.idea
+.cursorrules
+
+# AI tools
 .claude
+.gains
 opencode*
