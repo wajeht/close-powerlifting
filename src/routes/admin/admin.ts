@@ -8,6 +8,7 @@ import {
   updateApiLimitValidation,
   usersQueryValidation,
   cacheKeyValidation,
+  cacheQueryValidation,
 } from "./admin.validation";
 
 export function createAdminRouter(context: AppContext) {
@@ -25,6 +26,7 @@ export function createAdminRouter(context: AppContext) {
     context.userRepository,
     context.cache,
     context.authService,
+    context.helpers,
     context.logger,
   );
 
@@ -92,16 +94,22 @@ export function createAdminRouter(context: AppContext) {
   router.get(
     "/cache",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.validationMiddleware({ query: cacheQueryValidation }),
     async (req: Request, res: Response) => {
-      const search = (req.query.search as string) || "";
-      const pattern = search ? `%${search}%` : "%";
-      const entries = await adminService.getCacheEntries(pattern);
+      const page = req.query.page as number | undefined;
+      const search = req.query.search as string | undefined;
+
+      const { entries, pagination } = await adminService.getCacheEntries({
+        page,
+        search,
+      });
 
       return res.render("admin/cache-view.html", {
         title: "Cache Management",
         path: "/admin/cache",
         entries,
-        search,
+        pagination,
+        search: search || "",
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
       });

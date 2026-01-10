@@ -59,6 +59,20 @@
   </table>
 </div>
 
+<% if (it.pagination.pages > 1) { %>
+<div class="fade-in animation-delay-6 mt-6 flex items-center justify-center gap-2">
+  <% if (it.pagination.current_page > 1) { %>
+  <a href="/admin/cache?page=<%= it.pagination.current_page - 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <% } %>
+  <span class="px-4 text-neutral-400">
+    Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
+  </span>
+  <% if (it.pagination.current_page < it.pagination.pages) { %>
+  <a href="/admin/cache?page=<%= it.pagination.current_page + 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <% } %>
+</div>
+<% } %>
+
 <%~ include('../_components/modal.html', {
   id: 'clear-all-modal',
   action: '/admin/cache/clear',
