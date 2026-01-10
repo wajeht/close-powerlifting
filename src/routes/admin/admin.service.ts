@@ -1,7 +1,8 @@
 import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
+import type { ApiCallLogRepositoryType } from "../../db/api-call-log";
 import type { AuthServiceType } from "../auth/auth.service";
-import type { User, Pagination } from "../../types";
+import type { User, Pagination, ApiCallLog } from "../../types";
 import type { LoggerType } from "../../utils/logger";
 
 export interface AdminServiceType {
@@ -12,6 +13,10 @@ export interface AdminServiceType {
     order?: "asc" | "desc";
   }) => Promise<{ users: User[]; pagination: Pagination }>;
   getUserById: (id: number) => Promise<User | undefined>;
+  getUserApiCallHistory: (
+    userId: number,
+    options?: { page?: number; limit?: number; search?: string },
+  ) => Promise<{ calls: ApiCallLog[]; pagination: Pagination }>;
   updateUserApiCallCount: (userId: number, count: number) => Promise<User | undefined>;
   updateUserApiCallLimit: (userId: number, limit: number) => Promise<User | undefined>;
   resendVerificationEmail: (userId: number, hostname: string) => Promise<boolean>;
@@ -57,6 +62,7 @@ export function createAdminService(
   cache: CacheType,
   authService: AuthServiceType,
   logger: LoggerType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
 ): AdminServiceType {
   async function getAllUsers(
     options: {
@@ -86,6 +92,27 @@ export function createAdminService(
 
   async function getUserById(id: number): Promise<User | undefined> {
     return userRepository.findById(id);
+  }
+
+  async function getUserApiCallHistory(
+    userId: number,
+    options: { page?: number; limit?: number; search?: string } = {},
+  ): Promise<{ calls: ApiCallLog[]; pagination: Pagination }> {
+    const limit = options.limit || 10;
+
+    const total = await apiCallLogRepository.countByUserId(userId, options.search);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const calls = await apiCallLogRepository.findByUserId(userId, {
+      search: options.search,
+      orderBy: "created_at",
+      order: "desc",
+      limit,
+      offset,
+    });
+
+    return { calls, pagination };
   }
 
   async function updateUserApiCallCount(userId: number, count: number): Promise<User | undefined> {
@@ -173,6 +200,7 @@ export function createAdminService(
   return {
     getAllUsers,
     getUserById,
+    getUserApiCallHistory,
     updateUserApiCallCount,
     updateUserApiCallLimit,
     resendVerificationEmail,

@@ -68,6 +68,13 @@ describe("Admin Routes", () => {
       expect(response.headers.location).toBe("/login");
     });
 
+    it("should redirect GET /admin/users/:id to login", async () => {
+      const response = await request(app).get("/admin/users/1");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
     it("should redirect POST /admin/users/:id/api-limit to login", async () => {
       const response = await request(app)
         .post("/admin/users/1/api-limit")
@@ -126,6 +133,13 @@ describe("Admin Routes", () => {
 
     it("should redirect GET /admin/cache to login for non-admin user", async () => {
       const response = await nonAdminAgent.get("/admin/cache");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should redirect GET /admin/users/:id to login for non-admin user", async () => {
+      const response = await nonAdminAgent.get(`/admin/users/${regularUserId}`);
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -241,6 +255,50 @@ describe("Admin Routes", () => {
 
         const user = await knex("users").where({ id: regularUserId }).first();
         expect(user.api_call_limit).toBe(1000);
+      });
+    });
+
+    describe("GET /admin/users/:id", () => {
+      it("should render user details page", async () => {
+        const response = await agent.get(`/admin/users/${regularUserId}`);
+
+        expect(response.status).toBe(200);
+        expect(response.text).toContain("User Details");
+        expect(response.text).toContain("Regular Test User");
+        expect(response.text).toContain(regularEmail);
+      });
+
+      it("should show API call history when logs exist", async () => {
+        await knex("api_call_logs").insert({
+          user_id: regularUserId,
+          method: "GET",
+          endpoint: "/api/rankings",
+          status_code: 200,
+          response_time_ms: 42,
+          ip_address: "127.0.0.1",
+        });
+
+        const response = await agent.get(`/admin/users/${regularUserId}`);
+
+        expect(response.status).toBe(200);
+        expect(response.text).toContain("API Call History");
+        expect(response.text).toContain("/api/rankings");
+        expect(response.text).toContain("42ms");
+
+        await knex("api_call_logs").where({ user_id: regularUserId }).del();
+      });
+
+      it("should redirect to users list for non-existent user", async () => {
+        const response = await agent.get("/admin/users/99999");
+
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe("/admin/users");
+      });
+
+      it("should validate user id is a number", async () => {
+        const response = await agent.get("/admin/users/invalid");
+
+        expect(response.status).toBe(302);
       });
     });
 
