@@ -2,17 +2,7 @@ import crypto from "crypto";
 import { Request } from "express";
 
 import { configuration } from "../configuration";
-import type { Pagination, TurnstileVerifyResponse } from "../types";
-
-export interface PaginateOptions {
-  page?: number;
-  limit?: number;
-}
-
-export interface PaginateResult<T> {
-  items: T[];
-  pagination: Pagination;
-}
+import type { TurnstileVerifyResponse } from "../types";
 
 export interface HelpersType {
   getHostName: (req: Request) => string;
@@ -20,7 +10,6 @@ export interface HelpersType {
   timingSafeEqual: (a: string, b: string) => boolean;
   extractNameFromEmail: (email: string) => string;
   verifyTurnstileToken: (token: string, remoteip?: string) => Promise<TurnstileVerifyResponse>;
-  paginate: <T>(items: T[], options?: PaginateOptions) => PaginateResult<T>;
 }
 
 export function createHelper(): HelpersType {
@@ -89,35 +78,11 @@ export function createHelper(): HelpersType {
     }
   }
 
-  function paginate<T>(items: T[], options: PaginateOptions = {}): PaginateResult<T> {
-    const limit = options.limit || 10;
-    const total = items.length;
-    const totalPages = Math.max(1, Math.ceil(total / limit));
-    const page = Math.min(Math.max(1, options.page || 1), totalPages);
-    const offset = (page - 1) * limit;
-    const paginatedItems = items.slice(offset, offset + limit);
-
-    return {
-      items: paginatedItems,
-      pagination: {
-        items: total,
-        pages: totalPages,
-        per_page: limit,
-        current_page: page,
-        last_page: totalPages,
-        first_page: 1,
-        from: total > 0 ? offset + 1 : 0,
-        to: Math.min(offset + limit, total),
-      },
-    };
-  }
-
   return {
     getHostName,
     generateToken,
     timingSafeEqual,
     extractNameFromEmail,
     verifyTurnstileToken,
-    paginate,
   };
 }

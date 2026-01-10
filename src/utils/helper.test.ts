@@ -383,63 +383,6 @@ describe.concurrent("helpers.timingSafeEqual", () => {
   });
 });
 
-describe.concurrent("helpers.paginate", () => {
-  const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
-  it("returns first page with default limit", () => {
-    const result = helpers.paginate(items);
-    expect(result.items).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(result.pagination.current_page).toBe(1);
-    expect(result.pagination.pages).toBe(2);
-    expect(result.pagination.per_page).toBe(10);
-  });
-
-  it("returns second page", () => {
-    const result = helpers.paginate(items, { page: 2 });
-    expect(result.items).toEqual([11, 12]);
-    expect(result.pagination.current_page).toBe(2);
-  });
-
-  it("clamps page to max when exceeding total pages", () => {
-    const result = helpers.paginate(items, { page: 999 });
-    expect(result.pagination.current_page).toBe(2);
-    expect(result.items).toEqual([11, 12]);
-  });
-
-  it("clamps page to 1 when below 1", () => {
-    const result = helpers.paginate(items, { page: 0 });
-    expect(result.pagination.current_page).toBe(1);
-  });
-
-  it("respects custom limit", () => {
-    const result = helpers.paginate(items, { limit: 5 });
-    expect(result.items).toEqual([1, 2, 3, 4, 5]);
-    expect(result.pagination.pages).toBe(3);
-    expect(result.pagination.per_page).toBe(5);
-  });
-
-  it("handles empty array", () => {
-    const result = helpers.paginate([]);
-    expect(result.items).toEqual([]);
-    expect(result.pagination.pages).toBe(1);
-    expect(result.pagination.current_page).toBe(1);
-    expect(result.pagination.from).toBe(0);
-    expect(result.pagination.to).toBe(0);
-  });
-
-  it("calculates from/to correctly", () => {
-    const result = helpers.paginate(items, { page: 1, limit: 5 });
-    expect(result.pagination.from).toBe(1);
-    expect(result.pagination.to).toBe(5);
-  });
-
-  it("calculates from/to correctly for partial last page", () => {
-    const result = helpers.paginate(items, { page: 3, limit: 5 });
-    expect(result.pagination.from).toBe(11);
-    expect(result.pagination.to).toBe(12);
-  });
-});
-
 describe.concurrent("helpers.extractNameFromEmail", () => {
   it("extracts name from simple email", () => {
     expect(helpers.extractNameFromEmail("john@example.com")).toBe("John");
