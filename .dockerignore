@@ -1,14 +1,60 @@
-.gains
-.github
+# Git
+.git
+.gitignore
+
+# IDE/Editor
 .vscode
-coverage
-docs
+.idea
+*.swp
+*.swo
+
+# Dependencies
 node_modules
-.editorconfig
-.env.example
-*.csv
+
+# Build output
 dist
-deploy.sh
-README.md
-mongo-data
 coverage
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Documentation
+docs
+*.md
+
+# CI/CD
+.github
+
+# Docker
+Dockerfile
+docker-compose*.yml
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+mongo-data
+
+# Data files
+*.csv
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temp files
+*.tmp
+*.temp
+
+# Scripts
+deploy.sh
+
+# Claude/AI
+.claude
+.gains
