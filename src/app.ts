@@ -32,6 +32,7 @@ export async function createApp(
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const app = express();

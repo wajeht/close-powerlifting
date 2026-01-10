@@ -6,6 +6,7 @@ import { createDatabase, type DatabaseType } from "./db/db";
 import { createCache, type CacheType } from "./db/cache";
 import { createMail, type MailType } from "./mail";
 import { createUserRepository, type UserRepositoryType } from "./db/user";
+import { createApiCallLogRepository, type ApiCallLogRepositoryType } from "./db/api-call-log";
 import { createScraper, type ScraperType } from "./utils/scraper";
 import { createCron, type CronType } from "./cron";
 import { createAuthService, type AuthServiceType } from "./routes/auth/auth.service";
@@ -18,6 +19,7 @@ export type {
   CacheType,
   MailType,
   UserRepositoryType,
+  ApiCallLogRepositoryType,
   ScraperType,
   CronType,
   AuthServiceType,
@@ -32,6 +34,7 @@ export interface AppContext {
   cache: CacheType;
   mail: MailType;
   userRepository: UserRepositoryType;
+  apiCallLogRepository: ApiCallLogRepositoryType;
   scraper: ScraperType;
   cron: CronType;
   authService: AuthServiceType;
@@ -52,9 +55,10 @@ export function createContext(): AppContext {
   const cache = createCache(knex, logger);
   const mail = createMail(logger);
   const userRepository = createUserRepository(knex);
+  const apiCallLogRepository = createApiCallLogRepository(knex);
   const scraper = createScraper(cache, logger);
   const authService = createAuthService(userRepository, mail, logger);
-  const cron = createCron(cache, userRepository, mail, logger, scraper);
+  const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
   const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
 
   _context = {
@@ -65,6 +69,7 @@ export function createContext(): AppContext {
     cache,
     mail,
     userRepository,
+    apiCallLogRepository,
     scraper,
     cron,
     authService,
