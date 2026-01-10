@@ -3,6 +3,7 @@ import cron, { ScheduledTask } from "node-cron";
 import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
+import type { ApiCallLogRepositoryType } from "./db/api-call-log";
 import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
@@ -30,6 +31,7 @@ export interface CronType {
     refreshCache: () => Promise<void>;
     resetApiCallCount: () => Promise<void>;
     sendReachingApiLimitEmail: () => Promise<void>;
+    cleanupOldApiCallLogs: () => Promise<void>;
   };
 }
 
@@ -46,6 +48,7 @@ export function createCron(
   mail: MailType,
   logger: LoggerType,
   scraper: ScraperType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
 ): CronType {
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
@@ -386,10 +389,31 @@ export function createCron(
     }
   }
 
+  async function cleanupOldApiCallLogsTask() {
+    try {
+      logger.info("cron job started: cleanupOldApiCallLogs");
+
+      const retentionDays = configuration.app.apiCallLogRetentionDays;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+      const deletedCount = await apiCallLogRepository.deleteOlderThan(cutoffDate);
+
+      if (deletedCount > 0) {
+        logger.info(`cron job completed: cleanupOldApiCallLogs - deleted ${deletedCount} logs`);
+      } else {
+        logger.info("cron job completed: cleanupOldApiCallLogs - no logs to delete");
+      }
+    } catch (error) {
+      logger.error("cron job failed: cleanupOldApiCallLogs", error);
+    }
+  }
+
   function start(): void {
     cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", resetApiCallCountTask)); // Daily API call count reset: every day at 12:00 AM UTC
+    cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
 
     isRunning = true;
     logger.info("cron service started", { jobs: cronJobs.length });
@@ -416,6 +440,7 @@ export function createCron(
       refreshCache: refreshCacheTask,
       resetApiCallCount: resetApiCallCountTask,
       sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
+      cleanupOldApiCallLogs: cleanupOldApiCallLogsTask,
     },
   };
 }
