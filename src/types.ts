@@ -51,6 +51,20 @@ export type UserParams = {
   apiKeyVersion: number;
 };
 
+export interface ApiCallLog {
+  id: number;
+  user_id: number;
+  method: string;
+  endpoint: string;
+  status_code: number;
+  response_time_ms: number;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export type CreateApiCallLogInput = Omit<ApiCallLog, "id" | "created_at">;
+
 export interface ApiResponse<T> {
   data: T | null;
   pagination?: Pagination;
