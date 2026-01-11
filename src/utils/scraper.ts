@@ -5,13 +5,30 @@ import type { ApiResponse, Pagination } from "../types";
 import type { CacheType } from "../db/cache";
 import type { LoggerType } from "./logger";
 
-const DEFAULT_HEADERS: Record<string, string> = {
-  Cookie: "units=lbs;",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-  "User-Agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:88.0) Gecko/20100101 Firefox/88.0",
-  Pragma: "no-cache",
-};
+const USER_AGENTS: [string, ...string[]] = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
+  "Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:134.0) Gecko/20100101 Firefox/134.0",
+];
+
+function getRandomUserAgent(): string {
+  const index = Math.floor(Math.random() * USER_AGENTS.length);
+  return USER_AGENTS[index] ?? USER_AGENTS[0];
+}
+
+function getDefaultHeaders(): Record<string, string> {
+  return {
+    Cookie: "units=lbs;",
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "User-Agent": getRandomUserAgent(),
+    Pragma: "no-cache",
+  };
+}
 
 export interface ScraperType {
   fetchHtml: (path: string) => Promise<string>;
@@ -36,7 +53,7 @@ export interface ScraperType {
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
   async function fetchHtml(path: string): Promise<string> {
     const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
-    const response = await fetch(url, { headers: DEFAULT_HEADERS });
+    const response = await fetch(url, { headers: getDefaultHeaders() });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch ${path}`, response.status, path);
@@ -47,7 +64,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
 
   async function fetchJson<T>(path: string): Promise<T> {
     const url = `${configuration.openpowerlifting.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
-    const response = await fetch(url, { headers: DEFAULT_HEADERS });
+    const response = await fetch(url, { headers: getDefaultHeaders() });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch API ${path}`, response.status, path);
