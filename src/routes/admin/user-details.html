@@ -52,7 +52,7 @@
 <div class="fade-in animation-delay-4">
   <h2 class="mb-4 text-base font-semibold text-white md:text-lg">API Call History</h2>
 
-  <div class="mb-6">
+  <div class="mb-6 max-w-2xl">
     <form action="/admin/users/<%= it.viewedUser.id %>" method="get" class="flex gap-2">
       <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by endpoint, method, or status', value: it.search }) %>
       <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>

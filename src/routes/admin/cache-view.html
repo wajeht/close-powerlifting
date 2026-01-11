@@ -8,12 +8,14 @@
 </div>
 
 <!-- Search and Actions -->
-<div class="fade-in animation-delay-3 mb-6 flex flex-wrap items-center gap-4">
+<div class="fade-in animation-delay-3 flex justify-between mb-6">
+<div class="flex justify-between gap-4 max-w-2xl w-full">
   <form action="/admin/cache" method="get" class="flex flex-1 gap-2">
     <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by key...', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
   </form>
-  <button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700 sm:min-w-52" data-modal="clear-all-modal">Clear All Cache</button>
+</div>
+<button type="button" class="open-modal rounded-md bg-red-600 px-4 py-2 font-medium text-white transition-all hover:bg-red-700 sm:min-w-52" data-modal="clear-all-modal">Clear All Cache</button>
 </div>
 
 <!-- Cache Entries -->

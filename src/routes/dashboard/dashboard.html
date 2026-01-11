@@ -55,7 +55,7 @@
 <div class="fade-in animation-delay-5">
   <h2 class="mb-4 text-base font-semibold text-white md:text-lg">Recent API Calls</h2>
 
-  <div class="mb-6">
+  <div class="mb-6 max-w-2xl">
     <form action="/dashboard" method="get" class="flex gap-2">
       <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by endpoint, method, or status', value: it.search }) %>
       <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>

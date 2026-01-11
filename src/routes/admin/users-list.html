@@ -7,7 +7,7 @@
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<div class="fade-in animation-delay-3 mb-6">
+<div class="fade-in animation-delay-3 mb-6 max-w-2xl">
   <form action="/admin/users" method="get" class="flex gap-2">
     <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
