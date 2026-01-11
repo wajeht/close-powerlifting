@@ -45,6 +45,7 @@ function createTestCache(): CacheType {
       keyPatterns: [],
     }),
     getEntries: async () => [],
+    countEntries: async () => store.size,
   };
 }
 
