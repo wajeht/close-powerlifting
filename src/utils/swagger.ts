@@ -17,7 +17,7 @@ const swaggerConfig = {
 REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org), which updates multiple times daily with new meet results.
 
 ## Getting Started
-1. Register at [closepowerlifting.com](https://closepowerlifting.com/register)
+1. Register at [closepowerlifting.com](https://closepowerlifting.com/login)
 2. Copy your API key from the dashboard
 3. Include the key in your requests as a Bearer token
 
