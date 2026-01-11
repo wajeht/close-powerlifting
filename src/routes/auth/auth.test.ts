@@ -112,6 +112,20 @@ describe("Auth Routes", () => {
 
       await knex("users").where({ id: unverifiedUser.id }).delete();
     });
+
+    it("should reject invalid email format", async () => {
+      const agent = createUnauthenticatedSessionAgent();
+      const loginPage = await agent.get("/login");
+      const csrfToken = extractCsrfToken(loginPage.text);
+
+      const response = await agent
+        .post("/login")
+        .type("form")
+        .send({ email: "not-an-email", _csrf: csrfToken });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
   });
 
   describe("GET /magic-link", () => {
@@ -212,174 +226,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("Protected routes without authentication", () => {
-    it("should redirect GET /dashboard to login", async () => {
-      const response = await request(app).get("/dashboard");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect GET /settings to login", async () => {
-      const response = await request(app).get("/settings");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /settings to login", async () => {
-      const response = await request(app).post("/settings").type("form").send({ name: "Hacker" });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /settings/regenerate-key to login", async () => {
-      const response = await request(app).post("/settings/regenerate-key");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /settings/delete to login", async () => {
-      const response = await request(app).post("/settings/delete");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-  });
-
-  describe("Dashboard routes with authentication", () => {
-    let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
-
-    beforeEach(async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-    });
-
-    describe("GET /dashboard", () => {
-      it("should render dashboard with user info", async () => {
-        const response = await sessionAgent.get("/dashboard");
-
-        expect(response.status).toBe(200);
-        expect(response.text).toContain("Dashboard");
-        expect(response.text).toContain("API Usage");
-        expect(response.text).toContain("50"); // api_call_count
-      });
-    });
-
-    describe("POST /settings/regenerate-key", () => {
-      it("should regenerate API key", async () => {
-        const beforeUser = await knex("users").where({ id: testUserId }).first();
-        const beforeKey = beforeUser.api_key;
-
-        const settingsPage = await sessionAgent.get("/settings");
-        const csrfToken = extractCsrfToken(settingsPage.text);
-
-        const response = await sessionAgent
-          .post("/settings/regenerate-key")
-          .type("form")
-          .send({ _csrf: csrfToken });
-
-        expect(response.status).toBe(200);
-
-        const afterUser = await knex("users").where({ id: testUserId }).first();
-        expect(afterUser.api_key).not.toBe(beforeKey);
-      });
-    });
-  });
-
-  describe("Profile routes with authentication", () => {
-    let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
-
-    beforeEach(async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-    });
-
-    describe("GET /settings", () => {
-      it("should render settings page", async () => {
-        const response = await sessionAgent.get("/settings");
-
-        expect(response.status).toBe(200);
-        expect(response.text).toContain("Settings");
-        expect(response.text).toContain(testEmail);
-        expect(response.text).toContain(testName);
-      });
-    });
-
-    describe("POST /settings", () => {
-      afterEach(async () => {
-        await knex("users").where({ id: testUserId }).update({ name: testName });
-      });
-
-      it("should update user name", async () => {
-        const settingsPage = await sessionAgent.get("/settings");
-        const csrfToken = extractCsrfToken(settingsPage.text);
-
-        const response = await sessionAgent
-          .post("/settings")
-          .type("form")
-          .send({ name: "Updated Name", _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/settings");
-
-        const user = await knex("users").where({ id: testUserId }).first();
-        expect(user.name).toBe("Updated Name");
-      });
-    });
-
-    describe("POST /settings/delete", () => {
-      let deleteUserId: number;
-      const deleteMagicToken = "delete-magic-token";
-
-      beforeEach(async () => {
-        const [user] = await knex("users")
-          .insert({
-            name: "Delete Test User",
-            email: "delete-test@example.com",
-            verification_token: deleteMagicToken,
-            verified: true,
-          })
-          .returning("*");
-        deleteUserId = user.id;
-      });
-
-      it("should delete account and logout", async () => {
-        const deleteSessionAgent = createUnauthenticatedSessionAgent();
-        await deleteSessionAgent.get(
-          `/magic-link?token=${deleteMagicToken}&email=delete-test@example.com`,
-        );
-
-        const settingsPage = await deleteSessionAgent.get("/settings");
-        const csrfToken = extractCsrfToken(settingsPage.text);
-
-        const response = await deleteSessionAgent
-          .post("/settings/delete")
-          .type("form")
-          .send({ _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/login");
-
-        const user = await knex("users").where({ id: deleteUserId }).first();
-        expect(user).toBeUndefined();
-      });
-    });
-  });
-
-  describe("GET /verify-email - auto login flow", () => {
+  describe("GET /verify-email", () => {
     let verifyUserId: number;
     const verifyEmail = "verify-auto-login@example.com";
     const verifyToken = "verify-auto-login-token";
@@ -450,32 +297,48 @@ describe("Auth Routes", () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
     });
-  });
 
-  describe("Session user edge cases", () => {
-    it("should redirect to login if session user is deleted from database", async () => {
-      const [tempUser] = await knex("users")
-        .insert({
-          name: "Temp User",
-          email: "temp-user@example.com",
-          verification_token: "temp-token",
-          verified: true,
-        })
-        .returning("*");
+    it("should reject verification with expired token", async () => {
+      const expiredTime = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+      await knex("users").where({ id: verifyUserId }).update({
+        verification_token: verifyToken,
+        magic_link_expires_at: expiredTime,
+        verified: false,
+      });
 
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=temp-token&email=temp-user@example.com`);
+      const response = await request(app).get(
+        `/verify-email?token=${verifyToken}&email=${verifyEmail}`,
+      );
 
-      const dashboardBefore = await sessionAgent.get("/dashboard");
-      expect(dashboardBefore.status).toBe(200);
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
 
-      await knex("users").where({ id: tempUser.id }).delete();
-
-      const dashboardAfter = await sessionAgent.get("/dashboard");
-      expect(dashboardAfter.status).toBe(302);
-      expect(dashboardAfter.headers.location).toBe("/login");
+      const user = await knex("users").where({ id: verifyUserId }).first();
+      expect(user.verified).toBe(0);
     });
 
+    it("should accept verification with non-expired token", async () => {
+      const validTime = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
+      await knex("users").where({ id: verifyUserId }).update({
+        verification_token: verifyToken,
+        magic_link_expires_at: validTime,
+        verified: false,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      const response = await sessionAgent.get(
+        `/verify-email?token=${verifyToken}&email=${verifyEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/dashboard");
+
+      const user = await knex("users").where({ id: verifyUserId }).first();
+      expect(user.verified).toBe(1);
+    });
+  });
+
+  describe("Admin route access", () => {
     it("should redirect non-admin to login when accessing admin routes", async () => {
       const sessionAgent = createUnauthenticatedSessionAgent();
       await knex("users").where({ id: testUserId }).update({
@@ -510,341 +373,12 @@ describe("Auth Routes", () => {
       expect(magicLinkResponse.status).toBe(302);
       expect(magicLinkResponse.headers.location).toBe("/dashboard");
 
-      const dashboardResponse = await sessionAgent.get("/dashboard");
-      expect(dashboardResponse.status).toBe(200);
-
       const response = await sessionAgent.get("/admin/users");
 
       expect(response.status).toBe(200);
       expect(response.text).toContain("Manage Users");
 
       await knex("users").where({ id: adminUser.id }).delete();
-    });
-  });
-
-  describe("Validation edge cases", () => {
-    it("POST /login should reject invalid email format", async () => {
-      const agent = createUnauthenticatedSessionAgent();
-      const loginPage = await agent.get("/login");
-      const csrfToken = extractCsrfToken(loginPage.text);
-
-      const response = await agent
-        .post("/login")
-        .type("form")
-        .send({ email: "not-an-email", _csrf: csrfToken });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("POST /settings should reject empty name", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const settingsPage = await sessionAgent.get("/settings");
-      const csrfToken = extractCsrfToken(settingsPage.text);
-
-      const response = await sessionAgent
-        .post("/settings")
-        .type("form")
-        .send({ name: "", _csrf: csrfToken });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/settings");
-
-      const user = await knex("users").where({ id: testUserId }).first();
-      expect(user.name).toBe(testName);
-    });
-  });
-
-  describe("Session persistence", () => {
-    it("should maintain session across multiple requests", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const dashboard1 = await sessionAgent.get("/dashboard");
-      expect(dashboard1.status).toBe(200);
-
-      const settings = await sessionAgent.get("/settings");
-      expect(settings.status).toBe(200);
-
-      const dashboard2 = await sessionAgent.get("/dashboard");
-      expect(dashboard2.status).toBe(200);
-    });
-
-    it("should update session name after name change", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const settingsPage = await sessionAgent.get("/settings");
-      const csrfToken = extractCsrfToken(settingsPage.text);
-
-      await sessionAgent
-        .post("/settings")
-        .type("form")
-        .send({ name: "Updated Session Name", _csrf: csrfToken });
-
-      const settingsPageAfter = await sessionAgent.get("/settings");
-      expect(settingsPageAfter.text).toContain("Updated Session Name");
-
-      await knex("users").where({ id: testUserId }).update({ name: testName });
-    });
-  });
-
-  describe("Session isolation", () => {
-    it("should not share sessions between different agents", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent1 = createUnauthenticatedSessionAgent();
-      const sessionAgent2 = createUnauthenticatedSessionAgent();
-
-      await sessionAgent1.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const dashboard1 = await sessionAgent1.get("/dashboard");
-      expect(dashboard1.status).toBe(200);
-
-      const dashboard2 = await sessionAgent2.get("/dashboard");
-      expect(dashboard2.status).toBe(302);
-      expect(dashboard2.headers.location).toBe("/login");
-    });
-
-    it("should not affect other sessions when one logs out", async () => {
-      const [user2] = await knex("users")
-        .insert({
-          name: "Session Test User 2",
-          email: "session-test-2@example.com",
-          verification_token: "session-token-2",
-          verified: true,
-        })
-        .returning("*");
-
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent1 = createUnauthenticatedSessionAgent();
-      const sessionAgent2 = createUnauthenticatedSessionAgent();
-
-      await sessionAgent1.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-      await sessionAgent2.get(`/magic-link?token=session-token-2&email=session-test-2@example.com`);
-
-      const dashboard1Before = await sessionAgent1.get("/dashboard");
-      expect(dashboard1Before.status).toBe(200);
-      const dashboard2Before = await sessionAgent2.get("/dashboard");
-      expect(dashboard2Before.status).toBe(200);
-
-      const dashboardPage = await sessionAgent1.get("/dashboard");
-      const csrfToken = extractCsrfToken(dashboardPage.text);
-      await sessionAgent1.post("/logout").type("form").send({ _csrf: csrfToken });
-
-      const dashboard1After = await sessionAgent1.get("/dashboard");
-      expect(dashboard1After.status).toBe(302);
-
-      const dashboard2After = await sessionAgent2.get("/dashboard");
-      expect(dashboard2After.status).toBe(200);
-
-      await knex("users").where({ id: user2.id }).delete();
-    });
-  });
-
-  describe("Session destruction", () => {
-    it("should clear session cookie after logout", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const dashboardBefore = await sessionAgent.get("/dashboard");
-      expect(dashboardBefore.status).toBe(200);
-
-      const dashboardPage = await sessionAgent.get("/dashboard");
-      const csrfToken = extractCsrfToken(dashboardPage.text);
-      await sessionAgent.post("/logout").type("form").send({ _csrf: csrfToken });
-
-      const dashboardAfter = await sessionAgent.get("/dashboard");
-      expect(dashboardAfter.status).toBe(302);
-      expect(dashboardAfter.headers.location).toBe("/login");
-
-      const settingsAfter = await sessionAgent.get("/settings");
-      expect(settingsAfter.status).toBe(302);
-      expect(settingsAfter.headers.location).toBe("/login");
-    });
-
-    it("should destroy session when user is deleted from database during active session", async () => {
-      const [tempUser] = await knex("users")
-        .insert({
-          name: "Destroy Session User",
-          email: "destroy-session@example.com",
-          verification_token: "destroy-token",
-          verified: true,
-        })
-        .returning("*");
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=destroy-token&email=destroy-session@example.com`);
-
-      const dashboardBefore = await sessionAgent.get("/dashboard");
-      expect(dashboardBefore.status).toBe(200);
-
-      await knex("users").where({ id: tempUser.id }).delete();
-
-      const dashboardAfter = await sessionAgent.get("/dashboard");
-      expect(dashboardAfter.status).toBe(302);
-      expect(dashboardAfter.headers.location).toBe("/login");
-
-      const settingsAfter = await sessionAgent.get("/settings");
-      expect(settingsAfter.status).toBe(302);
-      expect(settingsAfter.headers.location).toBe("/login");
-    });
-  });
-
-  describe("Flash messages", () => {
-    it("should show flash message when already logged in user visits login page", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const loginResponse = await sessionAgent.get("/login");
-      expect(loginResponse.status).toBe(302);
-      expect(loginResponse.headers.location).toBe("/dashboard");
-
-      const dashboardResponse = await sessionAgent.get("/dashboard");
-      expect(dashboardResponse.status).toBe(200);
-      expect(dashboardResponse.text).toContain("already logged in");
-    });
-
-    it("should show success flash after updating name", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const settingsPage = await sessionAgent.get("/settings");
-      const csrfToken = extractCsrfToken(settingsPage.text);
-
-      const updateResponse = await sessionAgent
-        .post("/settings")
-        .type("form")
-        .send({ name: "Flash Test Name", _csrf: csrfToken });
-
-      expect(updateResponse.status).toBe(302);
-
-      const settingsAfter = await sessionAgent.get("/settings");
-      expect(settingsAfter.text).toContain("updated successfully");
-
-      await knex("users").where({ id: testUserId }).update({ name: testName });
-    });
-
-    it("should show success flash after regenerating API key", async () => {
-      await knex("users").where({ id: testUserId }).update({
-        verification_token: testMagicToken,
-        magic_link_expires_at: null,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
-
-      const settingsPage = await sessionAgent.get("/settings");
-      const csrfToken = extractCsrfToken(settingsPage.text);
-
-      const response = await sessionAgent
-        .post("/settings/regenerate-key")
-        .type("form")
-        .send({ _csrf: csrfToken });
-
-      expect(response.status).toBe(200);
-      expect(response.text).toContain("generated");
-      expect(response.text).toContain("email");
-    });
-  });
-
-  describe("Security: Verification token expiry", () => {
-    let securityUserId: number;
-    const securityEmail = "verify-expiry@example.com";
-    const securityToken = "verify-expiry-token";
-
-    beforeAll(async () => {
-      const [user] = await knex("users")
-        .insert({
-          name: "Verify Expiry Test",
-          email: securityEmail,
-          verification_token: securityToken,
-          verified: false,
-        })
-        .returning("*");
-      securityUserId = user.id;
-    });
-
-    afterAll(async () => {
-      await knex("users").where({ id: securityUserId }).delete();
-    });
-
-    it("should reject verification with expired token", async () => {
-      const expiredTime = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
-      await knex("users").where({ id: securityUserId }).update({
-        verification_token: securityToken,
-        magic_link_expires_at: expiredTime,
-        verified: false,
-      });
-
-      const response = await request(app).get(
-        `/verify-email?token=${securityToken}&email=${securityEmail}`,
-      );
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-
-      const user = await knex("users").where({ id: securityUserId }).first();
-      expect(user.verified).toBe(0);
-    });
-
-    it("should accept verification with non-expired token", async () => {
-      const validTime = new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString();
-      await knex("users").where({ id: securityUserId }).update({
-        verification_token: securityToken,
-        magic_link_expires_at: validTime,
-        verified: false,
-      });
-
-      const sessionAgent = createUnauthenticatedSessionAgent();
-      const response = await sessionAgent.get(
-        `/verify-email?token=${securityToken}&email=${securityEmail}`,
-      );
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/dashboard");
-
-      const user = await knex("users").where({ id: securityUserId }).first();
-      expect(user.verified).toBe(1);
     });
   });
 

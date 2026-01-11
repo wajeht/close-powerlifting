@@ -76,7 +76,9 @@ describe("Dashboard Routes", () => {
         .returning("*");
 
       const tempAgent = createUnauthenticatedSessionAgent();
-      await tempAgent.get(`/magic-link?token=temp-dashboard-token&email=temp-dashboard@example.com`);
+      await tempAgent.get(
+        `/magic-link?token=temp-dashboard-token&email=temp-dashboard@example.com`,
+      );
 
       const dashboardBefore = await tempAgent.get("/dashboard");
       expect(dashboardBefore.status).toBe(200);

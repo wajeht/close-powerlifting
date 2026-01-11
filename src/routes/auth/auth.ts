@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { UnauthorizedError } from "../../error";
-import { buildPagination } from "../../utils/helpers";
 import { createMiddleware } from "../middleware";
 
 const MAGIC_LINK_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
@@ -13,12 +12,7 @@ const loginValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
 });
 
-const updateNameValidation = z.object({
-  name: z.string({ message: "name is required!" }).min(1, "name is required"),
-});
-
 type LoginType = z.infer<typeof loginValidation>;
-type UpdateNameType = z.infer<typeof updateNameValidation>;
 
 export function createAuthRouter(context: AppContext) {
   const middleware = createMiddleware(
@@ -204,169 +198,6 @@ export function createAuthRouter(context: AppContext) {
           context.logger.info(`User ${user.id} (${user.email}) logged in via magic link`);
           res.redirect("/dashboard");
         });
-      });
-    },
-  );
-
-  router.get(
-    "/dashboard",
-    middleware.sessionAuthenticationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
-
-      const page = req.query.page ? Math.max(1, parseInt(req.query.page as string, 10)) : 1;
-      const search = (req.query.search as string) || "";
-      const limit = 10;
-
-      const totalCalls = await context.apiCallLogRepository.countByUserId(
-        sessionUser.id,
-        search || undefined,
-      );
-      const callsPagination = buildPagination(totalCalls, page, limit);
-      const offset = (callsPagination.current_page - 1) * limit;
-
-      const recentCalls = await context.apiCallLogRepository.findByUserId(sessionUser.id, {
-        search: search || undefined,
-        limit,
-        offset,
-        orderBy: "created_at",
-        order: "desc",
-      });
-
-      let stats = null;
-      if (user.admin) {
-        const allUsers = await context.userRepository.findAll();
-        const cacheStats = await context.cache.getStatistics();
-        stats = {
-          totalUsers: allUsers.length,
-          verifiedUsers: allUsers.filter((u) => u.verified).length,
-          unverifiedUsers: allUsers.filter((u) => !u.verified).length,
-          adminUsers: allUsers.filter((u) => u.admin).length,
-          cacheEntries: cacheStats.totalEntries,
-          totalApiCalls: allUsers.reduce((sum, u) => sum + u.api_call_count, 0),
-        };
-      }
-
-      return res.render("auth/dashboard.html", {
-        title: "Dashboard",
-        path: "/dashboard",
-        user,
-        usagePercent,
-        recentCalls,
-        callsPagination,
-        search,
-        stats,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.get(
-    "/settings",
-    middleware.sessionAuthenticationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      return res.render("auth/settings.html", {
-        title: "Settings",
-        path: "/settings",
-        user,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.post(
-    "/settings",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    middleware.validationMiddleware({ body: updateNameValidation }),
-    async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
-      const sessionUser = req.session.user!;
-      const { name } = req.body;
-
-      const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
-
-      if (updatedUser) {
-        req.session.user = {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          name: updatedUser.name,
-          admin: Boolean(updatedUser.admin),
-        };
-      }
-
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
-
-      req.flash("success", "Name updated successfully");
-      return res.redirect("/settings");
-    },
-  );
-
-  router.post(
-    "/settings/regenerate-key",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      await context.authService.regenerateKey(sessionUser.id);
-
-      const updatedUser = await context.userRepository.findById(sessionUser.id);
-
-      req.flash("success", "Your new API key has been generated and sent to your email!");
-
-      return res.render("auth/settings.html", {
-        title: "Settings",
-        path: "/settings",
-        user: updatedUser,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.post(
-    "/settings/delete",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-
-      await context.userRepository.delete(sessionUser.id);
-
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) deleted their account`);
-
-      req.session.destroy(() => {
-        res.redirect("/login");
       });
     },
   );
