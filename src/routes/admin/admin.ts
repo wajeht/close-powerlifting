@@ -38,7 +38,7 @@ export function createAdminRouter(context: AppContext) {
   router.get(
     "/",
     middleware.sessionAdminAuthenticationMiddleware,
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.redirect("/dashboard");
     },
   );

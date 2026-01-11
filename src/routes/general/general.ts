@@ -35,7 +35,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    async (req: Request, res: Response) => {
+    async (_req: Request, res: Response) => {
       const now = Date.now();
 
       if (!rankingsCache || now - rankingsCache.timestamp > RANKINGS_CACHE_TTL) {
@@ -71,7 +71,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/terms",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/terms.html", {
         path: "/terms",
         title: "Terms of Service",
@@ -82,7 +82,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/privacy",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/privacy.html", {
         path: "/privacy",
         title: "Privacy Policy",
@@ -114,7 +114,7 @@ export function createGeneralRouter(context: AppContext) {
     },
   );
 
-  router.get("/health-check", (req: Request, res: Response) => {
+  router.get("/health-check", (_req: Request, res: Response) => {
     res.status(200).json({
       status: "ok",
       uptime: process.uptime(),
@@ -125,7 +125,7 @@ export function createGeneralRouter(context: AppContext) {
     });
   });
 
-  router.get("/healthz", (req: Request, res: Response) => {
+  router.get("/healthz", (_req: Request, res: Response) => {
     res.status(200).json({
       status: "ok",
       uptime: process.uptime(),
