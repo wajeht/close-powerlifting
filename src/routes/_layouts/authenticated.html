@@ -23,14 +23,14 @@
 
         <div class="flex gap-8">
           <!-- Desktop sidebar -->
-          <aside class="hidden w-48 shrink-0 border-r border-neutral-800 pr-6 md:block">
+          <aside class="hidden w-68 shrink-0 border-r border-neutral-800 pr-8 md:block">
             <nav class="flex flex-col gap-2">
               <a href="/dashboard" class="rounded-md px-3 py-2 <%= it.path === '/dashboard' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Dashboard</a>
-              <a href="/settings" class="rounded-md px-3 py-2 <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
               <% if (it.user && it.user.admin) { %>
               <a href="/admin/users" class="rounded-md px-3 py-2 <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
               <a href="/admin/cache" class="rounded-md px-3 py-2 <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
               <% } %>
+              <a href="/settings" class="rounded-md px-3 py-2 <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
             </nav>
             <form action="/logout" method="post" class="mt-8">
               <%~ include('../_components/csrf-input.html') %>
