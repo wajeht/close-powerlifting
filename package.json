@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.1.18",
-    "better-sqlite3": "^12.6.0",
+    "better-sqlite3": "^12.6.2",
     "compression": "^1.7.5",
     "concurrently": "^9.1.2",
     "connect-flash": "^0.1.1",
