@@ -20,6 +20,9 @@ jobs:
       matrix:
         node-version: [24.x]
 
+    env:
+      OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
+
     steps:
       - uses: actions/checkout@v4
 
