@@ -21,6 +21,8 @@ function getRandomUserAgent(): string {
   return USER_AGENTS[index] ?? USER_AGENTS[0];
 }
 
+const FETCH_TIMEOUT_MS = 15000; // 15 seconds
+
 function getDefaultHeaders(): Record<string, string> {
   return {
     Cookie: "units=lbs;",
@@ -53,7 +55,10 @@ export interface ScraperType {
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
   async function fetchHtml(path: string): Promise<string> {
     const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
-    const response = await fetch(url, { headers: getDefaultHeaders() });
+    const response = await fetch(url, {
+      headers: getDefaultHeaders(),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch ${path}`, response.status, path);
@@ -64,7 +69,10 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
 
   async function fetchJson<T>(path: string): Promise<T> {
     const url = `${configuration.openpowerlifting.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
-    const response = await fetch(url, { headers: getDefaultHeaders() });
+    const response = await fetch(url, {
+      headers: getDefaultHeaders(),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch API ${path}`, response.status, path);
@@ -208,6 +216,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         headers: { authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       return {
         ok: response.ok,
