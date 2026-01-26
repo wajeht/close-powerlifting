@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { ConnectSessionKnexStore } from "connect-session-knex";
 import { csrfSync } from "csrf-sync";
 import { NextFunction, Request, Response } from "express";
@@ -30,6 +31,7 @@ type RequestValidators = {
 };
 
 export interface MiddlewareType {
+  requestLoggerMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   rateLimitMiddleware: ReturnType<typeof rateLimit>;
   authRateLimitMiddleware: ReturnType<typeof rateLimit>;
   notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
@@ -74,6 +76,33 @@ export function createMiddleware(
   authService: AuthServiceType,
   apiCallLogRepository: ApiCallLogRepositoryType,
 ): MiddlewareType {
+  const SLOW_REQUEST_MS = 1000;
+
+  function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction): void {
+    const requestId = crypto.randomUUID().slice(0, 8);
+    const start = Date.now();
+
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      const hasQuery = req.query && Object.keys(req.query).length > 0;
+
+      logger.info("request", {
+        id: requestId,
+        method: req.method,
+        path: req.path,
+        query: hasQuery ? JSON.stringify(req.query) : undefined,
+        status: res.statusCode,
+        duration: `${duration}ms`,
+        userId: req.user?.id ?? "anon",
+        ip: req.ip ?? req.socket.remoteAddress,
+        slow: duration >= SLOW_REQUEST_MS ? "true" : undefined,
+        ua: req.get("user-agent")?.slice(0, 50),
+      });
+    });
+
+    next();
+  }
+
   const rateLimitMiddleware = rateLimit({
     windowMs: 60 * 60 * 1000, // 60 minutes
     max: 50, // Limit each IP to 50 requests per `window`
@@ -526,6 +555,7 @@ export function createMiddleware(
   }
 
   return {
+    requestLoggerMiddleware,
     rateLimitMiddleware,
     authRateLimitMiddleware,
     notFoundMiddleware,

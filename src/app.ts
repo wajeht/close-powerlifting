@@ -42,6 +42,7 @@ export async function createApp(
     .set("trust proxy", 1)
     .set("etag", "strong")
     .use(middleware.hostNameMiddleware)
+    .use(middleware.requestLoggerMiddleware)
     .use(cookieParser())
     .use(flash())
     .use(middleware.sessionMiddleware())
