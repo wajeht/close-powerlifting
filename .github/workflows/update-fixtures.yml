@@ -10,11 +10,10 @@ jobs:
   update-fixtures:
     name: Update OpenPowerlifting fixtures
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.verify-changed-files.outputs.changed }}
 
     permissions:
       contents: write
+      pull-requests: write
 
     strategy:
       matrix:
@@ -41,88 +40,17 @@ jobs:
       - name: Format updated fixtures
         run: npm run format
 
-      - name: Check for changes
-        id: verify-changed-files
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Files have been modified:"
-            git diff --name-only
-            echo "Diff summary:"
-            git diff --stat
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No files were modified."
-          fi
-
-      - name: Commit updated fixtures
-        if: steps.verify-changed-files.outputs.changed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
         with:
-          commit_message: "chore: update OpenPowerlifting fixtures"
-          file_pattern: "src/routes/api/**/fixtures/*"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update OpenPowerlifting fixtures"
+          title: "chore: update OpenPowerlifting fixtures"
+          body: |
+            Automated update of test fixtures from OpenPowerlifting.
 
-  test:
-    needs: [update-fixtures]
-    name: Run tests with updated fixtures
-    runs-on: ubuntu-latest
-    if: needs.update-fixtures.outputs.changed == 'true'
-
-    strategy:
-      matrix:
-        node-version: [24.x]
-
-    env:
-      APP_PORT: 80
-      APP_ENV: "testing"
-      APP_DOMAIN: "localhost"
-      APP_PASSWORD_SALT: 10
-      APP_JWT_SECRET: "test-jwt-secret"
-      APP_ADMIN_EMAIL: "test@gmail.com"
-      API_CALL_LOG_RETENTION_DAYS: 90
-
-      SESSION_SECRET: "test-session-secret"
-      SESSION_NAME: "close-powerlifting"
-      SESSION_DOMAIN: "localhost"
-
-      GOOGLE_CLIENT_ID: ""
-      GOOGLE_CLIENT_SECRET: ""
-      GOOGLE_OAUTH_REDIRECT_URL: "http://localhost/oauth/google/redirect"
-
-      OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
-
-      EMAIL_HOST: "localhost"
-      EMAIL_PORT: 1025
-      EMAIL_SECURE: "false"
-      EMAIL_USER: ""
-      EMAIL_PASSWORD: ""
-      EMAIL_FROM: "noreply@close-powerlifting.local"
-
-    services:
-      mailhog:
-        image: mailhog/mailhog:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Pull latest changes
-        run: git pull origin ${{ github.ref_name }}
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test:ci
+            This PR was automatically created by the Update Fixtures workflow.
+          branch: chore/update-fixtures
+          delete-branch: true
+          add-paths: |
+            src/routes/api/**/fixtures/*
