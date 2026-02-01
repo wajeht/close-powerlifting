@@ -316,33 +316,37 @@ export function createCron(
   }
 
   async function refreshCacheTask() {
-    const startTime = Date.now();
-    logger.info("cron job started: refreshCache");
+    try {
+      const startTime = Date.now();
+      logger.info("cron job started: refreshCache");
 
-    const allKeys = await cache.keys("%");
-    const keysToRefresh = allKeys.filter((key) => !INTERNAL_CACHE_KEYS.includes(key));
+      const allKeys = await cache.keys("%");
+      const keysToRefresh = allKeys.filter((key) => !INTERNAL_CACHE_KEYS.includes(key));
 
-    logger.info(`refreshCache: found ${keysToRefresh.length} keys to refresh`);
+      logger.info(`refreshCache: found ${keysToRefresh.length} keys to refresh`);
 
-    const results: RefreshResult[] = [];
+      const results: RefreshResult[] = [];
 
-    for (const key of keysToRefresh) {
-      results.push(await refreshEndpoint(key, () => refreshCacheKey(key)));
-      await delay(REFRESH_DELAY_MS);
+      for (const key of keysToRefresh) {
+        results.push(await refreshEndpoint(key, () => refreshCacheKey(key)));
+        await delay(REFRESH_DELAY_MS);
+      }
+
+      // Summary
+      const successful = results.filter((r) => r.success).length;
+      const failed = results.filter((r) => !r.success);
+      const totalDurationMs = Date.now() - startTime;
+
+      logger.info("cron job completed: refreshCache", {
+        total: results.length,
+        successful,
+        failed: failed.length,
+        totalDurationMs,
+        failedEndpoints: failed.map((f) => f.endpoint),
+      });
+    } catch (error) {
+      logger.error("cron job failed: refreshCache", error);
     }
-
-    // Summary
-    const successful = results.filter((r) => r.success).length;
-    const failed = results.filter((r) => !r.success);
-    const totalDurationMs = Date.now() - startTime;
-
-    logger.info("cron job completed: refreshCache", {
-      total: results.length,
-      successful,
-      failed: failed.length,
-      totalDurationMs,
-      failedEndpoints: failed.map((f) => f.endpoint),
-    });
   }
 
   async function resetApiCallCountTask() {
