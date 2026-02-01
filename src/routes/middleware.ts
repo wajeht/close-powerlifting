@@ -121,7 +121,10 @@ export function createMiddleware(
       }
       return res.render("general/rate-limit.html", { title: "Rate Limited" });
     },
-    skip: () => configuration.app.env !== "production",
+    skip: (req) =>
+      configuration.app.env !== "production" ||
+      req.path === "/healthz" ||
+      req.path === "/health-check",
   });
 
   const authRateLimitMiddleware = rateLimit({
