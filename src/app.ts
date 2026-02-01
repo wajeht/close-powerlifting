@@ -123,7 +123,7 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
 
       const mailAvailable = await context.mail.verifyConnection();
       if (mailAvailable) {
-        context.logger.info("Mail service connected (mailpit)");
+        context.logger.info("Mail service connected");
       } else {
         context.logger.info("Mail service unavailable - emails will not be sent");
       }

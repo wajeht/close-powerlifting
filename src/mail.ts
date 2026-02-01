@@ -63,7 +63,7 @@ export function createMail(logger: LoggerType): MailType {
     } catch {
       const redactedText = redactSensitiveData(text);
       const content = `To: ${to}\nSubject: ${subject}\n${"-".repeat(50)}\n${redactedText}`;
-      logger.box("EMAIL (mailpit unavailable)", content);
+      logger.box("EMAIL (mail service unavailable)", content);
     }
   }
 
