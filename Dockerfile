@@ -1,4 +1,4 @@
-FROM node:24-slim AS build
+FROM node:25-slim AS build
 
 WORKDIR /usr/src/app
 
@@ -26,7 +26,7 @@ RUN npm run build:prod && \
     rm -rf vitest.config.* && \
     rm -rf src/routes/**/fixtures
 
-FROM node:24-slim
+FROM node:25-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
