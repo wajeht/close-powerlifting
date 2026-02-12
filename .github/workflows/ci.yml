@@ -145,6 +145,7 @@ jobs:
           tags: ${{ steps.image-name.outputs.IMAGE_URL }}
 
   deploy:
+    if: github.event_name == 'push'
     needs: build
     name: Deploy
     uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@main
