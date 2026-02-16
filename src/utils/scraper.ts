@@ -100,7 +100,14 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     const headers: string[] = [];
     for (const cell of headerRow.querySelectorAll("th, td")) {
       const text = cell.textContent?.trim().toLowerCase().replace(/\s+/g, "") || "";
-      headers.push(text);
+      const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
+      if (colspan > 1) {
+        for (let c = 1; c <= colspan; c++) {
+          headers.push(`${text}${c}`);
+        }
+      } else {
+        headers.push(text);
+      }
     }
 
     const data: T[] = [];

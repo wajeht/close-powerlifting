@@ -12,6 +12,63 @@ import { transformRankingRow } from "../rankings/rankings.service";
 
 const { defaultPerPage } = configuration.pagination;
 
+const LIFT_PREFIXES = ["squat", "bench", "deadlift"] as const;
+const ATTEMPTS_PER_LIFT = 4;
+const REGEX_TRAILING_DIGIT = /\d$/;
+
+function isAttemptColumn(key: string): boolean {
+  for (const prefix of LIFT_PREFIXES) {
+    if (key !== prefix && key.startsWith(prefix) && REGEX_TRAILING_DIGIT.test(key)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function pickBestAttempt(row: Record<string, string>, prefix: string): string {
+  let best = "";
+  let bestValue = -Infinity;
+
+  for (let i = 1; i <= ATTEMPTS_PER_LIFT; i++) {
+    const value = row[`${prefix}${i}`] ?? "";
+    if (value === "") continue;
+
+    const numeric = parseFloat(value);
+    if (Number.isNaN(numeric)) continue;
+
+    if (numeric > bestValue) {
+      best = value;
+      bestValue = numeric;
+    }
+  }
+
+  return best;
+}
+
+export function transformCompetitionResults(
+  rows: ReadonlyArray<Record<string, string>>,
+): CompetitionResult[] {
+  const results: CompetitionResult[] = [];
+
+  for (const row of rows) {
+    const transformed: Record<string, string> = {};
+
+    for (const key of Object.keys(row)) {
+      if (!isAttemptColumn(key)) {
+        transformed[key] = row[key]!;
+      }
+    }
+
+    for (const prefix of LIFT_PREFIXES) {
+      transformed[prefix] = pickBestAttempt(row, prefix);
+    }
+
+    results.push(transformed as CompetitionResult);
+  }
+
+  return results;
+}
+
 export function createUserService(scraper: ScraperType) {
   function parseUserProfileHtml(doc: Document, username: string): UserProfile {
     const mixedContent = scraper.getElementByClass(doc, "mixed-content");
@@ -34,7 +91,10 @@ export function createUserService(scraper: ScraperType) {
 
     const tables = mixedContent.querySelectorAll("table");
     const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
-    const competitionResults = tables[1] ? scraper.tableToJson<CompetitionResult>(tables[1]) : [];
+    const rawCompetitionResults = tables[1]
+      ? scraper.tableToJson<Record<string, string>>(tables[1])
+      : [];
+    const competitionResults = transformCompetitionResults(rawCompetitionResults);
 
     return {
       name,

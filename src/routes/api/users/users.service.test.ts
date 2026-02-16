@@ -107,6 +107,49 @@ describe.concurrent("users service", () => {
         expect(hasPlace || hasFed || hasDate).toBe(true);
       }
     });
+
+    it("competition results have squat, bench, deadlift, total, and dots fields", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(first).toHaveProperty("squat");
+      expect(first).toHaveProperty("bench");
+      expect(first).toHaveProperty("deadlift");
+      expect(first).toHaveProperty("total");
+      expect(first).toHaveProperty("dots");
+    });
+
+    it("competition results do not contain numbered attempt columns", () => {
+      const first = johnProfile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+
+    it("extracts best squat from John Haack first competition", () => {
+      // First comp: squat attempts 320, 350, 372.5, empty
+      // Best successful squat = 372.5
+      const first = johnProfile.competition_results[0]!;
+      expect(first.squat).toBe("372.5");
+    });
+
+    it("extracts best bench from John Haack first competition", () => {
+      // First comp: bench attempts 230, 250, -260 (failed), empty
+      // Best successful bench = 250
+      const first = johnProfile.competition_results[0]!;
+      expect(first.bench).toBe("250");
+    });
+
+    it("extracts best deadlift from John Haack first competition", () => {
+      // First comp: deadlift attempts 370, 392.5, -402.5 (failed), empty
+      // Best successful deadlift = 392.5
+      const first = johnProfile.competition_results[0]!;
+      expect(first.deadlift).toBe("392.5");
+    });
+
+    it("preserves total and dots values", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(first.total).toBe("1015");
+      expect(first.dots).toBe("628.33");
+    });
   });
 
   describe("pagination config", () => {

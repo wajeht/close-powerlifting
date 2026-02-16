@@ -88,6 +88,30 @@ describe.concurrent("tableToJson", () => {
     expect(scraper.tableToJson(table)).toEqual([{ header1: "Data 1-1", header2: "Data 1-2" }]);
   });
 
+  it("expands colspan headers with numbered suffixes", () => {
+    const dom = new JSDOM(`
+      <table>
+        <tr>
+          <th>Name</th>
+          <th colspan="3">Squat</th>
+          <th>Total</th>
+        </tr>
+        <tr>
+          <td>John</td>
+          <td>300</td>
+          <td>320</td>
+          <td>-340</td>
+          <td>620</td>
+        </tr>
+      </table>
+    `);
+
+    const table = dom.window.document.querySelector("table");
+    expect(scraper.tableToJson(table)).toEqual([
+      { name: "John", squat1: "300", squat2: "320", squat3: "-340", total: "620" },
+    ]);
+  });
+
   it("handles table with only one column correctly", () => {
     const dom = new JSDOM(`
       <table>

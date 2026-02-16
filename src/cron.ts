@@ -15,9 +15,9 @@ import type {
   RecordCategory,
   UserProfile,
   PersonalBest,
-  CompetitionResult,
 } from "./types";
 import { transformRankingRow } from "./routes/api/rankings/rankings.service";
+import { transformCompetitionResults } from "./routes/api/users/users.service";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
@@ -188,7 +188,10 @@ export function createCron(
 
     const tables = mixedContent.querySelectorAll("table");
     const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
-    const competitionResults = tables[1] ? scraper.tableToJson<CompetitionResult>(tables[1]) : [];
+    const rawCompetitionResults = tables[1]
+      ? scraper.tableToJson<Record<string, string>>(tables[1])
+      : [];
+    const competitionResults = transformCompetitionResults(rawCompetitionResults);
 
     return {
       name,
