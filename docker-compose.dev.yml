@@ -22,7 +22,7 @@ services:
   mailpit:
     container_name: close-powerlifting-mailpit
     restart: unless-stopped
-    image: axllent/mailpit
+    image: axllent/mailpit@sha256:7c38788069433ba9d2d9131abac8d17da0fb18f09b689207ec7a773dcb8d6eee
     ports:
       - "8025:8025"
       - "1025:1025"
