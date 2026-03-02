@@ -4,11 +4,11 @@ import type { CacheType, ScraperType, LoggerType } from "../../../context";
 import { createHealthCheckService } from "./health-check.service";
 
 function createMockCache(): CacheType {
-  const store = new Map<string, string>();
+  const store = new Map<string, { value: string; updated_at: string }>();
   return {
-    get: vi.fn((key: string) => Promise.resolve(store.get(key) || null)),
+    get: vi.fn((key: string) => Promise.resolve(store.get(key)?.value || null)),
     set: vi.fn((key: string, value: string) => {
-      store.set(key, value);
+      store.set(key, { value, updated_at: new Date().toISOString() });
       return Promise.resolve();
     }),
     del: vi.fn((key: string) => {
@@ -25,7 +25,21 @@ function createMockCache(): CacheType {
     getStatistics: vi.fn(() =>
       Promise.resolve({ totalEntries: 0, oldestEntry: null, newestEntry: null, keyPatterns: [] }),
     ),
-    getEntries: vi.fn(() => Promise.resolve([])),
+    getEntries: vi.fn(({ pattern }: { pattern?: string } = {}) => {
+      const entries = [];
+      for (const [key, entry] of store.entries()) {
+        if (!pattern || key.includes(pattern)) {
+          entries.push({
+            key,
+            value: entry.value,
+            created_at: entry.updated_at,
+            updated_at: entry.updated_at,
+          });
+        }
+      }
+      return Promise.resolve(entries);
+    }),
+    countEntries: vi.fn(() => Promise.resolve(0)),
   };
 }
 
@@ -224,6 +238,59 @@ describe("health-check service", () => {
       await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
       await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
+      expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
+      expect(cache.set).toHaveBeenCalledTimes(1);
+    });
+
+    it("re-fetches when cache is older than 6 hours", async () => {
+      const mockResponses = Array(TOTAL_ROUTES * 2).fill({
+        ok: true,
+        date: "2024-01-01T00:00:00Z",
+      });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      // First call populates cache
+      await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+      expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
+
+      // Simulate stale cache by backdating updated_at to 7 hours ago
+      const cacheKey = "close-powerlifting-global-status-call-cache";
+      const storeEntry = (cache as any).set.mock.calls[0];
+      const sevenHoursAgo = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+      vi.mocked(cache.getEntries).mockResolvedValueOnce([
+        {
+          key: cacheKey,
+          value: storeEntry?.[1] || "[]",
+          created_at: sevenHoursAgo,
+          updated_at: sevenHoursAgo,
+        },
+      ]);
+
+      // Second call should re-fetch because cache is stale
+      await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+      expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES * 2);
+      expect(cache.set).toHaveBeenCalledTimes(2);
+    });
+
+    it("does NOT re-fetch when cache is less than 6 hours old", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({
+        ok: true,
+        date: "2024-01-01T00:00:00Z",
+      });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      // First call populates cache (updated_at is set to now by the mock)
+      await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+      expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
+
+      // Second call should use cache since it's fresh
+      await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
       expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
       expect(cache.set).toHaveBeenCalledTimes(1);
     });

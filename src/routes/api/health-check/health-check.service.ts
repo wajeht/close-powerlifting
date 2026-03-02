@@ -52,6 +52,8 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Public", path: "/api/health-check" },
 ];
 
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
 export function createHealthCheckService(
   cache: CacheType,
   scraper: ScraperType,
@@ -101,10 +103,20 @@ export function createHealthCheckService(
 
     const cacheKey = `close-powerlifting-global-status-call-cache`;
 
+    let isStale = false;
     const cachedData = await cache.get(cacheKey);
     let data = cachedData ? JSON.parse(cachedData) : null;
 
-    if (data === null) {
+    if (data !== null) {
+      const entries = await cache.getEntries({ pattern: cacheKey });
+      const entry = entries[0];
+      if (entry) {
+        const age = Date.now() - new Date(entry.updated_at).getTime();
+        isStale = age > SIX_HOURS_MS;
+      }
+    }
+
+    if (data === null || isStale) {
       data = await fetchStatus();
 
       await cache.set(cacheKey, JSON.stringify(data));
