@@ -1085,3 +1085,102 @@ describe("notFoundMiddleware - consistent error response", () => {
     expect(response.errors).toEqual([]);
   });
 });
+
+describe("trackAPICallsMiddleware - X-RateLimit headers", () => {
+  let testUser: any;
+
+  async function createTestUser(overrides: Record<string, unknown> = {}) {
+    const [user] = await knex("users")
+      .insert({
+        name: "RateLimit Header Test User",
+        email: `ratelimit-${Date.now()}@example.com`,
+        api_key: `ratelimit-key-${Date.now()}`,
+        api_call_count: 0,
+        api_call_limit: 750,
+        admin: false,
+        verified: true,
+        ...overrides,
+      })
+      .returning("*");
+    return user;
+  }
+
+  afterEach(async () => {
+    if (testUser) {
+      await knex("users").where({ id: testUser.id }).delete();
+      testUser = null;
+    }
+  });
+
+  it("should set X-RateLimit-Limit header", async () => {
+    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 750 });
+
+    const req: any = {
+      user: { id: testUser.id },
+      method: "GET",
+      originalUrl: "/api/rankings",
+      headers: {},
+    };
+    const res: any = { on: vi.fn(), set: vi.fn() };
+    const next = vi.fn();
+
+    await middleware.trackAPICallsMiddleware(req, res, next);
+
+    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Limit", "750");
+  });
+
+  it("should set X-RateLimit-Remaining header with correct count", async () => {
+    testUser = await createTestUser({ api_call_count: 100, api_call_limit: 750 });
+
+    const req: any = {
+      user: { id: testUser.id },
+      method: "GET",
+      originalUrl: "/api/rankings",
+      headers: {},
+    };
+    const res: any = { on: vi.fn(), set: vi.fn() };
+    const next = vi.fn();
+
+    await middleware.trackAPICallsMiddleware(req, res, next);
+
+    // After increment, count is 101, so remaining is 750 - 101 = 649
+    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Remaining", "649");
+  });
+
+  it("should set X-RateLimit-Reset header as unix timestamp", async () => {
+    testUser = await createTestUser({ api_call_count: 0, api_call_limit: 750 });
+
+    const req: any = {
+      user: { id: testUser.id },
+      method: "GET",
+      originalUrl: "/api/rankings",
+      headers: {},
+    };
+    const res: any = { on: vi.fn(), set: vi.fn() };
+    const next = vi.fn();
+
+    await middleware.trackAPICallsMiddleware(req, res, next);
+
+    const resetCall = res.set.mock.calls.find((call: any[]) => call[0] === "X-RateLimit-Reset");
+    expect(resetCall).toBeDefined();
+    const resetTimestamp = Number(resetCall[1]);
+    expect(resetTimestamp).toBeGreaterThan(Math.floor(Date.now() / 1000));
+  });
+
+  it("should clamp remaining to 0 when limit is exceeded", async () => {
+    testUser = await createTestUser({ api_call_count: 800, api_call_limit: 750, admin: true });
+
+    const req: any = {
+      user: { id: testUser.id },
+      method: "GET",
+      originalUrl: "/api/rankings",
+      headers: {},
+    };
+    const res: any = { on: vi.fn(), set: vi.fn() };
+    const next = vi.fn();
+
+    await middleware.trackAPICallsMiddleware(req, res, next);
+
+    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
+  });
+});
