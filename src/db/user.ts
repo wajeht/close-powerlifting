@@ -142,8 +142,11 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
   }
 
   async function incrementApiCallCount(id: number): Promise<UserType | undefined> {
-    await knex<UserType>("users").where({ id }).increment("api_call_count", 1);
-    return findById(id);
+    const rows = await knex<UserType>("users")
+      .where({ id })
+      .increment("api_call_count", 1)
+      .returning("*");
+    return rows[0] as UserType | undefined;
   }
 
   async function setApiCallCount(id: number, count: number): Promise<UserType | undefined> {

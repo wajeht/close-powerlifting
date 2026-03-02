@@ -114,27 +114,29 @@ export function createGeneralRouter(context: AppContext) {
     },
   );
 
-  router.get("/health-check", (_req: Request, res: Response) => {
-    res.status(200).json({
-      status: "ok",
-      uptime: process.uptime(),
-      timestamp: Date.now(),
-      database: "connected",
-      cache: context.cache.isReady() ? "connected" : "disconnected",
-      crons: context.cron.getStatus().isRunning ? "started" : "stopped",
-    });
-  });
+  router.get("/health-check", handleHealthCheck);
+  router.get("/healthz", handleHealthCheck);
+  async function handleHealthCheck(_req: Request, res: Response) {
+    let dbStatus: "connected" | "disconnected" = "disconnected";
+    let statusCode = 503;
 
-  router.get("/healthz", (_req: Request, res: Response) => {
-    res.status(200).json({
-      status: "ok",
+    try {
+      await context.knex.raw("SELECT 1");
+      dbStatus = "connected";
+      statusCode = 200;
+    } catch {
+      // DB is unreachable
+    }
+
+    res.status(statusCode).json({
+      status: statusCode === 200 ? "ok" : "error",
       uptime: process.uptime(),
       timestamp: Date.now(),
-      database: "connected",
+      database: dbStatus,
       cache: context.cache.isReady() ? "connected" : "disconnected",
       crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
-  });
+  }
 
   return router;
 }

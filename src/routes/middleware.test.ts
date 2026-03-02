@@ -23,6 +23,32 @@ const middleware = createMiddleware(
   context.apiCallLogRepository,
 );
 
+describe("requestLoggerMiddleware", () => {
+  it("should set X-Request-Id header on response", () => {
+    const req: any = {
+      method: "GET",
+      path: "/test",
+      query: {},
+      get: vi.fn(),
+      ip: "127.0.0.1",
+      socket: { remoteAddress: "127.0.0.1" },
+    };
+    const res: any = {
+      set: vi.fn(),
+      on: vi.fn(),
+      statusCode: 200,
+    };
+    const next = vi.fn();
+
+    middleware.requestLoggerMiddleware(req, res, next);
+
+    expect(res.set).toHaveBeenCalledWith("X-Request-Id", expect.any(String));
+    const requestId = res.set.mock.calls.find((call: any[]) => call[0] === "X-Request-Id")?.[1];
+    expect(requestId).toMatch(/^[a-f0-9]{8}$/);
+    expect(next).toHaveBeenCalled();
+  });
+});
+
 describe("notFoundHandler", () => {
   let req: any;
   let res: any;
@@ -69,6 +95,7 @@ describe("notFoundHandler", () => {
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
+      errors: [],
       data: [],
     });
     expect(res.render).not.toHaveBeenCalled();
@@ -968,5 +995,93 @@ describe("trackAPICallsMiddleware", () => {
 
     const updatedUser = await knex("users").where({ id: testUser.id }).first();
     expect(updatedUser.api_call_count).toBe(11);
+  });
+});
+
+describe("errorMiddleware - consistent error response", () => {
+  let req: any;
+  let res: any;
+  let next: any;
+
+  beforeEach(() => {
+    req = {
+      url: "/api/test",
+      originalUrl: "/api/test",
+    };
+    res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+      render: vi.fn(),
+    };
+    next = vi.fn();
+  });
+
+  it("should include errors array with ZodError issues", () => {
+    const issue = {
+      code: "invalid_type" as const,
+      expected: "string",
+      received: "undefined",
+      path: [] as (string | number)[],
+      message: "Required",
+    };
+    const err = new ZodError([issue]);
+
+    middleware.errorMiddleware(err, req, res, next);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errors: err.issues,
+      }),
+    );
+  });
+
+  it("should include empty errors array for non-ZodError", () => {
+    const err = new Error("Something went wrong");
+
+    middleware.errorMiddleware(err, req, res, next);
+
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errors: [],
+      }),
+    );
+  });
+
+  it("should include all expected fields in error response", () => {
+    const err = new Error("Something went wrong");
+
+    middleware.errorMiddleware(err, req, res, next);
+
+    const response = res.json.mock.calls[0][0];
+    expect(response).toHaveProperty("status");
+    expect(response).toHaveProperty("request_url");
+    expect(response).toHaveProperty("message");
+    expect(response).toHaveProperty("errors");
+    expect(response).toHaveProperty("data");
+  });
+});
+
+describe("notFoundMiddleware - consistent error response", () => {
+  it("should include errors array in API 404 response", () => {
+    const req: any = {
+      url: "/api/nonexistent",
+      originalUrl: "/api/nonexistent",
+    };
+    const res: any = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+      render: vi.fn(),
+    };
+    const next = vi.fn();
+
+    middleware.notFoundMiddleware(req, res, next);
+
+    const response = res.json.mock.calls[0][0];
+    expect(response).toHaveProperty("status");
+    expect(response).toHaveProperty("request_url");
+    expect(response).toHaveProperty("message");
+    expect(response).toHaveProperty("errors");
+    expect(response).toHaveProperty("data");
+    expect(response.errors).toEqual([]);
   });
 });

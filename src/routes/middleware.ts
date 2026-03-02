@@ -82,6 +82,8 @@ export function createMiddleware(
     const requestId = crypto.randomUUID().slice(0, 8);
     const start = Date.now();
 
+    res.set("X-Request-Id", requestId);
+
     res.on("finish", () => {
       const duration = Date.now() - start;
       const hasQuery = req.query && Object.keys(req.query).length > 0;
@@ -116,6 +118,7 @@ export function createMiddleware(
           status: "fail",
           request_url: req.originalUrl,
           message: "Too many requests, please try again later?",
+          errors: [],
           data: [],
         });
       }
@@ -164,6 +167,7 @@ export function createMiddleware(
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
+      errors: [],
       data: [],
     });
   }
@@ -206,7 +210,7 @@ export function createMiddleware(
       status: "fail",
       request_url: req.originalUrl,
       message,
-      errors: err instanceof ZodError ? err.issues : undefined,
+      errors: err instanceof ZodError ? err.issues : [],
       data: [],
     });
   }
