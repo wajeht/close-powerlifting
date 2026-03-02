@@ -79,7 +79,7 @@ export function createMeetsRouter(context: AppContext) {
    * @security BearerAuth
    * @security ApiKeyAuth
    * @param {string} meet.path.required - Meet code (e.g., usapl/CA-2024-01, rps/2548, uspa/1969)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {MeetResponse} 200 - Meet data with results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Meet not found

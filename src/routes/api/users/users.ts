@@ -118,7 +118,7 @@ export function createUsersRouter(context: AppContext) {
    * @param {string} search.query - Search query for athlete name
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {UserSearchResponse} 200 - Search results
    * @return {object} 308 - Redirect to rankings (if no search query)
    * @return {ErrorResponse} 401 - Unauthorized
@@ -169,7 +169,7 @@ export function createUsersRouter(context: AppContext) {
    * @security BearerAuth
    * @security ApiKeyAuth
    * @param {string} username.path.required - Athlete's username/slug
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {UserResponse} 200 - Athlete profile
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Athlete not found

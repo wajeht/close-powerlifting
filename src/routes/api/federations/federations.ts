@@ -79,7 +79,7 @@ export function createFederationsRouter(context: AppContext) {
    * @security ApiKeyAuth
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {FederationsResponse} 200 - Success response with federations list
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @example response - 200 - Success response
@@ -121,7 +121,7 @@ export function createFederationsRouter(context: AppContext) {
    * @security ApiKeyAuth
    * @param {string} federation.path.required - Federation code (e.g., ipf, usapl, uspa, wrpf)
    * @param {number} year.query - Filter results by competition year (e.g., 2024)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {FederationsResponse} 200 - Success response with federation results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Federation not found

@@ -87,7 +87,7 @@ export function createRankingsRouter(context: AppContext) {
    * @security ApiKeyAuth
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Success response with rankings data
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {ErrorResponse} 429 - Rate limit exceeded
@@ -132,7 +132,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
@@ -187,7 +187,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
@@ -243,7 +243,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
@@ -304,7 +304,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} year.path.required - Competition year (e.g., 2024)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
@@ -367,7 +367,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} event.path.required - Event type - enum:full-power,bench-only,deadlift-only
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
@@ -432,7 +432,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} sort.path.required - Sort by - enum:by-dots,by-total,by-squat,by-bench,by-deadlift
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-   * @param {boolean} cache.query - Use cached data (default true)
+
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @example response - 200 - Success response
