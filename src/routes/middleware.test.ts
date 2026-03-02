@@ -822,7 +822,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -839,7 +839,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -856,7 +856,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -874,7 +874,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -891,7 +891,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -914,7 +914,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -933,7 +933,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -956,7 +956,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -971,7 +971,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);
@@ -988,7 +988,7 @@ describe("trackAPICallsMiddleware", () => {
       originalUrl: "/api/rankings",
       headers: {},
     };
-    const res: any = { on: vi.fn() };
+    const res: any = { on: vi.fn(), set: vi.fn() };
     const next = vi.fn();
 
     await middleware.trackAPICallsMiddleware(req, res, next);

@@ -143,6 +143,7 @@ export function createMiddleware(
           status: "fail",
           request_url: req.originalUrl,
           message: "Too many authentication attempts, please try again later.",
+          errors: [],
           data: [],
         });
       }
@@ -297,6 +298,13 @@ export function createMiddleware(
         if (!user) {
           return next();
         }
+
+        const remaining = Math.max(0, user.api_call_limit - user.api_call_count);
+        const now = new Date();
+        const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        res.set("X-RateLimit-Limit", String(user.api_call_limit));
+        res.set("X-RateLimit-Remaining", String(remaining));
+        res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
 
         if (user.api_call_count >= user.api_call_limit && !user.admin) {
           if (user.api_call_count === user.api_call_limit) {
