@@ -90,6 +90,7 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return knex<UserType>("users").where({
       api_call_count: count,
       verified: true,
+      admin: false,
     });
   }
 

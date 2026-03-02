@@ -295,6 +295,13 @@ export function createMiddleware(
         }
 
         if (user.api_call_count >= user.api_call_limit && !user.admin) {
+          if (user.api_call_count === user.api_call_limit) {
+            await mail.sendReachingApiLimitEmail({
+              email: user.email,
+              name: user.name,
+              percent: 100,
+            });
+          }
           throw new APICallsExceededError("API Calls exceeded!");
         }
 
