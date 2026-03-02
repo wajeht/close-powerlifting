@@ -770,7 +770,7 @@ describe("trackAPICallsMiddleware", () => {
         email: `track-api-${Date.now()}@example.com`,
         api_key: `track-api-key-${Date.now()}`,
         api_call_count: 0,
-        api_call_limit: 500,
+        api_call_limit: 750,
         admin: false,
         verified: true,
         ...overrides,
@@ -804,7 +804,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should throw APICallsExceededError when non-admin reaches limit", async () => {
-    testUser = await createTestUser({ api_call_count: 499, api_call_limit: 500, admin: false });
+    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: false });
 
     const req: any = {
       user: { id: testUser.id },
@@ -821,7 +821,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should NOT throw when admin reaches limit", async () => {
-    testUser = await createTestUser({ api_call_count: 499, api_call_limit: 500, admin: true });
+    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: true });
 
     const req: any = {
       user: { id: testUser.id },
@@ -839,7 +839,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should NOT throw when admin exceeds limit", async () => {
-    testUser = await createTestUser({ api_call_count: 600, api_call_limit: 500, admin: true });
+    testUser = await createTestUser({ api_call_count: 800, api_call_limit: 750, admin: true });
 
     const req: any = {
       user: { id: testUser.id },
@@ -856,7 +856,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should send 100% limit email when non-admin hits exact limit", async () => {
-    testUser = await createTestUser({ api_call_count: 499, api_call_limit: 500, admin: false });
+    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: false });
 
     const req: any = {
       user: { id: testUser.id },
@@ -877,7 +877,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should NOT send 100% email when non-admin already past limit", async () => {
-    testUser = await createTestUser({ api_call_count: 500, api_call_limit: 500, admin: false });
+    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
 
     vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockClear();
 
@@ -898,7 +898,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should send 50% warning email for non-admin at half limit", async () => {
-    testUser = await createTestUser({ api_call_count: 249, api_call_limit: 500, admin: false });
+    testUser = await createTestUser({ api_call_count: 374, api_call_limit: 750, admin: false });
 
     const req: any = {
       user: { id: testUser.id },
@@ -919,7 +919,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should NOT send 50% warning email for admin at half limit", async () => {
-    testUser = await createTestUser({ api_call_count: 249, api_call_limit: 500, admin: true });
+    testUser = await createTestUser({ api_call_count: 374, api_call_limit: 750, admin: true });
 
     vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockClear();
 
@@ -953,7 +953,7 @@ describe("trackAPICallsMiddleware", () => {
   });
 
   it("should increment api_call_count in the database", async () => {
-    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 500, admin: false });
+    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 750, admin: false });
 
     const req: any = {
       user: { id: testUser.id },

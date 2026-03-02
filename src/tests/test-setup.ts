@@ -203,7 +203,7 @@ beforeAll(async () => {
         email: "test@example.com",
         api_key_version: 1,
         api_call_count: 0,
-        api_call_limit: 500,
+        api_call_limit: 750,
         admin: false,
       })
       .returning("*");

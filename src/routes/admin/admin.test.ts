@@ -19,7 +19,7 @@ describe("Admin Routes", () => {
         verification_token: adminMagicToken,
         api_key: "test-admin-key",
         api_call_count: 0,
-        api_call_limit: 500,
+        api_call_limit: 750,
         admin: true,
         verified: true,
       })

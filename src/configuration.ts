@@ -33,7 +33,7 @@ export const configuration = {
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
     passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    defaultApiCallLimit: 500,
+    defaultApiCallLimit: 750,
     apiCallLogRetentionDays: parseInt(process.env.API_CALL_LOG_RETENTION_DAYS || "90", 10),
   } as const,
 

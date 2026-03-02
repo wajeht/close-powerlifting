@@ -64,7 +64,7 @@ Errors return \`status: "fail"\` with appropriate HTTP codes:
 | 403 | Forbidden - Access denied |
 | 404 | Not Found - Resource doesn't exist |
 | 422 | Validation Error - Invalid parameters |
-| 429 | Rate Limited - Too many requests |
+| 429 | Rate Limited - Monthly quota or IP rate limit exceeded |
 
 ## Pagination
 Endpoints returning lists support pagination via query parameters:
@@ -72,9 +72,24 @@ Endpoints returning lists support pagination via query parameters:
 - \`current_page\`: Page number (default: 1)
 
 ## Rate Limits
-- **Monthly quota**: 500 requests per month (resets on the 1st)
-- **Per-IP limit**: 50 requests per hour
-- **Auth endpoints**: 10 requests per 15 minutes
+Rate limits protect the upstream OpenPowerlifting data source and ensure fair usage for all developers.
+
+| Limit | Threshold | Scope |
+|-------|-----------|-------|
+| **Monthly quota** | 750 requests/month | Per API key |
+| **Per-IP limit** | 50 requests/hour | Per IP address |
+| **Auth endpoints** | 10 requests/15 min | Per IP address |
+
+**Monthly quota details:**
+- Resets automatically on the 1st of each month
+- Email notifications are sent at 50%, 70%, and 100% usage
+- Exceeding the quota returns \`429 Too Many Requests\` until the next reset
+- Need a higher limit? Contact us via the support email below
+
+**Tips to stay within limits:**
+- Cache responses locally — data updates a few times daily, not in real-time
+- Use \`per_page\` to fetch larger pages in fewer requests
+- Leverage the 1-hour browser cache (\`Cache-Control: private, max-age=3600\`)
 
 ## Caching
 - **Server cache**: Responses are cached indefinitely until manually cleared by admins
