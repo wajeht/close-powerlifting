@@ -365,8 +365,13 @@ export function createCron(
       const users = await userRepository.findVerified();
       await userRepository.resetAllApiCallCounts();
 
-      for (const user of users) {
-        await mail.sendApiLimitResetEmail({ email: user.email, name: user.name });
+      const results = await Promise.allSettled(
+        users.map((user) => mail.sendApiLimitResetEmail({ email: user.email, name: user.name })),
+      );
+
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) {
+        logger.warn(`resetApiCallCount: ${failed.length}/${users.length} emails failed to send`);
       }
 
       logger.info("cron job completed: resetApiCallCount");
@@ -382,12 +387,21 @@ export function createCron(
       const targetCount = Math.floor(configuration.app.defaultApiCallLimit * 0.7);
       const users = await userRepository.findByApiCallCount(targetCount);
 
-      for (const user of users) {
-        await mail.sendReachingApiLimitEmail({
-          email: user.email,
-          name: user.name,
-          percent: 70,
-        });
+      const results = await Promise.allSettled(
+        users.map((user) =>
+          mail.sendReachingApiLimitEmail({
+            email: user.email,
+            name: user.name,
+            percent: 70,
+          }),
+        ),
+      );
+
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length > 0) {
+        logger.warn(
+          `sendReachingApiLimitEmail: ${failed.length}/${users.length} emails failed to send`,
+        );
       }
 
       logger.info("cron job completed: sendReachingApiLimitEmail");

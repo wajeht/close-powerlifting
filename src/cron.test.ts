@@ -607,6 +607,28 @@ describe("cron", () => {
 
       expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
     });
+
+    it("should continue sending emails when one fails", async () => {
+      vi.setSystemTime(new Date(2024, 0, 1));
+
+      const mockUsers = [
+        { email: "user1@test.com", name: "User 1" },
+        { email: "user2@test.com", name: "User 2" },
+        { email: "user3@test.com", name: "User 3" },
+      ];
+      vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
+      vi.mocked(mail.sendApiLimitResetEmail)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error("SMTP error"))
+        .mockResolvedValueOnce(undefined);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
+      expect(logger.warn).toHaveBeenCalledWith("resetApiCallCount: 1/3 emails failed to send");
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
+    });
   });
 
   describe("sendReachingApiLimitEmail task", () => {
@@ -664,6 +686,26 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
+    });
+
+    it("should continue sending emails when one fails", async () => {
+      const mockUsers = [
+        { email: "user1@test.com", name: "User 1" },
+        { email: "user2@test.com", name: "User 2" },
+      ];
+      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
+      vi.mocked(mail.sendReachingApiLimitEmail)
+        .mockRejectedValueOnce(new Error("SMTP error"))
+        .mockResolvedValueOnce(undefined);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.sendReachingApiLimitEmail();
+
+      expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledTimes(2);
+      expect(logger.warn).toHaveBeenCalledWith(
+        "sendReachingApiLimitEmail: 1/2 emails failed to send",
+      );
       expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
     });
   });
