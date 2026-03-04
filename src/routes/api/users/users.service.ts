@@ -70,7 +70,11 @@ export function transformCompetitionResults(
 }
 
 export function createUserService(scraper: ScraperType) {
-  function parseUserProfileHtml(doc: Document, username: string): UserProfile {
+  function parseUserProfileHtml(
+    doc: Document,
+    username: string,
+    includeAttempts: boolean = false,
+  ): UserProfile {
     const mixedContent = scraper.getElementByClass(doc, "mixed-content");
     if (!mixedContent) {
       throw new Error(`User profile not found: ${username}`);
@@ -94,7 +98,9 @@ export function createUserService(scraper: ScraperType) {
     const rawCompetitionResults = tables[1]
       ? scraper.tableToJson<Record<string, string>>(tables[1])
       : [];
-    const competitionResults = transformCompetitionResults(rawCompetitionResults);
+    const competitionResults = includeAttempts
+      ? (rawCompetitionResults as CompetitionResult[])
+      : transformCompetitionResults(rawCompetitionResults);
 
     return {
       name,
@@ -107,15 +113,24 @@ export function createUserService(scraper: ScraperType) {
     };
   }
 
-  async function fetchUserProfile(username: string): Promise<UserProfile> {
-    const html = await scraper.fetchHtml(`/u/${username}`);
+  async function fetchUserProfile(
+    username: string,
+    includeAttempts: boolean = false,
+    units: string = "lbs",
+  ): Promise<UserProfile> {
+    const html = await scraper.fetchHtml(`/u/${username}`, units);
     const doc = scraper.parseHtml(html);
-    return parseUserProfileHtml(doc, username);
+    return parseUserProfileHtml(doc, username, includeAttempts);
   }
 
-  async function getUser({ username }: GetUserType): Promise<UserProfile[] | null> {
-    const result = await scraper.withCache<UserProfile>(`user-${username}`, () =>
-      fetchUserProfile(username),
+  async function getUser(
+    { username }: GetUserType,
+    includeAttempts: boolean = false,
+    units: string = "lbs",
+  ): Promise<UserProfile[] | null> {
+    const cacheKey = `user-${username}${includeAttempts ? "-attempts" : ""}-${units}`;
+    const result = await scraper.withCache<UserProfile>(cacheKey, () =>
+      fetchUserProfile(username, includeAttempts, units),
     );
 
     if (!result.data) {
@@ -134,6 +149,7 @@ export function createUserService(scraper: ScraperType) {
     search,
     per_page = defaultPerPage,
     current_page = 1,
+    units = "lbs",
   }: GetUsersType): Promise<{
     data: RankingRow[] | null;
     pagination?: SearchPagination;
@@ -151,7 +167,7 @@ export function createUserService(scraper: ScraperType) {
       const startIndex = searchResult.next_index;
       const endIndex = startIndex + per_page - 1;
 
-      const query = `start=${startIndex}&end=${endIndex}&lang=en&units=lbs`;
+      const query = `start=${startIndex}&end=${endIndex}&lang=en&units=${units}`;
       const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
 
       const rows = response.rows.map(transformRankingRow);

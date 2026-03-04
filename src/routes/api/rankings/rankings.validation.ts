@@ -15,6 +15,8 @@ export const sortEnum = z.enum([
   "by-dots",
   "by-wilks",
   "by-glossbrenner",
+  "by-gl-points",
+  "by-mcculloch",
   "by-total",
   "by-squat",
   "by-bench",
@@ -33,6 +35,8 @@ export const getRankingsValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+  federation: z.string().optional(),
 });
 
 export const getFilteredRankingsParamValidation = z.object({
@@ -44,6 +48,19 @@ export const getFilteredRankingsParamValidation = z.object({
   sort: sortEnum.optional(),
 });
 
+export const ageClassEnum = z.enum([
+  "24-34",
+  "40-44",
+  "45-49",
+  "50-54",
+  "55-59",
+  "60-64",
+  "65-69",
+  "70-74",
+  "75-79",
+  "80-999",
+]);
+
 export const getFilteredRankingsQueryValidation = z.object({
   per_page: z
     .string()
@@ -53,6 +70,9 @@ export const getFilteredRankingsQueryValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+  federation: z.string().optional(),
+  age_class: ageClassEnum.optional(),
 });
 
 export const getRankValidation = z.object({

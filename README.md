@@ -20,6 +20,28 @@ An intuitive REST API for the OpenPowerlifting database.
 
 Full API documentation available at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api)
 
+## 🔍 Query Parameters
+
+### Rankings
+
+| Parameter    | Values                                                                                    | Description                  |
+| ------------ | ----------------------------------------------------------------------------------------- | ---------------------------- |
+| `units`      | `lbs`, `kg`                                                                               | Unit system (default: `lbs`) |
+| `federation` | Any federation code (e.g., `uspa`, `ipf`, `wrpf`)                                         | Filter by federation         |
+| `age_class`  | `24-34`, `40-44`, `45-49`, `50-54`, `55-59`, `60-64`, `65-69`, `70-74`, `75-79`, `80-999` | Filter by age class          |
+
+### Sort Options (path parameter)
+
+`by-dots`, `by-wilks`, `by-glossbrenner`, `by-gl-points`, `by-mcculloch`, `by-total`, `by-squat`, `by-bench`, `by-deadlift`
+
+### Users
+
+| Parameter          | Values          | Endpoint               | Description                     |
+| ------------------ | --------------- | ---------------------- | ------------------------------- |
+| `units`            | `lbs`, `kg`     | `/api/users`           | Unit system for search results  |
+| `units`            | `lbs`, `kg`     | `/api/users/:username` | Unit system for weight values   |
+| `include_attempts` | `true`, `false` | `/api/users/:username` | Include individual attempt data |
+
 ## 🔐 Authentication
 
 All endpoints except `/api/status` and `/api/health-check` require an API key:
@@ -33,7 +55,7 @@ Request an API key at [closepowerlifting.com](https://closepowerlifting.com)
 ## 📦 Example Response
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/rankings?per_page=100&current_page=1"
+curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/rankings?per_page=100&current_page=1&units=kg"
 ```
 
 ```json

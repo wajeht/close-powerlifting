@@ -87,6 +87,8 @@ export function createRankingsRouter(context: AppContext) {
    * @security BearerAuth
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
    * @return {RankingsResponse} 200 - Success response with rankings data
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {ErrorResponse} 400 - Validation error - Invalid query parameters
@@ -147,6 +149,9 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -226,6 +231,9 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -306,6 +314,9 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -391,6 +402,9 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} year.path.required - Competition year (e.g., 2024)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -478,6 +492,9 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -564,9 +581,12 @@ export function createRankingsRouter(context: AppContext) {
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {string} year.path.required - Competition year (e.g., 2024)
    * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
-   * @param {string} sort.path.required - Sort by - enum:by-dots,by-wilks,by-glossbrenner,by-total,by-squat,by-bench,by-deadlift
+   * @param {string} sort.path.required - Sort by - enum:by-dots,by-wilks,by-glossbrenner,by-gl-points,by-mcculloch,by-total,by-squat,by-bench,by-deadlift
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -582,7 +602,7 @@ export function createRankingsRouter(context: AppContext) {
    * {
    *   "status": "fail",
    *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/invalid",
-   *   "message": "Invalid enum value. Expected 'by-dots' | 'by-wilks' | 'by-glossbrenner' | 'by-total' | 'by-squat' | 'by-bench' | 'by-deadlift', received 'invalid'",
+   *   "message": "Invalid enum value. Expected 'by-dots' | 'by-wilks' | 'by-glossbrenner' | 'by-gl-points' | 'by-mcculloch' | 'by-total' | 'by-squat' | 'by-bench' | 'by-deadlift', received 'invalid'",
    *   "errors": [{"code": "invalid_enum_value", "path": ["sort"], "message": "Invalid enum value"}],
    *   "data": []
    * }

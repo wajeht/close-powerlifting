@@ -11,10 +11,11 @@ const FIXTURES_BASE = join(__dirname, "../src/routes/api");
 interface FixtureConfig {
   url: string;
   path: string;
+  headers?: Record<string, string>;
 }
 
 const fixtures: FixtureConfig[] = [
-  // Rankings (JSON API)
+  // Rankings (JSON API) - Default
   {
     url: "/api/rankings?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-default.json",
@@ -30,6 +31,34 @@ const fixtures: FixtureConfig[] = [
   {
     url: "/api/rankings/wraps/men/90/2024/full-power/by-dots?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-full-filter.json",
+  },
+
+  // Rankings (JSON API) - Units (kg)
+  {
+    url: "/api/rankings?start=0&end=10&lang=en&units=kg",
+    path: "rankings/fixtures/rankings-default-kg.json",
+  },
+
+  // Rankings (JSON API) - Federation filter
+  {
+    url: "/api/rankings/uspa/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-uspa-raw-men.json",
+  },
+
+  // Rankings (JSON API) - Age class filter
+  {
+    url: "/api/rankings/raw/men/90/40-44?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age40-44.json",
+  },
+
+  // Rankings (JSON API) - New sort options
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-gl-points?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-gl-points.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-mcculloch?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-mcculloch.json",
   },
 
   // Records (HTML) - Equipment types
@@ -75,6 +104,11 @@ const fixtures: FixtureConfig[] = [
   // Users (HTML)
   { url: "/u/kristyhawkins", path: "users/fixtures/user-kristyhawkins.html" },
   { url: "/u/johnhaack", path: "users/fixtures/user-johnhaack.html" },
+  {
+    url: "/u/johnhaack",
+    path: "users/fixtures/user-johnhaack-kg.html",
+    headers: { Cookie: "units=kg;" },
+  },
 
   // Status (HTML)
   { url: "/status", path: "status/fixtures/status.html" },
@@ -91,7 +125,7 @@ async function fetchFixture(fixture: FixtureConfig): Promise<void> {
 
   logger.info(`Fetching: ${url}`);
 
-  const response = await fetch(url);
+  const response = await fetch(url, fixture.headers ? { headers: fixture.headers } : undefined);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);

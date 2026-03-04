@@ -71,6 +71,29 @@ Endpoints returning lists support pagination via query parameters:
 - \`per_page\`: Results per page (default: 100, max: 500)
 - \`current_page\`: Page number (default: 1)
 
+## Query Parameters
+
+### Rankings endpoints (\`/api/rankings\`)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
+| \`federation\` | string | Filter by federation code (e.g., \`uspa\`, \`ipf\`, \`wrpf\`) |
+| \`age_class\` | string | Filter by age class (e.g., \`24-34\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`, \`80-999\`) |
+
+### Sort options (path parameter)
+Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-gl-points\`, \`by-mcculloch\`, \`by-total\`, \`by-squat\`, \`by-bench\`, \`by-deadlift\`
+
+### User search (\`/api/users\`)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
+
+### User profile (\`/api/users/:username\`)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| \`include_attempts\` | \`true\` \\| \`false\` | Include individual attempt data in competition results (default: \`false\`) |
+| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
+
 ## Rate Limits
 Rate limits protect the upstream OpenPowerlifting data source and ensure fair usage for all developers.
 

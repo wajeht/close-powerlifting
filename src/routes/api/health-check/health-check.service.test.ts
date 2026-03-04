@@ -71,7 +71,7 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
 
 describe("health-check service", () => {
   const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 21;
+  const TOTAL_ROUTES = 29;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -154,7 +154,7 @@ describe("health-check service", () => {
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
       expect(rankingsGroup).toBeDefined();
-      expect(rankingsGroup.routes.length).toBe(9);
+      expect(rankingsGroup.routes.length).toBe(14);
     });
 
     it("Federations group has correct number of routes", async () => {
@@ -293,6 +293,81 @@ describe("health-check service", () => {
       await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
       expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
       expect(cache.set).toHaveBeenCalledTimes(1);
+    });
+
+    it("Meets group has correct number of routes", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+
+      const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
+      expect(meetsGroup).toBeDefined();
+      expect(meetsGroup.routes.length).toBe(1);
+    });
+
+    it("Records group has correct number of routes", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+
+      const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
+      expect(recordsGroup).toBeDefined();
+      expect(recordsGroup.routes.length).toBe(3);
+    });
+
+    it("Users group has correct number of routes", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+
+      const usersGroup = result.find((g: { name: string }) => g.name === "Users");
+      expect(usersGroup).toBeDefined();
+      expect(usersGroup.routes.length).toBe(5);
+    });
+
+    it("new feature routes are present in rankings group", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+
+      const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
+      const urls = rankingsGroup.routes.map((r: { url: string }) => r.url);
+      expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("federation=uspa"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("by-gl-points"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("by-mcculloch"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("age_class=40-44"))).toBe(true);
+    });
+
+    it("new feature routes are present in users group", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
+
+      const usersGroup = result.find((g: { name: string }) => g.name === "Users");
+      const urls = usersGroup.routes.map((r: { url: string }) => r.url);
+      expect(urls.some((u: string) => u.includes("include_attempts=true"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
     });
 
     it("routes in each group have correct URL patterns", async () => {

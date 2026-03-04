@@ -66,7 +66,7 @@ vi.spyOn(context.scraper, "fetchJson").mockImplementation(async (path: string) =
   throw new Error(`No fixture for JSON path: ${path}`);
 });
 
-vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string) => {
+vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string, _units?: string) => {
   if (path.includes("status")) {
     return statusHtml;
   }

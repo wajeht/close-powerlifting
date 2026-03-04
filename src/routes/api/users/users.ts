@@ -7,7 +7,9 @@ import { createUserService } from "./users.service";
 import {
   getUserValidation,
   getUsersValidation,
+  getUserQueryValidation,
   GetUserType,
+  GetUserQueryType,
   GetUsersType,
 } from "./users.validation";
 
@@ -118,6 +120,7 @@ export function createUsersRouter(context: AppContext) {
    * @param {string} search.query - Search query for athlete name
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @return {UserSearchResponse} 200 - Search results
    * @return {object} 308 - Redirect to rankings (if no search query)
    * @return {ErrorResponse} 401 - Unauthorized
@@ -193,6 +196,8 @@ export function createUsersRouter(context: AppContext) {
    * @description Returns detailed athlete profile including personal bests and competition history
    * @security BearerAuth
    * @param {string} username.path.required - Athlete's username/slug
+   * @param {string} include_attempts.query - Include individual attempt data (true or false, default false) - enum:true,false
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @return {UserResponse} 200 - Athlete profile
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Athlete not found
@@ -235,9 +240,14 @@ export function createUsersRouter(context: AppContext) {
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({ params: getUserValidation }),
-    async (req: Request<GetUserType, {}, {}>, res: Response) => {
-      const user = await userService.getUser(req.params);
+    middleware.apiValidationMiddleware({
+      params: getUserValidation,
+      query: getUserQueryValidation,
+    }),
+    async (req: Request<GetUserType, {}, {}, GetUserQueryType>, res: Response) => {
+      const includeAttempts = req.query.include_attempts === "true";
+      const units = req.query.units ?? "lbs";
+      const user = await userService.getUser(req.params, includeAttempts, units);
 
       if (!user) throw new NotFoundError("The resource cannot be found!");
 

@@ -23,9 +23,9 @@ function getRandomUserAgent(): string {
 
 const FETCH_TIMEOUT_MS = 15000; // 15 seconds
 
-function getDefaultHeaders(): Record<string, string> {
+function getDefaultHeaders(units: string = "lbs"): Record<string, string> {
   return {
-    Cookie: "units=lbs;",
+    Cookie: `units=${units};`,
     Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "User-Agent": getRandomUserAgent(),
     Pragma: "no-cache",
@@ -33,7 +33,7 @@ function getDefaultHeaders(): Record<string, string> {
 }
 
 export interface ScraperType {
-  fetchHtml: (path: string) => Promise<string>;
+  fetchHtml: (path: string, units?: string) => Promise<string>;
   fetchJson: <T>(path: string) => Promise<T>;
   parseHtml: (html: string) => Document;
   tableToJson: <T extends Record<string, string> = Record<string, string>>(
@@ -43,7 +43,7 @@ export interface ScraperType {
   getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
   getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
   withCache: <T>(key: string, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
-  buildPaginationQuery: (currentPage: number, perPage: number) => string;
+  buildPaginationQuery: (currentPage: number, perPage: number, units?: string) => string;
   calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
   fetchWithAuth: (
     baseUrl: string,
@@ -53,10 +53,10 @@ export interface ScraperType {
 }
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
-  async function fetchHtml(path: string): Promise<string> {
+  async function fetchHtml(path: string, units: string = "lbs"): Promise<string> {
     const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
     const response = await fetch(url, {
-      headers: getDefaultHeaders(),
+      headers: getDefaultHeaders(units),
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
@@ -188,10 +188,14 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     }
   }
 
-  function buildPaginationQuery(currentPage: number, perPage: number): string {
+  function buildPaginationQuery(
+    currentPage: number,
+    perPage: number,
+    units: string = "lbs",
+  ): string {
     const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
     const end = start + perPage;
-    return `start=${start}&end=${end}&lang=en&units=lbs`;
+    return `start=${start}&end=${end}&lang=en&units=${units}`;
   }
 
   function calculatePagination(

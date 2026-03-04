@@ -22,12 +22,17 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Rankings", path: "/api/rankings" },
   { group: "Rankings", path: "/api/rankings/1" },
   { group: "Rankings", path: "/api/rankings?current_page=1&per_page=100" },
+  { group: "Rankings", path: "/api/rankings?units=kg" },
+  { group: "Rankings", path: "/api/rankings?federation=uspa" },
   { group: "Rankings", path: "/api/rankings/filter/raw" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-dots" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-gl-points" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-mcculloch" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men?age_class=40-44" },
 
   // Federations
   { group: "Federations", path: "/api/federations" },
@@ -45,7 +50,10 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
 
   // Users
   { group: "Users", path: "/api/users/johnhaack" },
+  { group: "Users", path: "/api/users/johnhaack?include_attempts=true" },
+  { group: "Users", path: "/api/users/johnhaack?units=kg" },
   { group: "Users", path: "/api/users?search=haack" },
+  { group: "Users", path: "/api/users?search=haack&units=kg" },
 
   // Public (no auth)
   { group: "Public", path: "/api/status" },
