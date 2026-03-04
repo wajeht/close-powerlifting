@@ -91,7 +91,7 @@ export function createFederationsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/",
+    "/api/federations",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -134,7 +134,7 @@ export function createFederationsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:federation",
+    "/api/federations/:federation",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,

@@ -92,7 +92,7 @@ export function createMeetsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/*meet",
+    "/api/meets/*meet",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,

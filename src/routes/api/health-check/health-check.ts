@@ -40,16 +40,20 @@ export function createHealthCheckRouter(context: AppContext) {
    *   "data": []
    * }
    */
-  router.get("/", middleware.apiCacheControlMiddleware, async (req: Request, res: Response) => {
-    const data: unknown[] = [];
+  router.get(
+    "/api/health-check",
+    middleware.apiCacheControlMiddleware,
+    async (req: Request, res: Response) => {
+      const data: unknown[] = [];
 
-    res.status(200).json({
-      status: "success",
-      request_url: req.originalUrl,
-      message: "ok",
-      data,
-    });
-  });
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "ok",
+        data,
+      });
+    },
+  );
 
   return router;
 }

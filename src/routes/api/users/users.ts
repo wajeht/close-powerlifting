@@ -132,7 +132,7 @@ export function createUsersRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/",
+    "/api/users",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -182,7 +182,7 @@ export function createUsersRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:username",
+    "/api/users/:username",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,

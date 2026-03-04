@@ -88,7 +88,7 @@ export function createRecordsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/",
+    "/api/records",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -137,7 +137,7 @@ export function createRecordsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:equipment",
+    "/api/records/:equipment",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -212,7 +212,7 @@ export function createRecordsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:equipment/:sex_or_weight_class",
+    "/api/records/:equipment/:sex_or_weight_class",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -277,7 +277,7 @@ export function createRecordsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:equipment/:weight_class/:sex",
+    "/api/records/:equipment/:weight_class/:sex",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,

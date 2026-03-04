@@ -65,7 +65,7 @@ export function createStatusRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/",
+    "/api/status",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,

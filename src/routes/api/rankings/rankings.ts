@@ -101,7 +101,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/",
+    "/api/rankings",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -144,7 +144,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment",
+    "/api/rankings/filter/:equipment",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -199,7 +199,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment/:sex",
+    "/api/rankings/filter/:equipment/:sex",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -255,7 +255,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment/:sex/:weight_class",
+    "/api/rankings/filter/:equipment/:sex/:weight_class",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -316,7 +316,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment/:sex/:weight_class/:year",
+    "/api/rankings/filter/:equipment/:sex/:weight_class/:year",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -379,7 +379,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment/:sex/:weight_class/:year/:event",
+    "/api/rankings/filter/:equipment/:sex/:weight_class/:year/:event",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -444,7 +444,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
+    "/api/rankings/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -491,7 +491,7 @@ export function createRankingsRouter(context: AppContext) {
    * }
    */
   router.get(
-    "/:rank",
+    "/api/rankings/:rank",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
