@@ -12,13 +12,13 @@ import { createUsersRouter } from "./users/users";
 export function createApiRouter(context: AppContext) {
   const router = express.Router();
 
-  router.use("/rankings", createRankingsRouter(context));
-  router.use("/federations", createFederationsRouter(context));
-  router.use("/meets", createMeetsRouter(context));
-  router.use("/records", createRecordsRouter(context));
-  router.use("/users", createUsersRouter(context));
-  router.use("/status", createStatusRouter(context));
-  router.use("/health-check", createHealthCheckRouter(context));
+  router.use("/api/rankings", createRankingsRouter(context));
+  router.use("/api/federations", createFederationsRouter(context));
+  router.use("/api/meets", createMeetsRouter(context));
+  router.use("/api/records", createRecordsRouter(context));
+  router.use("/api/users", createUsersRouter(context));
+  router.use("/api/status", createStatusRouter(context));
+  router.use("/api/health-check", createHealthCheckRouter(context));
 
   return router;
 }

@@ -11,12 +11,12 @@ import { createSettingsRouter } from "./settings/settings";
 export function createMainRouter(context: AppContext) {
   const router = express.Router();
 
-  router.use("/", createGeneralRouter(context));
-  router.use("/", createAuthRouter(context));
-  router.use("/dashboard", createDashboardRouter(context));
-  router.use("/settings", createSettingsRouter(context));
-  router.use("/api", createApiRouter(context));
-  router.use("/admin", createAdminRouter(context));
+  router.use(createGeneralRouter(context));
+  router.use(createAuthRouter(context));
+  router.use(createDashboardRouter(context));
+  router.use(createSettingsRouter(context));
+  router.use(createApiRouter(context));
+  router.use(createAdminRouter(context));
 
   return router;
 }

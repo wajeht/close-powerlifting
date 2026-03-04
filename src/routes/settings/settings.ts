@@ -25,7 +25,7 @@ export function createSettingsRouter(context: AppContext) {
   const router = express.Router();
 
   router.get(
-    "/",
+    "/settings",
     middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
@@ -49,7 +49,7 @@ export function createSettingsRouter(context: AppContext) {
   );
 
   router.post(
-    "/",
+    "/settings",
     middleware.sessionAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: updateNameValidation }),
@@ -76,7 +76,7 @@ export function createSettingsRouter(context: AppContext) {
   );
 
   router.post(
-    "/regenerate-key",
+    "/settings/regenerate-key",
     middleware.sessionAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
@@ -107,7 +107,7 @@ export function createSettingsRouter(context: AppContext) {
   );
 
   router.post(
-    "/delete",
+    "/settings/delete",
     middleware.sessionAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {

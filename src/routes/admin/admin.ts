@@ -36,7 +36,7 @@ export function createAdminRouter(context: AppContext) {
   const router = express.Router();
 
   router.get(
-    "/",
+    "/admin",
     middleware.sessionAdminAuthenticationMiddleware,
     (_req: Request, res: Response) => {
       return res.redirect("/dashboard");
@@ -44,7 +44,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.get(
-    "/users",
+    "/admin/users",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.validationMiddleware({ query: usersQueryValidation }),
     async (req: Request, res: Response) => {
@@ -69,7 +69,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/users/:id/api-limit",
+    "/admin/users/:id/api-limit",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({
@@ -95,7 +95,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/users/:id/resend-verification",
+    "/admin/users/:id/resend-verification",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ params: userIdParamValidation }),
@@ -115,7 +115,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.get(
-    "/users/:id",
+    "/admin/users/:id",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.validationMiddleware({
       params: userIdParamValidation,
@@ -148,7 +148,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.get(
-    "/cache",
+    "/admin/cache",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.validationMiddleware({ query: cacheQueryValidation }),
     async (req: Request, res: Response) => {
@@ -173,7 +173,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/cache/clear",
+    "/admin/cache/clear",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
@@ -185,7 +185,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/cache/delete",
+    "/admin/cache/delete",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: cacheKeyValidation }),

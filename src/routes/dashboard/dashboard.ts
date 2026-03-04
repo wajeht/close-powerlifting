@@ -19,7 +19,7 @@ export function createDashboardRouter(context: AppContext) {
   const router = express.Router();
 
   router.get(
-    "/",
+    "/dashboard",
     middleware.sessionAuthenticationMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
