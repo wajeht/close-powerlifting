@@ -293,6 +293,43 @@ export function createMiddleware(
     try {
       const id = req.user?.id as unknown as number;
       if (id) {
+        // Register API call log listener FIRST so ALL requests get logged
+        // (including over-limit rejections)
+        res.on("finish", () => {
+          apiCallLogRepository
+            .create({
+              user_id: id,
+              method: req.method,
+              endpoint: req.originalUrl,
+              status_code: res.statusCode,
+              response_time_ms: Date.now() - startTime,
+              ip_address: (req.headers["cf-connecting-ip"] as string) || req.ip || null,
+              user_agent: req.headers["user-agent"]?.substring(0, 512) || null,
+            })
+            .catch((err) => {
+              logger.error(err);
+            });
+        });
+
+        // Check if non-admin is already at/over limit BEFORE incrementing
+        const currentUser = await userRepository.findById(id);
+
+        if (!currentUser) {
+          return next();
+        }
+
+        if (!currentUser.admin && currentUser.api_call_count >= currentUser.api_call_limit) {
+          // Don't increment — just set headers and reject
+          const now = new Date();
+          const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          res.set("X-RateLimit-Limit", String(currentUser.api_call_limit));
+          res.set("X-RateLimit-Remaining", "0");
+          res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
+
+          throw new APICallsExceededError("API Calls exceeded!");
+        }
+
+        // Safe to increment — user is under the limit (or is admin)
         const user = await userRepository.incrementApiCallCount(id);
 
         if (!user) {
@@ -306,6 +343,7 @@ export function createMiddleware(
         res.set("X-RateLimit-Remaining", String(remaining));
         res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
 
+        // After increment, check if non-admin just hit the limit
         if (user.api_call_count >= user.api_call_limit && !user.admin) {
           if (user.api_call_count === user.api_call_limit) {
             await mail.sendReachingApiLimitEmail({
@@ -324,22 +362,6 @@ export function createMiddleware(
             percent: 50,
           });
         }
-
-        res.on("finish", () => {
-          apiCallLogRepository
-            .create({
-              user_id: id,
-              method: req.method,
-              endpoint: req.originalUrl,
-              status_code: res.statusCode,
-              response_time_ms: Date.now() - startTime,
-              ip_address: (req.headers["cf-connecting-ip"] as string) || req.ip || null,
-              user_agent: req.headers["user-agent"]?.substring(0, 512) || null,
-            })
-            .catch((err) => {
-              logger.error(err);
-            });
-        });
       }
       next();
     } catch (e) {
