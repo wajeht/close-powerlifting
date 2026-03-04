@@ -76,12 +76,12 @@ export function createFederationsRouter(context: AppContext) {
    * @summary Get all federations with optional pagination
    * @description Returns a paginated list of all powerlifting federations with their meets
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {FederationsResponse} 200 - Success response with federations list
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -118,13 +118,13 @@ export function createFederationsRouter(context: AppContext) {
    * @summary Get meets for a specific federation
    * @description Returns meet results for a specific federation, optionally filtered by year
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {string} federation.path.required - Federation code (e.g., ipf, usapl, uspa, wrpf)
    * @param {number} year.query - Filter results by competition year (e.g., 2024)
-
    * @return {FederationsResponse} 200 - Success response with federation results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Federation not found
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",

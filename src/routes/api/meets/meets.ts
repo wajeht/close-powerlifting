@@ -77,12 +77,11 @@ export function createMeetsRouter(context: AppContext) {
    * @summary Get meet results by meet code
    * @description Returns detailed meet information including all lifter results with attempt data
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {string} meet.path.required - Meet code (e.g., usapl/CA-2024-01, rps/2548, uspa/1969)
-
    * @return {MeetResponse} 200 - Meet data with results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Meet not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",

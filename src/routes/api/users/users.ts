@@ -114,15 +114,15 @@ export function createUsersRouter(context: AppContext) {
    * @summary Search for athletes or redirect to rankings
    * @description Searches for athletes by name. If no search query is provided, redirects to rankings endpoint.
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {string} search.query - Search query for athlete name
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {UserSearchResponse} 200 - Search results
    * @return {object} 308 - Redirect to rankings (if no search query)
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - No results found
+   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -167,12 +167,11 @@ export function createUsersRouter(context: AppContext) {
    * @summary Get athlete profile by username
    * @description Returns detailed athlete profile including personal bests and competition history
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {string} username.path.required - Athlete's username/slug
-
    * @return {UserResponse} 200 - Athlete profile
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Athlete not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",

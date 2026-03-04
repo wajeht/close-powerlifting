@@ -84,12 +84,11 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Get all rankings with optional pagination
    * @description Returns paginated list of all powerlifting rankings sorted by DOTS score
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Success response with rankings data
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
+   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -128,13 +127,13 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Filter rankings by equipment type
    * @description Returns rankings filtered by equipment category
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -182,14 +181,14 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Filter rankings by equipment and sex
    * @description Returns rankings filtered by equipment category and sex
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -237,15 +236,15 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Filter rankings by equipment, sex and weight class
    * @description Returns rankings filtered by equipment, sex and weight class
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -297,16 +296,16 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Filter rankings by equipment, sex, weight class and year
    * @description Returns rankings filtered by equipment, sex, weight class and competition year
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {string} year.path.required - Competition year (e.g., 2024)
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -359,17 +358,17 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Filter rankings by equipment, sex, weight class, year and event
    * @description Returns rankings filtered by all criteria including event type
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {string} year.path.required - Competition year (e.g., 2024)
-   * @param {string} event.path.required - Event type - enum:full-power,bench-only,deadlift-only
+   * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -423,18 +422,18 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Get fully filtered rankings with custom sort
    * @description Returns rankings filtered by all criteria with custom sort order
    * @security BearerAuth
-   * @security ApiKeyAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single-ply,multi-ply
+   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,raw-wraps,single-ply,multi-ply,unlimited
    * @param {string} sex.path.required - Sex - enum:men,women
    * @param {string} weight_class.path.required - Weight class (e.g., 75, 90, 100)
    * @param {string} year.path.required - Competition year (e.g., 2024)
-   * @param {string} event.path.required - Event type - enum:full-power,bench-only,deadlift-only
-   * @param {string} sort.path.required - Sort by - enum:by-dots,by-total,by-squat,by-bench,by-deadlift
+   * @param {string} event.path.required - Event type - enum:full-power,push-pull,squat,bench,deadlift
+   * @param {string} sort.path.required - Sort by - enum:by-dots,by-wilks,by-glossbrenner,by-total,by-squat,by-bench,by-deadlift
    * @param {number} current_page.query - Page number (default 1)
    * @param {number} per_page.query - Results per page (max 500, default 100)
-
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -477,11 +476,11 @@ export function createRankingsRouter(context: AppContext) {
    * @summary Get a single ranking by position
    * @description Returns a single ranking entry by its position number
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {number} rank.path.required - Ranking position (1-based)
    * @return {RankingsResponse} 200 - Single ranking entry
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Ranking not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
