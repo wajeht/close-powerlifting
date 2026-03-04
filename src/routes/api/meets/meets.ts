@@ -53,6 +53,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -88,6 +89,30 @@ export function createMeetsRouter(context: AppContext) {
    *   "request_url": "/api/meets/uspa/1969",
    *   "message": "The resource was returned successfully!",
    *   "data": {"title": "2024 USPA Nationals", "results": []}
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/uspa/1969",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Meet not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/invalid/code",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/uspa/1969",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(

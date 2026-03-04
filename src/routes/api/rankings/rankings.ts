@@ -60,6 +60,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -88,7 +89,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Success response with rankings data
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid query parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -97,6 +98,22 @@ export function createRankingsRouter(context: AppContext) {
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}],
    *   "pagination": {"current_page": 1, "per_page": 100, "items": 3000000}
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -132,7 +149,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -140,6 +157,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "equipment": "Raw", "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid equipment value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/invalid",
+   *   "message": "Invalid enum value. Expected 'raw' | 'wraps' | 'raw-wraps' | 'single-ply' | 'multi-ply' | 'unlimited', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["equipment"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -187,7 +228,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -195,6 +236,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw/men",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "sex": "M", "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/invalid",
+   *   "message": "Invalid enum value. Expected 'men' | 'women', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["sex"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -243,7 +308,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -251,6 +316,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw/men/100",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "weight_class_kg": "100", "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/invalid/men/100",
+   *   "message": "Invalid enum value. Expected 'raw' | 'wraps' | 'raw-wraps' | 'single-ply' | 'multi-ply' | 'unlimited', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["equipment"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -304,7 +393,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -312,6 +401,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw/men/100/2024",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "date": "2024-06-15", "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/invalid/men/100/2024",
+   *   "message": "Invalid enum value. Expected 'raw' | 'wraps' | 'raw-wraps' | 'single-ply' | 'multi-ply' | 'unlimited', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["equipment"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -367,7 +480,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -375,6 +488,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "total_kg": 950, "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/invalid",
+   *   "message": "Invalid enum value. Expected 'full-power' | 'push-pull' | 'squat' | 'bench' | 'deadlift', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["event"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -432,7 +569,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -440,6 +577,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"rank": 1, "name": "John Haack", "dots": 617.45}]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/invalid",
+   *   "message": "Invalid enum value. Expected 'by-dots' | 'by-wilks' | 'by-glossbrenner' | 'by-total' | 'by-squat' | 'by-bench' | 'by-deadlift', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["sort"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/filter/raw/men/100/2024/full-power/by-dots",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -487,6 +648,30 @@ export function createRankingsRouter(context: AppContext) {
    *   "request_url": "/api/rankings/1",
    *   "message": "The resource was returned successfully!",
    *   "data": {"rank": 1, "name": "John Haack", "dots": 617.45}
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/1",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Ranking not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/99999999",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/rankings/1",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(

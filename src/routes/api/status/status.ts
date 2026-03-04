@@ -40,6 +40,7 @@ import { getStatusValidation, GetStatusType } from "./status.validation";
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -73,6 +74,22 @@ export function createStatusRouter(context: AppContext) {
    *   "request_url": "/api/status",
    *   "message": "The resource was returned successfully!",
    *   "data": {"server_version": "abc123", "meets": "50000", "federations": []}
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/status",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/status",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(

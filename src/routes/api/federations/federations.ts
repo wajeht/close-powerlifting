@@ -52,6 +52,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -80,7 +81,7 @@ export function createFederationsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @return {FederationsResponse} 200 - Success response with federations list
    * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid query parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -88,6 +89,22 @@ export function createFederationsRouter(context: AppContext) {
    *   "request_url": "/api/federations",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"federation": "IPF", "meetname": "World Championships"}]
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/federations",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/federations",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -123,7 +140,7 @@ export function createFederationsRouter(context: AppContext) {
    * @return {FederationsResponse} 200 - Success response with federation results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Federation not found
-   * @return {ErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -131,6 +148,30 @@ export function createFederationsRouter(context: AppContext) {
    *   "request_url": "/api/federations/ipf",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"meetname": "World Championships", "date": "2024-06-15"}]
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/federations/ipf",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Federation not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/federations/nonexistent",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/federations/ipf",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(

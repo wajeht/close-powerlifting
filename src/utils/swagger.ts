@@ -63,7 +63,7 @@ Errors return \`status: "fail"\` with appropriate HTTP codes:
 | 401 | Unauthorized - Invalid or missing API key |
 | 403 | Forbidden - Access denied |
 | 404 | Not Found - Resource doesn't exist |
-| 422 | Validation Error - Invalid parameters |
+| 400 | Validation Error - Invalid parameters |
 | 429 | Rate Limited - Monthly quota or IP rate limit exceeded |
 
 ## Pagination

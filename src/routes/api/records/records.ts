@@ -45,7 +45,8 @@ import {
  * @property {string} status - Response status ("fail")
  * @property {string} request_url - Original request URL
  * @property {string} message - Error message describing the failure
- * @property {object[]} errors - Validation errors (for 400 responses)
+ * @property {object[]} errors - Error details array
+ * @property {object[]} data - Empty array
  */
 
 export function createRecordsRouter(context: AppContext) {
@@ -87,6 +88,30 @@ export function createRecordsRouter(context: AppContext) {
    *     }
    *   ]
    * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Records not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
+   * }
    */
   router.get(
     "/api/records",
@@ -121,7 +146,7 @@ export function createRecordsRouter(context: AppContext) {
    * @return {RecordsResponse} 200 - Records filtered by equipment
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Records not found
-   * @return {RecordsErrorResponse} 422 - Validation error - Invalid equipment parameter
+   * @return {RecordsErrorResponse} 400 - Validation error - Invalid equipment parameter
    * @return {RecordsErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response for raw records
    * {
@@ -136,6 +161,38 @@ export function createRecordsRouter(context: AppContext) {
    *       ]
    *     }
    *   ]
+   * }
+   * @example response - 400 - Invalid equipment value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/invalid",
+   *   "message": "Invalid enum value. Expected 'raw' | 'wraps' | 'single' | 'multi' | 'unlimited' | 'all-tested', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["equipment"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Records not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -212,6 +269,30 @@ export function createRecordsRouter(context: AppContext) {
    *     }
    *   ]
    * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw/men",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw/invalid",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw/men",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
+   * }
    */
   router.get(
     "/api/records/:equipment/:sex_or_weight_class",
@@ -262,7 +343,7 @@ export function createRecordsRouter(context: AppContext) {
    * @return {RecordsResponse} 200 - Records filtered by all criteria
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Records not found
-   * @return {RecordsErrorResponse} 422 - Validation error - Invalid parameters
+   * @return {RecordsErrorResponse} 400 - Validation error - Invalid parameters
    * @return {RecordsErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response for women's unlimited WP-class records
    * {
@@ -277,6 +358,38 @@ export function createRecordsRouter(context: AppContext) {
    *       ]
    *     }
    *   ]
+   * }
+   * @example response - 400 - Invalid parameter value
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/raw/ipf-classes/invalid",
+   *   "message": "Invalid enum value. Expected 'men' | 'women', received 'invalid'",
+   *   "errors": [{"code": "invalid_enum_value", "path": ["sex"], "message": "Invalid enum value"}],
+   *   "data": []
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/unlimited/wp-classes/women",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Records not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/unlimited/wp-classes/women",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/records/unlimited/wp-classes/women",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(

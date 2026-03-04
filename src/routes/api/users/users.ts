@@ -90,6 +90,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -121,7 +122,7 @@ export function createUsersRouter(context: AppContext) {
    * @return {object} 308 - Redirect to rankings (if no search query)
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - No results found
-   * @return {ErrorResponse} 422 - Validation error - Invalid query parameters
+   * @return {ErrorResponse} 400 - Validation error - Invalid query parameters
    * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
@@ -129,6 +130,30 @@ export function createUsersRouter(context: AppContext) {
    *   "request_url": "/api/users?search=haack",
    *   "message": "The resource was returned successfully!",
    *   "data": [{"name": "John Haack", "username": "johnhaack"}]
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users?search=haack",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - No results found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users?search=zzzznotfound",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users?search=haack",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
@@ -178,6 +203,30 @@ export function createUsersRouter(context: AppContext) {
    *   "request_url": "/api/users/johnhaack",
    *   "message": "The resource was returned successfully!",
    *   "data": {"name": "John Haack", "personal_best": []}
+   * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users/johnhaack",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Athlete not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users/nonexistentuser",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/users/johnhaack",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
    * }
    */
   router.get(
