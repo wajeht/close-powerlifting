@@ -68,4 +68,46 @@ describe("GET /api/meets/:meet", () => {
     expect(response.status).toBe(404);
     expect(response.body.status).toBe("fail");
   });
+
+  it("should return 200 with sort=by-wilks", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?sort=by-wilks");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 200 with sort=by-total", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?sort=by-total");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 with invalid sort", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?sort=invalid");
+
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 200 with units=kg", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?units=kg");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 with invalid units", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?units=invalid");
+
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 200 with sort and units combined", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/meets/uspa/1969?sort=by-wilks&units=kg",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
 });

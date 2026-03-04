@@ -42,6 +42,8 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
 
   // Meets
   { group: "Meets", path: "/api/meets/uspa/1969" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks" },
+  { group: "Meets", path: "/api/meets/uspa/1969?units=kg" },
 
   // Records
   { group: "Records", path: "/api/records" },

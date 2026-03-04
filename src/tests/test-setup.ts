@@ -79,7 +79,7 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string, _
   if (path.includes("johnhaack") || path.includes("search=haack")) {
     return userJohnHaackHtml;
   }
-  if (path.includes("uspa/1969") || path.includes("m/uspa/1969")) {
+  if (path.includes("m/uspa/1969")) {
     return meetUspa1969Html;
   }
   if (path.includes("records")) {

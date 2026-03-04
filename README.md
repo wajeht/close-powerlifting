@@ -34,6 +34,13 @@ Full API documentation available at [closepowerlifting.com/docs/api](https://clo
 
 `by-dots`, `by-wilks`, `by-glossbrenner`, `by-gl-points`, `by-mcculloch`, `by-total`, `by-squat`, `by-bench`, `by-deadlift`
 
+### Meets
+
+| Parameter | Values                                                                                                                                                                                     | Description                  |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- |
+| `sort`    | `by-dots`, `by-wilks`, `by-wilks2020`, `by-glossbrenner`, `by-goodlift`, `by-ipf-points`, `by-mcculloch`, `by-total`, `by-ah`, `by-nasa`, `by-reshel`, `by-schwartz-malone`, `by-division` | Sort order for results       |
+| `units`   | `lbs`, `kg`                                                                                                                                                                                | Unit system (default: `lbs`) |
+
 ### Users
 
 | Parameter          | Values          | Endpoint               | Description                     |

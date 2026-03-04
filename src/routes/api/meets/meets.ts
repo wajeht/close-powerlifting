@@ -79,6 +79,8 @@ export function createMeetsRouter(context: AppContext) {
    * @description Returns detailed meet information including all lifter results with attempt data
    * @security BearerAuth
    * @param {string} meet.path.required - Meet code (e.g., usapl/CA-2024-01, rps/2548, uspa/1969)
+   * @param {string} sort.query - Sort order for results - enum:by-dots,by-wilks,by-wilks2020,by-glossbrenner,by-goodlift,by-ipf-points,by-mcculloch,by-total,by-ah,by-nasa,by-reshel,by-schwartz-malone,by-division
+   * @param {string} units.query - Unit system for weight values (lbs or kg, default: lbs) - enum:lbs,kg
    * @return {MeetResponse} 200 - Meet data with results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Meet not found
@@ -125,8 +127,8 @@ export function createMeetsRouter(context: AppContext) {
       params: getMeetParamValidation,
       query: getMeetQueryValidation,
     }),
-    async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
-      const result = await meetService.getMeet(req.params);
+    async (req: Request<GetMeetParamType, {}, {}, GetMeetQueryType>, res: Response) => {
+      const result = await meetService.getMeet(req.params, req.query.sort, req.query.units);
 
       if (!result.data) throw new NotFoundError("The resource cannot be found!");
 
