@@ -208,8 +208,6 @@ Rate limits protect the upstream OpenPowerlifting data source and ensure fair us
     customCss: `
       .swagger-ui .topbar { display: none }
       .swagger-ui .info .title { font-size: 2rem }
-      body { background: #fff }
-      .swagger-ui { color: #3b4151 }
     `,
     customSiteTitle: "Close Powerlifting API Docs",
   },
