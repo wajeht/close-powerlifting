@@ -18,6 +18,7 @@ import type {
 } from "./types";
 import { transformRankingRow } from "./routes/api/rankings/rankings.service";
 import { transformCompetitionResults } from "./routes/api/users/users.service";
+import { createHealthCheckService } from "./routes/api/health-check/health-check.service";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
@@ -29,6 +30,7 @@ export interface CronType {
   getStatus: () => { isRunning: boolean; jobCount: number };
   tasks: {
     refreshCache: () => Promise<void>;
+    refreshHealthCheck: () => Promise<void>;
     resetApiCallCount: () => Promise<void>;
     sendReachingApiLimitEmail: () => Promise<void>;
     cleanupOldApiCallLogs: () => Promise<void>;
@@ -318,6 +320,31 @@ export function createCron(
     logger.warn(`refreshCacheKey: unknown key type: ${key}`);
   }
 
+  async function refreshHealthCheckTask() {
+    try {
+      logger.info("cron job started: refreshHealthCheck");
+
+      const hostname = await cache.get("hostname");
+      if (!hostname) {
+        logger.warn("refreshHealthCheck: hostname not cached yet, skipping");
+        return;
+      }
+
+      const adminUser = await userRepository.findByEmail(configuration.app.adminEmail);
+      if (!adminUser?.api_key) {
+        logger.warn("refreshHealthCheck: admin user or API key not found, skipping");
+        return;
+      }
+
+      const healthCheckService = createHealthCheckService(cache, scraper, logger);
+      await healthCheckService.refreshAPIStatus({ apiKey: adminUser.api_key, url: hostname });
+
+      logger.info("cron job completed: refreshHealthCheck");
+    } catch (error) {
+      logger.error("cron job failed: refreshHealthCheck", error);
+    }
+  }
+
   async function refreshCacheTask() {
     try {
       const startTime = Date.now();
@@ -432,6 +459,7 @@ export function createCron(
 
   function start(): void {
     cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
+    cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask)); // Daily health check refresh: every day at 5:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", resetApiCallCountTask)); // Daily API call count reset: every day at 12:00 AM UTC
     cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
@@ -459,6 +487,7 @@ export function createCron(
     getStatus,
     tasks: {
       refreshCache: refreshCacheTask,
+      refreshHealthCheck: refreshHealthCheckTask,
       resetApiCallCount: resetApiCallCountTask,
       sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
       cleanupOldApiCallLogs: cleanupOldApiCallLogsTask,

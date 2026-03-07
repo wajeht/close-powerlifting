@@ -101,6 +101,7 @@ describe("cron", () => {
       findVerified: vi.fn().mockResolvedValue([]),
       resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
       findByApiCallCount: vi.fn().mockResolvedValue([]),
+      findByEmail: vi.fn().mockResolvedValue(null),
     } as unknown as UserRepositoryType;
     mail = {
       sendApiLimitResetEmail: vi.fn().mockResolvedValue(undefined),
@@ -137,7 +138,7 @@ describe("cron", () => {
 
       const status = cron.getStatus();
       expect(status.isRunning).toBe(true);
-      expect(status.jobCount).toBe(4);
+      expect(status.jobCount).toBe(5);
 
       cron.stop();
     });
@@ -154,7 +155,7 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       cron.start();
 
-      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 4 });
+      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 5 });
 
       cron.stop();
 
@@ -520,6 +521,53 @@ describe("cron", () => {
           successful: 7,
           failed: 0,
         }),
+      );
+    });
+  });
+
+  describe("refreshHealthCheck task", () => {
+    it("should skip when hostname is not cached", async () => {
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshHealthCheck: hostname not cached yet, skipping",
+      );
+    });
+
+    it("should skip when admin user is not found", async () => {
+      await cache.set("hostname", "http://localhost");
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshHealthCheck: admin user or API key not found, skipping",
+      );
+    });
+
+    it("should refresh health check when hostname and admin exist", async () => {
+      await cache.set("hostname", "http://localhost");
+      vi.mocked(userRepository.findByEmail).mockResolvedValueOnce({
+        api_key: "test-key",
+      } as never);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: refreshHealthCheck");
+    });
+
+    it("should log error on failure", async () => {
+      await cache.set("hostname", "http://localhost");
+      vi.mocked(userRepository.findByEmail).mockRejectedValueOnce(new Error("db error"));
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "cron job failed: refreshHealthCheck",
+        expect.any(Error),
       );
     });
   });

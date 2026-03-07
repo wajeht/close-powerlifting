@@ -87,81 +87,72 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Public", path: "/api/health-check" },
 ];
 
-const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
+const CACHE_KEY = "close-powerlifting-global-status-call-cache";
 
 export function createHealthCheckService(
   cache: CacheType,
   scraper: ScraperType,
   logger: LoggerType,
 ) {
-  async function getAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
-    const fetchStatus = async () => {
-      const promises = await Promise.allSettled(
-        ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
-      );
+  async function getAPIStatus({
+    apiKey,
+    url,
+  }: {
+    apiKey: string;
+    url: string;
+  }): Promise<RouteGroup[]> {
+    const cachedData = await cache.get(CACHE_KEY);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
+    return refreshAPIStatus({ apiKey, url });
+  }
 
-      const groupOrder = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-      const groupMap = new Map<string, RouteStatus[]>();
+  async function refreshAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
+    const promises = await Promise.allSettled(
+      ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
+    );
 
-      for (const groupName of groupOrder) {
-        groupMap.set(groupName, []);
-      }
+    const groupOrder = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
+    const groupMap = new Map<string, RouteStatus[]>();
 
-      for (let i = 0; i < ROUTE_DEFINITIONS.length; i++) {
-        const routeDefinition = ROUTE_DEFINITIONS[i];
-        if (!routeDefinition) continue;
+    for (const groupName of groupOrder) {
+      groupMap.set(groupName, []);
+    }
 
-        const promise = promises[i];
-        const result = promise != null && promise.status === "fulfilled" ? promise.value : null;
+    for (let i = 0; i < ROUTE_DEFINITIONS.length; i++) {
+      const routeDefinition = ROUTE_DEFINITIONS[i];
+      if (!routeDefinition) continue;
 
-        const routeStatus: RouteStatus = {
-          status: Boolean(result?.ok),
-          method: "GET",
-          url: routeDefinition.path,
-          date: result?.date || new Date().toISOString(),
-        };
+      const promise = promises[i];
+      const result = promise != null && promise.status === "fulfilled" ? promise.value : null;
 
-        groupMap.get(routeDefinition.group)?.push(routeStatus);
-      }
+      const routeStatus: RouteStatus = {
+        status: Boolean(result?.ok),
+        method: "GET",
+        url: routeDefinition.path,
+        date: result?.date || new Date().toISOString(),
+      };
 
-      const groups: RouteGroup[] = [];
-      for (const groupName of groupOrder) {
-        const routes = groupMap.get(groupName);
-        if (routes != null && routes.length > 0) {
-          groups.push({ name: groupName, routes });
-        }
-      }
+      groupMap.get(routeDefinition.group)?.push(routeStatus);
+    }
 
-      return groups;
-    };
-
-    const cacheKey = `close-powerlifting-global-status-call-cache`;
-
-    let isStale = false;
-    const cachedData = await cache.get(cacheKey);
-    let data = cachedData ? JSON.parse(cachedData) : null;
-
-    if (data !== null) {
-      const entries = await cache.getEntries({ pattern: cacheKey });
-      const entry = entries[0];
-      if (entry) {
-        const age = Date.now() - new Date(entry.updated_at).getTime();
-        isStale = age > TWENTY_FOUR_HOURS_MS;
+    const groups: RouteGroup[] = [];
+    for (const groupName of groupOrder) {
+      const routes = groupMap.get(groupName);
+      if (routes != null && routes.length > 0) {
+        groups.push({ name: groupName, routes });
       }
     }
 
-    if (data === null || isStale) {
-      data = await fetchStatus();
+    await cache.set(CACHE_KEY, JSON.stringify(groups));
+    logger.info("Global status cache was updated!");
 
-      await cache.set(cacheKey, JSON.stringify(data));
-
-      logger.info("Global status cache was updated!");
-    }
-
-    return data;
+    return groups;
   }
 
   return {
     getAPIStatus,
+    refreshAPIStatus,
   };
 }
