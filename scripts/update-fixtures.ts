@@ -44,13 +44,52 @@ const fixtures: FixtureConfig[] = [
     url: "/api/rankings/uspa/raw/men?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-uspa-raw-men.json",
   },
+  {
+    url: "/api/rankings/ipf/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-ipf-raw-men.json",
+  },
+  {
+    url: "/api/rankings/wrpf/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-wrpf-raw-men.json",
+  },
 
   // Rankings (JSON API) - Age class filter
+  {
+    url: "/api/rankings/raw/men/90/24-34?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age24-34.json",
+  },
   {
     url: "/api/rankings/raw/men/90/40-44?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-raw-men-90-age40-44.json",
   },
-
+  {
+    url: "/api/rankings/raw/men/90/45-49?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age45-49.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/50-54?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age50-54.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/55-59?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age55-59.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/60-64?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age60-64.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/65-69?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age65-69.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/70-74?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age70-74.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/75-79?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age75-79.json",
+  },
   // Rankings (JSON API) - Sort options
   {
     url: "/api/rankings/raw/men/90/2024/full-power/by-wilks?start=0&end=10&lang=en&units=lbs",

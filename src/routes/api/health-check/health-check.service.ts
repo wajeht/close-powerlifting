@@ -39,6 +39,11 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-bench" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-deadlift" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men?age_class=40-44" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men?federation=ipf" },
+  {
+    group: "Rankings",
+    path: "/api/rankings/filter/raw/men?units=kg&federation=uspa&age_class=24-34",
+  },
 
   // Federations
   { group: "Federations", path: "/api/federations" },

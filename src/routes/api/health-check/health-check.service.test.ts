@@ -71,7 +71,7 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
 
 describe("health-check service", () => {
   const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 51;
+  const TOTAL_ROUTES = 53;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -154,7 +154,7 @@ describe("health-check service", () => {
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
       expect(rankingsGroup).toBeDefined();
-      expect(rankingsGroup.routes.length).toBe(20);
+      expect(rankingsGroup.routes.length).toBe(22);
     });
 
     it("Federations group has correct number of routes", async () => {
@@ -350,7 +350,9 @@ describe("health-check service", () => {
       const urls = rankingsGroup.routes.map((r: { url: string }) => r.url);
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
       expect(urls.some((u: string) => u.includes("federation=uspa"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("federation=ipf"))).toBe(true);
       expect(urls.some((u: string) => u.includes("age_class=40-44"))).toBe(true);
+      expect(urls.some((u: string) => u.includes("age_class=24-34"))).toBe(true);
       for (const sort of [
         "by-dots",
         "by-wilks",

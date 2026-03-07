@@ -151,7 +151,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -233,7 +233,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -316,7 +316,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -404,7 +404,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -494,7 +494,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters
@@ -586,7 +586,7 @@ export function createRankingsRouter(context: AppContext) {
    * @param {number} per_page.query - Results per page (max 500, default 100)
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @param {string} federation.query - Federation code to filter by (e.g., uspa, ipf, wrpf)
-   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-999
+   * @param {string} age_class.query - Age class filter - enum:24-34,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79
    * @return {RankingsResponse} 200 - Filtered rankings
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 400 - Validation error - Invalid parameters

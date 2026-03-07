@@ -129,7 +129,6 @@ describe.concurrent("rankings validation", () => {
         "65-69",
         "70-74",
         "75-79",
-        "80-999",
       ];
       for (const ageClass of validAgeClasses) {
         const result = getFilteredRankingsQueryValidation.safeParse({ age_class: ageClass });
@@ -195,7 +194,6 @@ describe.concurrent("rankings validation", () => {
         "65-69",
         "70-74",
         "75-79",
-        "80-999",
       ];
       for (const value of validValues) {
         expect(ageClassEnum.safeParse(value).success).toBe(true);

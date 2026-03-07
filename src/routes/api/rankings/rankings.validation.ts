@@ -58,7 +58,6 @@ export const ageClassEnum = z.enum([
   "65-69",
   "70-74",
   "75-79",
-  "80-999",
 ]);
 
 export const getFilteredRankingsQueryValidation = z.object({
