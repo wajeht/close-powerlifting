@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { configuration } from "../../../configuration";
 import { getUsersValidation, getUserValidation, getUserQueryValidation } from "./users.validation";
