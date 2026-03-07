@@ -30,8 +30,14 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-dots" },
-  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-gl-points" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-wilks" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-glossbrenner" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-goodlift" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-mcculloch" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-total" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-squat" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-bench" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power/by-deadlift" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men?age_class=40-44" },
 
   // Federations
@@ -43,12 +49,26 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   // Meets
   { group: "Meets", path: "/api/meets/uspa/1969" },
   { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks2020" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-glossbrenner" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-goodlift" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-ipf-points" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-mcculloch" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-total" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-ah" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-nasa" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-reshel" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-schwartz-malone" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-division" },
   { group: "Meets", path: "/api/meets/uspa/1969?units=kg" },
+  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks&units=kg" },
 
   // Records
   { group: "Records", path: "/api/records" },
   { group: "Records", path: "/api/records/raw" },
   { group: "Records", path: "/api/records/raw/men" },
+  { group: "Records", path: "/api/records/raw/ipf-classes" },
+  { group: "Records", path: "/api/records/raw/ipf-classes/men" },
 
   // Users
   { group: "Users", path: "/api/users/johnhaack" },

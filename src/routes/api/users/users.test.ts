@@ -204,6 +204,32 @@ describe("GET /api/users/:username default include_attempts behavior", () => {
     expect(response.body.status).toBe("success");
   });
 
+  it("should return different personal best values with units=kg vs default", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=kg");
+
+    const defaultPb = defaultResponse.body.data[0].personal_best[0];
+    const kgPb = kgResponse.body.data[0].personal_best[0];
+
+    expect(defaultPb.equip).toBe("Raw");
+    expect(kgPb.equip).toBe("Raw");
+    expect(defaultPb.squat).toBe("821.2");
+    expect(kgPb.squat).toBe("372.5");
+    expect(defaultPb.total).toBe("2300.5");
+    expect(kgPb.total).toBe("1043.5");
+  });
+
+  it("should return different competition result values with units=kg vs default", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=kg");
+
+    const defaultComp = defaultResponse.body.data[0].competition_results[0];
+    const kgComp = kgResponse.body.data[0].competition_results[0];
+
+    expect(defaultComp.total).toBe("2237.7");
+    expect(kgComp.total).toBe("1015");
+  });
+
   it("should return 400 for invalid units on user profile", async () => {
     const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=invalid");
 

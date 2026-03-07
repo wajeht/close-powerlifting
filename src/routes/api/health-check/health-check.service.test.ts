@@ -71,7 +71,7 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
 
 describe("health-check service", () => {
   const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 31;
+  const TOTAL_ROUTES = 51;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -154,7 +154,7 @@ describe("health-check service", () => {
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
       expect(rankingsGroup).toBeDefined();
-      expect(rankingsGroup.routes.length).toBe(14);
+      expect(rankingsGroup.routes.length).toBe(20);
     });
 
     it("Federations group has correct number of routes", async () => {
@@ -306,7 +306,7 @@ describe("health-check service", () => {
 
       const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
       expect(meetsGroup).toBeDefined();
-      expect(meetsGroup.routes.length).toBe(3);
+      expect(meetsGroup.routes.length).toBe(15);
     });
 
     it("Records group has correct number of routes", async () => {
@@ -320,7 +320,7 @@ describe("health-check service", () => {
 
       const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
       expect(recordsGroup).toBeDefined();
-      expect(recordsGroup.routes.length).toBe(3);
+      expect(recordsGroup.routes.length).toBe(5);
     });
 
     it("Users group has correct number of routes", async () => {
@@ -350,9 +350,20 @@ describe("health-check service", () => {
       const urls = rankingsGroup.routes.map((r: { url: string }) => r.url);
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
       expect(urls.some((u: string) => u.includes("federation=uspa"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("by-gl-points"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("by-mcculloch"))).toBe(true);
       expect(urls.some((u: string) => u.includes("age_class=40-44"))).toBe(true);
+      for (const sort of [
+        "by-dots",
+        "by-wilks",
+        "by-glossbrenner",
+        "by-goodlift",
+        "by-mcculloch",
+        "by-total",
+        "by-squat",
+        "by-bench",
+        "by-deadlift",
+      ]) {
+        expect(urls.some((u: string) => u.includes(sort))).toBe(true);
+      }
     });
 
     it("new feature routes are present in users group", async () => {

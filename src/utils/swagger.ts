@@ -81,7 +81,7 @@ Endpoints returning lists support pagination via query parameters:
 | \`age_class\` | string | Filter by age class (e.g., \`24-34\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`, \`80-999\`) |
 
 ### Sort options (path parameter)
-Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-gl-points\`, \`by-mcculloch\`, \`by-total\`, \`by-squat\`, \`by-bench\`, \`by-deadlift\`
+Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-goodlift\`, \`by-mcculloch\`, \`by-total\`, \`by-squat\`, \`by-bench\`, \`by-deadlift\`
 
 ### Meet results (\`/api/meets/{fed}/{code}\`)
 | Parameter | Type | Description |

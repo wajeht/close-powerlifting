@@ -51,14 +51,38 @@ const fixtures: FixtureConfig[] = [
     path: "rankings/fixtures/rankings-raw-men-90-age40-44.json",
   },
 
-  // Rankings (JSON API) - New sort options
+  // Rankings (JSON API) - Sort options
   {
-    url: "/api/rankings/raw/men/90/2024/full-power/by-gl-points?start=0&end=10&lang=en&units=lbs",
-    path: "rankings/fixtures/rankings-by-gl-points.json",
+    url: "/api/rankings/raw/men/90/2024/full-power/by-wilks?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-wilks.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-glossbrenner?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-glossbrenner.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-goodlift?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-goodlift.json",
   },
   {
     url: "/api/rankings/raw/men/90/2024/full-power/by-mcculloch?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-by-mcculloch.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-total?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-total.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-squat?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-squat.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-bench?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-bench.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-deadlift?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-deadlift.json",
   },
 
   // Records (HTML) - Equipment types
@@ -99,13 +123,42 @@ const fixtures: FixtureConfig[] = [
   { url: "/m/rps/2548", path: "meets/fixtures/meet-rps-2548.html" },
   { url: "/m/usapl/ISR-2025-02", path: "meets/fixtures/meet-usapl-isr-2025-02.html" },
   { url: "/m/wrpf-usa/23e1", path: "meets/fixtures/meet-wrpf-usa-23e1.html" },
-  { url: "/m/uspa/1969", path: "meets/fixtures/meet-uspa-1969.html" },
+  {
+    url: "/m/uspa/1969",
+    path: "meets/fixtures/meet-uspa-1969.html",
+    headers: { Cookie: "units=lbs;" },
+  },
   { url: "/m/uspa/1969/by-wilks", path: "meets/fixtures/meet-uspa-1969-by-wilks.html" },
+  { url: "/m/uspa/1969/by-wilks2020", path: "meets/fixtures/meet-uspa-1969-by-wilks2020.html" },
+  {
+    url: "/m/uspa/1969/by-glossbrenner",
+    path: "meets/fixtures/meet-uspa-1969-by-glossbrenner.html",
+  },
+  { url: "/m/uspa/1969/by-goodlift", path: "meets/fixtures/meet-uspa-1969-by-goodlift.html" },
+  { url: "/m/uspa/1969/by-ipf-points", path: "meets/fixtures/meet-uspa-1969-by-ipf-points.html" },
+  { url: "/m/uspa/1969/by-mcculloch", path: "meets/fixtures/meet-uspa-1969-by-mcculloch.html" },
   { url: "/m/uspa/1969/by-total", path: "meets/fixtures/meet-uspa-1969-by-total.html" },
+  { url: "/m/uspa/1969/by-ah", path: "meets/fixtures/meet-uspa-1969-by-ah.html" },
+  { url: "/m/uspa/1969/by-nasa", path: "meets/fixtures/meet-uspa-1969-by-nasa.html" },
+  { url: "/m/uspa/1969/by-reshel", path: "meets/fixtures/meet-uspa-1969-by-reshel.html" },
+  {
+    url: "/m/uspa/1969/by-schwartz-malone",
+    path: "meets/fixtures/meet-uspa-1969-by-schwartz-malone.html",
+  },
+  { url: "/m/uspa/1969/by-division", path: "meets/fixtures/meet-uspa-1969-by-division.html" },
+  {
+    url: "/m/uspa/1969",
+    path: "meets/fixtures/meet-uspa-1969-kg.html",
+    headers: { Cookie: "units=kg;" },
+  },
 
   // Users (HTML)
   { url: "/u/kristyhawkins", path: "users/fixtures/user-kristyhawkins.html" },
-  { url: "/u/johnhaack", path: "users/fixtures/user-johnhaack.html" },
+  {
+    url: "/u/johnhaack",
+    path: "users/fixtures/user-johnhaack.html",
+    headers: { Cookie: "units=lbs;" },
+  },
   {
     url: "/u/johnhaack",
     path: "users/fixtures/user-johnhaack-kg.html",

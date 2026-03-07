@@ -125,29 +125,29 @@ describe.concurrent("users service", () => {
     });
 
     it("extracts best squat from John Haack first competition", () => {
-      // First comp: squat attempts 320, 350, 372.5, empty
-      // Best successful squat = 372.5
+      // First comp: squat attempts 705.4, 771.6, 821.2, empty
+      // Best successful squat = 821.2
       const first = johnProfile.competition_results[0]!;
-      expect(first.squat).toBe("372.5");
+      expect(first.squat).toBe("821.2");
     });
 
     it("extracts best bench from John Haack first competition", () => {
-      // First comp: bench attempts 230, 250, -260 (failed), empty
-      // Best successful bench = 250
+      // First comp: bench attempts 507, 551.1, -573.2 (failed), empty
+      // Best successful bench = 551.1
       const first = johnProfile.competition_results[0]!;
-      expect(first.bench).toBe("250");
+      expect(first.bench).toBe("551.1");
     });
 
     it("extracts best deadlift from John Haack first competition", () => {
-      // First comp: deadlift attempts 370, 392.5, -402.5 (failed), empty
-      // Best successful deadlift = 392.5
+      // First comp: deadlift attempts 815.7, 865.3, -887.3 (failed), empty
+      // Best successful deadlift = 865.3
       const first = johnProfile.competition_results[0]!;
-      expect(first.deadlift).toBe("392.5");
+      expect(first.deadlift).toBe("865.3");
     });
 
     it("preserves total and dots values", () => {
       const first = johnProfile.competition_results[0]!;
-      expect(first.total).toBe("1015");
+      expect(first.total).toBe("2237.7");
       expect(first.dots).toBe("628.33");
     });
   });

@@ -69,15 +69,22 @@ describe("GET /api/meets/:meet", () => {
     expect(response.body.status).toBe("fail");
   });
 
-  it("should return 200 with sort=by-wilks", async () => {
-    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?sort=by-wilks");
-
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe("success");
-  });
-
-  it("should return 200 with sort=by-total", async () => {
-    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?sort=by-total");
+  it.each([
+    "by-dots",
+    "by-wilks",
+    "by-wilks2020",
+    "by-glossbrenner",
+    "by-goodlift",
+    "by-ipf-points",
+    "by-mcculloch",
+    "by-total",
+    "by-ah",
+    "by-nasa",
+    "by-reshel",
+    "by-schwartz-malone",
+    "by-division",
+  ])("should return 200 with sort=%s", async (sort) => {
+    const response = await createAuthenticatedApiAgent().get(`/api/meets/uspa/1969?sort=${sort}`);
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
@@ -109,5 +116,54 @@ describe("GET /api/meets/:meet", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.status).toBe("success");
+  });
+
+  it("should return correct lifter data in default response", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969");
+    const first = response.body.data.results[0];
+
+    expect(first.lifter).toContain("Alex Maher");
+    expect(first.rank).toBe("1");
+    expect(first.squat).toBe("451.9");
+    expect(first.bench).toBe("253.5");
+    expect(first.deadlift).toBe("766.1");
+    expect(first.total).toBe("1471.6");
+  });
+
+  it("should return different sort order with sort=by-total", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969");
+    const totalResponse = await createAuthenticatedApiAgent().get(
+      "/api/meets/uspa/1969?sort=by-total",
+    );
+
+    expect(defaultResponse.body.data.results[0].lifter).toContain("Alex Maher");
+    expect(totalResponse.body.data.results[0].lifter).toContain("Joseph Ferguson");
+  });
+
+  it("should return wilks column instead of dots when sorted by wilks", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969");
+    const wilksResponse = await createAuthenticatedApiAgent().get(
+      "/api/meets/uspa/1969?sort=by-wilks",
+    );
+
+    const defaultFirst = defaultResponse.body.data.results[0];
+    const wilksFirst = wilksResponse.body.data.results[0];
+    expect(defaultFirst.dots).toBe("478.88");
+    expect(wilksFirst.wilks).toBe("475.63");
+  });
+
+  it("should return different weight values with units=kg", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969?units=kg");
+
+    const defaultFirst = defaultResponse.body.data.results[0];
+    const kgFirst = kgResponse.body.data.results[0];
+
+    expect(defaultFirst.lifter).toContain("Alex Maher");
+    expect(kgFirst.lifter).toContain("Alex Maher");
+    expect(defaultFirst.squat).toBe("451.9");
+    expect(kgFirst.squat).toBe("205");
+    expect(defaultFirst.weight).toBe("165.3");
+    expect(kgFirst.weight).toBe("75");
   });
 });

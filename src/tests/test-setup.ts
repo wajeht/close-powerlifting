@@ -11,14 +11,20 @@ import { createLogger } from "../utils/logger";
 
 import {
   rankingsDefault,
+  rankingsDefaultKg,
   rankingsRawMen,
   rankingsRawWomen75,
   rankingsFullFilter,
 } from "../routes/api/rankings/fixtures";
 import { mlistHtml, mlistUsaplHtml } from "../routes/api/federations/fixtures";
 import { statusHtml } from "../routes/api/status/fixtures";
-import { userJohnHaackHtml } from "../routes/api/users/fixtures";
-import { meetUspa1969Html } from "../routes/api/meets/fixtures";
+import { userJohnHaackHtml, userJohnHaackKgHtml } from "../routes/api/users/fixtures";
+import {
+  meetUspa1969Html,
+  meetUspa1969ByWilksHtml,
+  meetUspa1969ByTotalHtml,
+  meetUspa1969KgHtml,
+} from "../routes/api/meets/fixtures";
 import {
   recordsDefaultHtml,
   recordsRawHtml,
@@ -60,6 +66,9 @@ vi.spyOn(context.scraper, "fetchJson").mockImplementation(async (path: string) =
   if (path.includes("wraps")) {
     return rankingsDefault;
   }
+  if (path.includes("rankings") && path.includes("units=kg")) {
+    return rankingsDefaultKg;
+  }
   if (path.includes("rankings")) {
     return rankingsDefault;
   }
@@ -77,10 +86,16 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string, _
     return mlistHtml;
   }
   if (path.includes("johnhaack") || path.includes("search=haack")) {
-    return userJohnHaackHtml;
+    return _units === "kg" ? userJohnHaackKgHtml : userJohnHaackHtml;
   }
   if (path.includes("m/uspa/1969")) {
-    return meetUspa1969Html;
+    if (path.includes("by-wilks")) {
+      return meetUspa1969ByWilksHtml;
+    }
+    if (path.includes("by-total")) {
+      return meetUspa1969ByTotalHtml;
+    }
+    return _units === "kg" ? meetUspa1969KgHtml : meetUspa1969Html;
   }
   if (path.includes("records")) {
     // Most specific first: Equipment + Weight Class + Sex

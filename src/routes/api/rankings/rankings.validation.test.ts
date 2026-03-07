@@ -152,8 +152,8 @@ describe.concurrent("rankings validation", () => {
   });
 
   describe("sortEnum", () => {
-    it("accepts by-gl-points", () => {
-      const result = sortEnum.safeParse("by-gl-points");
+    it("accepts by-goodlift", () => {
+      const result = sortEnum.safeParse("by-goodlift");
       expect(result.success).toBe(true);
     });
 
@@ -209,8 +209,8 @@ describe.concurrent("rankings validation", () => {
   });
 
   describe("getFilteredRankingsParamValidation with new sort values", () => {
-    it("accepts by-gl-points as sort param", () => {
-      const result = getFilteredRankingsParamValidation.safeParse({ sort: "by-gl-points" });
+    it("accepts by-goodlift as sort param", () => {
+      const result = getFilteredRankingsParamValidation.safeParse({ sort: "by-goodlift" });
       expect(result.success).toBe(true);
     });
 

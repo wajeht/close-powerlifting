@@ -15,7 +15,7 @@ export const sortEnum = z.enum([
   "by-dots",
   "by-wilks",
   "by-glossbrenner",
-  "by-gl-points",
+  "by-goodlift",
   "by-mcculloch",
   "by-total",
   "by-squat",

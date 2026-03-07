@@ -300,24 +300,29 @@ describe("GET /api/rankings/filter with age_class query parameter", () => {
   });
 });
 
-describe("GET /api/rankings/filter with new sort values", () => {
-  it("should accept by-gl-points sort", async () => {
-    const response = await createAuthenticatedApiAgent().get(
-      "/api/rankings/filter/raw/men/100/2024/full-power/by-gl-points",
-    );
+describe("GET /api/rankings/filter with sort values", () => {
+  const sortOptions = [
+    "by-dots",
+    "by-wilks",
+    "by-glossbrenner",
+    "by-goodlift",
+    "by-mcculloch",
+    "by-total",
+    "by-squat",
+    "by-bench",
+    "by-deadlift",
+  ];
 
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe("success");
-  });
+  for (const sort of sortOptions) {
+    it(`should accept ${sort} sort`, async () => {
+      const response = await createAuthenticatedApiAgent().get(
+        `/api/rankings/filter/raw/men/100/2024/full-power/${sort}`,
+      );
 
-  it("should accept by-mcculloch sort", async () => {
-    const response = await createAuthenticatedApiAgent().get(
-      "/api/rankings/filter/raw/men/100/2024/full-power/by-mcculloch",
-    );
-
-    expect(response.status).toBe(200);
-    expect(response.body.status).toBe("success");
-  });
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+    });
+  }
 });
 
 describe("GET /api/rankings combining multiple query parameters", () => {
@@ -375,6 +380,32 @@ describe("GET /api/rankings combining multiple query parameters", () => {
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body.data)).toBe(true);
     expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it("should return different body_weight values for kg vs default (lbs)", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/rankings");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    const defaultEntry = defaultResponse.body.data[0];
+    const kgEntry = kgResponse.body.data[0];
+
+    expect(defaultEntry.full_name).toBe("Kristy Hawkins");
+    expect(kgEntry.full_name).toBe("Kristy Hawkins");
+    expect(defaultEntry.body_weight).toBe(163.1);
+    expect(kgEntry.body_weight).toBe(74.0);
+  });
+
+  it("should return different lift values for kg vs default (lbs)", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/rankings");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    const defaultEntry = defaultResponse.body.data[0];
+    const kgEntry = kgResponse.body.data[0];
+
+    expect(defaultEntry.squat).toBe(683.4);
+    expect(kgEntry.squat).toBe(310.0);
+    expect(defaultEntry.total).toBe(1598.3);
+    expect(kgEntry.total).toBe(725.0);
   });
 
   it("should return pagination when using federation on base rankings", async () => {
