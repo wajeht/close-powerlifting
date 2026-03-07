@@ -1,4 +1,4 @@
-# 🏋🏻 Close Powerlifting
+# Close Powerlifting
 
 [![Node.js CI](https://github.com/wajeht/close-powerlifting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/wajeht/close-powerlifting/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC)
@@ -6,7 +6,7 @@
 
 An intuitive REST API for the OpenPowerlifting database.
 
-## 📃 API Endpoints
+## API Endpoints
 
 | Endpoint            | Description                                                 |
 | ------------------- | ----------------------------------------------------------- |
@@ -20,7 +20,7 @@ An intuitive REST API for the OpenPowerlifting database.
 
 See full query parameters, sort options, and filtering docs at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api)
 
-## 🔐 Authentication
+## Authentication
 
 All endpoints except `/api/status` and `/api/health-check` require an API key:
 
@@ -30,7 +30,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" https://closepowerlifting.com/api/r
 
 Request an API key at [closepowerlifting.com](https://closepowerlifting.com)
 
-## 📦 Example Response
+## Example Response
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/rankings?per_page=100&current_page=1&units=kg"
@@ -62,12 +62,12 @@ curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/
 }
 ```
 
-## 📑 Docs
+## Docs
 
 - See [DEVELOPMENT](./docs/getting-started.md) for `development` guide.
 - See [CONTRIBUTION](./docs/contribution.md) for `contribution` guide.
 
-## 📊 Data Attribution
+## Data Attribution
 
 This project uses data from the [OpenPowerlifting](https://www.openpowerlifting.org) project, a community service to create a permanent, open archive of the world's powerlifting data.
 
@@ -75,6 +75,6 @@ All competition data is contributed to the **Public Domain**. You can download a
 
 If you find this API useful, please consider [supporting OpenPowerlifting](https://www.patreon.com/join/openpowerlifting).
 
-## 📜 License
+## License
 
 Distributed under the MIT License © [wajeht](https://github.com/wajeht). See [LICENSE](./LICENSE) for more information.
