@@ -220,7 +220,8 @@ export function createMiddleware(
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (validators.params) {
-          req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
+          const parsed = await validators.params.parseAsync(req.params);
+          req.params = parsed as typeof req.params;
         }
         if (validators.body) {
           req.body = await validators.body.parseAsync(req.body);
@@ -241,10 +242,11 @@ export function createMiddleware(
   }
 
   function apiValidationMiddleware(validators: RequestValidators) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, _res: Response, next: NextFunction) => {
       try {
         if (validators.params) {
-          req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
+          const parsed = await validators.params.parseAsync(req.params);
+          req.params = parsed as typeof req.params;
         }
         if (validators.body) {
           req.body = await validators.body.parseAsync(req.body);
@@ -260,20 +262,24 @@ export function createMiddleware(
     };
   }
 
-  async function apiAuthenticationMiddleware(req: Request, res: Response, next: NextFunction) {
+  async function apiAuthenticationMiddleware(req: Request, _res: Response, next: NextFunction) {
     try {
       let token: string = "";
 
       if (!req.headers.authorization) {
         throw new UnauthorizedError("Authorization header required!");
       }
-      if (req.headers.authorization.split(" ").length != 2) {
+      if (req.headers.authorization.split(" ").length !== 2) {
         throw new UnauthorizedError("Must use bearer token authentication!");
       }
       if (!req.headers.authorization.startsWith("Bearer")) {
         throw new UnauthorizedError("Must use bearer token authentication!");
       }
-      token = req.headers.authorization.split(" ")[1] as string;
+      const tokenValue = req.headers.authorization.split(" ")[1];
+      if (!tokenValue) {
+        throw new UnauthorizedError("Must use bearer token authentication!");
+      }
+      token = tokenValue;
 
       const validatedUser = await authService.validateKey(token);
       if (!validatedUser) {
@@ -291,8 +297,8 @@ export function createMiddleware(
     const startTime = Date.now();
 
     try {
-      const id = req.user?.id as unknown as number;
-      if (id) {
+      const id = req.user?.id;
+      if (id != null) {
         // Register API call log listener FIRST so ALL requests get logged
         // (including over-limit rejections)
         res.on("finish", () => {
@@ -303,7 +309,12 @@ export function createMiddleware(
               endpoint: req.originalUrl,
               status_code: res.statusCode,
               response_time_ms: Date.now() - startTime,
-              ip_address: (req.headers["cf-connecting-ip"] as string) || req.ip || null,
+              ip_address:
+                (typeof req.headers["cf-connecting-ip"] === "string"
+                  ? req.headers["cf-connecting-ip"]
+                  : undefined) ??
+                req.ip ??
+                null,
               user_agent: req.headers["user-agent"]?.substring(0, 512) || null,
             })
             .catch((err) => {
@@ -369,7 +380,7 @@ export function createMiddleware(
     }
   }
 
-  async function hostNameMiddleware(req: Request, res: Response, next: NextFunction) {
+  async function hostNameMiddleware(req: Request, _res: Response, next: NextFunction) {
     if (!req.app.locals.hostname) {
       const hostname = await cache.get("hostname");
 
@@ -415,8 +426,9 @@ export function createMiddleware(
       if (req.body && req.body._csrf) {
         return req.body._csrf;
       }
-      if (req.headers["x-csrf-token"]) {
-        return req.headers["x-csrf-token"] as string;
+      const csrfHeader = req.headers["x-csrf-token"];
+      if (typeof csrfHeader === "string") {
+        return csrfHeader;
       }
       return undefined;
     },
@@ -447,7 +459,9 @@ export function createMiddleware(
 
     csrfSynchronisedProtection(req, res, (err: unknown) => {
       if (err) {
-        logger.error(err as Error);
+        if (err instanceof Error) {
+          logger.error(err);
+        }
         req.flash("error", "Invalid form submission. Please refresh the page and try again.");
         return res.redirect("back");
       }
@@ -586,12 +600,15 @@ export function createMiddleware(
         return res.redirect(redirectUrl);
       }
 
-      const ip = (req.headers["cf-connecting-ip"] as string) || req.ip;
+      const cfIp = req.headers["cf-connecting-ip"];
+      const ip = (typeof cfIp === "string" ? cfIp : undefined) ?? req.ip;
       await helpers.verifyTurnstileToken(token, ip);
 
       next();
     } catch (error) {
-      logger.error(error as Error);
+      if (error instanceof Error) {
+        logger.error(error);
+      }
       const redirectUrl = req.get("referer") || "/login";
       req.flash("error", "Turnstile verification failed. Please try again.");
       return res.redirect(redirectUrl);

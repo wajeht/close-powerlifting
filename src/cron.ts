@@ -157,7 +157,7 @@ export function createCron(
     const location = locationParts.join(", ");
 
     const table = doc.querySelector("table");
-    const results = scraper.tableToJson(table) as MeetResult[];
+    const results = scraper.tableToJson<MeetResult>(table);
 
     return {
       title,
@@ -219,7 +219,7 @@ export function createCron(
       const html = await scraper.fetchHtml("/mlist");
       const doc = scraper.parseHtml(html);
       const table = doc.querySelector("table");
-      const data = scraper.tableToJson(table) as Meet[];
+      const data = scraper.tableToJson<Meet>(table);
       await cache.set(key, JSON.stringify(data));
       return;
     }
@@ -243,7 +243,7 @@ export function createCron(
       const html = await scraper.fetchHtml(path);
       const doc = scraper.parseHtml(html);
       const table = doc.querySelector("table");
-      const data = scraper.tableToJson(table) as Meet[];
+      const data = scraper.tableToJson<Meet>(table);
       await cache.set(key, JSON.stringify(data));
       return;
     }

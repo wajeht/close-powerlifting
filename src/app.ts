@@ -130,7 +130,8 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
 
       await context.adminUser.initializeAdminUser();
     } catch (error) {
-      context.logger.error((error as any).message);
+      const message = error instanceof Error ? error.message : "Unknown error during startup";
+      context.logger.error(message);
     }
   });
 

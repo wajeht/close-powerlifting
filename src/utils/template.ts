@@ -36,7 +36,7 @@ const version = {
 };
 
 export function layoutMiddleware(
-  req: import("express").Request,
+  _req: import("express").Request,
   res: import("express").Response,
   next: import("express").NextFunction,
 ) {

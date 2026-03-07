@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 import { configuration } from "../../configuration";
 import type { UserRepositoryType } from "../../db/user";
@@ -99,7 +99,11 @@ export function createAuthService(
     try {
       const decoded = jwt.verify(token, configuration.app.jwtSecret, {
         algorithms: ["HS256"],
-      }) as JwtPayload;
+      });
+
+      if (typeof decoded === "string") {
+        return null;
+      }
 
       const user = await userRepository.findById(decoded.id);
       if (!user) {
@@ -182,9 +186,13 @@ export function createAuthService(
       verified_at: new Date().toISOString(),
     });
 
+    if (!verified) {
+      throw new Error("Failed to verify user");
+    }
+
     await mail.sendWelcomeEmail({
       email,
-      name: verified!.name!,
+      name: verified.name,
       key: apiKey,
     });
 

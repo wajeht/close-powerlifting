@@ -56,7 +56,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/about",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/about.html", {
         path: "/about",
         title: "About",

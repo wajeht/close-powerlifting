@@ -82,23 +82,22 @@ export function createHealthCheckService(
         groupMap.set(groupName, []);
       }
 
-      ROUTE_DEFINITIONS.forEach((routeDefinition, i) => {
+      for (let i = 0; i < ROUTE_DEFINITIONS.length; i++) {
+        const routeDefinition = ROUTE_DEFINITIONS[i];
+        if (!routeDefinition) continue;
+
         const promise = promises[i];
-        const isFulfilled = promise != null && promise.status === "fulfilled";
-        const result = isFulfilled
-          ? (promise as PromiseFulfilledResult<{ ok: boolean; url: string; date: string | null }>)
-              .value
-          : null;
+        const result = promise != null && promise.status === "fulfilled" ? promise.value : null;
 
         const routeStatus: RouteStatus = {
-          status: Boolean(isFulfilled && result?.ok),
+          status: Boolean(result?.ok),
           method: "GET",
           url: routeDefinition.path,
           date: result?.date || new Date().toISOString(),
         };
 
         groupMap.get(routeDefinition.group)?.push(routeStatus);
-      });
+      }
 
       const groups: RouteGroup[] = [];
       for (const groupName of groupOrder) {
