@@ -158,10 +158,7 @@ describe("meets service", () => {
 
       await meetService.getMeet({ meet: "uspa/1969" }, "by-total");
 
-      expect(cacheSpy).toHaveBeenCalledWith(
-        "meet-uspa/1969-by-total-undefined",
-        expect.any(Function),
-      );
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-by-total", expect.any(Function));
       cacheSpy.mockRestore();
     });
 

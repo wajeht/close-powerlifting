@@ -35,7 +35,7 @@ export function createMeetService(scraper: ScraperType) {
     sort?: string,
     units?: string,
   ): Promise<ApiResponse<MeetData>> {
-    const cacheKey = `meet-${meet}${sort ? `-${sort}` : ""}-${units}`;
+    const cacheKey = `meet-${meet}${sort ? `-${sort}` : ""}${units ? `-${units}` : ""}`;
     return scraper.withCache<MeetData>(cacheKey, () => fetchMeetData(meet, sort, units));
   }
 
