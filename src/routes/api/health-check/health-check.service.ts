@@ -87,7 +87,7 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Public", path: "/api/health-check" },
 ];
 
-const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
 export function createHealthCheckService(
   cache: CacheType,
@@ -146,7 +146,7 @@ export function createHealthCheckService(
       const entry = entries[0];
       if (entry) {
         const age = Date.now() - new Date(entry.updated_at).getTime();
-        isStale = age > SIX_HOURS_MS;
+        isStale = age > TWENTY_FOUR_HOURS_MS;
       }
     }
 

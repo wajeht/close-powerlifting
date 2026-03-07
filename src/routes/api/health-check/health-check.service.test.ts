@@ -242,7 +242,7 @@ describe("health-check service", () => {
       expect(cache.set).toHaveBeenCalledTimes(1);
     });
 
-    it("re-fetches when cache is older than 6 hours", async () => {
+    it("re-fetches when cache is older than 24 hours", async () => {
       const mockResponses = Array(TOTAL_ROUTES * 2).fill({
         ok: true,
         date: "2024-01-01T00:00:00Z",
@@ -256,16 +256,16 @@ describe("health-check service", () => {
       await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
       expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
 
-      // Simulate stale cache by backdating updated_at to 7 hours ago
+      // Simulate stale cache by backdating updated_at to 25 hours ago
       const cacheKey = "close-powerlifting-global-status-call-cache";
       const storeEntry = (cache as any).set.mock.calls[0];
-      const sevenHoursAgo = new Date(Date.now() - 7 * 60 * 60 * 1000).toISOString();
+      const twentyFiveHoursAgo = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
       vi.mocked(cache.getEntries).mockResolvedValueOnce([
         {
           key: cacheKey,
           value: storeEntry?.[1] || "[]",
-          created_at: sevenHoursAgo,
-          updated_at: sevenHoursAgo,
+          created_at: twentyFiveHoursAgo,
+          updated_at: twentyFiveHoursAgo,
         },
       ]);
 
@@ -275,7 +275,7 @@ describe("health-check service", () => {
       expect(cache.set).toHaveBeenCalledTimes(2);
     });
 
-    it("does NOT re-fetch when cache is less than 6 hours old", async () => {
+    it("does NOT re-fetch when cache is less than 24 hours old", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({
         ok: true,
         date: "2024-01-01T00:00:00Z",
