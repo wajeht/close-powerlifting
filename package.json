@@ -84,7 +84,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260311.1",
     "@vitest/coverage-v8": "4.0.18",
     "html-minifier-terser": "7.2.0",
-    "oxfmt": "0.36.0",
+    "oxfmt": "0.37.0",
     "oxlint": "1.52.0",
     "satori": "0.25.0",
     "sharp": "0.34.5",
