@@ -1,4 +1,4 @@
-import { describe, expect, beforeEach, afterEach, it } from "vitest";
+import { describe, expect, beforeEach, afterEach, it } from "vite-plus/test";
 
 import { knex } from "../tests/test-setup";
 import { createUserRepository } from "./user";

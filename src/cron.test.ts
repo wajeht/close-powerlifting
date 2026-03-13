@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test";
 import { createCron } from "./cron";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";

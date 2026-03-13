@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest";
+import { describe, expect, it, beforeEach, afterEach } from "vite-plus/test";
 
 import { createContext } from "../../context";
 import { knex } from "../../tests/test-setup";

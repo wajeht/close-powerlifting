@@ -22,15 +22,17 @@
     "minify": "tsx scripts/minify.ts",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
-    "test:watch": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vitest",
-    "test": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vitest --run",
-    "test:coverage": "APP_ENV=testing NODE_ENV=testing vitest run --coverage",
-    "test:ci": "APP_ENV=testing NODE_ENV=testing vitest run --coverage.enabled --coverage.reporter='text-summary'",
-    "format:check": "oxfmt --check .",
-    "format": "oxfmt --write . > /dev/null",
-    "format:verbose": "oxfmt --write .",
-    "lint:check": "oxlint .",
-    "lint": "oxlint --fix .",
+    "test:watch": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test watch",
+    "test": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test",
+    "test:coverage": "APP_ENV=testing NODE_ENV=testing vp test --coverage",
+    "test:ci": "APP_ENV=testing NODE_ENV=testing vp test --coverage.enabled --coverage.reporter='text-summary'",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
+    "format:check": "vp fmt --check .",
+    "format": "vp fmt --write . > /dev/null",
+    "format:verbose": "vp fmt --write .",
+    "lint:check": "vp lint .",
+    "lint": "vp lint --fix .",
     "db:prepare:dev": "npm run db:migrate:latest && npm run db:seed:run",
     "db:migrate:make": "tsx ./node_modules/knex/bin/cli.js migrate:make --knexfile=./src/db/knexfile.ts",
     "db:migrate:latest": "tsx ./node_modules/knex/bin/cli.js migrate:latest --knexfile=./src/db/knexfile.ts",
@@ -40,7 +42,8 @@
     "rmds": "find . -name '.DS_Store' -delete",
     "update:fixtures": "tsx ./scripts/update-fixtures.ts",
     "generate:og": "tsx ./scripts/generate-og-image.ts",
-    "optimize:images": "tsx ./scripts/optimize-images.ts"
+    "optimize:images": "tsx ./scripts/optimize-images.ts",
+    "prepare": "vp config"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.2.1",
@@ -84,16 +87,20 @@
     "@typescript/native-preview": "7.0.0-dev.20260311.1",
     "@vitest/coverage-v8": "4.0.18",
     "html-minifier-terser": "7.2.0",
-    "oxfmt": "0.37.0",
-    "oxlint": "1.52.0",
     "satori": "0.25.0",
     "sharp": "0.34.5",
     "supertest": "7.2.2",
     "terser": "5.46.0",
     "tsx": "4.21.0",
-    "vitest": "4.0.18"
+    "vite-plus": "latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
   },
   "engines": {
     "node": ">=25.6.1"
-  }
+  },
+  "packageManager": "npm@11.11.1"
 }

@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, beforeAll, afterAll, beforeEach, it } from "vitest";
+import { describe, expect, beforeAll, afterAll, beforeEach, it } from "vite-plus/test";
 
 import {
   app,

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vite-plus/test";
 
 import type { CacheType, ScraperType, LoggerType } from "../../../context";
 import { createHealthCheckService } from "./health-check.service";

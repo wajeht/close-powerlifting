@@ -2,7 +2,7 @@ process.env.APP_ENV = "testing";
 process.env.NODE_ENV = "testing";
 
 import request from "supertest";
-import { afterAll, beforeAll, vi } from "vitest";
+import { afterAll, beforeAll, vi } from "vite-plus/test";
 
 import { createApp } from "../app";
 import { createContext } from "../context";
