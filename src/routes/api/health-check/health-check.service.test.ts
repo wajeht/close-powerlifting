@@ -35,7 +35,6 @@ function createMockLogger(): LoggerType {
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
-    debug: vi.fn(),
     box: vi.fn(),
     setLevel: vi.fn(),
   };
@@ -192,7 +191,7 @@ describe("health-check service", () => {
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
       expect(rankingsGroup).toBeDefined();
-      expect(rankingsGroup.routes.length).toBe(22);
+      expect(rankingsGroup!.routes.length).toBe(22);
     });
 
     it("Federations group has correct number of routes", async () => {
@@ -209,7 +208,7 @@ describe("health-check service", () => {
 
       const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
       expect(federationsGroup).toBeDefined();
-      expect(federationsGroup.routes.length).toBe(4);
+      expect(federationsGroup!.routes.length).toBe(4);
     });
 
     it("Meets group has correct number of routes", async () => {
@@ -226,7 +225,7 @@ describe("health-check service", () => {
 
       const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
       expect(meetsGroup).toBeDefined();
-      expect(meetsGroup.routes.length).toBe(15);
+      expect(meetsGroup!.routes.length).toBe(15);
     });
 
     it("Records group has correct number of routes", async () => {
@@ -243,7 +242,7 @@ describe("health-check service", () => {
 
       const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
       expect(recordsGroup).toBeDefined();
-      expect(recordsGroup.routes.length).toBe(5);
+      expect(recordsGroup!.routes.length).toBe(5);
     });
 
     it("Users group has correct number of routes", async () => {
@@ -260,7 +259,7 @@ describe("health-check service", () => {
 
       const usersGroup = result.find((g: { name: string }) => g.name === "Users");
       expect(usersGroup).toBeDefined();
-      expect(usersGroup.routes.length).toBe(5);
+      expect(usersGroup!.routes.length).toBe(5);
     });
 
     it("Public group has correct number of routes", async () => {
@@ -277,7 +276,7 @@ describe("health-check service", () => {
 
       const publicGroup = result.find((g: { name: string }) => g.name === "Public");
       expect(publicGroup).toBeDefined();
-      expect(publicGroup.routes.length).toBe(2);
+      expect(publicGroup!.routes.length).toBe(2);
     });
 
     it("sets status to true when request succeeds", async () => {
@@ -342,7 +341,7 @@ describe("health-check service", () => {
       });
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
-      const urls = rankingsGroup.routes.map((r: { url: string }) => r.url);
+      const urls = rankingsGroup!.routes.map((r: { url: string }) => r.url);
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
       expect(urls.some((u: string) => u.includes("federation=uspa"))).toBe(true);
       expect(urls.some((u: string) => u.includes("federation=ipf"))).toBe(true);
@@ -376,7 +375,7 @@ describe("health-check service", () => {
       });
 
       const usersGroup = result.find((g: { name: string }) => g.name === "Users");
-      const urls = usersGroup.routes.map((r: { url: string }) => r.url);
+      const urls = usersGroup!.routes.map((r: { url: string }) => r.url);
       expect(urls.some((u: string) => u.includes("include_attempts=true"))).toBe(true);
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
     });
@@ -395,26 +394,26 @@ describe("health-check service", () => {
 
       const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
       expect(
-        rankingsGroup.routes.every((r: { url: string }) => r.url.includes("/api/rankings")),
+        rankingsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/rankings")),
       ).toBe(true);
 
       const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
       expect(
-        federationsGroup.routes.every((r: { url: string }) => r.url.includes("/api/federations")),
+        federationsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/federations")),
       ).toBe(true);
 
       const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
-      expect(meetsGroup.routes.every((r: { url: string }) => r.url.includes("/api/meets"))).toBe(
+      expect(meetsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/meets"))).toBe(
         true,
       );
 
       const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
       expect(
-        recordsGroup.routes.every((r: { url: string }) => r.url.includes("/api/records")),
+        recordsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/records")),
       ).toBe(true);
 
       const usersGroup = result.find((g: { name: string }) => g.name === "Users");
-      expect(usersGroup.routes.every((r: { url: string }) => r.url.includes("/api/users"))).toBe(
+      expect(usersGroup!.routes.every((r: { url: string }) => r.url.includes("/api/users"))).toBe(
         true,
       );
     });

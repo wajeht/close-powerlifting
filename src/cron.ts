@@ -470,7 +470,7 @@ export function createCron(
 
   function stop(): void {
     for (const job of cronJobs) {
-      job.stop();
+      void job.stop();
     }
     cronJobs = [];
     isRunning = false;

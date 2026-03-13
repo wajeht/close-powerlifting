@@ -157,14 +157,18 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
         return { data: JSON.parse(cached) as T };
       }
     } catch (error) {
-      logger.warn(`Cache read error for ${key}: ${error}`);
+      logger.warn(
+        `Cache read error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     try {
       const data = await fetcher();
 
       cache.set(key, JSON.stringify(data)).catch((error) => {
-        logger.warn(`Cache write error for ${key}: ${error}`);
+        logger.warn(
+          `Cache write error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       });
 
       return { data };
