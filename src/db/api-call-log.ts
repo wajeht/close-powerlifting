@@ -50,7 +50,7 @@ export function createApiCallLogRepository(knex: Knex): ApiCallLogRepositoryType
       query = query.where((qb) => {
         qb.where("endpoint", "like", `%${escaped}%`)
           .orWhere("method", "like", `%${escaped}%`)
-          .orWhere("status_code", "like", `%${escaped}%`);
+          .orWhereRaw("CAST(status_code AS TEXT) LIKE ?", [`%${escaped}%`]);
       });
     }
     if (options.orderBy) {
@@ -74,7 +74,7 @@ export function createApiCallLogRepository(knex: Knex): ApiCallLogRepositoryType
       query = query.where((qb) => {
         qb.where("endpoint", "like", `%${escaped}%`)
           .orWhere("method", "like", `%${escaped}%`)
-          .orWhere("status_code", "like", `%${escaped}%`);
+          .orWhereRaw("CAST(status_code AS TEXT) LIKE ?", [`%${escaped}%`]);
       });
     }
     const result = await query.count("* as count").first<{ count: number }>();
