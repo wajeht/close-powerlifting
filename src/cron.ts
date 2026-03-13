@@ -461,7 +461,7 @@ export function createCron(
     cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
     cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask)); // Daily health check refresh: every day at 5:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
-    cronJobs.push(cron.schedule("0 0 * * *", resetApiCallCountTask)); // Daily API call count reset: every day at 12:00 AM UTC
+    cronJobs.push(cron.schedule("5 0 * * *", resetApiCallCountTask)); // Monthly API call count reset: every day at 12:05 AM UTC (staggered after email)
     cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
 
     isRunning = true;
@@ -470,7 +470,7 @@ export function createCron(
 
   function stop(): void {
     for (const job of cronJobs) {
-      job.stop();
+      void job.stop();
     }
     cronJobs = [];
     isRunning = false;

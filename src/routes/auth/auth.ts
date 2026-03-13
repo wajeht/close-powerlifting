@@ -69,7 +69,7 @@ export function createAuthRouter(context: AppContext) {
 
         context.logger.info(`user_id: ${user.id} has registered an account!`);
 
-        context.authService.sendVerificationEmail({
+        void context.authService.sendVerificationEmail({
           name,
           email,
           verification_token: token,
@@ -91,7 +91,7 @@ export function createAuthRouter(context: AppContext) {
           magic_link_expires_at: verificationExpiresAt,
         });
 
-        context.authService.sendVerificationEmail({
+        void context.authService.sendVerificationEmail({
           name: user.name,
           email: user.email,
           verification_token: newToken,
@@ -109,7 +109,7 @@ export function createAuthRouter(context: AppContext) {
         magic_link_expires_at: expiresAt,
       });
 
-      context.authService.sendMagicLinkEmail({
+      void context.authService.sendMagicLinkEmail({
         name: user.name,
         email: user.email,
         token,

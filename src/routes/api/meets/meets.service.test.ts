@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createMeetService } from "./meets.service";
@@ -142,7 +142,6 @@ describe("meets service", () => {
       const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
       vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
         data: await fn(),
-        cached: false,
       }));
 
       await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks");
@@ -152,9 +151,7 @@ describe("meets service", () => {
     });
 
     it("includes sort in cache key", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: uspaMeet, cached: false });
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
 
       await meetService.getMeet({ meet: "uspa/1969" }, "by-total");
 
@@ -166,7 +163,6 @@ describe("meets service", () => {
       const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
       vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
         data: await fn(),
-        cached: false,
       }));
 
       await meetService.getMeet({ meet: "uspa/1969" });
@@ -181,7 +177,6 @@ describe("meets service", () => {
       const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
       vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
         data: await fn(),
-        cached: false,
       }));
 
       await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
@@ -191,9 +186,7 @@ describe("meets service", () => {
     });
 
     it("includes units in cache key", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: uspaMeet, cached: false });
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
 
       await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
 
@@ -202,9 +195,7 @@ describe("meets service", () => {
     });
 
     it("includes both sort and units in cache key", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: uspaMeet, cached: false });
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
 
       await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks", "kg");
 
@@ -216,7 +207,6 @@ describe("meets service", () => {
       const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
       vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
         data: await fn(),
-        cached: false,
       }));
 
       await meetService.getMeet({ meet: "uspa/1969" }, "by-total", "kg");
