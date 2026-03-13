@@ -152,7 +152,7 @@ jobs:
     if: github.event_name == 'push'
     needs: build
     name: Deploy
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@v0.0.18
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@v0.0.19
     with:
       app-path: apps/close-powerlifting
       tag: ${{ needs.build.outputs.tag }}
@@ -210,7 +210,7 @@ jobs:
     needs: temp-build
     permissions:
       deployments: write
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@v0.0.18
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@v0.0.19
     with:
       app-path: apps/close-powerlifting
       tag: ${{ needs.temp-build.outputs.tag }}
@@ -224,7 +224,7 @@ jobs:
       (github.event.action == 'unlabeled' && github.event.label.name == 'temp-deploy')
     permissions:
       deployments: write
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@v0.0.18
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@v0.0.19
     with:
       app-path: apps/close-powerlifting
     secrets:
