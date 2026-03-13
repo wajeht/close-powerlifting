@@ -43,7 +43,7 @@
     "update:fixtures": "tsx ./scripts/update-fixtures.ts",
     "generate:og": "tsx ./scripts/generate-og-image.ts",
     "optimize:images": "tsx ./scripts/optimize-images.ts",
-    "prepare": "vp config"
+    "prepare": "[ -z \"$CI\" ] && vp config || true"
   },
   "dependencies": {
     "@tailwindcss/cli": "^4.2.1",
