@@ -6,6 +6,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled, closed]
 
+permissions:
+  contents: read
+
 env:
   APP_PORT: 80
   APP_ENV: "testing"
