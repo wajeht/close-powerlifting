@@ -166,6 +166,19 @@ export function createSettingsRouter(context: AppContext) {
     },
   );
 
+  router.get(
+    "/settings/api-key",
+    middleware.sessionAuthenticationMiddleware,
+    async (req: Request, res: Response) => {
+      const sessionUser = req.session.user!;
+      const user = await context.userRepository.findById(sessionUser.id);
+      if (!user?.api_key) {
+        return res.json({ api_key: null });
+      }
+      return res.json({ api_key: user.api_key });
+    },
+  );
+
   router.post(
     "/settings/delete",
     middleware.sessionAuthenticationMiddleware,

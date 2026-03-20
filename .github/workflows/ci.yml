@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 env:
   APP_PORT: 80
   APP_ENV: "testing"

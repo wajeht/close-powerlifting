@@ -210,6 +210,32 @@ Rate limits protect the upstream OpenPowerlifting data source and ensure fair us
       .swagger-ui .info .title { font-size: 2rem }
     `,
     customSiteTitle: "Close Powerlifting API Docs",
+    customJsStr: `
+      console.log('[Swagger] Fetching API key...');
+      fetch('/settings/api-key', { credentials: 'same-origin' })
+        .then(r => {
+          console.log('[Swagger] Response status:', r.status);
+          return r.json();
+        })
+        .then(data => {
+          console.log('[Swagger] API key data:', data);
+          if (data.api_key) {
+            console.log('[Swagger] API key found, waiting for ui...');
+            const interval = setInterval(() => {
+              if (window.ui) {
+                console.log('[Swagger] ui ready, setting API key');
+                window.ui.preauthorizeApiKey('BearerAuth', data.api_key);
+                clearInterval(interval);
+              }
+            }, 100);
+          } else {
+            console.log('[Swagger] No API key returned (user not logged in or no key)');
+          }
+        })
+        .catch(err => {
+          console.error('[Swagger] Error fetching API key:', err);
+        });
+    `,
   },
 } as unknown as Options;
 

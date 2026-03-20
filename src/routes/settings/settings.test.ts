@@ -403,6 +403,53 @@ describe("Settings Routes", () => {
     });
   });
 
+  describe("GET /settings/api-key", () => {
+    it("should return api key for authenticated user", async () => {
+      await knex("users").where({ id: testUserId }).update({
+        verification_token: testMagicToken,
+        magic_link_expires_at: null,
+      });
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
+
+      const response = await sessionAgent.get("/settings/api-key");
+
+      expect(response.status).toBe(200);
+      expect(response.body.api_key).toBeTruthy();
+      expect(typeof response.body.api_key).toBe("string");
+    });
+
+    it("should redirect unauthenticated user to login", async () => {
+      const response = await request(app).get("/settings/api-key");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
+    it("should return null api_key if user has no key", async () => {
+      const [noKeyUser] = await knex("users")
+        .insert({
+          name: "No Key User",
+          email: "no-key@example.com",
+          verification_token: "no-key-token",
+          api_key: null,
+          verified: true,
+        })
+        .returning("*");
+
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=no-key-token&email=no-key@example.com`);
+
+      const response = await sessionAgent.get("/settings/api-key");
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ api_key: null });
+
+      await knex("users").where({ id: noKeyUser.id }).delete();
+    });
+  });
+
   describe("Session destruction after logout", () => {
     it("should not access settings after logout", async () => {
       await knex("users").where({ id: testUserId }).update({
