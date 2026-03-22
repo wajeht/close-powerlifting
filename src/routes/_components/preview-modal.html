@@ -1,0 +1,16 @@
+<dialog id="<%= it.id %>" class="fixed inset-0 m-auto h-fit max-h-[80vh] w-full max-w-2xl rounded-lg border border-neutral-800 bg-neutral-900 p-6 backdrop:bg-black/70">
+  <form method="dialog" class="flex flex-col gap-4">
+    <div class="flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-white truncate"><%= it.title %></h3>
+      <button type="submit" formmethod="dialog" class="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <pre class="overflow-auto rounded-md bg-neutral-950 p-4 text-sm text-neutral-300 max-h-[60vh] whitespace-pre-wrap break-words"><%= it.content %></pre>
+    <div class="flex justify-end">
+      <%~ include('./button.html', { text: 'Close', variant: 'secondary', formmethod: 'dialog' }) %>
+    </div>
+  </form>
+</dialog>
