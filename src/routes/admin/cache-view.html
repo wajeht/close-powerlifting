@@ -34,7 +34,7 @@
       <% for (const entry of it.entries) { %>
       <tr class="hover:bg-neutral-800/50">
         <td class="p-4 font-mono text-sm text-white"><%= entry.key %></td>
-        <td class="max-w-xs truncate p-4 text-sm text-neutral-400" title="<%= entry.value.substring(0, 200) %>">
+        <td class="max-w-xs truncate p-4 text-sm text-neutral-400 cursor-pointer hover:text-neutral-200 open-modal" data-modal="preview-modal-<%= entry.key.replace(/[^a-zA-Z0-9]/g, '-') %>" title="Click to preview">
           <%= entry.value.substring(0, 100) %><%= entry.value.length > 100 ? '...' : '' %>
         </td>
         <td class="p-4 text-sm text-neutral-300"><%= new Date(entry.created_at).toLocaleString() %></td>
@@ -92,6 +92,15 @@
   hiddenValue: entry.key,
   confirmText: 'Delete',
   confirmVariant: 'danger'
+}) %>
+<% } %>
+
+<% for (const entry of it.entries) { %>
+<% let formattedValue; try { formattedValue = JSON.stringify(JSON.parse(entry.value), null, 2); } catch { formattedValue = entry.value; } %>
+<%~ include('../_components/preview-modal.html', {
+  id: 'preview-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'),
+  title: entry.key,
+  content: formattedValue
 }) %>
 <% } %>
 
