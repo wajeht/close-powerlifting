@@ -37,6 +37,22 @@ export async function createApp(
 
   const app = express();
 
+  if (configuration.app.env === "development") {
+    try {
+      const { expressTemplatesReload } = await import("@wajeht/express-templates-reload");
+      expressTemplatesReload({
+        app,
+        watch: [
+          { path: "./public", extensions: [".css", ".js"] },
+          { path: "./src/routes", extensions: [".html"] },
+        ],
+        options: { quiet: false },
+      });
+    } catch {
+      context.logger.warn("Express templates reload not available in production");
+    }
+  }
+
   app
     .disable("x-powered-by")
     .set("trust proxy", 1)

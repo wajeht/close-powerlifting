@@ -86,6 +86,7 @@
     "@types/supertest": "7.2.0",
     "@typescript/native-preview": "7.0.0-dev.20260327.2",
     "@vitest/coverage-v8": "4.1.2",
+    "@wajeht/express-templates-reload": "^3.0.0",
     "html-minifier-terser": "7.2.0",
     "satori": "0.25.0",
     "sharp": "0.34.5",
