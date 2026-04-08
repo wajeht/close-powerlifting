@@ -58,57 +58,79 @@ export function createSettingsRouter(context: AppContext) {
     middleware.validationMiddleware({ body: updateSettingsValidation }),
     async (req: Request<{}, {}, UpdateSettingsType>, res: Response) => {
       const sessionUser = req.session.user!;
-      const { name, email: newEmail } = req.body;
+      const { name, email } = req.body;
       const hostname = context.helpers.getHostName(req);
 
-      const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
+      if (email && email !== sessionUser.email) {
+        const existingUser = await context.userRepository.findByEmail(email);
+        if (existingUser) {
+          req.flash("error", "This email address is already in use.");
+          return res.redirect("/settings");
+        }
+        const token = context.helpers.generateToken();
+        const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
+        const updatedUser = await context.userRepository.updateById(sessionUser.id, {
+          name,
+          pending_email: email,
+          pending_email_token: token,
+          pending_email_expires_at: expiresAt,
+        });
 
-      if (updatedUser) {
+        if (!updatedUser) {
+          req.session.destroy(() => {
+            res.redirect("/login");
+          });
+          return;
+        }
+
         req.session.user = {
           id: updatedUser.id,
           email: updatedUser.email,
           name: updatedUser.name,
           admin: Boolean(updatedUser.admin),
         };
-      }
 
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
-
-      if (newEmail && newEmail !== sessionUser.email) {
-        const existingUser = await context.userRepository.findByEmail(newEmail);
-        if (existingUser) {
-          req.flash("error", "This email address is already in use.");
-          return res.redirect("/settings");
-        }
-
-        const token = context.helpers.generateToken();
-        const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
-
-        await context.userRepository.updateById(sessionUser.id, {
-          pending_email: newEmail,
-          pending_email_token: token,
-          pending_email_expires_at: expiresAt,
-        });
+        context.logger.info(
+          `User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`,
+        );
 
         void context.authService.sendEmailChangeVerificationEmail({
-          name: updatedUser?.name || sessionUser.name,
-          email: newEmail,
+          name: updatedUser.name,
+          email,
           token,
           hostname,
         });
 
         context.logger.info(
-          `User ${sessionUser.id} (${sessionUser.email}) requested email change to ${newEmail}`,
+          `User ${sessionUser.id} (${sessionUser.email}) requested email change to ${email}`,
         );
 
         req.flash(
           "info",
           "A verification link has been sent to your new email address. Please verify it to complete the email change.",
         );
-      } else {
-        req.flash("success", "Name updated successfully.");
+        return res.redirect("/settings");
       }
 
+      const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
+
+      if (!updatedUser) {
+        req.session.destroy(() => {
+          res.redirect("/login");
+        });
+        return;
+      }
+
+      req.session.user = {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        admin: Boolean(updatedUser.admin),
+      };
+
+      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
+
+      req.flash("success", "Name updated successfully.");
       return res.redirect("/settings");
     },
   );

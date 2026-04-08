@@ -338,6 +338,119 @@ describe("Auth Routes", () => {
     });
   });
 
+  describe("GET /verify-email-change", () => {
+    let verifyChangeUserId: number;
+    const currentEmail = "verify-change@example.com";
+    const pendingEmail = "verify-change-new@example.com";
+    const verifyChangeToken = "verify-change-token";
+    const loginToken = "verify-change-login-token";
+
+    beforeEach(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Verify Change User",
+          email: currentEmail,
+          verification_token: loginToken,
+          verified: true,
+          pending_email: pendingEmail,
+          pending_email_token: verifyChangeToken,
+          pending_email_expires_at: new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString(),
+        })
+        .returning("*");
+      verifyChangeUserId = user.id;
+    });
+
+    afterEach(async () => {
+      await knex("users").where({ id: verifyChangeUserId }).delete();
+      await knex("users").where({ email: pendingEmail }).delete();
+    });
+
+    it("should update the email, clear pending fields, and logout the current session", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      await sessionAgent.get(`/magic-link?token=${loginToken}&email=${currentEmail}`);
+
+      const response = await sessionAgent.get(`/verify-email-change?token=${verifyChangeToken}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: verifyChangeUserId }).first();
+      expect(user.email).toBe(pendingEmail);
+      expect(user.pending_email).toBeNull();
+      expect(user.pending_email_token).toBeNull();
+      expect(user.pending_email_expires_at).toBeNull();
+
+      const loginPage = await sessionAgent.get("/login");
+      expect(loginPage.status).toBe(200);
+      expect(loginPage.text).toContain("successfully updated");
+      expect(loginPage.text).toContain("new email address");
+
+      const dashboardResponse = await sessionAgent.get("/dashboard");
+      expect(dashboardResponse.status).toBe(302);
+      expect(dashboardResponse.headers.location).toBe("/login");
+    });
+
+    it("should reject requests without a token", async () => {
+      const response = await request(app).get("/verify-email-change");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: verifyChangeUserId }).first();
+      expect(user.email).toBe(currentEmail);
+      expect(user.pending_email).toBe(pendingEmail);
+    });
+
+    it("should reject invalid tokens", async () => {
+      const response = await request(app).get("/verify-email-change?token=wrong-token");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: verifyChangeUserId }).first();
+      expect(user.email).toBe(currentEmail);
+      expect(user.pending_email_token).toBe(verifyChangeToken);
+    });
+
+    it("should reject expired tokens", async () => {
+      await knex("users")
+        .where({ id: verifyChangeUserId })
+        .update({
+          pending_email_expires_at: new Date(Date.now() - 60 * 1000).toISOString(),
+        });
+
+      const response = await request(app).get(`/verify-email-change?token=${verifyChangeToken}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: verifyChangeUserId }).first();
+      expect(user.email).toBe(currentEmail);
+      expect(user.pending_email).toBe(pendingEmail);
+      expect(user.pending_email_token).toBe(verifyChangeToken);
+    });
+
+    it("should reject email changes when the pending email is no longer available", async () => {
+      await knex("users").insert({
+        name: "Taken During Verify",
+        email: pendingEmail,
+        verification_token: "taken-during-verify-token",
+        verified: true,
+      });
+
+      const response = await request(app).get(`/verify-email-change?token=${verifyChangeToken}`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: verifyChangeUserId }).first();
+      expect(user.email).toBe(currentEmail);
+      expect(user.pending_email).toBeNull();
+      expect(user.pending_email_token).toBeNull();
+      expect(user.pending_email_expires_at).toBeNull();
+    });
+  });
+
   describe("Admin route access", () => {
     it("should redirect non-admin to login when accessing admin routes", async () => {
       const sessionAgent = createUnauthenticatedSessionAgent();

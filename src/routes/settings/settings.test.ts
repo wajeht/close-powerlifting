@@ -1,12 +1,24 @@
 import request from "supertest";
-import { describe, expect, beforeAll, afterAll, beforeEach, afterEach, it } from "vite-plus/test";
+import {
+  describe,
+  expect,
+  beforeAll,
+  afterAll,
+  beforeEach,
+  afterEach,
+  it,
+  vi,
+} from "vite-plus/test";
 
+import { createContext } from "../../context";
 import {
   app,
   knex,
   createUnauthenticatedSessionAgent,
   extractCsrfToken,
 } from "../../tests/test-setup";
+
+const context = createContext();
 
 describe("Settings Routes", () => {
   let testUserId: number;
@@ -84,6 +96,7 @@ describe("Settings Routes", () => {
       expect(response.text).toContain("Settings");
       expect(response.text).toContain(testEmail);
       expect(response.text).toContain(testName);
+      expect(response.text).toContain('type="email"');
     });
 
     it("should redirect to login if session user is deleted from database", async () => {
@@ -110,22 +123,35 @@ describe("Settings Routes", () => {
     });
   });
 
-  describe("POST /settings - update name", () => {
+  describe("POST /settings", () => {
     let sessionAgent: ReturnType<typeof createUnauthenticatedSessionAgent>;
 
     beforeEach(async () => {
       await knex("users").where({ id: testUserId }).update({
+        email: testEmail,
         verification_token: testMagicToken,
         magic_link_expires_at: null,
         name: testName,
+        pending_email: null,
+        pending_email_token: null,
+        pending_email_expires_at: null,
       });
+
+      vi.mocked(context.mail.sendEmailChangeVerificationEmail).mockClear();
 
       sessionAgent = createUnauthenticatedSessionAgent();
       await sessionAgent.get(`/magic-link?token=${testMagicToken}&email=${testEmail}`);
     });
 
     afterEach(async () => {
-      await knex("users").where({ id: testUserId }).update({ name: testName });
+      await knex("users").where({ id: testUserId }).update({
+        email: testEmail,
+        name: testName,
+        pending_email: null,
+        pending_email_token: null,
+        pending_email_expires_at: null,
+      });
+      await knex("users").where({ email: "taken-settings@example.com" }).delete();
     });
 
     it("should update user name", async () => {
@@ -142,6 +168,96 @@ describe("Settings Routes", () => {
 
       const user = await knex("users").where({ id: testUserId }).first();
       expect(user.name).toBe("Updated Name");
+    });
+
+    it("should store pending email change details and send a verification email", async () => {
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+      const newEmail = "updated-settings@example.com";
+
+      const response = await sessionAgent.post("/settings").type("form").send({
+        name: "Updated Name",
+        email: newEmail,
+        _csrf: csrfToken,
+      });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/settings");
+
+      const user = await knex("users").where({ id: testUserId }).first();
+      expect(user.name).toBe("Updated Name");
+      expect(user.email).toBe(testEmail);
+      expect(user.pending_email).toBe(newEmail);
+      expect(user.pending_email_token).toBeTruthy();
+      expect(user.pending_email_expires_at).toBeTruthy();
+
+      expect(context.mail.sendEmailChangeVerificationEmail).toHaveBeenCalledWith({
+        hostname: expect.any(String),
+        email: newEmail,
+        name: "Updated Name",
+        token: user.pending_email_token,
+      });
+
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.text).toContain("verification link has been sent");
+    });
+
+    it("should reject invalid email addresses", async () => {
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+
+      const response = await sessionAgent.post("/settings").type("form").send({
+        name: "Updated Name",
+        email: "not-an-email",
+        _csrf: csrfToken,
+      });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/settings");
+
+      const user = await knex("users").where({ id: testUserId }).first();
+      expect(user.name).toBe(testName);
+      expect(user.pending_email).toBeNull();
+      expect(context.mail.sendEmailChangeVerificationEmail).not.toHaveBeenCalled();
+
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.text).toContain("valid email");
+    });
+
+    it("should reject an email that is already in use without applying partial updates", async () => {
+      const takenEmail = "taken-settings@example.com";
+      const [otherUser] = await knex("users")
+        .insert({
+          name: "Taken Email User",
+          email: takenEmail,
+          verification_token: "taken-settings-token",
+          verified: true,
+        })
+        .returning("*");
+
+      const settingsPage = await sessionAgent.get("/settings");
+      const csrfToken = extractCsrfToken(settingsPage.text);
+
+      const response = await sessionAgent.post("/settings").type("form").send({
+        name: "Should Not Persist",
+        email: takenEmail,
+        _csrf: csrfToken,
+      });
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/settings");
+
+      const user = await knex("users").where({ id: testUserId }).first();
+      expect(user.name).toBe(testName);
+      expect(user.email).toBe(testEmail);
+      expect(user.pending_email).toBeNull();
+      expect(user.pending_email_token).toBeNull();
+      expect(context.mail.sendEmailChangeVerificationEmail).not.toHaveBeenCalled();
+
+      const settingsAfter = await sessionAgent.get("/settings");
+      expect(settingsAfter.text).toContain("already in use");
+
+      await knex("users").where({ id: otherUser.id }).delete();
     });
 
     it("should reject empty name", async () => {

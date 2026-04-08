@@ -318,13 +318,57 @@ export function createAuthRouter(context: AppContext) {
       }
 
       const newEmail = foundUser.pending_email;
+      const existingUser = await context.userRepository.findByEmail(newEmail);
 
-      await context.userRepository.updateById(foundUser.id, {
-        email: newEmail,
-        pending_email: null,
-        pending_email_token: null,
-        pending_email_expires_at: null,
-      });
+      if (existingUser && existingUser.id !== foundUser.id) {
+        await context.userRepository.updateById(foundUser.id, {
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+        req.flash(
+          "error",
+          "This email address is no longer available. Please request a new email change.",
+        );
+        return res.redirect("/login");
+      }
+
+      try {
+        await context.userRepository.updateById(foundUser.id, {
+          email: newEmail,
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+      } catch (error) {
+        if (!(error instanceof Error)) {
+          throw error;
+        }
+
+        const errorWithCode = error as Error & { code?: string };
+        const message = error.message.toLowerCase();
+
+        if (
+          errorWithCode.code !== "23505" &&
+          errorWithCode.code !== "SQLITE_CONSTRAINT" &&
+          errorWithCode.code !== "SQLITE_CONSTRAINT_UNIQUE" &&
+          !message.includes("unique constraint") &&
+          !message.includes("duplicate key")
+        ) {
+          throw error;
+        }
+
+        await context.userRepository.updateById(foundUser.id, {
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+        req.flash(
+          "error",
+          "This email address is no longer available. Please request a new email change.",
+        );
+        return res.redirect("/login");
+      }
 
       context.logger.info(
         `User ${foundUser.id} verified email change from ${foundUser.email} to ${newEmail}`,
