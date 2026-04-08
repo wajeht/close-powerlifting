@@ -156,6 +156,7 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string, _
 
 vi.spyOn(context.mail, "sendVerificationEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendMagicLinkEmail").mockResolvedValue();
+vi.spyOn(context.mail, "sendEmailChangeVerificationEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendWelcomeEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendContactEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendApiLimitResetEmail").mockResolvedValue();

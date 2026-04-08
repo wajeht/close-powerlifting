@@ -280,6 +280,118 @@ export function createAuthRouter(context: AppContext) {
     },
   );
 
+  router.get(
+    "/verify-email-change",
+    middleware.authRateLimitMiddleware,
+    async (req: Request, res: Response) => {
+      const { token } = req.query as { token: string };
+
+      if (!token) {
+        req.flash("error", "Invalid verification link.");
+        return res.redirect("/login");
+      }
+
+      const foundUser = await context.userRepository.findByPendingEmailToken(token);
+
+      if (!foundUser) {
+        req.flash("error", "Invalid verification link.");
+        return res.redirect("/login");
+      }
+
+      if (!foundUser.pending_email_expires_at) {
+        req.flash("error", "Invalid verification link.");
+        return res.redirect("/login");
+      }
+
+      const expiresAt = new Date(foundUser.pending_email_expires_at);
+      if (expiresAt < new Date()) {
+        req.flash(
+          "error",
+          "Verification link has expired. Please request a new one from your settings.",
+        );
+        return res.redirect("/login");
+      }
+
+      if (!foundUser.pending_email) {
+        req.flash("error", "Invalid verification link.");
+        return res.redirect("/login");
+      }
+
+      const newEmail = foundUser.pending_email;
+      const existingUser = await context.userRepository.findByEmail(newEmail);
+
+      if (existingUser && existingUser.id !== foundUser.id) {
+        await context.userRepository.updateById(foundUser.id, {
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+        req.flash(
+          "error",
+          "This email address is no longer available. Please request a new email change.",
+        );
+        return res.redirect("/login");
+      }
+
+      try {
+        await context.userRepository.updateById(foundUser.id, {
+          email: newEmail,
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+      } catch (error) {
+        if (!(error instanceof Error)) {
+          throw error;
+        }
+
+        const errorWithCode = error as Error & { code?: string };
+        const message = error.message.toLowerCase();
+
+        if (
+          errorWithCode.code !== "23505" &&
+          errorWithCode.code !== "SQLITE_CONSTRAINT" &&
+          errorWithCode.code !== "SQLITE_CONSTRAINT_UNIQUE" &&
+          !message.includes("unique constraint") &&
+          !message.includes("duplicate key")
+        ) {
+          throw error;
+        }
+
+        await context.userRepository.updateById(foundUser.id, {
+          pending_email: null,
+          pending_email_token: null,
+          pending_email_expires_at: null,
+        });
+        req.flash(
+          "error",
+          "This email address is no longer available. Please request a new email change.",
+        );
+        return res.redirect("/login");
+      }
+
+      context.logger.info(
+        `User ${foundUser.id} verified email change from ${foundUser.email} to ${newEmail}`,
+      );
+
+      req.session.regenerate((err) => {
+        if (err) {
+          context.logger.error(err);
+          return res.redirect("/login");
+        }
+
+        req.flash(
+          "success",
+          "Your email has been successfully updated. Please login with your new email address.",
+        );
+
+        req.session.save(() => {
+          res.redirect("/login");
+        });
+      });
+    },
+  );
+
   router.get("/oauth/google", async (req: Request, res: Response) => {
     const state = context.authService.generateOAuthState();
     req.session.oauthState = state;

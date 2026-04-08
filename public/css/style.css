@@ -937,14 +937,6 @@
   .bg-neutral-800 {
     background-color: var(--color-neutral-800) !important;
   }
-  .bg-neutral-800\/50 {
-    background-color: #26262680 !important;
-  }
-  @supports (color: color-mix(in lab, red, red)) {
-    .bg-neutral-800\/50 {
-      background-color: color-mix(in oklab, var(--color-neutral-800) 50%, transparent) !important;
-    }
-  }
   .bg-neutral-900 {
     background-color: var(--color-neutral-900) !important;
   }

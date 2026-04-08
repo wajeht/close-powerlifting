@@ -53,6 +53,12 @@ export interface AuthServiceType {
     name: string;
     verification_token: string;
   }) => Promise<void>;
+  sendEmailChangeVerificationEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) => Promise<void>;
   sendMagicLinkEmail: (params: {
     hostname: string;
     email: string;
@@ -172,6 +178,25 @@ export function createAuthService(
       email,
       name,
       verification_token,
+    });
+  }
+
+  async function sendEmailChangeVerificationEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) {
+    await mail.sendEmailChangeVerificationEmail({
+      hostname,
+      email,
+      name,
+      token,
     });
   }
 
@@ -316,6 +341,7 @@ export function createAuthService(
     regenerateKey,
     updateUser,
     sendVerificationEmail,
+    sendEmailChangeVerificationEmail,
     sendMagicLinkEmail,
     sendWelcomeEmail,
     generateOAuthState,

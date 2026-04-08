@@ -13,6 +13,7 @@ export interface FindAllOptions {
 export interface UserRepositoryType {
   findById: (id: number) => Promise<UserType | undefined>;
   findByEmail: (email: string) => Promise<UserType | undefined>;
+  findByPendingEmailToken: (token: string) => Promise<UserType | undefined>;
   findByVerificationToken: (token: string) => Promise<UserType | undefined>;
   findOne: (where: Partial<UserType>) => Promise<UserType | undefined>;
   findAll: (options?: FindAllOptions) => Promise<UserType[]>;
@@ -36,6 +37,10 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
 
   async function findByEmail(email: string): Promise<UserType | undefined> {
     return knex<UserType>("users").where({ email }).first();
+  }
+
+  async function findByPendingEmailToken(token: string): Promise<UserType | undefined> {
+    return knex<UserType>("users").where({ pending_email_token: token }).first();
   }
 
   async function findByVerificationToken(token: string): Promise<UserType | undefined> {
@@ -168,6 +173,7 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
   return {
     findById,
     findByEmail,
+    findByPendingEmailToken,
     findByVerificationToken,
     findOne,
     findAll,
