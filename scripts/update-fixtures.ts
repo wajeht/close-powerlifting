@@ -11,10 +11,11 @@ const FIXTURES_BASE = join(__dirname, "../src/routes/api");
 interface FixtureConfig {
   url: string;
   path: string;
+  headers?: Record<string, string>;
 }
 
 const fixtures: FixtureConfig[] = [
-  // Rankings (JSON API)
+  // Rankings (JSON API) - Default
   {
     url: "/api/rankings?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-default.json",
@@ -30,6 +31,97 @@ const fixtures: FixtureConfig[] = [
   {
     url: "/api/rankings/wraps/men/90/2024/full-power/by-dots?start=0&end=10&lang=en&units=lbs",
     path: "rankings/fixtures/rankings-full-filter.json",
+  },
+
+  // Rankings (JSON API) - Units (kg)
+  {
+    url: "/api/rankings?start=0&end=10&lang=en&units=kg",
+    path: "rankings/fixtures/rankings-default-kg.json",
+  },
+
+  // Rankings (JSON API) - Federation filter
+  {
+    url: "/api/rankings/uspa/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-uspa-raw-men.json",
+  },
+  {
+    url: "/api/rankings/ipf/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-ipf-raw-men.json",
+  },
+  {
+    url: "/api/rankings/wrpf/raw/men?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-wrpf-raw-men.json",
+  },
+
+  // Rankings (JSON API) - Age class filter
+  {
+    url: "/api/rankings/raw/men/90/24-34?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age24-34.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/40-44?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age40-44.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/45-49?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age45-49.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/50-54?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age50-54.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/55-59?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age55-59.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/60-64?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age60-64.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/65-69?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age65-69.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/70-74?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age70-74.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/75-79?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-raw-men-90-age75-79.json",
+  },
+  // Rankings (JSON API) - Sort options
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-wilks?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-wilks.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-glossbrenner?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-glossbrenner.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-goodlift?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-goodlift.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-mcculloch?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-mcculloch.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-total?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-total.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-squat?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-squat.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-bench?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-bench.json",
+  },
+  {
+    url: "/api/rankings/raw/men/90/2024/full-power/by-deadlift?start=0&end=10&lang=en&units=lbs",
+    path: "rankings/fixtures/rankings-by-deadlift.json",
   },
 
   // Records (HTML) - Equipment types
@@ -70,11 +162,47 @@ const fixtures: FixtureConfig[] = [
   { url: "/m/rps/2548", path: "meets/fixtures/meet-rps-2548.html" },
   { url: "/m/usapl/ISR-2025-02", path: "meets/fixtures/meet-usapl-isr-2025-02.html" },
   { url: "/m/wrpf-usa/23e1", path: "meets/fixtures/meet-wrpf-usa-23e1.html" },
-  { url: "/m/uspa/1969", path: "meets/fixtures/meet-uspa-1969.html" },
+  {
+    url: "/m/uspa/1969",
+    path: "meets/fixtures/meet-uspa-1969.html",
+    headers: { Cookie: "units=lbs;" },
+  },
+  { url: "/m/uspa/1969/by-wilks", path: "meets/fixtures/meet-uspa-1969-by-wilks.html" },
+  { url: "/m/uspa/1969/by-wilks2020", path: "meets/fixtures/meet-uspa-1969-by-wilks2020.html" },
+  {
+    url: "/m/uspa/1969/by-glossbrenner",
+    path: "meets/fixtures/meet-uspa-1969-by-glossbrenner.html",
+  },
+  { url: "/m/uspa/1969/by-goodlift", path: "meets/fixtures/meet-uspa-1969-by-goodlift.html" },
+  { url: "/m/uspa/1969/by-ipf-points", path: "meets/fixtures/meet-uspa-1969-by-ipf-points.html" },
+  { url: "/m/uspa/1969/by-mcculloch", path: "meets/fixtures/meet-uspa-1969-by-mcculloch.html" },
+  { url: "/m/uspa/1969/by-total", path: "meets/fixtures/meet-uspa-1969-by-total.html" },
+  { url: "/m/uspa/1969/by-ah", path: "meets/fixtures/meet-uspa-1969-by-ah.html" },
+  { url: "/m/uspa/1969/by-nasa", path: "meets/fixtures/meet-uspa-1969-by-nasa.html" },
+  { url: "/m/uspa/1969/by-reshel", path: "meets/fixtures/meet-uspa-1969-by-reshel.html" },
+  {
+    url: "/m/uspa/1969/by-schwartz-malone",
+    path: "meets/fixtures/meet-uspa-1969-by-schwartz-malone.html",
+  },
+  { url: "/m/uspa/1969/by-division", path: "meets/fixtures/meet-uspa-1969-by-division.html" },
+  {
+    url: "/m/uspa/1969",
+    path: "meets/fixtures/meet-uspa-1969-kg.html",
+    headers: { Cookie: "units=kg;" },
+  },
 
   // Users (HTML)
   { url: "/u/kristyhawkins", path: "users/fixtures/user-kristyhawkins.html" },
-  { url: "/u/johnhaack", path: "users/fixtures/user-johnhaack.html" },
+  {
+    url: "/u/johnhaack",
+    path: "users/fixtures/user-johnhaack.html",
+    headers: { Cookie: "units=lbs;" },
+  },
+  {
+    url: "/u/johnhaack",
+    path: "users/fixtures/user-johnhaack-kg.html",
+    headers: { Cookie: "units=kg;" },
+  },
 
   // Status (HTML)
   { url: "/status", path: "status/fixtures/status.html" },
@@ -91,7 +219,7 @@ async function fetchFixture(fixture: FixtureConfig): Promise<void> {
 
   logger.info(`Fetching: ${url}`);
 
-  const response = await fetch(url);
+  const response = await fetch(url, fixture.headers ? { headers: fixture.headers } : undefined);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);

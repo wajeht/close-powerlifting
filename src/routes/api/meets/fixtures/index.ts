@@ -13,3 +13,15 @@ export const meetWrpfUsa23e1Html = readFileSync(
   "utf-8",
 );
 export const meetUspa1969Html = readFileSync(join(fixturesDir, "meet-uspa-1969.html"), "utf-8");
+export const meetUspa1969ByWilksHtml = readFileSync(
+  join(fixturesDir, "meet-uspa-1969-by-wilks.html"),
+  "utf-8",
+);
+export const meetUspa1969ByTotalHtml = readFileSync(
+  join(fixturesDir, "meet-uspa-1969-by-total.html"),
+  "utf-8",
+);
+export const meetUspa1969KgHtml = readFileSync(
+  join(fixturesDir, "meet-uspa-1969-kg.html"),
+  "utf-8",
+);

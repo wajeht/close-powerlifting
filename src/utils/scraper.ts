@@ -5,16 +5,35 @@ import type { ApiResponse, Pagination } from "../types";
 import type { CacheType } from "../db/cache";
 import type { LoggerType } from "./logger";
 
-const DEFAULT_HEADERS: Record<string, string> = {
-  Cookie: "units=lbs;",
-  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-  "User-Agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; rv:88.0) Gecko/20100101 Firefox/88.0",
-  Pragma: "no-cache",
-};
+const USER_AGENTS: [string, ...string[]] = [
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_7_2) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
+  "Mozilla/5.0 (X11; Linux x86_64; rv:134.0) Gecko/20100101 Firefox/134.0",
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0",
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.7; rv:134.0) Gecko/20100101 Firefox/134.0",
+];
+
+function getRandomUserAgent(): string {
+  const index = Math.floor(Math.random() * USER_AGENTS.length);
+  return USER_AGENTS[index] ?? USER_AGENTS[0];
+}
+
+const FETCH_TIMEOUT_MS = 15000; // 15 seconds
+
+function getDefaultHeaders(units: string = "lbs"): Record<string, string> {
+  return {
+    Cookie: `units=${units};`,
+    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "User-Agent": getRandomUserAgent(),
+    Pragma: "no-cache",
+  };
+}
 
 export interface ScraperType {
-  fetchHtml: (path: string) => Promise<string>;
+  fetchHtml: (path: string, units?: string) => Promise<string>;
   fetchJson: <T>(path: string) => Promise<T>;
   parseHtml: (html: string) => Document;
   tableToJson: <T extends Record<string, string> = Record<string, string>>(
@@ -24,7 +43,7 @@ export interface ScraperType {
   getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
   getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
   withCache: <T>(key: string, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
-  buildPaginationQuery: (currentPage: number, perPage: number) => string;
+  buildPaginationQuery: (currentPage: number, perPage: number, units?: string) => string;
   calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
   fetchWithAuth: (
     baseUrl: string,
@@ -34,9 +53,12 @@ export interface ScraperType {
 }
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
-  async function fetchHtml(path: string): Promise<string> {
+  async function fetchHtml(path: string, units: string = "lbs"): Promise<string> {
     const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
-    const response = await fetch(url, { headers: DEFAULT_HEADERS });
+    const response = await fetch(url, {
+      headers: getDefaultHeaders(units),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch ${path}`, response.status, path);
@@ -47,7 +69,10 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
 
   async function fetchJson<T>(path: string): Promise<T> {
     const url = `${configuration.openpowerlifting.apiUrl}${path.startsWith("/") ? path : `/${path}`}`;
-    const response = await fetch(url, { headers: DEFAULT_HEADERS });
+    const response = await fetch(url, {
+      headers: getDefaultHeaders(),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
 
     if (!response.ok) {
       throw new ScraperError(`Failed to fetch API ${path}`, response.status, path);
@@ -75,7 +100,14 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     const headers: string[] = [];
     for (const cell of headerRow.querySelectorAll("th, td")) {
       const text = cell.textContent?.trim().toLowerCase().replace(/\s+/g, "") || "";
-      headers.push(text);
+      const colspan = parseInt(cell.getAttribute("colspan") || "1", 10);
+      if (colspan > 1) {
+        for (let c = 1; c <= colspan; c++) {
+          headers.push(`${text}${c}`);
+        }
+      } else {
+        headers.push(text);
+      }
     }
 
     const data: T[] = [];
@@ -125,14 +157,18 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
         return { data: JSON.parse(cached) as T };
       }
     } catch (error) {
-      logger.warn(`Cache read error for ${key}: ${error}`);
+      logger.warn(
+        `Cache read error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
 
     try {
       const data = await fetcher();
 
       cache.set(key, JSON.stringify(data)).catch((error) => {
-        logger.warn(`Cache write error for ${key}: ${error}`);
+        logger.warn(
+          `Cache write error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+        );
       });
 
       return { data };
@@ -156,10 +192,14 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     }
   }
 
-  function buildPaginationQuery(currentPage: number, perPage: number): string {
+  function buildPaginationQuery(
+    currentPage: number,
+    perPage: number,
+    units: string = "lbs",
+  ): string {
     const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
     const end = start + perPage;
-    return `start=${start}&end=${end}&lang=en&units=lbs`;
+    return `start=${start}&end=${end}&lang=en&units=${units}`;
   }
 
   function calculatePagination(
@@ -191,6 +231,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         headers: { authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       return {
         ok: response.ok,

@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
+
+permissions:
+  contents: read
 
 env:
   APP_PORT: 80
@@ -12,6 +16,7 @@ env:
   APP_PASSWORD_SALT: 10
   APP_JWT_SECRET: "test-jwt-secret"
   APP_ADMIN_EMAIL: "test@gmail.com"
+  API_CALL_LOG_RETENTION_DAYS: 90
 
   SESSION_SECRET: "test-session-secret"
   SESSION_NAME: "close-powerlifting"
@@ -33,17 +38,17 @@ env:
 
 jobs:
   format:
-    name: Oxfmt format
+    name: Format
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [25.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
@@ -51,21 +56,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Format codes
+      - name: Format
         run: npm run format:check
 
   lint:
-    name: Oxlint
+    name: Lint
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [25.x]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
@@ -73,7 +78,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint codes
+      - name: Lint
         run: npm run lint:check
 
   test:
@@ -82,19 +87,19 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [25.x]
 
     services:
       mailhog:
-        image: mailhog/mailhog:latest
+        image: mailhog/mailhog:latest@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea
         ports:
           - 1025:1025
           - 8025:8025
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
@@ -102,47 +107,125 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Test codes
+      - name: Test
         run: npm run test:ci
 
-  deploy:
-    needs: [format, test, lint]
-    name: Deploy to production
+  build:
+    needs: [format, lint, test]
+    name: Build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://close-powerlifting.jaw.dev/
+    outputs:
+      tag: ${{ steps.image-name.outputs.TAG }}
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
 
       - name: Login to Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_TOKEN }}
 
-      - name: Preset Image Name
-        run: echo "IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$(echo ${{ github.sha }} | cut -c1-7) | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+      - name: Generate Image Name
+        id: image-name
+        run: |
+          TAG=$(echo ${{ github.sha }} | cut -c1-7)
+          IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.IMAGE_URL }}
+          tags: ${{ steps.image-name.outputs.IMAGE_URL }}
 
-      - name: Deploy Image to Production
-        uses: caprover/deploy-from-github@v1.1.2
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    name: Deploy
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@c976aac4e51a559837963f7d903600c2c436e589 # v0.0.20
+    with:
+      app-path: apps/close-powerlifting
+      tag: ${{ needs.build.outputs.tag }}
+      url: https://closepowerlifting.com
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  temp-build:
+    name: Temp Build
+    if: >
+      (github.event.action == 'labeled' && github.event.label.name == 'temp-deploy') ||
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'temp-deploy'))
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.image-name.outputs.TAG }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Login to Container Registry
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
         with:
-          server: "${{ secrets.CAPROVER_SERVER }}"
-          app: "${{ secrets.APP_NAME }}"
-          token: "${{ secrets.APP_TOKEN }}"
-          image: ${{ env.IMAGE_URL }}
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GH_TOKEN }}
+
+      - name: Generate Image Name
+        id: image-name
+        run: |
+          TAG=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
+          IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker Image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.image-name.outputs.IMAGE_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          sbom: false
+
+  temp-deploy:
+    name: Temp Deploy
+    if: >
+      (github.event.action == 'labeled' && github.event.label.name == 'temp-deploy') ||
+      (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'temp-deploy'))
+    needs: temp-build
+    permissions:
+      deployments: write
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@c976aac4e51a559837963f7d903600c2c436e589 # v0.0.20
+    with:
+      app-path: apps/close-powerlifting
+      tag: ${{ needs.temp-build.outputs.tag }}
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  temp-cleanup:
+    name: Temp Cleanup
+    if: >
+      github.event.action == 'closed' ||
+      (github.event.action == 'unlabeled' && github.event.label.name == 'temp-deploy')
+    permissions:
+      deployments: write
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@c976aac4e51a559837963f7d903600c2c436e589 # v0.0.20
+    with:
+      app-path: apps/close-powerlifting
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}

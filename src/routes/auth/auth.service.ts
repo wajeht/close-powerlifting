@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 import { configuration } from "../../configuration";
 import type { UserRepositoryType } from "../../db/user";
@@ -53,6 +53,12 @@ export interface AuthServiceType {
     name: string;
     verification_token: string;
   }) => Promise<void>;
+  sendEmailChangeVerificationEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) => Promise<void>;
   sendMagicLinkEmail: (params: {
     hostname: string;
     email: string;
@@ -99,7 +105,11 @@ export function createAuthService(
     try {
       const decoded = jwt.verify(token, configuration.app.jwtSecret, {
         algorithms: ["HS256"],
-      }) as JwtPayload;
+      });
+
+      if (typeof decoded === "string") {
+        return null;
+      }
 
       const user = await userRepository.findById(decoded.id);
       if (!user) {
@@ -171,6 +181,25 @@ export function createAuthService(
     });
   }
 
+  async function sendEmailChangeVerificationEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) {
+    await mail.sendEmailChangeVerificationEmail({
+      hostname,
+      email,
+      name,
+      token,
+    });
+  }
+
   async function sendWelcomeEmail(userParams: UserParams) {
     const { email } = userParams;
 
@@ -182,9 +211,13 @@ export function createAuthService(
       verified_at: new Date().toISOString(),
     });
 
+    if (!verified) {
+      throw new Error("Failed to verify user");
+    }
+
     await mail.sendWelcomeEmail({
       email,
-      name: verified!.name!,
+      name: verified.name,
       key: apiKey,
     });
 
@@ -245,6 +278,10 @@ export function createAuthService(
       grant_type: "authorization_code",
     });
 
+    logger.info("Google OAuth token request", {
+      redirectUri: configuration.oauth.google.redirectUrl,
+    });
+
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -255,12 +292,17 @@ export function createAuthService(
       });
 
       if (!response.ok) {
+        const errorBody = await response.text();
+        logger.error("Google OAuth token error response", {
+          status: response.status,
+          body: errorBody,
+        });
         throw new Error("Failed to fetch Google OAuth Tokens", { cause: response.statusText });
       }
 
       return response.json();
     } catch (error: unknown) {
-      logger.error("Failed to fetch Google OAuth Tokens");
+      logger.error("Failed to fetch Google OAuth Tokens", { error });
       throw error;
     }
   }
@@ -299,6 +341,7 @@ export function createAuthService(
     regenerateKey,
     updateUser,
     sendVerificationEmail,
+    sendEmailChangeVerificationEmail,
     sendMagicLinkEmail,
     sendWelcomeEmail,
     generateOAuthState,

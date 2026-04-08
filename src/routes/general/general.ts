@@ -20,6 +20,7 @@ export function createGeneralRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const healthCheckService = createHealthCheckService(
@@ -34,7 +35,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    async (req: Request, res: Response) => {
+    async (_req: Request, res: Response) => {
       const now = Date.now();
 
       if (!rankingsCache || now - rankingsCache.timestamp > RANKINGS_CACHE_TTL) {
@@ -55,7 +56,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/about",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/about.html", {
         path: "/about",
         title: "About",
@@ -70,7 +71,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/terms",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/terms.html", {
         path: "/terms",
         title: "Terms of Service",
@@ -81,7 +82,7 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/privacy",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.status(200).render("general/privacy.html", {
         path: "/privacy",
         title: "Privacy Policy",
@@ -113,27 +114,29 @@ export function createGeneralRouter(context: AppContext) {
     },
   );
 
-  router.get("/health-check", (req: Request, res: Response) => {
-    res.status(200).json({
-      status: "ok",
-      uptime: process.uptime(),
-      timestamp: Date.now(),
-      database: "connected",
-      cache: context.cache.isReady() ? "connected" : "disconnected",
-      crons: context.cron.getStatus().isRunning ? "started" : "stopped",
-    });
-  });
+  router.get("/health-check", handleHealthCheck);
+  router.get("/healthz", handleHealthCheck);
+  async function handleHealthCheck(_req: Request, res: Response) {
+    let dbStatus: "connected" | "disconnected" = "disconnected";
+    let statusCode = 503;
 
-  router.get("/healthz", (req: Request, res: Response) => {
-    res.status(200).json({
-      status: "ok",
+    try {
+      await context.knex.raw("SELECT 1");
+      dbStatus = "connected";
+      statusCode = 200;
+    } catch {
+      // DB is unreachable
+    }
+
+    res.status(statusCode).json({
+      status: statusCode === 200 ? "ok" : "error",
       uptime: process.uptime(),
       timestamp: Date.now(),
-      database: "connected",
+      database: dbStatus,
       cache: context.cache.isReady() ? "connected" : "disconnected",
       crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
-  });
+  }
 
   return router;
 }

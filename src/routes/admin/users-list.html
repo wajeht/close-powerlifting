@@ -7,7 +7,7 @@
   <%~ include('../_components/flash-message.html') %>
 </div>
 
-<div class="fade-in animation-delay-3 mb-6">
+<div class="fade-in animation-delay-3 mb-6 max-w-2xl">
   <form action="/admin/users" method="get" class="flex gap-2">
     <%~ include('../_components/inputs/search.html', { name: 'search', placeholder: 'Search by name or email', value: it.search }) %>
     <%~ include('../_components/button.html', { text: 'Search', minWidth: true }) %>
@@ -33,7 +33,7 @@
         <td class="p-4 text-neutral-400"><%= user.id %></td>
         <td class="p-4">
           <div class="flex items-center gap-2">
-            <span class="text-white"><%= user.name %></span>
+            <a href="/admin/users/<%= user.id %>" class="text-white hover:text-power"><%= user.name %></a>
             <% if (user.verified) { %>
             <%~ include('../_components/badge.html', { text: 'Verified', variant: 'success' }) %>
             <% } else { %>
@@ -47,16 +47,13 @@
         <td class="p-4 text-sm text-neutral-300"><%= new Date(user.created_at).toLocaleString() %></td>
         <td class="p-4 text-sm text-neutral-300"><%= new Date(user.updated_at).toLocaleString() %></td>
         <td class="p-4">
-          <button
-            type="button"
-            class="open-modal rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-blue-400"
-            data-modal="modal-user-<%= user.id %>"
-            title="Update API Limit"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-          </button>
+          <%~ include('../_components/actions-dropdown.html', {
+            id: 'dropdown-user-' + user.id,
+            items: [
+              { label: 'Update API Limit', modal: 'modal-limit-' + user.id },
+              { label: 'Resend Verification', modal: 'modal-resend-' + user.id, disabled: user.verified }
+            ]
+          }) %>
         </td>
       </tr>
       <% } %>
@@ -70,26 +67,36 @@
 </div>
 
 <% for (const user of it.users) { %>
+<% const escapedName = user.name.split('&').join('&amp;').split(String.fromCharCode(60)).join('&lt;').split(String.fromCharCode(62)).join('&gt;').split('"').join('&quot;'); %>
 <%~ include('../_components/modal.html', {
-  id: 'modal-user-' + user.id,
+  id: 'modal-limit-' + user.id,
   action: '/admin/users/' + user.id + '/api-limit',
   title: 'Update API Limit',
-  description: 'Set a new API call limit for <span class="text-white">' + user.name + '</span>.',
+  description: 'Set a new API call limit for <span class="text-white">' + escapedName + '</span>.',
   input: include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }),
   confirmText: 'Update Limit'
 }) %>
+<% if (!user.verified) { %>
+<%~ include('../_components/modal.html', {
+  id: 'modal-resend-' + user.id,
+  action: '/admin/users/' + user.id + '/resend-verification',
+  title: 'Resend Verification Email',
+  description: 'Send a new verification email to <span class="text-white">' + escapedName + '</span>.',
+  confirmText: 'Send Email'
+}) %>
+<% } %>
 <% } %>
 
 <% if (it.pagination.pages > 1) { %>
 <div class="fade-in animation-delay-5 mt-6 flex items-center justify-center gap-2">
   <% if (it.pagination.current_page > 1) { %>
-  <a href="/admin/users?page=<%= it.pagination.current_page - 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
+  <a href="/admin/users?page=<%= it.pagination.current_page - 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Previous</a>
   <% } %>
   <span class="px-4 text-neutral-400">
     Page <%= it.pagination.current_page %> of <%= it.pagination.pages %>
   </span>
   <% if (it.pagination.current_page < it.pagination.pages) { %>
-  <a href="/admin/users?page=<%= it.pagination.current_page + 1 %>&search=<%= it.search %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
+  <a href="/admin/users?page=<%= it.pagination.current_page + 1 %>&search=<%= encodeURIComponent(it.search) %>" class="rounded-md bg-neutral-800 px-3 py-2 text-neutral-300 hover:bg-neutral-700">Next</a>
   <% } %>
 </div>
 <% } %>

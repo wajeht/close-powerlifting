@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test";
 import { createCron } from "./cron";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
+import type { ApiCallLogRepositoryType } from "./db/api-call-log";
 import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
 
-// Simple in-memory cache for testing
 function createTestCache(): CacheType {
   const store = new Map<string, string>();
   return {
@@ -28,16 +28,27 @@ function createTestCache(): CacheType {
       return count;
     },
     keys: async (pattern) => {
+      // Return all keys when pattern is '%'
+      if (pattern === "%") {
+        return Array.from(store.keys());
+      }
       return Array.from(store.keys()).filter((k) => k.includes(pattern.replace(/%/g, "")));
     },
     clearAll: async () => {
       store.clear();
     },
     isReady: () => true,
+    getStatistics: async () => ({
+      totalEntries: store.size,
+      oldestEntry: null,
+      newestEntry: null,
+      keyPatterns: [],
+    }),
+    getEntries: async () => [],
+    countEntries: async () => store.size,
   };
 }
 
-// Simple logger for testing
 function createTestLogger(): LoggerType {
   return {
     info: vi.fn(),
@@ -47,7 +58,6 @@ function createTestLogger(): LoggerType {
   } as unknown as LoggerType;
 }
 
-// Simple scraper for testing
 function createTestScraper(): ScraperType {
   const mockDoc = {
     querySelectorAll: () => [],
@@ -81,6 +91,7 @@ describe("cron", () => {
   let scraper: ScraperType;
   let userRepository: UserRepositoryType;
   let mail: MailType;
+  let apiCallLogRepository: ApiCallLogRepositoryType;
 
   beforeEach(() => {
     cache = createTestCache();
@@ -90,11 +101,15 @@ describe("cron", () => {
       findVerified: vi.fn().mockResolvedValue([]),
       resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
       findByApiCallCount: vi.fn().mockResolvedValue([]),
+      findByEmail: vi.fn().mockResolvedValue(null),
     } as unknown as UserRepositoryType;
     mail = {
       sendApiLimitResetEmail: vi.fn().mockResolvedValue(undefined),
       sendReachingApiLimitEmail: vi.fn().mockResolvedValue(undefined),
     } as unknown as MailType;
+    apiCallLogRepository = {
+      deleteOlderThan: vi.fn().mockResolvedValue(0),
+    } as unknown as ApiCallLogRepositoryType;
   });
 
   afterEach(() => {
@@ -103,7 +118,7 @@ describe("cron", () => {
 
   describe("createCron", () => {
     it("should create cron with correct interface", () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
 
       expect(cron).toHaveProperty("start");
       expect(cron).toHaveProperty("stop");
@@ -112,24 +127,24 @@ describe("cron", () => {
     });
 
     it("should return not running status initially", () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
 
       expect(cron.getStatus()).toEqual({ isRunning: false, jobCount: 0 });
     });
 
     it("should update status after start", () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       cron.start();
 
       const status = cron.getStatus();
       expect(status.isRunning).toBe(true);
-      expect(status.jobCount).toBe(3);
+      expect(status.jobCount).toBe(5);
 
       cron.stop();
     });
 
     it("should update status after stop", () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       cron.start();
       cron.stop();
 
@@ -137,10 +152,10 @@ describe("cron", () => {
     });
 
     it("should log when started and stopped", () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       cron.start();
 
-      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 3 });
+      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 5 });
 
       cron.stop();
 
@@ -149,8 +164,18 @@ describe("cron", () => {
   });
 
   describe("refreshCache task", () => {
-    it("should cache status data", async () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+    async function seedCache(
+      cacheInstance: CacheType,
+      keys: string[] = ["status", "federations-list", "records"],
+    ) {
+      for (const key of keys) {
+        await cacheInstance.set(key, JSON.stringify({ placeholder: true }));
+      }
+    }
+
+    it("should refresh status data from cache", async () => {
+      await seedCache(cache, ["status"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("status");
@@ -158,52 +183,125 @@ describe("cron", () => {
       expect(JSON.parse(cached!)).toHaveProperty("server_version");
     });
 
-    it("should cache federations list", async () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+    it("should refresh federations list from cache", async () => {
+      await seedCache(cache, ["federations-list"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("federations-list");
       expect(cached).not.toBeNull();
     });
 
-    it("should cache records", async () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+    it("should refresh records from cache", async () => {
+      await seedCache(cache, ["records"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("records");
       expect(cached).not.toBeNull();
     });
 
-    it("should cache rankings pages 1-10", async () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+    it("should refresh rankings keys from cache", async () => {
+      await seedCache(cache, ["rankings-1-100", "rankings-2-100"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      for (let i = 1; i <= 10; i++) {
-        const cached = await cache.get(`rankings-${i}-100`);
-        expect(cached).not.toBeNull();
-      }
+      const cached1 = await cache.get("rankings-1-100");
+      const cached2 = await cache.get("rankings-2-100");
+      expect(cached1).not.toBeNull();
+      expect(cached2).not.toBeNull();
+    });
+
+    it("should refresh filtered rankings keys", async () => {
+      await seedCache(cache, ["rankings/raw-1-100", "rankings/raw/men-1-100"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      const cached1 = await cache.get("rankings/raw-1-100");
+      const cached2 = await cache.get("rankings/raw/men-1-100");
+      expect(cached1).not.toBeNull();
+      expect(cached2).not.toBeNull();
+    });
+
+    it("should refresh federation keys", async () => {
+      await seedCache(cache, ["federation-ipf", "federation-uspa-2024"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/ipf");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/uspa/2024");
+    });
+
+    it("should handle federation keys with hyphenated names and year", async () => {
+      await seedCache(cache, ["federation-usa-pl-2020", "federation-all-russia"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/usa-pl/2020");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/all-russia");
+    });
+
+    it("should refresh meet keys", async () => {
+      await seedCache(cache, ["meet-uspa/1969"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/uspa/1969");
+    });
+
+    it("should refresh user keys", async () => {
+      await seedCache(cache, ["user-johnhaack"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/johnhaack");
+    });
+
+    it("should refresh records with filter path", async () => {
+      await seedCache(cache, ["records/raw", "records/raw/men"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw/men");
+    });
+
+    it("should skip internal cache keys", async () => {
+      await seedCache(cache, ["hostname", "close-powerlifting-global-status-call-cache", "status"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      // Only status should be refreshed
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job completed: refreshCache",
+        expect.objectContaining({
+          total: 1,
+        }),
+      );
     });
 
     it("should log completion with results summary", async () => {
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      await seedCache(cache, ["status", "federations-list", "records"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
         "cron job completed: refreshCache",
         expect.objectContaining({
-          total: 13,
-          successful: 13,
+          total: 3,
+          successful: 3,
           failed: 0,
         }),
       );
     });
 
     it("should handle fetchHtml errors and continue", async () => {
+      await seedCache(cache, ["status", "federations-list"]);
       vi.mocked(scraper.fetchHtml)
         .mockRejectedValueOnce(new Error("Network error"))
         .mockResolvedValue("<html></html>");
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -215,22 +313,24 @@ describe("cron", () => {
       expect(fedCached).not.toBeNull();
     });
 
-    it("should handle fetchJson errors and continue", async () => {
+    it("should handle fetchJson errors for rankings", async () => {
+      await seedCache(cache, ["rankings-1-100"]);
       vi.mocked(scraper.fetchJson).mockRejectedValueOnce(new Error("API error"));
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh rankings-page-1",
+        "refreshCache: failed to refresh rankings-1-100",
         expect.any(Object),
       );
     });
 
     it("should handle missing text-content element", async () => {
+      await seedCache(cache, ["status"]);
       vi.mocked(scraper.getElementByClass).mockReturnValueOnce(null);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -240,21 +340,234 @@ describe("cron", () => {
     });
 
     it("should report partial failures in summary", async () => {
+      await seedCache(cache, ["status", "federations-list", "records"]);
       vi.mocked(scraper.fetchHtml)
         .mockRejectedValueOnce(new Error("Error 1"))
         .mockRejectedValueOnce(new Error("Error 2"))
         .mockResolvedValue("<html></html>");
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
         "cron job completed: refreshCache",
         expect.objectContaining({
-          total: 13,
-          successful: 11,
+          total: 3,
+          successful: 1,
           failed: 2,
         }),
+      );
+    });
+
+    it("should do nothing when cache is empty", async () => {
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job completed: refreshCache",
+        expect.objectContaining({
+          total: 0,
+          successful: 0,
+          failed: 0,
+        }),
+      );
+    });
+
+    // Edge cases for rankings
+    it("should handle rankings with page > 1 correctly", async () => {
+      await seedCache(cache, ["rankings-3-100"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      // page 3 with perPage 100: start = (3-1)*100 = 200, end = 300
+      expect(scraper.fetchJson).toHaveBeenCalledWith(
+        "/rankings?start=200&end=300&lang=en&units=lbs",
+      );
+    });
+
+    it("should handle deep filter path rankings from prod", async () => {
+      await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchJson).toHaveBeenCalledWith(
+        "/rankings/raw/men/100/2024/full-power/by-dots?start=0&end=100&lang=en&units=lbs",
+      );
+    });
+
+    it("should handle rankings with small perPage", async () => {
+      await seedCache(cache, ["rankings-1-9"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchJson).toHaveBeenCalledWith("/rankings?start=0&end=9&lang=en&units=lbs");
+    });
+
+    it("should warn on invalid rankings key format", async () => {
+      await seedCache(cache, ["rankings-invalid"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshCacheKey: invalid rankings key format: rankings-invalid",
+      );
+    });
+
+    it("should warn on rankings key with non-numeric page/perPage", async () => {
+      await seedCache(cache, ["rankings-abc-def"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshCacheKey: invalid page/perPage in key: rankings-abc-def",
+      );
+    });
+
+    // Edge cases for records
+    it("should handle deep records filter paths from prod", async () => {
+      await seedCache(cache, [
+        "records/unlimited/para-classes/women",
+        "records/raw/expanded-classes/men",
+        "records/all-tested/women",
+      ]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/unlimited/para-classes/women");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw/expanded-classes/men");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/all-tested/women");
+    });
+
+    // Edge cases for federations
+    it("should not treat short numbers as years", async () => {
+      // federation-365strong should NOT be parsed as year=365
+      await seedCache(cache, ["federation-365strong"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/365strong");
+    });
+
+    it("should handle federation ending in 3 digit number", async () => {
+      await seedCache(cache, ["federation-uspa-123"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      // 123 is not 4 digits, so it's part of the federation name
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/uspa-123");
+    });
+
+    // Edge cases for meets
+    it("should handle meet codes with multiple path segments", async () => {
+      await seedCache(cache, ["meet-wrpf-ru/2301", "meet-gpc/aus-vic/2023"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/wrpf-ru/2301");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/gpc/aus-vic/2023");
+    });
+
+    // Edge cases for users
+    it("should handle user profile fetch failure", async () => {
+      await seedCache(cache, ["user-nonexistent"]);
+      vi.mocked(scraper.getElementByClass).mockReturnValueOnce(null);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "refreshCache: failed to refresh user-nonexistent",
+        expect.objectContaining({ error: "User profile not found: nonexistent" }),
+      );
+    });
+
+    it("should handle usernames with hyphens", async () => {
+      await seedCache(cache, ["user-john-doe"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/john-doe");
+    });
+
+    // Unknown key type
+    it("should warn on unknown key types", async () => {
+      await seedCache(cache, ["unknown-key-type"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshCacheKey: unknown key type: unknown-key-type",
+      );
+    });
+
+    // Mixed key types in single refresh
+    it("should handle all key types in single refresh", async () => {
+      await seedCache(cache, [
+        "status",
+        "federations-list",
+        "federation-ipf-2024",
+        "meet-uspa/1969",
+        "records/raw/men",
+        "user-johnhaack",
+        "rankings-1-100",
+      ]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job completed: refreshCache",
+        expect.objectContaining({
+          total: 7,
+          successful: 7,
+          failed: 0,
+        }),
+      );
+    });
+  });
+
+  describe("refreshHealthCheck task", () => {
+    it("should skip when hostname is not cached", async () => {
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshHealthCheck: hostname not cached yet, skipping",
+      );
+    });
+
+    it("should skip when admin user is not found", async () => {
+      await cache.set("hostname", "http://localhost");
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshHealthCheck: admin user or API key not found, skipping",
+      );
+    });
+
+    it("should refresh health check when hostname and admin exist", async () => {
+      await cache.set("hostname", "http://localhost");
+      vi.mocked(userRepository.findByEmail).mockResolvedValueOnce({
+        api_key: "test-key",
+      } as never);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: refreshHealthCheck");
+    });
+
+    it("should log error on failure", async () => {
+      await cache.set("hostname", "http://localhost");
+      vi.mocked(userRepository.findByEmail).mockRejectedValueOnce(new Error("db error"));
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshHealthCheck();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "cron job failed: refreshHealthCheck",
+        expect.any(Error),
       );
     });
   });
@@ -263,7 +576,7 @@ describe("cron", () => {
     it("should skip if not first day of month", async () => {
       vi.setSystemTime(new Date(2024, 0, 15)); // Jan 15
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
       expect(userRepository.resetAllApiCallCounts).not.toHaveBeenCalled();
@@ -278,7 +591,7 @@ describe("cron", () => {
       const mockUsers = [{ email: "test@test.com", name: "Test" }];
       vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
       expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
@@ -298,7 +611,7 @@ describe("cron", () => {
       ];
       vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
       expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
@@ -308,7 +621,7 @@ describe("cron", () => {
       vi.setSystemTime(new Date(2024, 0, 1));
       vi.mocked(userRepository.findVerified).mockRejectedValue(new Error("DB error"));
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -324,7 +637,7 @@ describe("cron", () => {
       ] as never);
       vi.mocked(userRepository.resetAllApiCallCounts).mockRejectedValue(new Error("DB error"));
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -337,9 +650,31 @@ describe("cron", () => {
       vi.setSystemTime(new Date(2024, 0, 1));
       vi.mocked(userRepository.findVerified).mockResolvedValue([]);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
 
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
+    });
+
+    it("should continue sending emails when one fails", async () => {
+      vi.setSystemTime(new Date(2024, 0, 1));
+
+      const mockUsers = [
+        { email: "user1@test.com", name: "User 1" },
+        { email: "user2@test.com", name: "User 2" },
+        { email: "user3@test.com", name: "User 3" },
+      ];
+      vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
+      vi.mocked(mail.sendApiLimitResetEmail)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error("SMTP error"))
+        .mockResolvedValueOnce(undefined);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
+      expect(logger.warn).toHaveBeenCalledWith("resetApiCallCount: 1/3 emails failed to send");
       expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
     });
   });
@@ -349,7 +684,7 @@ describe("cron", () => {
       const mockUsers = [{ email: "user@test.com", name: "User" }];
       vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
       expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledWith({
@@ -362,7 +697,7 @@ describe("cron", () => {
     it("should not send emails if no users at limit", async () => {
       vi.mocked(userRepository.findByApiCallCount).mockResolvedValue([]);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
       expect(mail.sendReachingApiLimitEmail).not.toHaveBeenCalled();
@@ -375,7 +710,7 @@ describe("cron", () => {
       ];
       vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
       expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledTimes(2);
@@ -384,7 +719,7 @@ describe("cron", () => {
     it("should handle findByApiCallCount error", async () => {
       vi.mocked(userRepository.findByApiCallCount).mockRejectedValue(new Error("DB error"));
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -396,10 +731,79 @@ describe("cron", () => {
     it("should log completion on success", async () => {
       vi.mocked(userRepository.findByApiCallCount).mockResolvedValue([]);
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.sendReachingApiLimitEmail();
 
       expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
+    });
+
+    it("should continue sending emails when one fails", async () => {
+      const mockUsers = [
+        { email: "user1@test.com", name: "User 1" },
+        { email: "user2@test.com", name: "User 2" },
+      ];
+      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
+      vi.mocked(mail.sendReachingApiLimitEmail)
+        .mockRejectedValueOnce(new Error("SMTP error"))
+        .mockResolvedValueOnce(undefined);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.sendReachingApiLimitEmail();
+
+      expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledTimes(2);
+      expect(logger.warn).toHaveBeenCalledWith(
+        "sendReachingApiLimitEmail: 1/2 emails failed to send",
+      );
+      expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
+    });
+  });
+
+  describe("cleanupOldApiCallLogs task", () => {
+    it("should call deleteOlderThan with correct cutoff date", async () => {
+      const mockDate = new Date("2024-03-15T12:00:00Z");
+      vi.setSystemTime(mockDate);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.cleanupOldApiCallLogs();
+
+      expect(apiCallLogRepository.deleteOlderThan).toHaveBeenCalledWith(expect.any(Date));
+      const callArg = vi.mocked(apiCallLogRepository.deleteOlderThan).mock.calls[0][0];
+      const daysDiff = Math.round((mockDate.getTime() - callArg.getTime()) / (1000 * 60 * 60 * 24));
+      expect(daysDiff).toBe(90);
+    });
+
+    it("should log completion with deleted count when logs deleted", async () => {
+      vi.mocked(apiCallLogRepository.deleteOlderThan).mockResolvedValue(42);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.cleanupOldApiCallLogs();
+
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job completed: cleanupOldApiCallLogs - deleted 42 logs",
+      );
+    });
+
+    it("should log completion when no logs to delete", async () => {
+      vi.mocked(apiCallLogRepository.deleteOlderThan).mockResolvedValue(0);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.cleanupOldApiCallLogs();
+
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job completed: cleanupOldApiCallLogs - no logs to delete",
+      );
+    });
+
+    it("should handle deleteOlderThan error", async () => {
+      vi.mocked(apiCallLogRepository.deleteOlderThan).mockRejectedValue(new Error("DB error"));
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.cleanupOldApiCallLogs();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "cron job failed: cleanupOldApiCallLogs",
+        expect.any(Error),
+      );
     });
   });
 });

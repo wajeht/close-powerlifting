@@ -1,20 +1,35 @@
 import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
+import type { ApiCallLogRepositoryType } from "../../db/api-call-log";
 import type { AuthServiceType } from "../auth/auth.service";
-import type { User, Pagination } from "../../types";
+import type { User, Pagination, ApiCallLog } from "../../types";
 import type { LoggerType } from "../../utils/logger";
+import type { HelpersType } from "../../utils/helpers";
+import { buildPagination } from "../../utils/helpers";
+
+const VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export interface AdminServiceType {
   getAllUsers: (options?: {
     page?: number;
     limit?: number;
     search?: string;
+    order?: "asc" | "desc";
   }) => Promise<{ users: User[]; pagination: Pagination }>;
   getUserById: (id: number) => Promise<User | undefined>;
+  getUserApiCallHistory: (
+    userId: number,
+    options?: { page?: number; limit?: number; search?: string },
+  ) => Promise<{ calls: ApiCallLog[]; pagination: Pagination }>;
   updateUserApiCallCount: (userId: number, count: number) => Promise<User | undefined>;
   updateUserApiCallLimit: (userId: number, limit: number) => Promise<User | undefined>;
   resendVerificationEmail: (userId: number, hostname: string) => Promise<boolean>;
-  getCacheEntries: (pattern: string) => Promise<CacheEntry[]>;
+  getCacheEntries: (options?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    order?: "asc" | "desc";
+  }) => Promise<{ entries: CacheEntry[]; pagination: Pagination }>;
   clearAllCache: () => Promise<void>;
   deleteCacheEntry: (key: string) => Promise<void>;
   getDashboardStats: () => Promise<DashboardStats>;
@@ -34,50 +49,58 @@ export function createAdminService(
   cache: CacheType,
   authService: AuthServiceType,
   logger: LoggerType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
+  helpers: HelpersType,
 ): AdminServiceType {
   async function getAllUsers(
     options: {
       page?: number;
       limit?: number;
       search?: string;
+      order?: "asc" | "desc";
     } = {},
   ): Promise<{ users: User[]; pagination: Pagination }> {
-    const page = options.page || 1;
-    const limit = options.limit || 20;
+    const limit = options.limit || 10;
+    const order = options.order || "desc";
 
-    let allUsers = await userRepository.findAll();
+    const total = await userRepository.count({}, options.search);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
 
-    if (options.search) {
-      const searchLower = options.search.toLowerCase();
-      allUsers = allUsers.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchLower) ||
-          user.email.toLowerCase().includes(searchLower),
-      );
-    }
+    const users = await userRepository.findAll({
+      search: options.search,
+      orderBy: "created_at",
+      order,
+      limit,
+      offset,
+    });
 
-    const total = allUsers.length;
-    const totalPages = Math.ceil(total / limit);
-    const offset = (page - 1) * limit;
-    const users = allUsers.slice(offset, offset + limit);
-
-    return {
-      users,
-      pagination: {
-        items: total,
-        pages: totalPages,
-        per_page: limit,
-        current_page: page,
-        last_page: totalPages,
-        first_page: 1,
-        from: offset + 1,
-        to: Math.min(offset + limit, total),
-      },
-    };
+    return { users, pagination };
   }
 
   async function getUserById(id: number): Promise<User | undefined> {
     return userRepository.findById(id);
+  }
+
+  async function getUserApiCallHistory(
+    userId: number,
+    options: { page?: number; limit?: number; search?: string } = {},
+  ): Promise<{ calls: ApiCallLog[]; pagination: Pagination }> {
+    const limit = options.limit || 10;
+
+    const total = await apiCallLogRepository.countByUserId(userId, options.search);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const calls = await apiCallLogRepository.findByUserId(userId, {
+      search: options.search,
+      orderBy: "created_at",
+      order: "desc",
+      limit,
+      offset,
+    });
+
+    return { calls, pagination };
   }
 
   async function updateUserApiCallCount(userId: number, count: number): Promise<User | undefined> {
@@ -91,15 +114,23 @@ export function createAdminService(
   async function resendVerificationEmail(userId: number, hostname: string): Promise<boolean> {
     const user = await userRepository.findById(userId);
 
-    if (!user || user.verified || !user.verification_token) {
+    if (!user || user.verified) {
       return false;
     }
+
+    const newToken = helpers.generateToken();
+    const verificationExpiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
+
+    await userRepository.updateById(user.id, {
+      verification_token: newToken,
+      magic_link_expires_at: verificationExpiresAt,
+    });
 
     await authService.sendVerificationEmail({
       hostname,
       name: user.name,
       email: user.email,
-      verification_token: user.verification_token,
+      verification_token: newToken,
     });
 
     logger.info(`Admin resent verification email to user ${user.id} (${user.email})`);
@@ -107,8 +138,31 @@ export function createAdminService(
     return true;
   }
 
-  async function getCacheEntries(pattern: string): Promise<CacheEntry[]> {
-    return cache.getEntries(pattern);
+  async function getCacheEntries(
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      order?: "asc" | "desc";
+    } = {},
+  ): Promise<{ entries: CacheEntry[]; pagination: Pagination }> {
+    const limit = options.limit || 10;
+    const order = options.order || "desc";
+    const pattern = options.search ? `%${options.search}%` : "%";
+
+    const total = await cache.countEntries(pattern);
+    const pagination = buildPagination(total, options.page || 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const entries = await cache.getEntries({
+      pattern,
+      orderBy: "updated_at",
+      order,
+      limit,
+      offset,
+    });
+
+    return { entries, pagination };
   }
 
   async function clearAllCache(): Promise<void> {
@@ -142,6 +196,7 @@ export function createAdminService(
   return {
     getAllUsers,
     getUserById,
+    getUserApiCallHistory,
     updateUserApiCallCount,
     updateUserApiCallLimit,
     resendVerificationEmail,

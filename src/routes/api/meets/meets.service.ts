@@ -23,14 +23,20 @@ export function createMeetService(scraper: ScraperType) {
     };
   }
 
-  async function fetchMeetData(meet: string): Promise<MeetData> {
-    const html = await scraper.fetchHtml(`/m/${meet}`);
+  async function fetchMeetData(meet: string, sort?: string, units?: string): Promise<MeetData> {
+    const sortPath = sort ? `/${sort}` : "";
+    const html = await scraper.fetchHtml(`/m/${meet}${sortPath}`, units);
     const doc = scraper.parseHtml(html);
     return parseMeetHtml(doc);
   }
 
-  async function getMeet({ meet }: GetMeetParamType): Promise<ApiResponse<MeetData>> {
-    return scraper.withCache<MeetData>(`meet-${meet}`, () => fetchMeetData(meet));
+  async function getMeet(
+    { meet }: GetMeetParamType,
+    sort?: string,
+    units?: string,
+  ): Promise<ApiResponse<MeetData>> {
+    const cacheKey = `meet-${meet}${sort ? `-${sort}` : ""}${units ? `-${units}` : ""}`;
+    return scraper.withCache<MeetData>(cacheKey, () => fetchMeetData(meet, sort, units));
   }
 
   return {

@@ -53,6 +53,7 @@ import {
  * @property {string} status - Response status (fail)
  * @property {string} request_url - Request URL
  * @property {string} message - Error message
+ * @property {object[]} errors - Error details array
  * @property {object[]} data - Empty array
  */
 
@@ -65,6 +66,7 @@ export function createMeetsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
   const meetService = createMeetService(context.scraper);
 
@@ -76,12 +78,13 @@ export function createMeetsRouter(context: AppContext) {
    * @summary Get meet results by meet code
    * @description Returns detailed meet information including all lifter results with attempt data
    * @security BearerAuth
-   * @security ApiKeyAuth
    * @param {string} meet.path.required - Meet code (e.g., usapl/CA-2024-01, rps/2548, uspa/1969)
-   * @param {boolean} cache.query - Use cached data (default true)
+   * @param {string} sort.query - Sort order for results - enum:by-dots,by-wilks,by-wilks2020,by-glossbrenner,by-goodlift,by-ipf-points,by-mcculloch,by-total,by-ah,by-nasa,by-reshel,by-schwartz-malone,by-division
+   * @param {string} units.query - Unit system for weight values (lbs or kg, default: lbs) - enum:lbs,kg
    * @return {MeetResponse} 200 - Meet data with results
    * @return {ErrorResponse} 401 - Unauthorized
    * @return {ErrorResponse} 404 - Meet not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
    * @example response - 200 - Success response
    * {
    *   "status": "success",
@@ -89,9 +92,33 @@ export function createMeetsRouter(context: AppContext) {
    *   "message": "The resource was returned successfully!",
    *   "data": {"title": "2024 USPA Nationals", "results": []}
    * }
+   * @example response - 401 - Unauthorized
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/uspa/1969",
+   *   "message": "Authorization header required!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 404 - Meet not found
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/invalid/code",
+   *   "message": "The resource cannot be found!",
+   *   "errors": [],
+   *   "data": []
+   * }
+   * @example response - 429 - Rate limit exceeded
+   * {
+   *   "status": "fail",
+   *   "request_url": "/api/meets/uspa/1969",
+   *   "message": "Too many requests, please try again later?",
+   *   "errors": [],
+   *   "data": []
+   * }
    */
   router.get(
-    "/*meet",
+    "/api/meets/*meet",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -100,8 +127,8 @@ export function createMeetsRouter(context: AppContext) {
       params: getMeetParamValidation,
       query: getMeetQueryValidation,
     }),
-    async (req: Request<GetMeetParamType, {}, GetMeetQueryType>, res: Response) => {
-      const result = await meetService.getMeet(req.params);
+    async (req: Request<GetMeetParamType, {}, {}, GetMeetQueryType>, res: Response) => {
+      const result = await meetService.getMeet(req.params, req.query.sort, req.query.units);
 
       if (!result.data) throw new NotFoundError("The resource cannot be found!");
 

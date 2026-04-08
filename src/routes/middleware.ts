@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { ConnectSessionKnexStore } from "connect-session-knex";
 import { csrfSync } from "csrf-sync";
 import { NextFunction, Request, Response } from "express";
@@ -13,6 +14,7 @@ import type { MailType } from "../mail";
 import type { AuthServiceType } from "./auth/auth.service";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
+import type { ApiCallLogRepositoryType } from "../db/api-call-log";
 import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
 
 // View pages (static content): 24 hours - content rarely changes
@@ -29,6 +31,7 @@ type RequestValidators = {
 };
 
 export interface MiddlewareType {
+  requestLoggerMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   rateLimitMiddleware: ReturnType<typeof rateLimit>;
   authRateLimitMiddleware: ReturnType<typeof rateLimit>;
   notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
@@ -71,7 +74,37 @@ export function createMiddleware(
   logger: LoggerType,
   knex: Knex,
   authService: AuthServiceType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
 ): MiddlewareType {
+  const SLOW_REQUEST_MS = 1000;
+
+  function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction): void {
+    const requestId = crypto.randomUUID().slice(0, 8);
+    const start = Date.now();
+
+    res.set("X-Request-Id", requestId);
+
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      const hasQuery = req.query && Object.keys(req.query).length > 0;
+
+      logger.info("request", {
+        id: requestId,
+        method: req.method,
+        path: req.path,
+        query: hasQuery ? JSON.stringify(req.query) : undefined,
+        status: res.statusCode,
+        duration: `${duration}ms`,
+        userId: req.user?.id ?? "anon",
+        ip: req.ip ?? req.socket.remoteAddress,
+        slow: duration >= SLOW_REQUEST_MS ? "true" : undefined,
+        ua: req.get("user-agent")?.slice(0, 50),
+      });
+    });
+
+    next();
+  }
+
   const rateLimitMiddleware = rateLimit({
     windowMs: 60 * 60 * 1000, // 60 minutes
     max: 50, // Limit each IP to 50 requests per `window`
@@ -85,12 +118,16 @@ export function createMiddleware(
           status: "fail",
           request_url: req.originalUrl,
           message: "Too many requests, please try again later?",
+          errors: [],
           data: [],
         });
       }
       return res.render("general/rate-limit.html", { title: "Rate Limited" });
     },
-    skip: () => configuration.app.env !== "production",
+    skip: (req) =>
+      configuration.app.env !== "production" ||
+      req.path === "/healthz" ||
+      req.path === "/health-check",
   });
 
   const authRateLimitMiddleware = rateLimit({
@@ -106,6 +143,7 @@ export function createMiddleware(
           status: "fail",
           request_url: req.originalUrl,
           message: "Too many authentication attempts, please try again later.",
+          errors: [],
           data: [],
         });
       }
@@ -130,6 +168,7 @@ export function createMiddleware(
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
+      errors: [],
       data: [],
     });
   }
@@ -172,7 +211,7 @@ export function createMiddleware(
       status: "fail",
       request_url: req.originalUrl,
       message,
-      errors: err instanceof ZodError ? err.issues : undefined,
+      errors: err instanceof ZodError ? err.issues : [],
       data: [],
     });
   }
@@ -181,13 +220,15 @@ export function createMiddleware(
     return async (req: Request, res: Response, next: NextFunction) => {
       try {
         if (validators.params) {
-          req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
+          const parsed = await validators.params.parseAsync(req.params);
+          req.params = parsed as typeof req.params;
         }
         if (validators.body) {
           req.body = await validators.body.parseAsync(req.body);
         }
         if (validators.query) {
-          await validators.query.parseAsync(req.query);
+          const parsed = await validators.query.parseAsync(req.query);
+          Object.assign(req.query, parsed);
         }
         next();
       } catch (error) {
@@ -201,16 +242,18 @@ export function createMiddleware(
   }
 
   function apiValidationMiddleware(validators: RequestValidators) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, _res: Response, next: NextFunction) => {
       try {
         if (validators.params) {
-          req.params = (await validators.params.parseAsync(req.params)) as typeof req.params;
+          const parsed = await validators.params.parseAsync(req.params);
+          req.params = parsed as typeof req.params;
         }
         if (validators.body) {
           req.body = await validators.body.parseAsync(req.body);
         }
         if (validators.query) {
-          await validators.query.parseAsync(req.query);
+          const parsed = await validators.query.parseAsync(req.query);
+          Object.assign(req.query, parsed);
         }
         next();
       } catch (error) {
@@ -219,20 +262,24 @@ export function createMiddleware(
     };
   }
 
-  async function apiAuthenticationMiddleware(req: Request, res: Response, next: NextFunction) {
+  async function apiAuthenticationMiddleware(req: Request, _res: Response, next: NextFunction) {
     try {
       let token: string = "";
 
       if (!req.headers.authorization) {
         throw new UnauthorizedError("Authorization header required!");
       }
-      if (req.headers.authorization.split(" ").length != 2) {
+      if (req.headers.authorization.split(" ").length !== 2) {
         throw new UnauthorizedError("Must use bearer token authentication!");
       }
       if (!req.headers.authorization.startsWith("Bearer")) {
         throw new UnauthorizedError("Must use bearer token authentication!");
       }
-      token = req.headers.authorization.split(" ")[1] as string;
+      const tokenValue = req.headers.authorization.split(" ")[1];
+      if (!tokenValue) {
+        throw new UnauthorizedError("Must use bearer token authentication!");
+      }
+      token = tokenValue;
 
       const validatedUser = await authService.validateKey(token);
       if (!validatedUser) {
@@ -247,16 +294,75 @@ export function createMiddleware(
   }
 
   async function trackAPICallsMiddleware(req: Request, res: Response, next: NextFunction) {
+    const startTime = Date.now();
+
     try {
-      const id = req.user?.id as unknown as number;
-      if (id) {
+      const id = req.user?.id;
+      if (id != null) {
+        // Register API call log listener FIRST so ALL requests get logged
+        // (including over-limit rejections)
+        res.on("finish", () => {
+          apiCallLogRepository
+            .create({
+              user_id: id,
+              method: req.method,
+              endpoint: req.originalUrl,
+              status_code: res.statusCode,
+              response_time_ms: Date.now() - startTime,
+              ip_address:
+                (typeof req.headers["cf-connecting-ip"] === "string"
+                  ? req.headers["cf-connecting-ip"]
+                  : undefined) ??
+                req.ip ??
+                null,
+              user_agent: req.headers["user-agent"]?.substring(0, 512) || null,
+            })
+            .catch((err) => {
+              logger.error(err);
+            });
+        });
+
+        // Check if non-admin is already at/over limit BEFORE incrementing
+        const currentUser = await userRepository.findById(id);
+
+        if (!currentUser) {
+          return next();
+        }
+
+        if (!currentUser.admin && currentUser.api_call_count >= currentUser.api_call_limit) {
+          // Don't increment — just set headers and reject
+          const now = new Date();
+          const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          res.set("X-RateLimit-Limit", String(currentUser.api_call_limit));
+          res.set("X-RateLimit-Remaining", "0");
+          res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
+
+          throw new APICallsExceededError("API Calls exceeded!");
+        }
+
+        // Safe to increment — user is under the limit (or is admin)
         const user = await userRepository.incrementApiCallCount(id);
 
         if (!user) {
           return next();
         }
 
+        const remaining = Math.max(0, user.api_call_limit - user.api_call_count);
+        const now = new Date();
+        const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        res.set("X-RateLimit-Limit", String(user.api_call_limit));
+        res.set("X-RateLimit-Remaining", String(remaining));
+        res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
+
+        // After increment, check if non-admin just hit the limit
         if (user.api_call_count >= user.api_call_limit && !user.admin) {
+          if (user.api_call_count === user.api_call_limit) {
+            await mail.sendReachingApiLimitEmail({
+              email: user.email,
+              name: user.name,
+              percent: 100,
+            });
+          }
           throw new APICallsExceededError("API Calls exceeded!");
         }
 
@@ -274,7 +380,7 @@ export function createMiddleware(
     }
   }
 
-  async function hostNameMiddleware(req: Request, res: Response, next: NextFunction) {
+  async function hostNameMiddleware(req: Request, _res: Response, next: NextFunction) {
     if (!req.app.locals.hostname) {
       const hostname = await cache.get("hostname");
 
@@ -320,8 +426,9 @@ export function createMiddleware(
       if (req.body && req.body._csrf) {
         return req.body._csrf;
       }
-      if (req.headers["x-csrf-token"]) {
-        return req.headers["x-csrf-token"] as string;
+      const csrfHeader = req.headers["x-csrf-token"];
+      if (typeof csrfHeader === "string") {
+        return csrfHeader;
       }
       return undefined;
     },
@@ -352,7 +459,9 @@ export function createMiddleware(
 
     csrfSynchronisedProtection(req, res, (err: unknown) => {
       if (err) {
-        logger.error(err as Error);
+        if (err instanceof Error) {
+          logger.error(err);
+        }
         req.flash("error", "Invalid form submission. Please refresh the page and try again.");
         return res.redirect("back");
       }
@@ -437,6 +546,7 @@ export function createMiddleware(
       // Note: Do NOT call req.flash() here - it consumes the messages!
       // Flash messages are passed explicitly by routes via messages: req.flash()
       res.locals.state = {
+        domain: configuration.app.domain,
         user,
         currentYear,
         env: configuration.app.env,
@@ -490,12 +600,15 @@ export function createMiddleware(
         return res.redirect(redirectUrl);
       }
 
-      const ip = (req.headers["cf-connecting-ip"] as string) || req.ip;
+      const cfIp = req.headers["cf-connecting-ip"];
+      const ip = (typeof cfIp === "string" ? cfIp : undefined) ?? req.ip;
       await helpers.verifyTurnstileToken(token, ip);
 
       next();
     } catch (error) {
-      logger.error(error as Error);
+      if (error instanceof Error) {
+        logger.error(error);
+      }
       const redirectUrl = req.get("referer") || "/login";
       req.flash("error", "Turnstile verification failed. Please try again.");
       return res.redirect(redirectUrl);
@@ -503,6 +616,7 @@ export function createMiddleware(
   }
 
   return {
+    requestLoggerMiddleware,
     rateLimitMiddleware,
     authRateLimitMiddleware,
     notFoundMiddleware,

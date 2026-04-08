@@ -1,4 +1,4 @@
-FROM node:24-slim AS build
+FROM node:25-slim@sha256:435f3537a088a01fd208bb629a4b69c28d85deb9a60af8a710cafc3befd6e3be AS build
 
 WORKDIR /usr/src/app
 
@@ -26,29 +26,24 @@ RUN npm run build:prod && \
     rm -rf vitest.config.* && \
     rm -rf src/routes/**/fixtures
 
-FROM node:24-slim
+FROM node:25-slim@sha256:435f3537a088a01fd208bb629a4b69c28d85deb9a60af8a710cafc3befd6e3be
 
-# Combine RUN commands
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    groupadd -g 1001 nodejs && \
-    useradd -r -u 1001 -g nodejs nodejs
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
-# Copy only production dependencies and built files
-COPY --chown=nodejs:nodejs package*.json ./
+COPY --chown=node:node package*.json ./
 RUN npm ci --only=production --no-audit --no-fund && \
     npm cache clean --force
 
-# Copy built application
-COPY --chown=nodejs:nodejs --from=build /usr/src/app/dist ./dist
-COPY --chown=nodejs:nodejs --from=build /usr/src/app/public ./public
-COPY --chown=nodejs:nodejs --from=build /usr/src/app/src/routes ./src/routes
+COPY --chown=node:node --from=build /usr/src/app/dist ./dist
+COPY --chown=node:node --from=build /usr/src/app/public ./public
+COPY --chown=node:node --from=build /usr/src/app/src/routes ./src/routes
 
-USER nodejs
+USER node
 
 EXPOSE 80
 

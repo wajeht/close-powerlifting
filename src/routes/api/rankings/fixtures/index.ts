@@ -18,3 +18,7 @@ export const rankingsRawWomen75 = JSON.parse(
 export const rankingsFullFilter = JSON.parse(
   readFileSync(join(fixturesDir, "rankings-full-filter.json"), "utf-8"),
 );
+
+export const rankingsDefaultKg = JSON.parse(
+  readFileSync(join(fixturesDir, "rankings-default-kg.json"), "utf-8"),
+);

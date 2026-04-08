@@ -1,9 +1,9 @@
 ---
 name: Question
 about: Ask a question about the API or get help
-title: '[Question]: '
-labels: 'question'
-assignees: 'wajeht'
+title: "[Question]: "
+labels: "question"
+assignees: "wajeht"
 ---
 
 **Your question**

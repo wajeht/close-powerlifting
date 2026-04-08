@@ -8,6 +8,8 @@ import {
   updateApiLimitValidation,
   usersQueryValidation,
   cacheKeyValidation,
+  cacheQueryValidation,
+  userHistoryQueryValidation,
 } from "./admin.validation";
 
 export function createAdminRouter(context: AppContext) {
@@ -19,6 +21,7 @@ export function createAdminRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const adminService = createAdminService(
@@ -26,20 +29,22 @@ export function createAdminRouter(context: AppContext) {
     context.cache,
     context.authService,
     context.logger,
+    context.apiCallLogRepository,
+    context.helpers,
   );
 
   const router = express.Router();
 
   router.get(
-    "/",
+    "/admin",
     middleware.sessionAdminAuthenticationMiddleware,
-    (req: Request, res: Response) => {
+    (_req: Request, res: Response) => {
       return res.redirect("/dashboard");
     },
   );
 
   router.get(
-    "/users",
+    "/admin/users",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.validationMiddleware({ query: usersQueryValidation }),
     async (req: Request, res: Response) => {
@@ -64,7 +69,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/users/:id/api-limit",
+    "/admin/users/:id/api-limit",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({
@@ -89,19 +94,78 @@ export function createAdminRouter(context: AppContext) {
     },
   );
 
-  router.get(
-    "/cache",
+  router.post(
+    "/admin/users/:id/resend-verification",
     middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    middleware.validationMiddleware({ params: userIdParamValidation }),
     async (req: Request, res: Response) => {
-      const search = (req.query.search as string) || "";
-      const pattern = search ? `%${search}%` : "%";
-      const entries = await adminService.getCacheEntries(pattern);
+      const id = req.params.id as unknown as number;
+      const hostname = context.helpers.getHostName(req);
+
+      const success = await adminService.resendVerificationEmail(id, hostname);
+
+      if (!success) {
+        req.flash("error", "Could not resend verification email");
+      } else {
+        req.flash("success", "Verification email sent");
+      }
+      return res.redirect("/admin/users");
+    },
+  );
+
+  router.get(
+    "/admin/users/:id",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.validationMiddleware({
+      params: userIdParamValidation,
+      query: userHistoryQueryValidation,
+    }),
+    async (req: Request, res: Response) => {
+      const id = req.params.id as unknown as number;
+      const page = req.query.page as number | undefined;
+      const search = req.query.search as string | undefined;
+
+      const user = await adminService.getUserById(id);
+      if (!user) {
+        req.flash("error", "User not found");
+        return res.redirect("/admin/users");
+      }
+
+      const { calls, pagination } = await adminService.getUserApiCallHistory(id, { page, search });
+
+      return res.render("admin/user-details.html", {
+        title: `User: ${user.name}`,
+        path: "/admin/users",
+        viewedUser: user,
+        calls,
+        pagination,
+        search: search || "",
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
+
+  router.get(
+    "/admin/cache",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.validationMiddleware({ query: cacheQueryValidation }),
+    async (req: Request, res: Response) => {
+      const page = req.query.page as number | undefined;
+      const search = req.query.search as string | undefined;
+
+      const { entries, pagination } = await adminService.getCacheEntries({
+        page,
+        search,
+      });
 
       return res.render("admin/cache-view.html", {
         title: "Cache Management",
         path: "/admin/cache",
         entries,
-        search,
+        pagination,
+        search: search || "",
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
       });
@@ -109,7 +173,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/cache/clear",
+    "/admin/cache/clear",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     async (req: Request, res: Response) => {
@@ -121,7 +185,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   router.post(
-    "/cache/delete",
+    "/admin/cache/delete",
     middleware.sessionAdminAuthenticationMiddleware,
     middleware.csrfValidationMiddleware,
     middleware.validationMiddleware({ body: cacheKeyValidation }),

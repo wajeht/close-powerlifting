@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createMeetService } from "./meets.service";
@@ -23,7 +23,7 @@ const usaplMeet = meetService.parseMeetHtml(usaplDoc);
 const wrpfMeet = meetService.parseMeetHtml(wrpfDoc);
 const uspaMeet = meetService.parseMeetHtml(uspaDoc);
 
-describe.concurrent("meets service", () => {
+describe("meets service", () => {
   describe("parseMeetHtml", () => {
     it("parses RPS meet HTML correctly", () => {
       expect(rpsMeet).toBeDefined();
@@ -134,6 +134,85 @@ describe.concurrent("meets service", () => {
         const hasTotal = keys.some((k) => k.includes("total"));
         expect(hasSquat || hasBench || hasDeadlift || hasTotal).toBe(true);
       }
+    });
+  });
+
+  describe("getMeet with sort parameter", () => {
+    it("appends sort suffix to fetch path", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
+        data: await fn(),
+      }));
+
+      await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-wilks", undefined);
+      fetchSpy.mockRestore();
+    });
+
+    it("includes sort in cache key", async () => {
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
+
+      await meetService.getMeet({ meet: "uspa/1969" }, "by-total");
+
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-by-total", expect.any(Function));
+      cacheSpy.mockRestore();
+    });
+
+    it("uses default path when sort is not provided", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
+        data: await fn(),
+      }));
+
+      await meetService.getMeet({ meet: "uspa/1969" });
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", undefined);
+      fetchSpy.mockRestore();
+    });
+  });
+
+  describe("getMeet with units parameter", () => {
+    it("passes units to fetchHtml", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
+        data: await fn(),
+      }));
+
+      await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", "kg");
+      fetchSpy.mockRestore();
+    });
+
+    it("includes units in cache key", async () => {
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
+
+      await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
+
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-kg", expect.any(Function));
+      cacheSpy.mockRestore();
+    });
+
+    it("includes both sort and units in cache key", async () => {
+      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
+
+      await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks", "kg");
+
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-by-wilks-kg", expect.any(Function));
+      cacheSpy.mockRestore();
+    });
+
+    it("passes both sort and units to fetchHtml", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
+        data: await fn(),
+      }));
+
+      await meetService.getMeet({ meet: "uspa/1969" }, "by-total", "kg");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-total", "kg");
+      fetchSpy.mockRestore();
     });
   });
 });

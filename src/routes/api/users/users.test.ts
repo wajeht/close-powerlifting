@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import {
   createAuthenticatedApiAgent,
@@ -131,6 +131,153 @@ describe("GET /api/users/:username", () => {
     );
 
     expect(response.status).toBe(404);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should accept include_attempts=false query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=false",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    const user = response.body.data[0];
+    expect(user).toHaveProperty("competition_results");
+    const keys = Object.keys(user.competition_results[0]);
+    const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+    expect(hasNumberedColumns).toBe(false);
+  });
+
+  it("should accept include_attempts=true and return attempt data", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=true",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    const user = response.body.data[0];
+    expect(user).toHaveProperty("competition_results");
+    const keys = Object.keys(user.competition_results[0]);
+    const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+    expect(hasNumberedColumns).toBe(true);
+  });
+
+  it("should return 400 for invalid include_attempts value", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=yes",
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/users/:username default include_attempts behavior", () => {
+  it("should strip attempt columns by default (no include_attempts param)", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
+
+    expect(response.status).toBe(200);
+    const user = response.body.data[0];
+    expect(user).toHaveProperty("competition_results");
+    const keys = Object.keys(user.competition_results[0]);
+    const hasNumberedColumns = keys.some((k: string) => /^(squat|bench|deadlift)\d+$/.test(k));
+    expect(hasNumberedColumns).toBe(false);
+  });
+
+  it("should return fewer keys without attempts than with attempts", async () => {
+    const withoutResponse = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=false",
+    );
+    const withResponse = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=true",
+    );
+
+    const keysWithout = Object.keys(withoutResponse.body.data[0].competition_results[0]);
+    const keysWith = Object.keys(withResponse.body.data[0].competition_results[0]);
+    expect(keysWith.length).toBeGreaterThan(keysWithout.length);
+  });
+
+  it("should accept units=kg on user profile", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=kg");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return different personal best values with units=kg vs default", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=kg");
+
+    const defaultPb = defaultResponse.body.data[0].personal_best[0];
+    const kgPb = kgResponse.body.data[0].personal_best[0];
+
+    expect(defaultPb.equip).toBe("Raw");
+    expect(kgPb.equip).toBe("Raw");
+    expect(Number(defaultPb.squat)).toBeGreaterThan(Number(kgPb.squat));
+    expect(Number(defaultPb.total)).toBeGreaterThan(Number(kgPb.total));
+  });
+
+  it("should return different competition result values with units=kg vs default", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=kg");
+
+    const defaultComp = defaultResponse.body.data[0].competition_results[0];
+    const kgComp = kgResponse.body.data[0].competition_results[0];
+
+    expect(Number(defaultComp.total)).toBeGreaterThan(Number(kgComp.total));
+  });
+
+  it("should return 400 for invalid units on user profile", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack?units=invalid");
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should accept units + include_attempts together on user profile", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?units=kg&include_attempts=true",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    const user = response.body.data[0];
+    expect(user).toHaveProperty("competition_results");
+  });
+
+  it("should have squat, bench, deadlift best values when attempts are excluded", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack?include_attempts=false",
+    );
+
+    const result = response.body.data[0].competition_results[0];
+    expect(result).toHaveProperty("squat");
+    expect(result).toHaveProperty("bench");
+    expect(result).toHaveProperty("deadlift");
+  });
+});
+
+describe("GET /api/users with units query parameter", () => {
+  it("should accept units=kg on user search", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users?search=haack&units=kg");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept units=lbs on user search", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users?search=haack&units=lbs");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 for invalid units on user search", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users?search=haack&units=invalid",
+    );
+
+    expect(response.status).toBe(400);
     expect(response.body.status).toBe("fail");
   });
 });

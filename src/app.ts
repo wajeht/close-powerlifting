@@ -32,15 +32,33 @@ export async function createApp(
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const app = express();
+
+  if (configuration.app.env === "development") {
+    try {
+      const { expressTemplatesReload } = await import("@wajeht/express-templates-reload");
+      expressTemplatesReload({
+        app,
+        watch: [
+          { path: "./public", extensions: [".css", ".js"] },
+          { path: "./src/routes", extensions: [".html"] },
+        ],
+        options: { quiet: false },
+      });
+    } catch {
+      context.logger.warn("Express templates reload not available in production");
+    }
+  }
 
   app
     .disable("x-powered-by")
     .set("trust proxy", 1)
     .set("etag", "strong")
     .use(middleware.hostNameMiddleware)
+    .use(middleware.requestLoggerMiddleware)
     .use(cookieParser())
     .use(flash())
     .use(middleware.sessionMiddleware())
@@ -64,10 +82,17 @@ export async function createApp(
               "https://static.cloudflareinsights.com",
               "https://challenges.cloudflare.com",
             ],
+            scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://cloudflareinsights.com"],
+            connectSrc: [
+              "'self'",
+              "https://cloudflareinsights.com",
+              "https://challenges.cloudflare.com",
+            ],
             frameSrc: ["https://challenges.cloudflare.com"],
+            childSrc: ["https://challenges.cloudflare.com", "blob:"],
+            workerSrc: ["'self'", "blob:"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             frameAncestors: ["'self'"],
@@ -114,14 +139,15 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
 
       const mailAvailable = await context.mail.verifyConnection();
       if (mailAvailable) {
-        context.logger.info("Mail service connected (mailpit)");
+        context.logger.info("Mail service connected");
       } else {
         context.logger.info("Mail service unavailable - emails will not be sent");
       }
 
       await context.adminUser.initializeAdminUser();
     } catch (error) {
-      context.logger.error((error as any).message);
+      const message = error instanceof Error ? error.message : "Unknown error during startup";
+      context.logger.error(message);
     }
   });
 

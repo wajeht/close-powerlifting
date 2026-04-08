@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
@@ -228,6 +228,37 @@ describe.concurrent("rankings service", () => {
     it("row count matches requested page size", () => {
       // Fixture should have exactly 100 rows (default per_page)
       expect(rankingsDefault.rows.length).toBeLessThanOrEqual(defaultPerPage);
+    });
+  });
+
+  describe("buildPaginationQuery with units", () => {
+    it("defaults to lbs units", () => {
+      const query = scraper.buildPaginationQuery(1, 100);
+      expect(query).toContain("units=lbs");
+    });
+
+    it("uses kg units when specified", () => {
+      const query = scraper.buildPaginationQuery(1, 100, "kg");
+      expect(query).toContain("units=kg");
+    });
+
+    it("uses lbs units when explicitly specified", () => {
+      const query = scraper.buildPaginationQuery(1, 100, "lbs");
+      expect(query).toContain("units=lbs");
+    });
+
+    it("includes start, end, and lang parameters", () => {
+      const query = scraper.buildPaginationQuery(1, 50, "kg");
+      expect(query).toContain("start=0");
+      expect(query).toContain("end=50");
+      expect(query).toContain("lang=en");
+      expect(query).toContain("units=kg");
+    });
+
+    it("calculates correct start for page 2", () => {
+      const query = scraper.buildPaginationQuery(2, 100, "kg");
+      expect(query).toContain("start=100");
+      expect(query).toContain("end=200");
     });
   });
 });

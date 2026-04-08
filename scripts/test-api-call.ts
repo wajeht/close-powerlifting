@@ -3,7 +3,7 @@ import { createLogger } from "../src/utils/logger";
 const logger = createLogger();
 
 const API_KEY = process.env.API_KEY || process.argv[2] || "";
-const BASE_URL = "https://close-powerlifting.jaw.dev";
+const BASE_URL = "https://closepowerlifting.com";
 
 const ROUTES = [
   // Health Check (no auth required)

@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
-import { createUserService } from "./users.service";
+import { createUserService, transformCompetitionResults } from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
 
 const context = createContext();
@@ -106,6 +106,208 @@ describe.concurrent("users service", () => {
         const hasDate = keys.some((k) => k.includes("date"));
         expect(hasPlace || hasFed || hasDate).toBe(true);
       }
+    });
+
+    it("competition results have squat, bench, deadlift, total, and dots fields", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(first).toHaveProperty("squat");
+      expect(first).toHaveProperty("bench");
+      expect(first).toHaveProperty("deadlift");
+      expect(first).toHaveProperty("total");
+      expect(first).toHaveProperty("dots");
+    });
+
+    it("competition results do not contain numbered attempt columns", () => {
+      const first = johnProfile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+
+    it("extracts numeric squat from John Haack first competition", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(Number(first.squat)).toBeGreaterThan(0);
+    });
+
+    it("extracts numeric bench from John Haack first competition", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(Number(first.bench)).toBeGreaterThan(0);
+    });
+
+    it("extracts numeric deadlift from John Haack first competition", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(Number(first.deadlift)).toBeGreaterThan(0);
+    });
+
+    it("preserves total and dots values", () => {
+      const first = johnProfile.competition_results[0]!;
+      expect(Number(first.total)).toBeGreaterThan(0);
+      expect(Number(first.dots)).toBeGreaterThan(0);
+    });
+  });
+
+  describe("parseUserProfileHtml with includeAttempts", () => {
+    it("returns raw attempt columns when includeAttempts is true", () => {
+      const profile = userService.parseUserProfileHtml(johnDoc, "johnhaack", true);
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(true);
+    });
+
+    it("strips attempt columns when includeAttempts is false", () => {
+      const profile = userService.parseUserProfileHtml(johnDoc, "johnhaack", false);
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+
+    it("strips attempt columns by default (no includeAttempts param)", () => {
+      const profile = userService.parseUserProfileHtml(johnDoc, "johnhaack");
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+
+    it("preserves best lift values when includeAttempts is true", () => {
+      const profile = userService.parseUserProfileHtml(johnDoc, "johnhaack", true);
+      const first = profile.competition_results[0]!;
+      expect(first).toHaveProperty("total");
+      expect(first).toHaveProperty("dots");
+    });
+
+    it("still returns same non-attempt fields regardless of includeAttempts", () => {
+      const withAttempts = userService.parseUserProfileHtml(johnDoc, "johnhaack", true);
+      const withoutAttempts = userService.parseUserProfileHtml(johnDoc, "johnhaack", false);
+
+      expect(withAttempts.name).toBe(withoutAttempts.name);
+      expect(withAttempts.username).toBe(withoutAttempts.username);
+      expect(withAttempts.sex).toBe(withoutAttempts.sex);
+      expect(withAttempts.instagram).toBe(withoutAttempts.instagram);
+      expect(withAttempts.personal_best).toEqual(withoutAttempts.personal_best);
+    });
+  });
+
+  describe("parseUserProfileHtml with Kristy Hawkins and includeAttempts", () => {
+    it("Kristy Hawkins with includeAttempts=true has attempt columns", () => {
+      const profile = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins", true);
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(true);
+    });
+
+    it("Kristy Hawkins with includeAttempts=false strips attempt columns", () => {
+      const profile = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins", false);
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+
+    it("Kristy Hawkins with includeAttempts=true has more keys than without", () => {
+      const withAttempts = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins", true);
+      const withoutAttempts = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins", false);
+
+      const keysWithAttempts = Object.keys(withAttempts.competition_results[0]!);
+      const keysWithoutAttempts = Object.keys(withoutAttempts.competition_results[0]!);
+      expect(keysWithAttempts.length).toBeGreaterThan(keysWithoutAttempts.length);
+    });
+
+    it("Kristy Hawkins default (no includeAttempts) strips attempt columns", () => {
+      const profile = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins");
+      const first = profile.competition_results[0]!;
+      const keys = Object.keys(first);
+      const hasNumberedColumns = keys.some((k) => /^(squat|bench|deadlift)\d+$/.test(k));
+      expect(hasNumberedColumns).toBe(false);
+    });
+  });
+
+  describe("transformCompetitionResults edge cases", () => {
+    it("picks best successful attempt ignoring failed ones (negative values)", () => {
+      const rows = [
+        {
+          place: "1",
+          squat1: "200",
+          squat2: "-210",
+          squat3: "215",
+          squat4: "",
+          bench1: "-100",
+          bench2: "-100",
+          bench3: "100",
+          bench4: "",
+          deadlift1: "250",
+          deadlift2: "260",
+          deadlift3: "-270",
+          deadlift4: "",
+          total: "575",
+          dots: "400",
+        },
+      ];
+
+      const result = transformCompetitionResults(rows);
+      expect(result[0].squat).toBe("215");
+      expect(result[0].bench).toBe("100");
+      expect(result[0].deadlift).toBe("260");
+    });
+
+    it("returns empty string when all attempts are empty", () => {
+      const rows = [
+        {
+          place: "1",
+          squat1: "",
+          squat2: "",
+          squat3: "",
+          squat4: "",
+          bench1: "100",
+          bench2: "",
+          bench3: "",
+          bench4: "",
+          deadlift1: "",
+          deadlift2: "",
+          deadlift3: "",
+          deadlift4: "",
+          total: "100",
+          dots: "50",
+        },
+      ];
+
+      const result = transformCompetitionResults(rows);
+      expect(result[0].squat).toBe("");
+      expect(result[0].bench).toBe("100");
+      expect(result[0].deadlift).toBe("");
+    });
+
+    it("preserves non-attempt columns unchanged", () => {
+      const rows = [
+        {
+          place: "1",
+          fed: "USPA",
+          date: "2024-01-01",
+          squat1: "200",
+          squat2: "",
+          squat3: "",
+          squat4: "",
+          bench1: "100",
+          bench2: "",
+          bench3: "",
+          bench4: "",
+          deadlift1: "250",
+          deadlift2: "",
+          deadlift3: "",
+          deadlift4: "",
+          total: "550",
+          dots: "400",
+        },
+      ];
+
+      const result = transformCompetitionResults(rows);
+      expect(result[0].place).toBe("1");
+      expect(result[0].fed).toBe("USPA");
+      expect(result[0].date).toBe("2024-01-01");
+      expect(result[0].total).toBe("550");
     });
   });
 

@@ -31,9 +31,9 @@ export const configuration = {
     version: packageJson.version,
     domain: process.env.APP_DOMAIN || "localhost",
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
-    passwordSalt: process.env.APP_PASSWORD_SALT || "10",
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    defaultApiCallLimit: 500,
+    defaultApiCallLimit: 750,
+    apiCallLogRetentionDays: parseInt(process.env.API_CALL_LOG_RETENTION_DAYS || "90", 10),
   } as const,
 
   pagination: {
@@ -53,7 +53,7 @@ export const configuration = {
     secure: process.env.EMAIL_SECURE === "true",
     user: process.env.EMAIL_USER || "",
     password: process.env.EMAIL_PASSWORD || "",
-    from: process.env.EMAIL_FROM || "noreply@close-powerlifting.local",
+    from: process.env.EMAIL_FROM || "noreply@jaw.dev",
   } as const,
 
   oauth: {

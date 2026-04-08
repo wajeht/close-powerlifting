@@ -10,21 +10,23 @@ jobs:
   update-fixtures:
     name: Update OpenPowerlifting fixtures
     runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.verify-changed-files.outputs.changed }}
 
     permissions:
       contents: write
+      pull-requests: write
 
     strategy:
       matrix:
-        node-version: [24.x]
+        node-version: [25.x]
+
+    env:
+      OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
@@ -38,86 +40,30 @@ jobs:
       - name: Format updated fixtures
         run: npm run format
 
-      - name: Check for changes
-        id: verify-changed-files
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-            echo "Files have been modified:"
-            git diff --name-only
-            echo "Diff summary:"
-            git diff --stat
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "No files were modified."
-          fi
-
-      - name: Commit updated fixtures
-        if: steps.verify-changed-files.outputs.changed == 'true'
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          commit_message: "chore: update OpenPowerlifting fixtures"
-          file_pattern: "src/routes/api/**/fixtures/*"
+          token: ${{ secrets.GH_TOKEN }}
+          commit-message: "chore: update OpenPowerlifting fixtures"
+          title: "chore: update OpenPowerlifting fixtures"
+          body: |
+            Automated update of test fixtures from OpenPowerlifting.
+
+            This PR was automatically created by the Update Fixtures workflow.
+          branch: chore/update-fixtures
+          delete-branch: true
+          add-paths: |
+            src/routes/api/**/fixtures/*
+
+      - name: Approve Pull Request
+        if: steps.cpr.outputs.pull-request-number
+        run: gh pr review --approve "${{ steps.cpr.outputs.pull-request-number }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
-  test:
-    needs: [update-fixtures]
-    name: Run tests with updated fixtures
-    runs-on: ubuntu-latest
-    if: needs.update-fixtures.outputs.changed == 'true'
-
-    strategy:
-      matrix:
-        node-version: [24.x]
-
-    env:
-      PORT: 80
-      ENV: "testing"
-      DOMAIN: "localhost"
-      FRONTEND_ORIGIN: "http://localhost:8080"
-      PASSWORD_SALT: 5
-      JWT_SECRET: "yeahhhhhhhhhhh"
-      ADMIN_EMAIL: "test@gmail.com"
-      ADMIN_NAME: "test"
-      COOKIE_EXPIRATION: 60000
-      COOKIE_PASSWORD: "cookie password"
-      COOKIE_NAME: "what is this cookie name"
-      SESSION_SECRET: "something someting"
-      SESSION_NAME: "something cool"
-      GOOGLE_CLIENT_ID: ""
-      GOOGLE_CLIENT_SECRET: ""
-      GOOGLE_OAUTH_REDIRECT_URL: "http://localhost:8080/oauth/google/redirect"
-      OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
-      APP_API_KEY: ""
-      EMAIL_HOST: "localhost"
-      EMAIL_PORT: 1025
-      EMAIL_AUTH_EMAIL: ""
-      EMAIL_AUTH_PASS: ""
-
-    services:
-      mailhog:
-        image: mailhog/mailhog:latest
-        ports:
-          - 1025:1025
-          - 8025:8025
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Pull latest changes
-        run: git pull origin ${{ github.ref_name }}
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test:ci
+      - name: Enable auto-merge
+        if: steps.cpr.outputs.pull-request-number
+        run: gh pr merge --auto --squash "${{ steps.cpr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

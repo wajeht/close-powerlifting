@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-import { email, z } from "zod";
+import { z } from "zod";
 
 import type { AppContext } from "../../context";
 import { UnauthorizedError } from "../../error";
@@ -12,13 +12,7 @@ const loginValidation = z.object({
   email: z.email({ message: "must be a valid email address!" }),
 });
 
-const updateNameValidation = z.object({
-  name: z.string({ message: "name is required!" }).min(1, "name is required"),
-  email: z.string().email().optional(),
-});
-
 type LoginType = z.infer<typeof loginValidation>;
-type UpdateNameType = z.infer<typeof updateNameValidation>;
 
 export function createAuthRouter(context: AppContext) {
   const middleware = createMiddleware(
@@ -29,6 +23,7 @@ export function createAuthRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
+    context.apiCallLogRepository,
   );
 
   const router = express.Router();
@@ -74,7 +69,7 @@ export function createAuthRouter(context: AppContext) {
 
         context.logger.info(`user_id: ${user.id} has registered an account!`);
 
-        context.authService.sendVerificationEmail({
+        void context.authService.sendVerificationEmail({
           name,
           email,
           verification_token: token,
@@ -96,7 +91,7 @@ export function createAuthRouter(context: AppContext) {
           magic_link_expires_at: verificationExpiresAt,
         });
 
-        context.authService.sendVerificationEmail({
+        void context.authService.sendVerificationEmail({
           name: user.name,
           email: user.email,
           verification_token: newToken,
@@ -114,7 +109,7 @@ export function createAuthRouter(context: AppContext) {
         magic_link_expires_at: expiresAt,
       });
 
-      context.authService.sendMagicLinkEmail({
+      void context.authService.sendMagicLinkEmail({
         name: user.name,
         email: user.email,
         token,
@@ -208,187 +203,6 @@ export function createAuthRouter(context: AppContext) {
   );
 
   router.get(
-    "/dashboard",
-    middleware.sessionAuthenticationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      const usagePercent = Math.round((user.api_call_count / user.api_call_limit) * 100);
-
-      let stats = null;
-      if (user.admin) {
-        const allUsers = await context.userRepository.findAll();
-        const cacheStats = await context.cache.getStatistics();
-        stats = {
-          totalUsers: allUsers.length,
-          verifiedUsers: allUsers.filter((u) => u.verified).length,
-          unverifiedUsers: allUsers.filter((u) => !u.verified).length,
-          adminUsers: allUsers.filter((u) => u.admin).length,
-          cacheEntries: cacheStats.totalEntries,
-          totalApiCalls: allUsers.reduce((sum, u) => sum + u.api_call_count, 0),
-        };
-      }
-
-      return res.render("auth/dashboard.html", {
-        title: "Dashboard",
-        path: "/dashboard",
-        user,
-        usagePercent,
-        stats,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.get(
-    "/settings",
-    middleware.sessionAuthenticationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      return res.render("auth/settings.html", {
-        title: "Settings",
-        path: "/settings",
-        user,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.post(
-    "/settings",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    middleware.validationMiddleware({ body: updateNameValidation }),
-    async (req: Request<{}, {}, UpdateNameType>, res: Response) => {
-      const sessionUser = req.session.user!;
-      const { name, email: newEmail } = req.body;
-      const hostname = context.helpers.getHostName(req);
-
-      const updatedUser = await context.userRepository.updateById(sessionUser.id, { name });
-
-      if (updatedUser) {
-        req.session.user = {
-          id: updatedUser.id,
-          email: updatedUser.email,
-          name: updatedUser.name,
-          admin: Boolean(updatedUser.admin),
-        };
-      }
-
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) updated name to ${name}`);
-
-      // Handle email change if new email is provided and different from current
-      if (newEmail && newEmail !== sessionUser.email) {
-        // Check if new email is already in use
-        const existingUser = await context.userRepository.findByEmail(newEmail);
-        if (existingUser) {
-          req.flash("error", "This email address is already in use");
-          return res.redirect("/settings");
-        }
-
-        // Generate verification token for email change
-        const token = context.helpers.generateToken();
-        const expiresAt = new Date(Date.now() + VERIFICATION_TOKEN_EXPIRY_MS).toISOString();
-
-        // Store pending email details
-        await context.userRepository.updateById(sessionUser.id, {
-          pending_email: newEmail,
-          pending_email_token: token,
-          pending_email_expires_at: expiresAt,
-        });
-
-        // Send verification email to new address
-        context.authService.sendVerificationEmail({
-          name: updatedUser?.name || sessionUser.name,
-          email: newEmail,
-          verification_token: token,
-          hostname,
-        });
-
-        context.logger.info(
-          `User ${sessionUser.id} (${sessionUser.email}) requested email change to ${newEmail}`,
-        );
-
-        req.flash(
-          "info",
-          "A verification link has been sent to your new email address. Please verify it to complete the email change.",
-        );
-      } else {
-        req.flash("success", "Name updated successfully");
-      }
-
-      return res.redirect("/settings");
-    },
-  );
-
-  router.post(
-    "/settings/regenerate-key",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-      const user = await context.userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      await context.authService.regenerateKey(sessionUser.id);
-
-      const updatedUser = await context.userRepository.findById(sessionUser.id);
-
-      req.flash("success", "Your new API key has been generated and sent to your email!");
-
-      return res.render("auth/settings.html", {
-        title: "Settings",
-        path: "/settings",
-        user: updatedUser,
-        messages: req.flash(),
-        layout: "_layouts/authenticated.html",
-      });
-    },
-  );
-
-  router.post(
-    "/settings/delete",
-    middleware.sessionAuthenticationMiddleware,
-    middleware.csrfValidationMiddleware,
-    async (req: Request, res: Response) => {
-      const sessionUser = req.session.user!;
-
-      await context.userRepository.delete(sessionUser.id);
-
-      context.logger.info(`User ${sessionUser.id} (${sessionUser.email}) deleted their account`);
-
-      req.session.destroy(() => {
-        res.redirect("/login");
-      });
-    },
-  );
-
-  router.get(
     "/verify-email",
     middleware.authRateLimitMiddleware,
     async (req: Request, res: Response) => {
@@ -473,19 +287,19 @@ export function createAuthRouter(context: AppContext) {
       const { token } = req.query as { token: string };
 
       if (!token) {
-        req.flash("error", "Invalid verification link");
+        req.flash("error", "Invalid verification link.");
         return res.redirect("/login");
       }
 
       const foundUser = await context.userRepository.findByPendingEmailToken(token);
 
       if (!foundUser) {
-        req.flash("error", "Invalid verification link");
+        req.flash("error", "Invalid verification link.");
         return res.redirect("/login");
       }
 
       if (!foundUser.pending_email_expires_at) {
-        req.flash("error", "Invalid verification link");
+        req.flash("error", "Invalid verification link.");
         return res.redirect("/login");
       }
 
@@ -498,22 +312,38 @@ export function createAuthRouter(context: AppContext) {
         return res.redirect("/login");
       }
 
-      // Update email and clear pending fields
+      if (!foundUser.pending_email) {
+        req.flash("error", "Invalid verification link.");
+        return res.redirect("/login");
+      }
+
+      const newEmail = foundUser.pending_email;
+
       await context.userRepository.updateById(foundUser.id, {
-        email: foundUser.pending_email,
+        email: newEmail,
         pending_email: null,
         pending_email_token: null,
         pending_email_expires_at: null,
       });
 
       context.logger.info(
-        `User ${foundUser.id} verified email change from ${foundUser.email} to ${foundUser.pending_email}`,
+        `User ${foundUser.id} verified email change from ${foundUser.email} to ${newEmail}`,
       );
 
-      // Destroy session
-      req.session.destroy(() => {
-        req.flash("success", "Your email has been successfully updated. Please login with your new email address.");
-        res.redirect("/login");
+      req.session.regenerate((err) => {
+        if (err) {
+          context.logger.error(err);
+          return res.redirect("/login");
+        }
+
+        req.flash(
+          "success",
+          "Your email has been successfully updated. Please login with your new email address.",
+        );
+
+        req.session.save(() => {
+          res.redirect("/login");
+        });
       });
     },
   );

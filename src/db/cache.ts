@@ -15,6 +15,14 @@ export interface CacheStatistics {
   keyPatterns: { pattern: string; count: number }[];
 }
 
+export interface GetEntriesOptions {
+  pattern?: string;
+  orderBy?: keyof CacheEntry;
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}
+
 export interface CacheType {
   get: (key: string) => Promise<string | null>;
   set: (key: string, value: string) => Promise<void>;
@@ -24,7 +32,8 @@ export interface CacheType {
   clearAll: () => Promise<void>;
   isReady: () => boolean;
   getStatistics: () => Promise<CacheStatistics>;
-  getEntries: (pattern: string) => Promise<CacheEntry[]>;
+  getEntries: (options?: GetEntriesOptions) => Promise<CacheEntry[]>;
+  countEntries: (pattern?: string) => Promise<number>;
 }
 
 export function createCache(knex: Knex, logger: LoggerType): CacheType {
@@ -103,8 +112,28 @@ export function createCache(knex: Knex, logger: LoggerType): CacheType {
     };
   }
 
-  async function getEntries(pattern: string): Promise<CacheEntry[]> {
-    return knex<CacheEntry>("cache").where("key", "like", pattern).select("*");
+  async function getEntries(options: GetEntriesOptions = {}): Promise<CacheEntry[]> {
+    const pattern = options.pattern || "%";
+
+    let query = knex<CacheEntry>("cache").where("key", "like", pattern).select("*");
+    if (options.orderBy) {
+      query = query.orderBy(options.orderBy, options.order || "asc");
+    }
+    if (options.limit != null) {
+      query = query.limit(options.limit);
+    }
+    if (options.offset != null) {
+      query = query.offset(options.offset);
+    }
+    return query;
+  }
+
+  async function countEntries(pattern: string = "%"): Promise<number> {
+    const result = await knex<CacheEntry>("cache")
+      .where("key", "like", pattern)
+      .count("* as count")
+      .first<{ count: number }>();
+    return Number(result?.count || 0);
   }
 
   return {
@@ -117,5 +146,6 @@ export function createCache(knex: Knex, logger: LoggerType): CacheType {
     isReady,
     getStatistics,
     getEntries,
+    countEntries,
   };
 }

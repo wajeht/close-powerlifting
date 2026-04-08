@@ -1,4 +1,4 @@
-import { describe, expect } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";

@@ -1,3 +1,8 @@
+<% if (!rankings?.data?.length) { %>
+<div class="rounded-lg border border-neutral-800 bg-neutral-900 p-8 text-center text-neutral-400">
+  No rankings data available.
+</div>
+<% } else { %>
 <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
   <table class="w-full text-left">
     <thead class="border-b border-neutral-800 text-neutral-400">
@@ -41,3 +46,4 @@
     </tbody>
   </table>
 </div>
+<% } %>

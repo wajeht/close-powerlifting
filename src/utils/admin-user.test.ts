@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { configuration } from "../configuration";
 import { knex, logger } from "../tests/test-setup";
@@ -12,6 +12,7 @@ const mockMail = {
   sendMagicLinkEmail: vi.fn().mockResolvedValue({}),
   sendWelcomeEmail: vi.fn().mockResolvedValue({}),
   sendVerificationEmail: vi.fn().mockResolvedValue({}),
+  sendEmailChangeVerificationEmail: vi.fn().mockResolvedValue({}),
   sendContactEmail: vi.fn().mockResolvedValue({}),
   sendApiLimitResetEmail: vi.fn().mockResolvedValue({}),
   sendReachingApiLimitEmail: vi.fn().mockResolvedValue({}),

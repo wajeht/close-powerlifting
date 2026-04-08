@@ -2,7 +2,7 @@
 DC := docker compose -f docker-compose.dev.yml
 EXEC := $(DC) exec close-powerlifting
 
-.PHONY: help push test lint format up down shell deploy update-fixtures
+.PHONY: help push test lint format up down shell update-fixtures
 
 help:
 	@echo "Usage: make [target]"
@@ -37,7 +37,6 @@ help:
 	@echo ""
 	@echo "Deployment:"
 	@echo "  push        Test + lint + format + commit + push"
-	@echo "  deploy      Deploy to production"
 	@echo "  clean       Remove all containers and volumes"
 
 # === Development ===
@@ -116,9 +115,6 @@ push:
 	@git add -A
 	@curl -s http://commit.jaw.dev/ | sh -s -- --no-verify
 	@git push --no-verify
-
-deploy:
-	@./scripts/deploy.sh
 
 clean:
 	@$(DC) down --rmi all --volumes --remove-orphans

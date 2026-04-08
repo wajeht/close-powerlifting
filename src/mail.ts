@@ -17,6 +17,12 @@ export interface MailType {
     name: string;
     token: string;
   }) => Promise<void>;
+  sendEmailChangeVerificationEmail: (params: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }) => Promise<void>;
   sendWelcomeEmail: (params: { email: string; name: string; key: string }) => Promise<void>;
   sendContactEmail: (params: { name: string; email: string; message: string }) => Promise<void>;
   sendApiLimitResetEmail: (params: { email: string; name: string }) => Promise<void>;
@@ -63,7 +69,7 @@ export function createMail(logger: LoggerType): MailType {
     } catch {
       const redactedText = redactSensitiveData(text);
       const content = `To: ${to}\nSubject: ${subject}\n${"-".repeat(50)}\n${redactedText}`;
-      logger.box("EMAIL (mailpit unavailable)", content);
+      logger.box("EMAIL (mail service unavailable)", content);
     }
   }
 
@@ -90,6 +96,35 @@ ${hostname}/verify-email?token=${verification_token}&email=${email}
 Once verified, you'll receive your API key to access powerlifting data from around the world.
 
 If you didn't create this account, you can safely ignore this email.
+
+Cheers,
+The Close Powerlifting Team`,
+    );
+  }
+
+  async function sendEmailChangeVerificationEmail({
+    hostname,
+    email,
+    name,
+    token,
+  }: {
+    hostname: string;
+    email: string;
+    name: string;
+    token: string;
+  }): Promise<void> {
+    await send(
+      email,
+      "Verify your new email address",
+      `Hi ${name},
+
+You requested to change your email address to ${email}. Please verify this new email address by clicking the link below:
+
+${hostname}/verify-email-change?token=${token}
+
+This link expires in 24 hours.
+
+If you didn't request this change, you can safely ignore this email.
 
 Cheers,
 The Close Powerlifting Team`,
@@ -145,7 +180,7 @@ API Key: ${key}
 
 Your key expires in 3 months. We'll send you a reminder before it does.
 
-Check out our documentation to get started: https://close-powerlifting.jaw.dev/docs/api
+Check out our documentation to get started: https://closepowerlifting.com/docs/api
 
 Happy lifting!
 The Close Powerlifting Team`,
@@ -222,6 +257,7 @@ The Close Powerlifting Team`,
   return {
     verifyConnection,
     sendVerificationEmail,
+    sendEmailChangeVerificationEmail,
     sendMagicLinkEmail,
     sendWelcomeEmail,
     sendContactEmail,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "./configuration";
 
@@ -31,8 +31,8 @@ describe.concurrent("config", () => {
       expect(typeof configuration.app.port).toBe("number");
     });
 
-    it("defaultApiCallLimit is 500", () => {
-      expect(configuration.app.defaultApiCallLimit).toBe(500);
+    it("defaultApiCallLimit is 750", () => {
+      expect(configuration.app.defaultApiCallLimit).toBe(750);
     });
   });
 

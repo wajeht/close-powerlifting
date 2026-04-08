@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import request from "supertest";
-import { beforeAll, afterAll, afterEach, describe, expect, it } from "vitest";
+import { beforeAll, afterAll, afterEach, describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../configuration";
 import { createContext } from "../../context";

@@ -51,9 +51,12 @@ export function createRankingService(scraper: ScraperType) {
   async function fetchRankingsData(
     currentPage: number,
     perPage: number,
+    units: string = "lbs",
+    federation?: string,
   ): Promise<{ rows: RankingRow[]; totalLength: number }> {
-    const query = scraper.buildPaginationQuery(currentPage, perPage);
-    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
+    const query = scraper.buildPaginationQuery(currentPage, perPage, units);
+    const fedPath = federation ? `/${federation}` : "";
+    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings${fedPath}?${query}`);
 
     return {
       rows: response.rows.map(transformRankingRow),
@@ -64,12 +67,14 @@ export function createRankingService(scraper: ScraperType) {
   async function getRankings({
     current_page = 1,
     per_page = defaultPerPage,
+    units = "lbs",
+    federation,
   }: GetRankingsType): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
-    const cacheKey = `rankings-${current_page}-${per_page}`;
+    const cacheKey = `rankings-${current_page}-${per_page}-${units}${federation ? `-${federation}` : ""}`;
 
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
       cacheKey,
-      () => fetchRankingsData(current_page, per_page),
+      () => fetchRankingsData(current_page, per_page, units, federation),
     );
 
     if (!result.data) {
@@ -104,11 +109,16 @@ export function createRankingService(scraper: ScraperType) {
     return result.data[indexInPage];
   }
 
-  function buildFilterPath(filters: GetFilteredRankingsParamType): string {
+  function buildFilterPath(
+    filters: GetFilteredRankingsParamType,
+    options?: { federation?: string; age_class?: string },
+  ): string {
     const parts: string[] = [];
+    if (options?.federation) parts.push(options.federation);
     if (filters.equipment) parts.push(filters.equipment);
     if (filters.sex) parts.push(filters.sex);
     if (filters.weight_class) parts.push(filters.weight_class);
+    if (options?.age_class) parts.push(options.age_class);
     if (filters.year) parts.push(filters.year);
     if (filters.event) parts.push(filters.event);
     if (filters.sort) parts.push(filters.sort);
@@ -119,11 +129,14 @@ export function createRankingService(scraper: ScraperType) {
     filters: GetFilteredRankingsParamType,
     currentPage: number,
     perPage: number,
+    units: string = "lbs",
+    federation?: string,
+    age_class?: string,
   ): Promise<{ rows: RankingRow[]; totalLength: number }> {
-    const filterPath = buildFilterPath(filters);
+    const filterPath = buildFilterPath(filters, { federation, age_class });
     const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
     const end = start + perPage;
-    const query = `start=${start}&end=${end}&lang=en&units=lbs`;
+    const query = `start=${start}&end=${end}&lang=en&units=${units}`;
     const response = await scraper.fetchJson<RankingsApiResponse>(
       `/rankings${filterPath}?${query}`,
     );
@@ -140,13 +153,16 @@ export function createRankingService(scraper: ScraperType) {
   ): Promise<ApiResponse<RankingRow[]> & { pagination?: Pagination }> {
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
+    const units = query.units ?? "lbs";
+    const federation = query.federation;
+    const age_class = query.age_class;
 
-    const filterPath = buildFilterPath(filters);
-    const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}`;
+    const filterPath = buildFilterPath(filters, { federation, age_class });
+    const cacheKey = `rankings${filterPath}-${currentPage}-${perPage}-${units}`;
 
     const result = await scraper.withCache<{ rows: RankingRow[]; totalLength: number }>(
       cacheKey,
-      () => fetchFilteredRankingsData(filters, currentPage, perPage),
+      () => fetchFilteredRankingsData(filters, currentPage, perPage, units, federation, age_class),
     );
 
     if (!result.data) {

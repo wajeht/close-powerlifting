@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "vite-plus/test";
 
 import {
   createAuthenticatedApiAgent,
@@ -216,5 +216,203 @@ describe("GET /api/rankings/:rank", () => {
 
     expect(response.status).toBe(404);
     expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/rankings with units query parameter", () => {
+  it("should accept units=lbs query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?units=lbs");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept units=kg query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 for invalid units value", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?units=stones");
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/rankings with federation query parameter", () => {
+  it("should accept federation query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?federation=uspa");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+});
+
+describe("GET /api/rankings/filter with units query parameter", () => {
+  it("should accept units=kg on filtered rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings/filter/raw?units=kg");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 for invalid units on filtered rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw?units=invalid",
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/rankings/filter with federation query parameter", () => {
+  it("should accept federation query parameter on filtered rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw?federation=uspa",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+});
+
+describe("GET /api/rankings/filter with age_class query parameter", () => {
+  it("should accept valid age_class on filtered rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men?age_class=40-44",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should return 400 for invalid age_class", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men?age_class=invalid",
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/rankings/filter with sort values", () => {
+  const sortOptions = [
+    "by-dots",
+    "by-wilks",
+    "by-glossbrenner",
+    "by-goodlift",
+    "by-mcculloch",
+    "by-total",
+    "by-squat",
+    "by-bench",
+    "by-deadlift",
+  ];
+
+  for (const sort of sortOptions) {
+    it(`should accept ${sort} sort`, async () => {
+      const response = await createAuthenticatedApiAgent().get(
+        `/api/rankings/filter/raw/men/100/2024/full-power/${sort}`,
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.body.status).toBe("success");
+    });
+  }
+});
+
+describe("GET /api/rankings combining multiple query parameters", () => {
+  it("should accept units + federation together on base rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings?units=kg&federation=uspa",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
+
+  it("should accept units + federation + age_class on filtered rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men?units=kg&federation=uspa&age_class=40-44",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept age_class on deeper filter route with weight_class", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men/100?age_class=50-54",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept federation + units on deeper filter route", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men/100?federation=ipf&units=kg",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept all query params with pagination on filtered route", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/rankings/filter/raw/men?units=kg&federation=uspa&age_class=40-44&per_page=50&current_page=1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body).toHaveProperty("pagination");
+    expect(Number(response.body.pagination.per_page)).toBe(50);
+  });
+
+  it("should return data array when using units=kg on base rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it("should return different body_weight values for kg vs default (lbs)", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/rankings");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    const defaultEntry = defaultResponse.body.data[0];
+    const kgEntry = kgResponse.body.data[0];
+
+    expect(defaultEntry.full_name).toBe("Kristy Hawkins");
+    expect(kgEntry.full_name).toBe("Kristy Hawkins");
+    expect(defaultEntry.body_weight).toBe(163.1);
+    expect(kgEntry.body_weight).toBe(74.0);
+  });
+
+  it("should return different lift values for kg vs default (lbs)", async () => {
+    const defaultResponse = await createAuthenticatedApiAgent().get("/api/rankings");
+    const kgResponse = await createAuthenticatedApiAgent().get("/api/rankings?units=kg");
+
+    const defaultEntry = defaultResponse.body.data[0];
+    const kgEntry = kgResponse.body.data[0];
+
+    expect(defaultEntry.squat).toBe(683.4);
+    expect(kgEntry.squat).toBe(310.0);
+    expect(defaultEntry.total).toBe(1598.3);
+    expect(kgEntry.total).toBe(725.0);
+  });
+
+  it("should return pagination when using federation on base rankings", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/rankings?federation=uspa");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("pagination");
+    expect(response.body.pagination).toHaveProperty("items");
   });
 });

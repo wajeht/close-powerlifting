@@ -8,3 +8,7 @@ export const userKristyHawkinsHtml = readFileSync(
   "utf-8",
 );
 export const userJohnHaackHtml = readFileSync(join(fixturesDir, "user-johnhaack.html"), "utf-8");
+export const userJohnHaackKgHtml = readFileSync(
+  join(fixturesDir, "user-johnhaack-kg.html"),
+  "utf-8",
+);

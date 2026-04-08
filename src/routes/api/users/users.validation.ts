@@ -18,7 +18,14 @@ export const getUsersValidation = z.object({
     .string()
     .transform((val) => Math.max(1, Number(val)))
     .optional(),
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+});
+
+export const getUserQueryValidation = z.object({
+  include_attempts: z.enum(["true", "false"]).default("false").optional(),
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
 });
 
 export type GetUserType = z.infer<typeof getUserValidation>;
+export type GetUserQueryType = z.infer<typeof getUserQueryValidation>;
 export type GetUsersType = z.infer<typeof getUsersValidation>;
