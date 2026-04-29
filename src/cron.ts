@@ -22,7 +22,13 @@ import { createHealthCheckService } from "./routes/api/health-check/health-check
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
-const INTERNAL_CACHE_KEYS = ["hostname", "close-powerlifting-global-status-call-cache"];
+const API_CALL_RESET_MONTH_KEY = "api-call-count-last-reset-month";
+
+const INTERNAL_CACHE_KEYS = [
+  "hostname",
+  "close-powerlifting-global-status-call-cache",
+  API_CALL_RESET_MONTH_KEY,
+];
 
 export interface CronType {
   start: () => void;
@@ -383,14 +389,22 @@ export function createCron(
     try {
       logger.info("cron job started: resetApiCallCount");
 
-      const today = new Date();
-      if (today.getDate() !== 1) {
-        logger.info("cron job skipped: resetApiCallCount (not start of month)");
+      const now = new Date();
+      const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+
+      const lastResetMonth = await cache.get(API_CALL_RESET_MONTH_KEY);
+      if (lastResetMonth === currentMonth) {
+        logger.info("cron job skipped: resetApiCallCount (already reset this month)", {
+          currentMonth,
+        });
         return;
       }
 
       const users = await userRepository.findVerified();
       await userRepository.resetAllApiCallCounts();
+      // Persist marker before sending emails so a partial email failure
+      // doesn't cause duplicate resets/emails on the next cron firing.
+      await cache.set(API_CALL_RESET_MONTH_KEY, currentMonth);
 
       const results = await Promise.allSettled(
         users.map((user) => mail.sendApiLimitResetEmail({ email: user.email, name: user.name })),
@@ -461,7 +475,7 @@ export function createCron(
     cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
     cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask)); // Daily health check refresh: every day at 5:00 AM UTC
     cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
-    cronJobs.push(cron.schedule("5 0 * * *", resetApiCallCountTask)); // Monthly API call count reset: every day at 12:05 AM UTC (staggered after email)
+    cronJobs.push(cron.schedule("5 0 * * *", resetApiCallCountTask)); // Daily 12:05 AM check (server local time); resets once per UTC month — see API_CALL_RESET_MONTH_KEY guard. Self-heals if a firing is missed.
     cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
 
     isRunning = true;

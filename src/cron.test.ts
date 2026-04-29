@@ -573,20 +573,10 @@ describe("cron", () => {
   });
 
   describe("resetApiCallCount task", () => {
-    it("should skip if not first day of month", async () => {
-      vi.setSystemTime(new Date(2024, 0, 15)); // Jan 15
+    const RESET_MARKER_KEY = "api-call-count-last-reset-month";
 
-      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).not.toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith(
-        "cron job skipped: resetApiCallCount (not start of month)",
-      );
-    });
-
-    it("should reset counts on first day of month", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1)); // Jan 1
+    it("should reset and set marker when no previous reset is recorded", async () => {
+      vi.setSystemTime(new Date("2024-04-15T00:05:00Z"));
 
       const mockUsers = [{ email: "test@test.com", name: "Test" }];
       vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
@@ -595,14 +585,75 @@ describe("cron", () => {
       await cron.tasks.resetApiCallCount();
 
       expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
       expect(mail.sendApiLimitResetEmail).toHaveBeenCalledWith({
         email: "test@test.com",
         name: "Test",
       });
     });
 
+    it("should skip when already reset this month", async () => {
+      vi.setSystemTime(new Date("2024-04-15T00:05:00Z"));
+      await cache.set(RESET_MARKER_KEY, "2024-04");
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(userRepository.resetAllApiCallCounts).not.toHaveBeenCalled();
+      expect(mail.sendApiLimitResetEmail).not.toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalledWith(
+        "cron job skipped: resetApiCallCount (already reset this month)",
+        { currentMonth: "2024-04" },
+      );
+    });
+
+    it("should reset when marker is from a previous month", async () => {
+      vi.setSystemTime(new Date("2024-05-01T00:05:00Z"));
+      await cache.set(RESET_MARKER_KEY, "2024-04");
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-05");
+    });
+
+    // Regression: the old implementation only reset when getDate() === 1.
+    // If the cron's day-1 firing was missed (server down/deploy), the entire
+    // month was skipped. The marker-based check must self-heal on day 2+.
+    it("should self-heal: reset on day 2+ if first-day window was missed", async () => {
+      vi.setSystemTime(new Date("2024-05-15T00:05:00Z"));
+      await cache.set(RESET_MARKER_KEY, "2024-04");
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-05");
+    });
+
+    it("should be idempotent across multiple firings within the same month", async () => {
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+      await cron.tasks.resetApiCallCount();
+      await cron.tasks.resetApiCallCount();
+
+      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalledTimes(1);
+    });
+
+    it("should pad single-digit months in the marker (UTC YYYY-MM)", async () => {
+      vi.setSystemTime(new Date("2024-01-01T00:05:00Z"));
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-01");
+    });
+
     it("should send emails to all verified users", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1));
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
 
       const mockUsers = [
         { email: "user1@test.com", name: "User 1" },
@@ -618,7 +669,7 @@ describe("cron", () => {
     });
 
     it("should handle findVerified error", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1));
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
       vi.mocked(userRepository.findVerified).mockRejectedValue(new Error("DB error"));
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
@@ -628,10 +679,12 @@ describe("cron", () => {
         "cron job failed: resetApiCallCount",
         expect.any(Error),
       );
+      // Marker must NOT be set when reset never happened, so next firing retries.
+      expect(await cache.get(RESET_MARKER_KEY)).toBeNull();
     });
 
-    it("should handle resetAllApiCallCounts error", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1));
+    it("should handle resetAllApiCallCounts error and not set marker", async () => {
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
       vi.mocked(userRepository.findVerified).mockResolvedValue([
         { email: "a@b.com", name: "A" },
       ] as never);
@@ -644,10 +697,11 @@ describe("cron", () => {
         "cron job failed: resetApiCallCount",
         expect.any(Error),
       );
+      expect(await cache.get(RESET_MARKER_KEY)).toBeNull();
     });
 
     it("should log completion on success", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1));
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
       vi.mocked(userRepository.findVerified).mockResolvedValue([]);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
@@ -657,7 +711,7 @@ describe("cron", () => {
     });
 
     it("should continue sending emails when one fails", async () => {
-      vi.setSystemTime(new Date(2024, 0, 1));
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
 
       const mockUsers = [
         { email: "user1@test.com", name: "User 1" },
@@ -676,6 +730,8 @@ describe("cron", () => {
       expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
       expect(logger.warn).toHaveBeenCalledWith("resetApiCallCount: 1/3 emails failed to send");
       expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
+      // Marker is set even when some emails fail (reset itself succeeded).
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
     });
   });
 
