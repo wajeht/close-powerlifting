@@ -338,6 +338,56 @@ describe("Auth Routes", () => {
     });
   });
 
+  describe("GET /verify-email with + in email (regression)", () => {
+    let plusUserId: number;
+    const plusEmail = "zombyard+nonadmin@example.com";
+    const plusToken = "plus-email-token";
+
+    beforeEach(async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Plus User",
+          email: plusEmail,
+          verification_token: plusToken,
+          verified: false,
+        })
+        .returning("*");
+      plusUserId = user.id;
+    });
+
+    afterEach(async () => {
+      await knex("users").where({ id: plusUserId }).delete();
+    });
+
+    it("should verify users whose email contains a +", async () => {
+      const sessionAgent = createUnauthenticatedSessionAgent();
+      const response = await sessionAgent.get(
+        `/verify-email?token=${plusToken}&email=${encodeURIComponent(plusEmail)}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/dashboard");
+
+      const user = await knex("users").where({ id: plusUserId }).first();
+      expect(user.verified).toBe(1);
+    });
+
+    it("should fail verification when + is sent unencoded", async () => {
+      // A bare `+` in the query string decodes as a space, so the lookup
+      // becomes "zombyard nonadmin@example.com" which does not exist.
+      // This guards against anyone "fixing" the encoding by stripping it.
+      const response = await request(app).get(
+        `/verify-email?token=${plusToken}&email=${plusEmail}`,
+      );
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: plusUserId }).first();
+      expect(user.verified).toBe(0);
+    });
+  });
+
   describe("GET /verify-email-change", () => {
     let verifyChangeUserId: number;
     const currentEmail = "verify-change@example.com";

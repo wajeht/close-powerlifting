@@ -91,7 +91,7 @@ export function createMail(logger: LoggerType): MailType {
 
 Thanks for signing up for Close Powerlifting! Please verify your email address to get started:
 
-${hostname}/verify-email?token=${verification_token}&email=${email}
+${hostname}/verify-email?token=${verification_token}&email=${encodeURIComponent(email)}
 
 Once verified, you'll receive your API key to access powerlifting data from around the world.
 
@@ -149,7 +149,7 @@ The Close Powerlifting Team`,
 
 Click the link below to log in to your Close Powerlifting account:
 
-${hostname}/magic-link?token=${token}&email=${email}
+${hostname}/magic-link?token=${token}&email=${encodeURIComponent(email)}
 
 This link expires in 1 hour.
 
