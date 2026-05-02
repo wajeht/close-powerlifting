@@ -458,6 +458,9 @@
   .top-1\/2 {
     top: 50% !important;
   }
+  .top-\[72px\] {
+    top: 72px !important;
+  }
   .right-0 {
     right: calc(var(--spacing) * 0) !important;
   }
@@ -472,6 +475,9 @@
   }
   .z-10 {
     z-index: 10 !important;
+  }
+  .z-30 {
+    z-index: 30 !important;
   }
   .z-50 {
     z-index: 50 !important;
@@ -897,6 +903,14 @@
   @supports (color: color-mix(in lab, red, red)) {
     .bg-black\/30 {
       background-color: color-mix(in oklab, var(--color-black) 30%, transparent) !important;
+    }
+  }
+  .bg-black\/80 {
+    background-color: #000c !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-black\/80 {
+      background-color: color-mix(in oklab, var(--color-black) 80%, transparent) !important;
     }
   }
   .bg-blue-500\/10 {

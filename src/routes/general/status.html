@@ -32,7 +32,7 @@
 
     <% routeGroups.forEach(function(group) { %>
     <div class="fade-in animation-delay-3 flex flex-col gap-3">
-      <h2 class="text-lg font-semibold text-white"><%= group.name %></h2>
+      <h2 class="sticky top-[72px] z-30 bg-black/80 py-2 text-lg font-semibold text-white backdrop-blur-sm"><%= group.name %></h2>
       <div class="flex flex-col gap-2">
         <% group.routes.forEach(function(item) { %>
         <article class="flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
