@@ -126,14 +126,22 @@ export function createAdminService(
       magic_link_expires_at: verificationExpiresAt,
     });
 
-    await authService.sendVerificationEmail({
-      hostname,
-      name: user.name,
-      email: user.email,
-      verification_token: newToken,
-    });
+    void authService
+      .sendVerificationEmail({
+        hostname,
+        name: user.name,
+        email: user.email,
+        verification_token: newToken,
+      })
+      .catch((error) => {
+        logger.error("Admin failed to resend verification email", {
+          userId: user.id,
+          email: user.email,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
 
-    logger.info(`Admin resent verification email to user ${user.id} (${user.email})`);
+    logger.info(`Admin queued verification email to user ${user.id} (${user.email})`);
 
     return true;
   }

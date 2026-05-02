@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vite-plus/test";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vite-plus/test";
 
 import { createContext } from "../../context";
 import { knex } from "../../tests/test-setup";
@@ -213,6 +213,38 @@ describe("AdminService", () => {
       const updatedUser = await knex("users").where("id", user.id).first();
       expect(updatedUser.verification_token).not.toBe("old-token");
       expect(updatedUser.magic_link_expires_at).not.toBeNull();
+    });
+
+    it("does not wait for email delivery before returning", async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Slow Email User",
+          email: "slow-email-resend@example.com",
+          verified: false,
+          verification_token: "old-token",
+        })
+        .returning("*");
+      testUserId = user.id;
+
+      let releaseEmail!: () => void;
+      const emailDelivery = new Promise<void>((resolve) => {
+        releaseEmail = resolve;
+      });
+      const sendSpy = vi
+        .spyOn(context.authService, "sendVerificationEmail")
+        .mockReturnValueOnce(emailDelivery);
+
+      const result = await Promise.race([
+        adminService.resendVerificationEmail(user.id, "localhost"),
+        new Promise<"timed-out">((resolve) => setTimeout(() => resolve("timed-out"), 0)),
+      ]);
+
+      expect(result).toBe(true);
+      expect(sendSpy).toHaveBeenCalledTimes(1);
+
+      releaseEmail();
+      await emailDelivery;
+      sendSpy.mockRestore();
     });
   });
 });
