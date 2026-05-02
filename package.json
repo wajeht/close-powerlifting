@@ -46,7 +46,7 @@
     "prepare": "[ -z \"$CI\" ] && vp config || true"
   },
   "dependencies": {
-    "@tailwindcss/cli": "^4.2.1",
+    "@tailwindcss/cli": "^4.2.4",
     "better-sqlite3": "^12.6.2",
     "compression": "^1.8.1",
     "concurrently": "^9.2.1",
@@ -82,7 +82,7 @@
     "@types/jsdom": "28.0.1",
     "@types/jsonwebtoken": "9.0.10",
     "@types/node-cron": "3.0.11",
-    "@types/nodemailer": "7.0.11",
+    "@types/nodemailer": "^8.0.0",
     "@types/supertest": "7.2.0",
     "@typescript/native-preview": "7.0.0-dev.20260501.1",
     "@vitest/coverage-v8": "4.1.5",
