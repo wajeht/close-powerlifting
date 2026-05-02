@@ -35,6 +35,7 @@ function pickBestAttempt(row: Record<string, string>, prefix: string): string {
 
     const numeric = parseFloat(value);
     if (Number.isNaN(numeric)) continue;
+    if (numeric <= 0) continue;
 
     if (numeric > bestValue) {
       best = value;
@@ -145,6 +146,38 @@ export function createUserService(scraper: ScraperType) {
     current_page: number;
   }
 
+  async function fetchUserSearchData({
+    search,
+    per_page,
+    current_page,
+    units,
+  }: Required<Pick<GetUsersType, "search" | "per_page" | "current_page" | "units">>): Promise<{
+    rows: RankingRow[];
+    pagination: SearchPagination;
+  }> {
+    const offset = (current_page - 1) * per_page;
+    const searchResult = await scraper.fetchJson<{ next_index: number }>(
+      `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
+    );
+
+    const startIndex = searchResult.next_index;
+    if (!Number.isInteger(startIndex) || startIndex < 0) {
+      throw new Error("Search endpoint returned an invalid next_index");
+    }
+
+    const endIndex = startIndex + per_page;
+    const query = `start=${startIndex}&end=${endIndex}&lang=en&units=${units}`;
+    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
+
+    return {
+      rows: response.rows.map(transformRankingRow),
+      pagination: {
+        per_page,
+        current_page,
+      },
+    };
+  }
+
   async function searchUser({
     search,
     per_page = defaultPerPage,
@@ -154,34 +187,25 @@ export function createUserService(scraper: ScraperType) {
     data: RankingRow[] | null;
     pagination?: SearchPagination;
   }> {
-    if (!search) {
+    const normalizedSearch = search?.trim();
+    if (!normalizedSearch) {
       return { data: null };
     }
 
-    try {
-      const offset = (current_page - 1) * per_page;
-      const searchResult = await scraper.fetchJson<{ next_index: number }>(
-        `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
-      );
+    const cacheKey = `users-search-${encodeURIComponent(normalizedSearch)}-${current_page}-${per_page}-${units}`;
+    const result = await scraper.withCache<{ rows: RankingRow[]; pagination: SearchPagination }>(
+      cacheKey,
+      () => fetchUserSearchData({ search: normalizedSearch, per_page, current_page, units }),
+    );
 
-      const startIndex = searchResult.next_index;
-      const endIndex = startIndex + per_page - 1;
-
-      const query = `start=${startIndex}&end=${endIndex}&lang=en&units=${units}`;
-      const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
-
-      const rows = response.rows.map(transformRankingRow);
-
-      return {
-        data: rows,
-        pagination: {
-          per_page,
-          current_page,
-        },
-      };
-    } catch {
+    if (!result.data) {
       return { data: null };
     }
+
+    return {
+      data: result.data.rows,
+      pagination: result.data.pagination,
+    };
   }
 
   return {

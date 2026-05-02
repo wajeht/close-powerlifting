@@ -53,6 +53,24 @@ describe.concurrent("rankings validation", () => {
       }
     });
 
+    it("rejects non-numeric per_page", () => {
+      const result = getRankingsValidation.safeParse({ per_page: "abc" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects non-numeric current_page", () => {
+      const result = getRankingsValidation.safeParse({ current_page: "abc" });
+      expect(result.success).toBe(false);
+    });
+
+    it("enforces minimum per_page of 1", () => {
+      const result = getRankingsValidation.safeParse({ per_page: "0" });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.per_page).toBe(1);
+      }
+    });
+
     it("accepts empty object with optional fields", () => {
       const result = getRankingsValidation.safeParse({});
       expect(result.success).toBe(true);
@@ -85,6 +103,11 @@ describe.concurrent("rankings validation", () => {
       if (result.success) {
         expect(result.data.federation).toBe("uspa");
       }
+    });
+
+    it("rejects malformed federation slugs", () => {
+      const result = getRankingsValidation.safeParse({ federation: "uspa?start=0" });
+      expect(result.success).toBe(false);
     });
   });
 
@@ -141,6 +164,14 @@ describe.concurrent("rankings validation", () => {
 
     it("rejects invalid age_class value", () => {
       const result = getFilteredRankingsQueryValidation.safeParse({ age_class: "30-35" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects non-numeric pagination values", () => {
+      const result = getFilteredRankingsQueryValidation.safeParse({
+        per_page: "many",
+        current_page: "later",
+      });
       expect(result.success).toBe(false);
     });
 
@@ -215,6 +246,11 @@ describe.concurrent("rankings validation", () => {
     it("accepts by-mcculloch as sort param", () => {
       const result = getFilteredRankingsParamValidation.safeParse({ sort: "by-mcculloch" });
       expect(result.success).toBe(true);
+    });
+
+    it("rejects malformed year params", () => {
+      const result = getFilteredRankingsParamValidation.safeParse({ year: "twenty-twenty-four" });
+      expect(result.success).toBe(false);
     });
   });
 

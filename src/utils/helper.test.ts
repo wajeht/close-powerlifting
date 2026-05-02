@@ -1,8 +1,11 @@
 import { JSDOM } from "jsdom";
-import { beforeEach, describe, expect, it } from "vite-plus/test";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../context";
+import type { CacheType } from "../db/cache";
+import type { LoggerType } from "./logger";
 import { buildPagination } from "./helpers";
+import { createScraper } from "./scraper";
 
 const context = createContext();
 const scraper = context.scraper;
@@ -371,6 +374,77 @@ describe.concurrent("calculatePagination", () => {
     expect(result.per_page).toBe(100);
     expect(result.from).toBe(1);
     expect(result.to).toBe(100);
+  });
+});
+
+function createMockCache(initialEntries: Record<string, string> = {}): CacheType {
+  const entries = new Map(Object.entries(initialEntries));
+
+  return {
+    get: vi.fn(async (key: string) => entries.get(key) ?? null),
+    set: vi.fn(async (key: string, value: string) => {
+      entries.set(key, value);
+    }),
+    del: vi.fn(async (key: string) => {
+      entries.delete(key);
+    }),
+    delPattern: vi.fn(async () => 0),
+    keys: vi.fn(async () => Array.from(entries.keys())),
+    clearAll: vi.fn(async () => {
+      entries.clear();
+    }),
+    isReady: vi.fn(() => true),
+    getStatistics: vi.fn(async () => ({
+      totalEntries: entries.size,
+      oldestEntry: null,
+      newestEntry: null,
+      keyPatterns: [],
+    })),
+    getEntries: vi.fn(async () => []),
+    countEntries: vi.fn(async () => entries.size),
+  };
+}
+
+function createMockLogger(): LoggerType {
+  return {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    box: vi.fn(),
+    setLevel: vi.fn(),
+  };
+}
+
+describe("withCache", () => {
+  it("deduplicates concurrent cache misses for the same key", async () => {
+    const scraper = createScraper(createMockCache(), createMockLogger());
+    const fetcher = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return { value: "fresh" };
+    });
+
+    const [first, second, third] = await Promise.all([
+      scraper.withCache("shared-key", fetcher),
+      scraper.withCache("shared-key", fetcher),
+      scraper.withCache("shared-key", fetcher),
+    ]);
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(first).toEqual({ data: { value: "fresh" } });
+    expect(second).toEqual(first);
+    expect(third).toEqual(first);
+  });
+
+  it("deletes invalid cache JSON and refreshes the value", async () => {
+    const cache = createMockCache({ broken: "not-json" });
+    const logger = createMockLogger();
+    const scraper = createScraper(cache, logger);
+
+    const result = await scraper.withCache("broken", async () => ({ value: "fresh" }));
+
+    expect(result).toEqual({ data: { value: "fresh" } });
+    expect(cache.del).toHaveBeenCalledWith("broken");
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Cache parse error"));
   });
 });
 

@@ -39,6 +39,24 @@ describe.concurrent("users validation", () => {
       }
     });
 
+    it("rejects non-numeric per_page", () => {
+      const result = getUsersValidation.safeParse({ search: "test", per_page: "abc" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects non-numeric current_page", () => {
+      const result = getUsersValidation.safeParse({ search: "test", current_page: "abc" });
+      expect(result.success).toBe(false);
+    });
+
+    it("trims search query", () => {
+      const result = getUsersValidation.safeParse({ search: "  haack  " });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.search).toBe("haack");
+      }
+    });
+
     it("accepts empty object with optional fields", () => {
       const result = getUsersValidation.safeParse({});
       expect(result.success).toBe(true);

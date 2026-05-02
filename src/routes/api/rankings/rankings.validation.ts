@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { configuration } from "../../../configuration";
+import {
+  currentPageValidation,
+  federationSlugValidation,
+  perPageValidation,
+  yearPathValidation,
+} from "../query.validation";
 
 export const equipmentEnum = z.enum([
   "raw",
@@ -24,26 +29,18 @@ export const sortEnum = z.enum([
 ]);
 export const eventEnum = z.enum(["full-power", "push-pull", "squat", "bench", "deadlift"]);
 
-const { maxPerPage } = configuration.pagination;
-
 export const getRankingsValidation = z.object({
-  per_page: z
-    .string()
-    .transform((val) => Math.min(Number(val), maxPerPage))
-    .optional(),
-  current_page: z
-    .string()
-    .transform((val) => Math.max(1, Number(val)))
-    .optional(),
+  per_page: perPageValidation.optional(),
+  current_page: currentPageValidation.optional(),
   units: z.enum(["lbs", "kg"]).default("lbs").optional(),
-  federation: z.string().optional(),
+  federation: federationSlugValidation.optional(),
 });
 
 export const getFilteredRankingsParamValidation = z.object({
   equipment: equipmentEnum.optional(),
   sex: sexEnum.optional(),
   weight_class: z.string().optional(),
-  year: z.string().optional(),
+  year: yearPathValidation.optional(),
   event: eventEnum.optional(),
   sort: sortEnum.optional(),
 });
@@ -61,16 +58,10 @@ export const ageClassEnum = z.enum([
 ]);
 
 export const getFilteredRankingsQueryValidation = z.object({
-  per_page: z
-    .string()
-    .transform((val) => Math.min(Number(val), maxPerPage))
-    .optional(),
-  current_page: z
-    .string()
-    .transform((val) => Math.max(1, Number(val)))
-    .optional(),
+  per_page: perPageValidation.optional(),
+  current_page: currentPageValidation.optional(),
   units: z.enum(["lbs", "kg"]).default("lbs").optional(),
-  federation: z.string().optional(),
+  federation: federationSlugValidation.optional(),
   age_class: ageClassEnum.optional(),
 });
 

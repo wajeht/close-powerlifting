@@ -134,9 +134,7 @@ export function createRankingService(scraper: ScraperType) {
     age_class?: string,
   ): Promise<{ rows: RankingRow[]; totalLength: number }> {
     const filterPath = buildFilterPath(filters, { federation, age_class });
-    const start = currentPage === 1 ? 0 : (currentPage - 1) * perPage;
-    const end = start + perPage;
-    const query = `start=${start}&end=${end}&lang=en&units=${units}`;
+    const query = scraper.buildPaginationQuery(currentPage, perPage, units);
     const response = await scraper.fetchJson<RankingsApiResponse>(
       `/rankings${filterPath}?${query}`,
     );

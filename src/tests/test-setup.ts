@@ -51,6 +51,9 @@ export const knex = database.instance;
 const context = createContext();
 
 vi.spyOn(context.scraper, "fetchJson").mockImplementation(async (path: string) => {
+  if (path.includes("/search/rankings")) {
+    return { next_index: 0 };
+  }
   if (path.includes("raw") && path.includes("women") && path.includes("75")) {
     return rankingsRawWomen75;
   }

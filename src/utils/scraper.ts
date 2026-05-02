@@ -53,6 +53,8 @@ export interface ScraperType {
 }
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
+  const inFlightCacheFetches = new Map<string, Promise<ApiResponse<unknown>>>();
+
   async function fetchHtml(path: string, units: string = "lbs"): Promise<string> {
     const url = `${configuration.openpowerlifting.baseUrl}/${path.startsWith("/") ? path.slice(1) : path}`;
     const response = await fetch(url, {
@@ -154,7 +156,22 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     try {
       const cached = await cache.get(key);
       if (cached) {
-        return { data: JSON.parse(cached) as T };
+        try {
+          return { data: JSON.parse(cached) as T };
+        } catch (error) {
+          logger.warn(
+            `Cache parse error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+          try {
+            await cache.del(key);
+          } catch (deleteError) {
+            logger.warn(
+              `Cache delete error for ${key}: ${
+                deleteError instanceof Error ? deleteError.message : String(deleteError)
+              }`,
+            );
+          }
+        }
       }
     } catch (error) {
       logger.warn(
@@ -162,20 +179,36 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
       );
     }
 
-    try {
-      const data = await fetcher();
-
-      cache.set(key, JSON.stringify(data)).catch((error) => {
-        logger.warn(
-          `Cache write error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
-        );
-      });
-
-      return { data };
-    } catch (error) {
-      logScraperError(error, key);
-      return { data: null };
+    const existingFetch = inFlightCacheFetches.get(key);
+    if (existingFetch) {
+      return existingFetch as Promise<ApiResponse<T>>;
     }
+
+    const fetchPromise = (async (): Promise<ApiResponse<T>> => {
+      try {
+        const data = await fetcher();
+
+        try {
+          await cache.set(key, JSON.stringify(data));
+        } catch (error) {
+          logger.warn(
+            `Cache write error for ${key}: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+        }
+
+        return { data };
+      } catch (error) {
+        logScraperError(error, key);
+        return { data: null };
+      } finally {
+        inFlightCacheFetches.delete(key);
+      }
+    })();
+
+    inFlightCacheFetches.set(key, fetchPromise as Promise<ApiResponse<unknown>>);
+    return fetchPromise;
   }
 
   function logScraperError(error: unknown, context: string): void {

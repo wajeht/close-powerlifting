@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
 import { createUserService, transformCompetitionResults } from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
+import { rankingsDefault } from "../rankings/fixtures";
 
 const context = createContext();
 const scraper = context.scraper;
@@ -280,6 +281,33 @@ describe.concurrent("users service", () => {
       expect(result[0].deadlift).toBe("");
     });
 
+    it("returns empty string when all attempts for a lift failed", () => {
+      const rows = [
+        {
+          place: "DQ",
+          squat1: "-200",
+          squat2: "-210",
+          squat3: "-220",
+          squat4: "",
+          bench1: "100",
+          bench2: "",
+          bench3: "",
+          bench4: "",
+          deadlift1: "-250",
+          deadlift2: "-260",
+          deadlift3: "-270",
+          deadlift4: "",
+          total: "",
+          dots: "",
+        },
+      ];
+
+      const result = transformCompetitionResults(rows);
+      expect(result[0].squat).toBe("");
+      expect(result[0].bench).toBe("100");
+      expect(result[0].deadlift).toBe("");
+    });
+
     it("preserves non-attempt columns unchanged", () => {
       const rows = [
         {
@@ -322,6 +350,29 @@ describe.concurrent("users service", () => {
 
     it("default per_page is within max limit", () => {
       expect(defaultPerPage).toBeLessThanOrEqual(maxPerPage);
+    });
+  });
+
+  describe("searchUser", () => {
+    it("uses an exclusive end index when fetching search rankings", async () => {
+      const fetchJsonSpy = vi
+        .spyOn(scraper, "fetchJson")
+        .mockImplementationOnce(async () => ({ next_index: 42 }))
+        .mockImplementationOnce(async () => rankingsDefault);
+
+      const result = await userService.searchUser({
+        search: "unique-haack-search",
+        per_page: 5,
+        current_page: 1,
+        units: "kg",
+      });
+
+      expect(result.data).not.toBeNull();
+      expect(fetchJsonSpy).toHaveBeenNthCalledWith(
+        1,
+        "/search/rankings?q=unique-haack-search&start=0",
+      );
+      expect(fetchJsonSpy).toHaveBeenNthCalledWith(2, "/rankings?start=42&end=47&lang=en&units=kg");
     });
   });
 });
