@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
-import { createMeetService } from "./meets.service";
+import { createMeetService, buildMeetHighlights } from "./meets.service";
 import {
   meetRps2548Html,
   meetUsaplIsr2025Html,
@@ -169,6 +169,99 @@ describe("meets service", () => {
 
       expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", undefined);
       fetchSpy.mockRestore();
+    });
+  });
+
+  describe("buildMeetHighlights", () => {
+    it("returns title, date, location from the source meet", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      expect(highlights.title).toBe(uspaMeet.title);
+      expect(highlights.date).toBe(uspaMeet.date);
+      expect(highlights.location).toBe(uspaMeet.location);
+    });
+
+    it("total_lifters matches results length", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      expect(highlights.total_lifters).toBe(uspaMeet.results.length);
+    });
+
+    it("weight_classes_contested includes only distinct values", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      expect(highlights.weight_classes_contested).toEqual([
+        ...new Set(highlights.weight_classes_contested),
+      ]);
+    });
+
+    it("top_by_dots is at most 3 lifters", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      expect(highlights.top_by_dots.length).toBeLessThanOrEqual(3);
+    });
+
+    it("top_by_total is at most 3 lifters", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      expect(highlights.top_by_total.length).toBeLessThanOrEqual(3);
+    });
+
+    it("top_by_dots is sorted descending by DOTS", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      for (let i = 1; i < highlights.top_by_dots.length; i++) {
+        const prev = parseFloat(highlights.top_by_dots[i - 1]!.dots || "0");
+        const curr = parseFloat(highlights.top_by_dots[i]!.dots || "0");
+        expect(prev).toBeGreaterThanOrEqual(curr);
+      }
+    });
+
+    it("top_by_total is sorted descending by total", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      for (let i = 1; i < highlights.top_by_total.length; i++) {
+        const prev = parseFloat(highlights.top_by_total[i - 1]!.total || "0");
+        const curr = parseFloat(highlights.top_by_total[i]!.total || "0");
+        expect(prev).toBeGreaterThanOrEqual(curr);
+      }
+    });
+
+    it("returns empty top arrays when meet has no results", () => {
+      const empty = { ...uspaMeet, results: [] };
+      const highlights = buildMeetHighlights(empty);
+      expect(highlights.total_lifters).toBe(0);
+      expect(highlights.top_by_dots).toEqual([]);
+      expect(highlights.top_by_total).toEqual([]);
+      expect(highlights.weight_classes_contested).toEqual([]);
+    });
+
+    it("each highlighted lifter has place, name, total, dots", () => {
+      const highlights = buildMeetHighlights(uspaMeet);
+      if (highlights.top_by_dots.length > 0) {
+        const lifter = highlights.top_by_dots[0]!;
+        expect(lifter).toHaveProperty("place");
+        expect(lifter).toHaveProperty("name");
+        expect(lifter).toHaveProperty("total");
+        expect(lifter).toHaveProperty("dots");
+      }
+    });
+  });
+
+  describe("getMeetHighlights service method", () => {
+    it("uses a highlights-suffixed cache key", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockResolvedValueOnce({ data: buildMeetHighlights(uspaMeet) });
+
+      await meetService.getMeetHighlights({ meet: "uspa/1969" });
+
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-highlights", expect.any(Function));
+      cacheSpy.mockRestore();
+    });
+
+    it("includes units in cache key when provided", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockResolvedValueOnce({ data: buildMeetHighlights(uspaMeet) });
+
+      await meetService.getMeetHighlights({ meet: "uspa/1969" }, "kg");
+
+      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-highlights-kg", expect.any(Function));
+      cacheSpy.mockRestore();
     });
   });
 

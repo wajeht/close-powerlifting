@@ -1,6 +1,69 @@
 import type { ScraperType } from "../../../context";
-import type { MeetData, MeetResult, ApiResponse } from "../../../types";
-import type { GetMeetParamType } from "./meets.validation";
+import type {
+  MeetData,
+  MeetResult,
+  ApiResponse,
+  MeetHighlights,
+  MeetHighlightLifter,
+} from "../../../types";
+import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
+
+const HIGHLIGHTS_TOP_N = 3;
+
+function meetField(row: MeetResult, ...candidates: string[]): string {
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase();
+    for (const key of Object.keys(row)) {
+      if (key.toLowerCase() === lower) {
+        const value = row[key];
+        if (value != null) return value;
+      }
+    }
+  }
+  return "";
+}
+
+function toLifter(row: MeetResult): MeetHighlightLifter {
+  return {
+    place: meetField(row, "rank", "place"),
+    name: meetField(row, "lifter", "name"),
+    sex: meetField(row, "sex"),
+    weight_class: meetField(row, "class", "weight_class"),
+    bodyweight: meetField(row, "weight", "bodyweight"),
+    squat: meetField(row, "squat"),
+    bench: meetField(row, "bench"),
+    deadlift: meetField(row, "deadlift"),
+    total: meetField(row, "total"),
+    dots: meetField(row, "dots"),
+  };
+}
+
+export function buildMeetHighlights(meet: MeetData): MeetHighlights {
+  const lifters = meet.results;
+
+  const byDots = [...lifters].sort(
+    (a, b) => parseFloat(meetField(b, "dots") || "0") - parseFloat(meetField(a, "dots") || "0"),
+  );
+  const byTotal = [...lifters].sort(
+    (a, b) => parseFloat(meetField(b, "total") || "0") - parseFloat(meetField(a, "total") || "0"),
+  );
+
+  const weightClasses = new Set<string>();
+  for (const row of lifters) {
+    const wc = meetField(row, "class", "weight_class");
+    if (wc) weightClasses.add(wc);
+  }
+
+  return {
+    title: meet.title,
+    date: meet.date,
+    location: meet.location,
+    total_lifters: lifters.length,
+    weight_classes_contested: [...weightClasses].sort(),
+    top_by_dots: byDots.slice(0, HIGHLIGHTS_TOP_N).map(toLifter),
+    top_by_total: byTotal.slice(0, HIGHLIGHTS_TOP_N).map(toLifter),
+  };
+}
 
 export function createMeetService(scraper: ScraperType) {
   function parseMeetHtml(doc: Document): MeetData {
@@ -39,8 +102,21 @@ export function createMeetService(scraper: ScraperType) {
     return scraper.withCache<MeetData>(cacheKey, () => fetchMeetData(meet, sort, units));
   }
 
+  async function getMeetHighlights(
+    { meet }: GetMeetHighlightsParamType,
+    units?: string,
+  ): Promise<ApiResponse<MeetHighlights>> {
+    const meetPath = meet;
+    const cacheKey = `meet-${meetPath}-highlights${units ? `-${units}` : ""}`;
+    return scraper.withCache<MeetHighlights>(cacheKey, async () => {
+      const data = await fetchMeetData(meetPath, undefined, units);
+      return buildMeetHighlights(data);
+    });
+  }
+
   return {
     parseMeetHtml,
     getMeet,
+    getMeetHighlights,
   };
 }

@@ -7,8 +7,11 @@ import { createMeetService } from "./meets.service";
 import {
   getMeetParamValidation,
   getMeetQueryValidation,
+  getMeetHighlightsParamValidation,
+  getMeetHighlightsQueryValidation,
   GetMeetParamType,
   GetMeetQueryType,
+  GetMeetHighlightsQueryType,
 } from "./meets.validation";
 
 /**
@@ -117,6 +120,88 @@ export function createMeetsRouter(context: AppContext) {
    *   "data": []
    * }
    */
+  /**
+   * Meet highlight lifter
+   * @typedef {object} MeetHighlightLifter
+   * @property {string} place - Placement
+   * @property {string} name - Lifter name
+   * @property {string} sex - M or F
+   * @property {string} weight_class - Weight class
+   * @property {string} bodyweight - Body weight
+   * @property {string} squat - Best squat
+   * @property {string} bench - Best bench
+   * @property {string} deadlift - Best deadlift
+   * @property {string} total - Total
+   * @property {string} dots - DOTS score
+   */
+
+  /**
+   * Meet highlights data
+   * @typedef {object} MeetHighlightsData
+   * @property {string} title - Meet title
+   * @property {string} date - Meet date
+   * @property {string} location - Meet location
+   * @property {number} total_lifters - Total lifters
+   * @property {string[]} weight_classes_contested - Distinct weight classes
+   * @property {MeetHighlightLifter[]} top_by_dots - Top 3 by DOTS
+   * @property {MeetHighlightLifter[]} top_by_total - Top 3 by total
+   */
+
+  /**
+   * Meet highlights response
+   * @typedef {object} MeetHighlightsResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {MeetHighlightsData} data - Highlights data
+   */
+
+  /**
+   * GET /api/meets/{federation}/{code}/highlights
+   * @tags Meets
+   * @summary Get meet highlights
+   * @description Returns a summary of a meet: total lifters, weight classes contested, and top 3 lifters by DOTS and by total.
+   * @security BearerAuth
+   * @param {string} federation.path.required - Federation slug (e.g., uspa, usapl)
+   * @param {string} code.path.required - Meet code (e.g., 1969, ISR-2025-02)
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @return {MeetHighlightsResponse} 200 - Highlights data
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Meet not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   */
+  router.get(
+    "/api/meets/:federation/:code/highlights",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({
+      query: getMeetHighlightsQueryValidation,
+    }),
+    async (
+      req: Request<{ federation: string; code: string }, {}, {}, GetMeetHighlightsQueryType>,
+      res: Response,
+    ) => {
+      const meetPath = `${req.params.federation}/${req.params.code}`;
+      const parsed = getMeetHighlightsParamValidation.safeParse({ meet: meetPath });
+      if (!parsed.success) throw new NotFoundError("The resource cannot be found!");
+
+      const result = await meetService.getMeetHighlights(parsed.data, req.query.units);
+
+      if (!result.data) throw new NotFoundError("The resource cannot be found!");
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: result.data,
+      });
+    },
+  );
+
   router.get(
     "/api/meets/*meet",
     middleware.rateLimitMiddleware,

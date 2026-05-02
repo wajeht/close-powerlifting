@@ -27,5 +27,17 @@ export const getMeetQueryValidation = z.object({
   units: z.enum(["lbs", "kg"]).default("lbs").optional(),
 });
 
+export const getMeetHighlightsParamValidation = z.object({
+  meet: z.union([z.string(), z.array(z.string())]).transform((val) => {
+    return Array.isArray(val) ? val.join("/") : val;
+  }),
+});
+
+export const getMeetHighlightsQueryValidation = z.object({
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+});
+
 export type GetMeetParamType = z.infer<typeof getMeetParamValidation>;
 export type GetMeetQueryType = z.infer<typeof getMeetQueryValidation>;
+export type GetMeetHighlightsParamType = z.infer<typeof getMeetHighlightsParamValidation>;
+export type GetMeetHighlightsQueryType = z.infer<typeof getMeetHighlightsQueryValidation>;

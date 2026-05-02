@@ -167,3 +167,55 @@ describe("GET /api/meets/:meet", () => {
     expect(kgFirst.weight).toBe("75");
   });
 });
+
+describe("GET /api/meets/:fed/:code/highlights", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get("/api/meets/uspa/1969/highlights");
+    expect(response.status).toBe(401);
+  });
+
+  it("should return highlights with correct response shape", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969/highlights");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("The resource was returned successfully!");
+    expect(response.body.request_url).toBe("/api/meets/uspa/1969/highlights");
+    expect(response.body.data).toHaveProperty("title");
+    expect(response.body.data).toHaveProperty("date");
+    expect(response.body.data).toHaveProperty("location");
+    expect(response.body.data).toHaveProperty("total_lifters");
+    expect(response.body.data).toHaveProperty("weight_classes_contested");
+    expect(response.body.data).toHaveProperty("top_by_dots");
+    expect(response.body.data).toHaveProperty("top_by_total");
+  });
+
+  it("top_by_dots and top_by_total are at most 3 lifters", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969/highlights");
+    expect(response.body.data.top_by_dots.length).toBeLessThanOrEqual(3);
+    expect(response.body.data.top_by_total.length).toBeLessThanOrEqual(3);
+  });
+
+  it("highlighted lifters expose place, name, total, dots", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets/uspa/1969/highlights");
+    const lifter = response.body.data.top_by_dots[0];
+    expect(lifter).toHaveProperty("place");
+    expect(lifter).toHaveProperty("name");
+    expect(lifter).toHaveProperty("total");
+    expect(lifter).toHaveProperty("dots");
+  });
+
+  it("should accept units=kg query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/meets/uspa/1969/highlights?units=kg",
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 400 for invalid units value", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/meets/uspa/1969/highlights?units=stones",
+    );
+    expect(response.status).toBe(400);
+  });
+});

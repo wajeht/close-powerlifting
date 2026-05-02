@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { meetSortEnum, getMeetQueryValidation } from "./meets.validation";
+import {
+  meetSortEnum,
+  getMeetQueryValidation,
+  getMeetHighlightsParamValidation,
+  getMeetHighlightsQueryValidation,
+} from "./meets.validation";
 
 describe.concurrent("meets validation", () => {
   describe("meetSortEnum", () => {
@@ -98,6 +103,44 @@ describe.concurrent("meets validation", () => {
 
     it("rejects valid sort with invalid units", () => {
       const result = getMeetQueryValidation.safeParse({ sort: "by-dots", units: "invalid" });
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("getMeetHighlightsParamValidation", () => {
+    it("accepts a string meet path", () => {
+      const result = getMeetHighlightsParamValidation.safeParse({ meet: "uspa/1969" });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.meet).toBe("uspa/1969");
+      }
+    });
+
+    it("joins array meet path with slashes", () => {
+      const result = getMeetHighlightsParamValidation.safeParse({ meet: ["uspa", "1969"] });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.meet).toBe("uspa/1969");
+      }
+    });
+  });
+
+  describe("getMeetHighlightsQueryValidation", () => {
+    it("accepts no params (units defaults to lbs)", () => {
+      const result = getMeetHighlightsQueryValidation.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.units).toBe("lbs");
+      }
+    });
+
+    it("accepts units=kg", () => {
+      const result = getMeetHighlightsQueryValidation.safeParse({ units: "kg" });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects invalid units", () => {
+      const result = getMeetHighlightsQueryValidation.safeParse({ units: "stones" });
       expect(result.success).toBe(false);
     });
   });
