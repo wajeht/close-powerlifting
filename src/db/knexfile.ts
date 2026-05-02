@@ -44,10 +44,16 @@ let knexConfig: Knex.Config = {
 };
 
 if (isTesting) {
+  // Each connection to a `:memory:` SQLite database is a separate, empty database.
+  // Pin the pool to a single connection so all queries share the same in-memory tables.
   knexConfig = {
     ...knexConfig,
     connection: {
       filename: ":memory:",
+    },
+    pool: {
+      min: 1,
+      max: 1,
     },
     log: {
       warn: () => {},

@@ -18,7 +18,11 @@ import {
 } from "../routes/api/rankings/fixtures";
 import { mlistHtml, mlistUsaplHtml } from "../routes/api/federations/fixtures";
 import { statusHtml } from "../routes/api/status/fixtures";
-import { userJohnHaackHtml, userJohnHaackKgHtml } from "../routes/api/users/fixtures";
+import {
+  userJohnHaackHtml,
+  userJohnHaackKgHtml,
+  userKristyHawkinsHtml,
+} from "../routes/api/users/fixtures";
 import {
   meetUspa1969Html,
   meetUspa1969ByWilksHtml,
@@ -90,6 +94,9 @@ vi.spyOn(context.scraper, "fetchHtml").mockImplementation(async (path: string, _
   }
   if (path.includes("johnhaack") || path.includes("search=haack")) {
     return _units === "kg" ? userJohnHaackKgHtml : userJohnHaackHtml;
+  }
+  if (path.includes("kristyhawkins")) {
+    return userKristyHawkinsHtml;
   }
   if (path.includes("m/uspa/1969")) {
     if (path.includes("by-wilks")) {
