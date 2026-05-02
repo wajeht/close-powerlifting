@@ -147,6 +147,10 @@ const fixtures: FixtureConfig[] = [
     url: "/records/raw/expanded-classes",
     path: "records/fixtures/records-raw-expanded-classes.html",
   },
+  {
+    url: "/records/raw/para-classes",
+    path: "records/fixtures/records-raw-para-classes.html",
+  },
 
   // Records (HTML) - Equipment + Weight Class + Sex
   {

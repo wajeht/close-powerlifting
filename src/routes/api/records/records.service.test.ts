@@ -12,6 +12,7 @@ import {
   recordsAllTestedHtml,
   recordsUnlimitedWpClassesHtml,
   recordsUnlimitedWpClassesWomenHtml,
+  recordsRawParaClassesHtml,
 } from "./fixtures";
 
 const context = createContext();
@@ -27,6 +28,7 @@ const unlimitedDoc = scraper.parseHtml(recordsUnlimitedHtml);
 const allTestedDoc = scraper.parseHtml(recordsAllTestedHtml);
 const unlimitedWpClassesDoc = scraper.parseHtml(recordsUnlimitedWpClassesHtml);
 const unlimitedWpClassesWomenDoc = scraper.parseHtml(recordsUnlimitedWpClassesWomenHtml);
+const rawParaClassesDoc = scraper.parseHtml(recordsRawParaClassesHtml);
 
 const defaultCategories = recordService.parseRecordsHtml(defaultDoc);
 const rawCategories = recordService.parseRecordsHtml(rawDoc);
@@ -39,6 +41,7 @@ const unlimitedWpClassesCategories = recordService.parseRecordsHtml(unlimitedWpC
 const unlimitedWpClassesWomenCategories = recordService.parseRecordsHtml(
   unlimitedWpClassesWomenDoc,
 );
+const rawParaClassesCategories = recordService.parseRecordsHtml(rawParaClassesDoc);
 
 describe.concurrent("records service", () => {
   describe("parseRecordsHtml", () => {
@@ -91,6 +94,16 @@ describe.concurrent("records service", () => {
       expect(unlimitedWpClassesWomenCategories).toBeDefined();
       expect(Array.isArray(unlimitedWpClassesWomenCategories)).toBe(true);
       expect(unlimitedWpClassesWomenCategories.length).toBeGreaterThan(0);
+    });
+
+    it("parses raw para-classes records HTML correctly", () => {
+      expect(rawParaClassesCategories).toBeDefined();
+      expect(Array.isArray(rawParaClassesCategories)).toBe(true);
+      expect(rawParaClassesCategories.length).toBeGreaterThan(0);
+      for (const category of rawParaClassesCategories) {
+        expect(category.title.length).toBeGreaterThan(0);
+        expect(Array.isArray(category.records)).toBe(true);
+      }
     });
 
     it("extracts record categories from default records", () => {

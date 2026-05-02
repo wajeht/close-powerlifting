@@ -29,6 +29,10 @@ export const recordsRawExpandedClassesHtml = readFileSync(
   join(fixturesDir, "records-raw-expanded-classes.html"),
   "utf-8",
 );
+export const recordsRawParaClassesHtml = readFileSync(
+  join(fixturesDir, "records-raw-para-classes.html"),
+  "utf-8",
+);
 
 // Equipment + Weight Class + Sex
 export const recordsUnlimitedWpClassesWomenHtml = readFileSync(
