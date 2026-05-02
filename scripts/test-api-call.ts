@@ -27,9 +27,11 @@ const ROUTES = [
   { path: "/api/federations/uspa", requiresAuth: true },
   { path: "/api/federations/usapl", requiresAuth: true },
   { path: "/api/federations/ipf", requiresAuth: true },
+  { path: "/api/federations/ipf/stats", requiresAuth: true },
 
   // Meets
   { path: "/api/meets/uspa/1969", requiresAuth: true },
+  { path: "/api/meets/uspa/1969/highlights", requiresAuth: true },
 
   // Records - All equipment types
   { path: "/api/records", requiresAuth: true },
@@ -73,6 +75,10 @@ const ROUTES = [
   // Users
   { path: "/api/users?search=haack", requiresAuth: true },
   { path: "/api/users/johnhaack", requiresAuth: true },
+  { path: "/api/users/johnhaack/progression", requiresAuth: true },
+  { path: "/api/users/johnhaack/personal-bests", requiresAuth: true },
+  { path: "/api/users/johnhaack/rank", requiresAuth: true },
+  { path: "/api/users/compare?a=johnhaack&b=kristyhawkins", requiresAuth: true },
 ];
 
 interface TestResult {
