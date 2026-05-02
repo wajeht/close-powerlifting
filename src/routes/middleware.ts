@@ -63,6 +63,8 @@ export interface MiddlewareType {
     maxAgeSeconds?: number,
   ) => (req: Request, res: Response, next: NextFunction) => void;
   apiCacheControlMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  noCacheMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  sameOriginMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   turnstileMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
@@ -577,6 +579,27 @@ export function createMiddleware(
     next();
   }
 
+  function noCacheMiddleware(_req: Request, res: Response, next: NextFunction): void {
+    res.set("Cache-Control", "no-store, private");
+    res.set("Pragma", "no-cache");
+    next();
+  }
+
+  function sameOriginMiddleware(req: Request, res: Response, next: NextFunction): void {
+    const fetchSite = req.headers["sec-fetch-site"];
+    if (fetchSite !== undefined && fetchSite !== "same-origin") {
+      res.status(403).json({
+        status: "fail",
+        request_url: req.originalUrl,
+        message: "Cross-origin requests are not allowed for this resource.",
+        errors: [],
+        data: [],
+      });
+      return;
+    }
+    next();
+  }
+
   async function turnstileMiddleware(
     req: Request,
     res: Response,
@@ -634,6 +657,8 @@ export function createMiddleware(
     appLocalStateMiddleware,
     cacheControlMiddleware,
     apiCacheControlMiddleware,
+    noCacheMiddleware,
+    sameOriginMiddleware,
     turnstileMiddleware,
   };
 }

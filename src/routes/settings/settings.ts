@@ -169,6 +169,8 @@ export function createSettingsRouter(context: AppContext) {
   router.get(
     "/settings/api-key",
     middleware.sessionAuthenticationMiddleware,
+    middleware.sameOriginMiddleware,
+    middleware.noCacheMiddleware,
     async (req: Request, res: Response) => {
       const sessionUser = req.session.user!;
       const user = await context.userRepository.findById(sessionUser.id);

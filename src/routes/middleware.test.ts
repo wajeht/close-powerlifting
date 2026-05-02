@@ -574,6 +574,88 @@ describe("apiCacheControlMiddleware", () => {
   });
 });
 
+describe("noCacheMiddleware", () => {
+  let req: any;
+  let res: any;
+  let next: any;
+
+  beforeEach(() => {
+    req = {};
+    res = {
+      set: vi.fn(),
+    };
+    next = vi.fn();
+  });
+
+  it("should set Cache-Control no-store and Pragma headers", () => {
+    middleware.noCacheMiddleware(req, res, next);
+
+    expect(res.set).toHaveBeenCalledWith("Cache-Control", "no-store, private");
+    expect(res.set).toHaveBeenCalledWith("Pragma", "no-cache");
+    expect(next).toHaveBeenCalled();
+  });
+});
+
+describe("sameOriginMiddleware", () => {
+  let req: any;
+  let res: any;
+  let next: any;
+
+  beforeEach(() => {
+    req = { headers: {}, originalUrl: "/settings/api-key" };
+    res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn(),
+    };
+    next = vi.fn();
+  });
+
+  it("should call next when Sec-Fetch-Site header is absent", () => {
+    middleware.sameOriginMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("should call next when Sec-Fetch-Site is same-origin", () => {
+    req.headers["sec-fetch-site"] = "same-origin";
+    middleware.sameOriginMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("should return 403 when Sec-Fetch-Site is cross-site", () => {
+    req.headers["sec-fetch-site"] = "cross-site";
+    middleware.sameOriginMiddleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "fail",
+        request_url: "/settings/api-key",
+      }),
+    );
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("should return 403 when Sec-Fetch-Site is same-site", () => {
+    req.headers["sec-fetch-site"] = "same-site";
+    middleware.sameOriginMiddleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("should return 403 when Sec-Fetch-Site is none (direct navigation)", () => {
+    req.headers["sec-fetch-site"] = "none";
+    middleware.sameOriginMiddleware(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
 describe("ETag support", () => {
   it("should include ETag header on responses", async () => {
     const agent = createUnauthenticatedSessionAgent();
