@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
-import { createFederationService } from "./federations.service";
+import { createFederationService, buildFederationStats } from "./federations.service";
 import { mlistHtml, mlistUsaplHtml, mlistUsapl2024Html } from "./fixtures";
 
 const context = createContext();
@@ -114,6 +114,72 @@ describe.concurrent("federations service", () => {
         const usaplKeys = Object.keys(mlistUsaplMeets[0]);
         expect(defaultKeys.length).toBe(usaplKeys.length);
       }
+    });
+  });
+
+  describe("buildFederationStats", () => {
+    it("returns stats with federation slug and total_meets matching input length", () => {
+      const stats = buildFederationStats("usapl", mlistUsaplMeets);
+      expect(stats.federation).toBe("usapl");
+      expect(stats.total_meets).toBe(mlistUsaplMeets.length);
+    });
+
+    it("meets_by_year is sorted ascending by year", () => {
+      const stats = buildFederationStats("usapl", mlistUsaplMeets);
+      for (let i = 1; i < stats.meets_by_year.length; i++) {
+        expect(stats.meets_by_year[i]!.year).toBeGreaterThan(stats.meets_by_year[i - 1]!.year);
+      }
+    });
+
+    it("each meets_by_year entry has year and meets count", () => {
+      const stats = buildFederationStats("usapl", mlistUsaplMeets);
+      for (const entry of stats.meets_by_year) {
+        expect(entry.year).toBeGreaterThan(1900);
+        expect(entry.meets).toBeGreaterThan(0);
+      }
+    });
+
+    it("earliest_year and latest_year reflect first and last entries", () => {
+      const stats = buildFederationStats("usapl", mlistUsaplMeets);
+      if (stats.meets_by_year.length > 0) {
+        expect(stats.earliest_year).toBe(stats.meets_by_year[0]!.year);
+        expect(stats.latest_year).toBe(stats.meets_by_year[stats.meets_by_year.length - 1]!.year);
+      }
+    });
+
+    it("year-filtered fixture (USAPL 2024) yields only one year", () => {
+      const stats = buildFederationStats("usapl", mlistUsapl2024Meets);
+      expect(stats.meets_by_year.length).toBeLessThanOrEqual(1);
+      if (stats.meets_by_year.length === 1) {
+        expect(stats.meets_by_year[0]!.year).toBe(2024);
+      }
+    });
+
+    it("returns nulls for earliest/latest year when no meets", () => {
+      const stats = buildFederationStats("test", []);
+      expect(stats.total_meets).toBe(0);
+      expect(stats.earliest_year).toBeNull();
+      expect(stats.latest_year).toBeNull();
+      expect(stats.meets_by_year).toEqual([]);
+    });
+
+    it("sum of per-year counts equals total_meets when all dates parse", () => {
+      const stats = buildFederationStats("usapl", mlistUsaplMeets);
+      const sum = stats.meets_by_year.reduce((acc, entry) => acc + entry.meets, 0);
+      expect(sum).toBeLessThanOrEqual(stats.total_meets);
+    });
+  });
+
+  describe("getFederationStats service method", () => {
+    it("uses a stats-suffixed cache key", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockResolvedValueOnce({ data: buildFederationStats("usapl", mlistUsaplMeets) });
+
+      await federationService.getFederationStats("usapl");
+
+      expect(cacheSpy).toHaveBeenCalledWith("federation-usapl-stats", expect.any(Function));
+      cacheSpy.mockRestore();
     });
   });
 

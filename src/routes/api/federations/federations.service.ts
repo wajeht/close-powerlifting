@@ -1,6 +1,12 @@
 import type { ScraperType } from "../../../context";
 import { configuration } from "../../../configuration";
-import type { Meet, ApiResponse, Pagination } from "../../../types";
+import type {
+  Meet,
+  ApiResponse,
+  Pagination,
+  FederationStats,
+  FederationYearStat,
+} from "../../../types";
 import type {
   GetFederationsType,
   GetFederationsParamType,
@@ -8,8 +14,53 @@ import type {
 } from "./federations.validation";
 
 const { defaultPerPage } = configuration.pagination;
+const REGEX_YEAR_PREFIX = /^(\d{4})/;
 
 type FederationMeet = Meet;
+
+function fedField(row: FederationMeet, ...candidates: string[]): string {
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase();
+    for (const key of Object.keys(row)) {
+      if (key.toLowerCase() === lower) {
+        const value = row[key];
+        if (value != null) return value;
+      }
+    }
+  }
+  return "";
+}
+
+export function buildFederationStats(
+  federation: string,
+  meets: ReadonlyArray<FederationMeet>,
+): FederationStats {
+  const yearCounts = new Map<number, number>();
+
+  for (const row of meets) {
+    const dateField = fedField(row, "date");
+    const match = dateField.match(REGEX_YEAR_PREFIX);
+    if (!match) continue;
+    const year = Number(match[1]);
+    if (!Number.isFinite(year)) continue;
+    yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
+  }
+
+  const meetsByYear: FederationYearStat[] = [...yearCounts.entries()]
+    .map(([year, count]) => ({ year, meets: count }))
+    .sort((a, b) => a.year - b.year);
+
+  const earliestYear = meetsByYear.length > 0 ? meetsByYear[0]!.year : null;
+  const latestYear = meetsByYear.length > 0 ? meetsByYear[meetsByYear.length - 1]!.year : null;
+
+  return {
+    federation,
+    total_meets: meets.length,
+    earliest_year: earliestYear,
+    latest_year: latestYear,
+    meets_by_year: meetsByYear,
+  };
+}
 
 export function createFederationService(scraper: ScraperType) {
   function parseFederationMeetsHtml(doc: Document): FederationMeet[] {
@@ -67,9 +118,18 @@ export function createFederationService(scraper: ScraperType) {
     );
   }
 
+  async function getFederationStats(federation: string): Promise<ApiResponse<FederationStats>> {
+    const cacheKey = `federation-${federation}-stats`;
+    return scraper.withCache<FederationStats>(cacheKey, async () => {
+      const meets = await fetchFederationMeets(federation);
+      return buildFederationStats(federation, meets);
+    });
+  }
+
   return {
     parseFederationMeetsHtml,
     getFederations,
     getFederation,
+    getFederationStats,
   };
 }

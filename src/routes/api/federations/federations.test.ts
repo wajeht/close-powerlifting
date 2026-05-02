@@ -99,3 +99,44 @@ describe("GET /api/federations/:federation", () => {
     expect(response.body.status).toBe("fail");
   });
 });
+
+describe("GET /api/federations/:federation/stats", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get("/api/federations/usapl/stats");
+    expect(response.status).toBe(401);
+  });
+
+  it("should return federation stats with correct response shape", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/federations/usapl/stats");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("The resource was returned successfully!");
+    expect(response.body.request_url).toBe("/api/federations/usapl/stats");
+    expect(response.body.data).toHaveProperty("federation", "usapl");
+    expect(response.body.data).toHaveProperty("total_meets");
+    expect(response.body.data).toHaveProperty("earliest_year");
+    expect(response.body.data).toHaveProperty("latest_year");
+    expect(response.body.data).toHaveProperty("meets_by_year");
+    expect(Array.isArray(response.body.data.meets_by_year)).toBe(true);
+  });
+
+  it("meets_by_year entries have year and meets count", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/federations/usapl/stats");
+    if (response.body.data.meets_by_year.length > 0) {
+      const entry = response.body.data.meets_by_year[0];
+      expect(entry).toHaveProperty("year");
+      expect(entry).toHaveProperty("meets");
+      expect(typeof entry.year).toBe("number");
+      expect(typeof entry.meets).toBe("number");
+    }
+  });
+
+  it("meets_by_year is sorted ascending by year", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/federations/usapl/stats");
+    const entries = response.body.data.meets_by_year as Array<{ year: number }>;
+    for (let i = 1; i < entries.length; i++) {
+      expect(entries[i]!.year).toBeGreaterThan(entries[i - 1]!.year);
+    }
+  });
+});
