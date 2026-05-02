@@ -93,7 +93,7 @@
     "supertest": "7.2.2",
     "terser": "5.46.2",
     "tsx": "4.21.0",
-    "vite-plus": "latest",
+    "vite-plus": "^0.1.20",
     "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
   },
   "overrides": {
