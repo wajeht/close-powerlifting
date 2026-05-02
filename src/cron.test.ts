@@ -489,6 +489,32 @@ describe("cron", () => {
       expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/john-doe");
     });
 
+    it("should refresh cached user search keys", async () => {
+      await seedCache(cache, ["users-search-john%20haack-2-5-kg"]);
+      vi.mocked(scraper.fetchJson)
+        .mockResolvedValueOnce({ next_index: 42 })
+        .mockResolvedValueOnce({ rows: [], total_length: 0 });
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(scraper.fetchJson).toHaveBeenCalledWith("/search/rankings?q=john%20haack&start=5");
+      expect(scraper.fetchJson).toHaveBeenCalledWith("/rankings?start=42&end=47&lang=en&units=kg");
+      expect(logger.warn).not.toHaveBeenCalledWith(
+        "refreshCacheKey: unknown key type: users-search-john%20haack-2-5-kg",
+      );
+    });
+
+    it("should warn on invalid user search cache keys", async () => {
+      await seedCache(cache, ["users-search-haack-invalid"]);
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.refreshCache();
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        "refreshCacheKey: invalid users search key format: users-search-haack-invalid",
+      );
+    });
+
     // Unknown key type
     it("should warn on unknown key types", async () => {
       await seedCache(cache, ["unknown-key-type"]);

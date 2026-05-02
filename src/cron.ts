@@ -286,6 +286,58 @@ export function createCron(
       return;
     }
 
+    // User search: users-search-{encodedSearch}-{page}-{perPage}-{units}
+    if (key.startsWith("users-search-")) {
+      const remainder = key.replace("users-search-", "");
+      const lastDashIdx = remainder.lastIndexOf("-");
+      const secondLastDashIdx = remainder.lastIndexOf("-", lastDashIdx - 1);
+      const thirdLastDashIdx = remainder.lastIndexOf("-", secondLastDashIdx - 1);
+
+      if (lastDashIdx === -1 || secondLastDashIdx === -1 || thirdLastDashIdx === -1) {
+        logger.warn(`refreshCacheKey: invalid users search key format: ${key}`);
+        return;
+      }
+
+      const units = remainder.substring(lastDashIdx + 1);
+      const perPage = parseInt(remainder.substring(secondLastDashIdx + 1, lastDashIdx), 10);
+      const currentPage = parseInt(
+        remainder.substring(thirdLastDashIdx + 1, secondLastDashIdx),
+        10,
+      );
+      const encodedSearch = remainder.substring(0, thirdLastDashIdx);
+
+      if ((units !== "lbs" && units !== "kg") || isNaN(currentPage) || isNaN(perPage)) {
+        logger.warn(`refreshCacheKey: invalid users search key values: ${key}`);
+        return;
+      }
+
+      const search = decodeURIComponent(encodedSearch);
+      const offset = (currentPage - 1) * perPage;
+      const searchResult = await scraper.fetchJson<{ next_index: number }>(
+        `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
+      );
+
+      if (!Number.isInteger(searchResult.next_index) || searchResult.next_index < 0) {
+        logger.warn(`refreshCacheKey: invalid users search next_index for key: ${key}`);
+        return;
+      }
+
+      const startIndex = searchResult.next_index;
+      const endIndex = startIndex + perPage;
+      const response = await scraper.fetchJson<RankingsApiResponse>(
+        `/rankings?start=${startIndex}&end=${endIndex}&lang=en&units=${units}`,
+      );
+      const data = {
+        rows: response.rows.map(transformRankingRow),
+        pagination: {
+          per_page: perPage,
+          current_page: currentPage,
+        },
+      };
+      await cache.set(key, JSON.stringify(data));
+      return;
+    }
+
     // Rankings: rankings-{page}-{perPage} or rankings/{filterPath}-{page}-{perPage}
     if (key.startsWith("rankings")) {
       // Parse the key to extract filterPath, page, and perPage
