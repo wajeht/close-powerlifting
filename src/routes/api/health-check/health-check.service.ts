@@ -50,9 +50,12 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Federations", path: "/api/federations?current_page=1&per_page=100" },
   { group: "Federations", path: "/api/federations/ipf" },
   { group: "Federations", path: "/api/federations/ipf?year=2020" },
+  { group: "Federations", path: "/api/federations/ipf/stats" },
 
   // Meets
   { group: "Meets", path: "/api/meets/uspa/1969" },
+  { group: "Meets", path: "/api/meets/uspa/1969/highlights" },
+  { group: "Meets", path: "/api/meets/uspa/1969/highlights?units=kg" },
   { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks" },
   { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks2020" },
   { group: "Meets", path: "/api/meets/uspa/1969?sort=by-glossbrenner" },
@@ -81,6 +84,11 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Users", path: "/api/users/johnhaack?units=kg" },
   { group: "Users", path: "/api/users?search=haack" },
   { group: "Users", path: "/api/users?search=haack&units=kg" },
+  { group: "Users", path: "/api/users/johnhaack/progression" },
+  { group: "Users", path: "/api/users/johnhaack/progression?units=kg" },
+  { group: "Users", path: "/api/users/johnhaack/personal-bests" },
+  { group: "Users", path: "/api/users/johnhaack/rank" },
+  { group: "Users", path: "/api/users/compare?a=johnhaack&b=kristyhawkins" },
 
   // Public (no auth)
   { group: "Public", path: "/api/status" },

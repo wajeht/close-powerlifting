@@ -57,7 +57,7 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
 
 describe("health-check service", () => {
   const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 53;
+  const TOTAL_ROUTES = 61;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -208,7 +208,7 @@ describe("health-check service", () => {
 
       const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
       expect(federationsGroup).toBeDefined();
-      expect(federationsGroup!.routes.length).toBe(4);
+      expect(federationsGroup!.routes.length).toBe(5);
     });
 
     it("Meets group has correct number of routes", async () => {
@@ -225,7 +225,7 @@ describe("health-check service", () => {
 
       const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
       expect(meetsGroup).toBeDefined();
-      expect(meetsGroup!.routes.length).toBe(15);
+      expect(meetsGroup!.routes.length).toBe(17);
     });
 
     it("Records group has correct number of routes", async () => {
@@ -259,7 +259,7 @@ describe("health-check service", () => {
 
       const usersGroup = result.find((g: { name: string }) => g.name === "Users");
       expect(usersGroup).toBeDefined();
-      expect(usersGroup!.routes.length).toBe(5);
+      expect(usersGroup!.routes.length).toBe(10);
     });
 
     it("Public group has correct number of routes", async () => {
@@ -378,6 +378,30 @@ describe("health-check service", () => {
       const urls = usersGroup!.routes.map((r: { url: string }) => r.url);
       expect(urls.some((u: string) => u.includes("include_attempts=true"))).toBe(true);
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
+    });
+
+    it("derived endpoints (progression, PBs, rank, compare, highlights, fed-stats) are tracked", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.refreshAPIStatus({
+        apiKey: "test-key",
+        url: "http://localhost",
+      });
+
+      const allUrls = result.flatMap((g: { routes: { url: string }[] }) =>
+        g.routes.map((r) => r.url),
+      );
+
+      expect(allUrls).toContain("/api/users/johnhaack/progression");
+      expect(allUrls).toContain("/api/users/johnhaack/personal-bests");
+      expect(allUrls).toContain("/api/users/johnhaack/rank");
+      expect(allUrls.some((u: string) => u.startsWith("/api/users/compare?"))).toBe(true);
+      expect(allUrls).toContain("/api/meets/uspa/1969/highlights");
+      expect(allUrls).toContain("/api/federations/ipf/stats");
     });
 
     it("routes in each group have correct URL patterns", async () => {
