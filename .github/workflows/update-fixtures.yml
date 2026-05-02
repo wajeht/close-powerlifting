@@ -56,12 +56,6 @@ jobs:
           add-paths: |
             src/routes/api/**/fixtures/*
 
-      - name: Approve Pull Request
-        if: steps.cpr.outputs.pull-request-number
-        run: gh pr review --approve "${{ steps.cpr.outputs.pull-request-number }}"
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
       - name: Enable auto-merge
         if: steps.cpr.outputs.pull-request-number
         run: gh pr merge --auto --squash "${{ steps.cpr.outputs.pull-request-number }}"
