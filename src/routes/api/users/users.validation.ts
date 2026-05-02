@@ -18,6 +18,24 @@ export const getUserQueryValidation = z.object({
   units: z.enum(["lbs", "kg"]).default("lbs").optional(),
 });
 
+const usernameSlug = z
+  .string()
+  .trim()
+  .min(1)
+  .regex(/^[a-z0-9-]+$/i, { message: "Expected a username slug" });
+
+export const getCompareValidation = z.object({
+  a: usernameSlug,
+  b: usernameSlug,
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+});
+
+export const userUnitsQueryValidation = z.object({
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+});
+
 export type GetUserType = z.infer<typeof getUserValidation>;
 export type GetUserQueryType = z.infer<typeof getUserQueryValidation>;
 export type GetUsersType = z.infer<typeof getUsersValidation>;
+export type GetCompareType = z.infer<typeof getCompareValidation>;
+export type UserUnitsQueryType = z.infer<typeof userUnitsQueryValidation>;

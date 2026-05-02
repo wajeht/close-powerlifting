@@ -8,9 +8,13 @@ import {
   getUserValidation,
   getUsersValidation,
   getUserQueryValidation,
+  getCompareValidation,
+  userUnitsQueryValidation,
   GetUserType,
   GetUserQueryType,
   GetUsersType,
+  GetCompareType,
+  UserUnitsQueryType,
 } from "./users.validation";
 
 /**
@@ -186,6 +190,274 @@ export function createUsersRouter(context: AppContext) {
       }
 
       res.status(308).redirect("/api/rankings");
+    },
+  );
+
+  /**
+   * Progression point
+   * @typedef {object} ProgressionPoint
+   * @property {string} date - Meet date (YYYY-MM-DD)
+   * @property {string} meet - Meet name
+   * @property {string} federation - Federation
+   * @property {string} equipment - Equipment used
+   * @property {string} weight_class - Weight class
+   * @property {string} bodyweight - Body weight
+   * @property {string} squat - Best squat at that meet
+   * @property {string} bench - Best bench at that meet
+   * @property {string} deadlift - Best deadlift at that meet
+   * @property {string} total - Meet total
+   * @property {string} dots - DOTS score at that meet
+   * @property {string} place - Placement
+   */
+
+  /**
+   * Progression response
+   * @typedef {object} ProgressionResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {ProgressionPoint[]} data - Chronological list of meet performances
+   */
+
+  /**
+   * GET /api/users/{username}/progression
+   * @tags Users
+   * @summary Get an athlete's competition progression over time
+   * @description Returns a chronological time-series of total/squat/bench/deadlift/DOTS for every meet in the lifter's history. Useful for charting strength progression.
+   * @security BearerAuth
+   * @param {string} username.path.required - Athlete's username/slug
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @return {ProgressionResponse} 200 - Progression data
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Athlete not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/users/johnhaack/progression",
+   *   "message": "The resource was returned successfully!",
+   *   "data": [{"date": "2018-04-21", "meet": "USAPL Raw Nationals", "total": "2007", "dots": "560.5"}]
+   * }
+   */
+  router.get(
+    "/api/users/:username/progression",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({
+      params: getUserValidation,
+      query: userUnitsQueryValidation,
+    }),
+    async (req: Request<GetUserType, {}, {}, UserUnitsQueryType>, res: Response) => {
+      const units = req.query.units ?? "lbs";
+      const progression = await userService.getProgression(req.params, units);
+
+      if (!progression) throw new NotFoundError("The resource cannot be found!");
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: progression,
+      });
+    },
+  );
+
+  /**
+   * Personal best entry
+   * @typedef {object} PersonalBestEntry
+   * @property {string} value - Best lift value
+   * @property {string} meet - Meet where this PB was set
+   * @property {string} date - Date of the meet
+   * @property {string} federation - Federation
+   */
+
+  /**
+   * Personal bests by equipment
+   * @typedef {object} PersonalBestsByEquipment
+   * @property {string} equipment - Equipment type (Raw, Wraps, etc.)
+   * @property {PersonalBestEntry} squat - Best squat
+   * @property {PersonalBestEntry} bench - Best bench
+   * @property {PersonalBestEntry} deadlift - Best deadlift
+   * @property {PersonalBestEntry} total - Best total
+   * @property {PersonalBestEntry} dots - Best DOTS
+   */
+
+  /**
+   * Personal bests response
+   * @typedef {object} PersonalBestsResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {PersonalBestsByEquipment[]} data - PBs grouped by equipment
+   */
+
+  /**
+   * GET /api/users/{username}/personal-bests
+   * @tags Users
+   * @summary Get an athlete's personal bests grouped by equipment
+   * @description Returns the lifter's all-time best squat, bench, deadlift, total, and DOTS for each equipment type, with the meet and date where each PB was set.
+   * @security BearerAuth
+   * @param {string} username.path.required - Athlete's username/slug
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @return {PersonalBestsResponse} 200 - Personal bests
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Athlete not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   */
+  router.get(
+    "/api/users/:username/personal-bests",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({
+      params: getUserValidation,
+      query: userUnitsQueryValidation,
+    }),
+    async (req: Request<GetUserType, {}, {}, UserUnitsQueryType>, res: Response) => {
+      const units = req.query.units ?? "lbs";
+      const personalBests = await userService.getPersonalBests(req.params, units);
+
+      if (!personalBests) throw new NotFoundError("The resource cannot be found!");
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: personalBests,
+      });
+    },
+  );
+
+  /**
+   * User rank response
+   * @typedef {object} UserRankResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {object} data - Rank info with global_rank, best_dots, best_total, sex, equipment, weight_class
+   */
+
+  /**
+   * GET /api/users/{username}/rank
+   * @tags Users
+   * @summary Get an athlete's global ranking
+   * @description Returns the lifter's current position in the global DOTS-sorted rankings along with their best total, best DOTS, sex, equipment, and weight class.
+   * @security BearerAuth
+   * @param {string} username.path.required - Athlete's username/slug
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @return {UserRankResponse} 200 - Rank info
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - Athlete not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   */
+  router.get(
+    "/api/users/:username/rank",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({
+      params: getUserValidation,
+      query: userUnitsQueryValidation,
+    }),
+    async (req: Request<GetUserType, {}, {}, UserUnitsQueryType>, res: Response) => {
+      const units = req.query.units ?? "lbs";
+      const rank = await userService.getRank(req.params, units);
+
+      if (!rank) throw new NotFoundError("The resource cannot be found!");
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: rank,
+      });
+    },
+  );
+
+  /**
+   * Comparison summary
+   * @typedef {object} UserComparisonSummary
+   * @property {string} name - Lifter name
+   * @property {string} username - Username/slug
+   * @property {string} sex - M or F
+   * @property {number} total_meets - Number of meets in career
+   * @property {string} best_total - All-time best total
+   * @property {string} best_dots - All-time best DOTS
+   * @property {string} best_squat - All-time best squat
+   * @property {string} best_bench - All-time best bench
+   * @property {string} best_deadlift - All-time best deadlift
+   * @property {string} first_meet_date - Date of first meet
+   * @property {string} last_meet_date - Date of most recent meet
+   */
+
+  /**
+   * Shared meet entry
+   * @typedef {object} SharedMeetEntry
+   * @property {string} date - Meet date
+   * @property {string} meet - Meet name
+   * @property {string} federation - Federation
+   * @property {string} a_total - A's total
+   * @property {string} a_dots - A's DOTS
+   * @property {string} a_place - A's placement
+   * @property {string} b_total - B's total
+   * @property {string} b_dots - B's DOTS
+   * @property {string} b_place - B's placement
+   */
+
+  /**
+   * Compare response
+   * @typedef {object} CompareResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {object} data - Comparison object with `a`, `b`, and `shared_meets`
+   */
+
+  /**
+   * GET /api/users/compare
+   * @tags Users
+   * @summary Compare two athletes side-by-side
+   * @description Returns career summary stats for two lifters and any meets where both competed.
+   * @security BearerAuth
+   * @param {string} a.query.required - First athlete's username
+   * @param {string} b.query.required - Second athlete's username
+   * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
+   * @return {CompareResponse} 200 - Comparison data
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 404 - One or both athletes not found
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   */
+  router.get(
+    "/api/users/compare",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.trackAPICallsMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({ query: getCompareValidation }),
+    async (req: Request<{}, {}, {}, GetCompareType>, res: Response) => {
+      const units = req.query.units ?? "lbs";
+      const comparison = await userService.compareUsers({ a: req.query.a, b: req.query.b }, units);
+
+      if (!comparison) throw new NotFoundError("The resource cannot be found!");
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: comparison,
+      });
     },
   );
 

@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
-import { getUsersValidation, getUserValidation, getUserQueryValidation } from "./users.validation";
+import {
+  getUsersValidation,
+  getUserValidation,
+  getUserQueryValidation,
+  getCompareValidation,
+  userUnitsQueryValidation,
+} from "./users.validation";
 
 const { maxPerPage } = configuration.pagination;
 
@@ -191,6 +197,82 @@ describe.concurrent("users validation", () => {
         expect(result.data.include_attempts).toBe("true");
         expect(result.data.units).toBe("kg");
       }
+    });
+  });
+
+  describe("getCompareValidation", () => {
+    it("accepts two valid usernames", () => {
+      const result = getCompareValidation.safeParse({ a: "johnhaack", b: "kristyhawkins" });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects when a is missing", () => {
+      const result = getCompareValidation.safeParse({ b: "kristyhawkins" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects when b is missing", () => {
+      const result = getCompareValidation.safeParse({ a: "johnhaack" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects usernames with invalid characters", () => {
+      const result = getCompareValidation.safeParse({ a: "john_haack", b: "kristyhawkins" });
+      expect(result.success).toBe(false);
+    });
+
+    it("rejects empty username", () => {
+      const result = getCompareValidation.safeParse({ a: "", b: "kristyhawkins" });
+      expect(result.success).toBe(false);
+    });
+
+    it("accepts optional units=kg", () => {
+      const result = getCompareValidation.safeParse({
+        a: "johnhaack",
+        b: "kristyhawkins",
+        units: "kg",
+      });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.units).toBe("kg");
+      }
+    });
+
+    it("rejects invalid units value", () => {
+      const result = getCompareValidation.safeParse({
+        a: "johnhaack",
+        b: "kristyhawkins",
+        units: "stones",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("trims whitespace from usernames", () => {
+      const result = getCompareValidation.safeParse({ a: "  johnhaack  ", b: "kristyhawkins" });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.a).toBe("johnhaack");
+      }
+    });
+  });
+
+  describe("userUnitsQueryValidation", () => {
+    it("accepts no params (units defaults to lbs)", () => {
+      const result = userUnitsQueryValidation.safeParse({});
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.units).toBe("lbs");
+      }
+    });
+
+    it("accepts units=kg", () => {
+      const result = userUnitsQueryValidation.safeParse({ units: "kg" });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects invalid units value", () => {
+      const result = userUnitsQueryValidation.safeParse({ units: "stones" });
+      expect(result.success).toBe(false);
     });
   });
 });

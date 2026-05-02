@@ -2,7 +2,15 @@ import { describe, expect, it, vi } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
-import { createUserService, transformCompetitionResults } from "./users.service";
+import {
+  createUserService,
+  transformCompetitionResults,
+  buildProgression,
+  buildPersonalBests,
+  buildComparisonSummary,
+  findSharedMeets,
+  buildUserRank,
+} from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
 import { rankingsDefault } from "../rankings/fixtures";
 
@@ -17,7 +25,7 @@ const johnDoc = scraper.parseHtml(userJohnHaackHtml);
 const kristyProfile = userService.parseUserProfileHtml(kristyDoc, "kristyhawkins");
 const johnProfile = userService.parseUserProfileHtml(johnDoc, "johnhaack");
 
-describe.concurrent("users service", () => {
+describe("users service", () => {
   describe("parseUserProfileHtml", () => {
     it("parses Kristy Hawkins profile HTML correctly", () => {
       expect(kristyProfile).toBeDefined();
@@ -350,6 +358,271 @@ describe.concurrent("users service", () => {
 
     it("default per_page is within max limit", () => {
       expect(defaultPerPage).toBeLessThanOrEqual(maxPerPage);
+    });
+  });
+
+  describe("buildProgression", () => {
+    it("returns one point per competition_results row", () => {
+      const points = buildProgression(johnProfile);
+      expect(points.length).toBe(johnProfile.competition_results.length);
+    });
+
+    it("each point exposes date, meet, total, dots, place", () => {
+      const points = buildProgression(johnProfile);
+      const first = points[0]!;
+      expect(first).toHaveProperty("date");
+      expect(first).toHaveProperty("meet");
+      expect(first).toHaveProperty("total");
+      expect(first).toHaveProperty("dots");
+      expect(first).toHaveProperty("place");
+    });
+
+    it("points are sorted ascending by date", () => {
+      const points = buildProgression(johnProfile);
+      for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1]!;
+        const curr = points[i]!;
+        if (prev.date && curr.date) {
+          expect(prev.date.localeCompare(curr.date)).toBeLessThanOrEqual(0);
+        }
+      }
+    });
+
+    it("returns empty array when profile has no competition_results", () => {
+      const empty = { ...johnProfile, competition_results: [] };
+      expect(buildProgression(empty)).toEqual([]);
+    });
+  });
+
+  describe("buildPersonalBests", () => {
+    it("groups PBs by equipment", () => {
+      const bests = buildPersonalBests(johnProfile);
+      expect(Array.isArray(bests)).toBe(true);
+      expect(bests.length).toBeGreaterThan(0);
+      const equipments = bests.map((b) => b.equipment);
+      expect(new Set(equipments).size).toBe(equipments.length);
+    });
+
+    it("each entry has squat, bench, deadlift, total, dots", () => {
+      const bests = buildPersonalBests(johnProfile);
+      const first = bests[0]!;
+      expect(first).toHaveProperty("squat");
+      expect(first).toHaveProperty("bench");
+      expect(first).toHaveProperty("deadlift");
+      expect(first).toHaveProperty("total");
+      expect(first).toHaveProperty("dots");
+    });
+
+    it("each PB entry includes meet, date, federation alongside value", () => {
+      const bests = buildPersonalBests(johnProfile);
+      for (const equipBest of bests) {
+        if (equipBest.total.value !== "") {
+          expect(equipBest.total).toHaveProperty("meet");
+          expect(equipBest.total).toHaveProperty("date");
+          expect(equipBest.total).toHaveProperty("federation");
+        }
+      }
+    });
+
+    it("picks the highest numeric value for each lift", () => {
+      const bests = buildPersonalBests(johnProfile);
+      for (const equipBest of bests) {
+        const totals = johnProfile.competition_results
+          .filter((r) => {
+            const equip = Object.entries(r).find(([k]) => k.toLowerCase() === "equip")?.[1] ?? "";
+            return equip === equipBest.equipment;
+          })
+          .map((r) => parseFloat(r.total ?? "0"))
+          .filter((n) => n > 0);
+        if (totals.length === 0) continue;
+        const maxTotal = Math.max(...totals);
+        if (equipBest.total.value !== "") {
+          expect(parseFloat(equipBest.total.value)).toBe(maxTotal);
+        }
+      }
+    });
+
+    it("returns empty array when profile has no competition_results", () => {
+      const empty = { ...johnProfile, competition_results: [] };
+      expect(buildPersonalBests(empty)).toEqual([]);
+    });
+  });
+
+  describe("buildComparisonSummary", () => {
+    it("contains identifying info and aggregate bests", () => {
+      const summary = buildComparisonSummary(johnProfile);
+      expect(summary.name).toBe(johnProfile.name);
+      expect(summary.username).toBe(johnProfile.username);
+      expect(summary.sex).toBe(johnProfile.sex);
+      expect(summary.total_meets).toBe(johnProfile.competition_results.length);
+      expect(parseFloat(summary.best_total)).toBeGreaterThan(0);
+      expect(parseFloat(summary.best_dots)).toBeGreaterThan(0);
+    });
+
+    it("first_meet_date is the earliest date in results", () => {
+      const summary = buildComparisonSummary(johnProfile);
+      const allDates = johnProfile.competition_results
+        .map((r) => r.date ?? "")
+        .filter((d) => d !== "")
+        .sort();
+      if (allDates.length > 0) {
+        expect(summary.first_meet_date).toBe(allDates[0]);
+        expect(summary.last_meet_date).toBe(allDates[allDates.length - 1]);
+      }
+    });
+  });
+
+  describe("findSharedMeets", () => {
+    it("returns empty array when two lifters never overlap", () => {
+      const shared = findSharedMeets(johnProfile, kristyProfile);
+      expect(Array.isArray(shared)).toBe(true);
+    });
+
+    it("matches an entry when two lifters share date+meet", () => {
+      const sharedMeet = johnProfile.competition_results[0]!;
+      const fakeOther = {
+        ...kristyProfile,
+        competition_results: [
+          {
+            ...sharedMeet,
+            place: "5",
+            total: "1500",
+            dots: "500",
+          },
+        ],
+      };
+      const result = findSharedMeets(johnProfile, fakeOther);
+      expect(result.length).toBe(1);
+      expect(result[0]!.b_total).toBe("1500");
+      expect(result[0]!.a_total).toBe(sharedMeet.total ?? "");
+    });
+
+    it("returns empty when one profile has no results", () => {
+      const empty = { ...kristyProfile, competition_results: [] };
+      const result = findSharedMeets(johnProfile, empty);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("buildUserRank", () => {
+    it("returns the supplied global_rank value", () => {
+      const rank = buildUserRank(johnProfile, 42);
+      expect(rank.global_rank).toBe(42);
+    });
+
+    it("global_rank is null when supplied null", () => {
+      const rank = buildUserRank(johnProfile, null);
+      expect(rank.global_rank).toBeNull();
+    });
+
+    it("includes name, username, sex, best_total, best_dots", () => {
+      const rank = buildUserRank(johnProfile, 1);
+      expect(rank.name).toBe(johnProfile.name);
+      expect(rank.username).toBe(johnProfile.username);
+      expect(rank.sex).toBe(johnProfile.sex);
+      expect(parseFloat(rank.best_total)).toBeGreaterThan(0);
+      expect(parseFloat(rank.best_dots)).toBeGreaterThan(0);
+    });
+
+    it("best_equipment + best_weight_class come from the row with highest DOTS", () => {
+      const rank = buildUserRank(johnProfile, null);
+      let topDots = 0;
+      let expectedEquip = "";
+      let expectedClass = "";
+      for (const row of johnProfile.competition_results) {
+        const dots = parseFloat(row.dots ?? "0");
+        if (dots > topDots) {
+          topDots = dots;
+          expectedEquip = (Object.entries(row).find(([k]) => k.toLowerCase() === "equip")?.[1] ??
+            "") as string;
+          expectedClass = (Object.entries(row).find(([k]) => k.toLowerCase() === "class")?.[1] ??
+            "") as string;
+        }
+      }
+      expect(rank.best_equipment).toBe(expectedEquip);
+      expect(rank.best_weight_class).toBe(expectedClass);
+    });
+  });
+
+  describe("getProgression service method", () => {
+    it("returns null when profile cannot be fetched", async () => {
+      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+      const result = await userService.getProgression({ username: "ghost" });
+      expect(result).toBeNull();
+    });
+
+    it("returns sorted progression points when profile exists", async () => {
+      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: johnProfile });
+      const result = await userService.getProgression({ username: "johnhaack" });
+      expect(result).not.toBeNull();
+      expect(result!.length).toBe(johnProfile.competition_results.length);
+    });
+  });
+
+  describe("getPersonalBests service method", () => {
+    it("returns null when profile cannot be fetched", async () => {
+      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+      const result = await userService.getPersonalBests({ username: "ghost" });
+      expect(result).toBeNull();
+    });
+
+    it("returns PBs grouped by equipment when profile exists", async () => {
+      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: johnProfile });
+      const result = await userService.getPersonalBests({ username: "johnhaack" });
+      expect(result).not.toBeNull();
+      expect(Array.isArray(result)).toBe(true);
+    });
+  });
+
+  describe("compareUsers service method", () => {
+    it("returns null when either profile is missing", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockResolvedValueOnce({ data: johnProfile })
+        .mockResolvedValueOnce({ data: null });
+
+      const result = await userService.compareUsers({ a: "johnhaack", b: "ghost" });
+      expect(result).toBeNull();
+      cacheSpy.mockRestore();
+    });
+
+    it("returns a UserComparison when both profiles exist", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockResolvedValueOnce({ data: johnProfile })
+        .mockResolvedValueOnce({ data: kristyProfile });
+
+      const result = await userService.compareUsers({ a: "johnhaack", b: "kristyhawkins" });
+      expect(result).not.toBeNull();
+      expect(result!.a.username).toBe("johnhaack");
+      expect(result!.b.username).toBe("kristyhawkins");
+      expect(Array.isArray(result!.shared_meets)).toBe(true);
+      cacheSpy.mockRestore();
+    });
+  });
+
+  describe("getRank service method", () => {
+    it("returns null when profile is missing", async () => {
+      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+      const result = await userService.getRank({ username: "ghost" });
+      expect(result).toBeNull();
+    });
+
+    it("returns rank with global_rank when profile + search succeed", async () => {
+      const cacheSpy = vi
+        .spyOn(scraper, "withCache")
+        .mockImplementationOnce(async () => ({ data: johnProfile }))
+        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
+      const fetchSpy = vi
+        .spyOn(scraper, "fetchJson")
+        .mockResolvedValueOnce({ next_index: 41 } as never);
+
+      const result = await userService.getRank({ username: "johnhaack" });
+      expect(result).not.toBeNull();
+      expect(result!.username).toBe("johnhaack");
+      expect(result!.global_rank).toBe(42);
+      cacheSpy.mockRestore();
+      fetchSpy.mockRestore();
     });
   });
 

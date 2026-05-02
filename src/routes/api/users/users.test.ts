@@ -281,3 +281,201 @@ describe("GET /api/users with units query parameter", () => {
     expect(response.body.status).toBe("fail");
   });
 });
+
+describe("GET /api/users/:username/progression", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get("/api/users/johnhaack/progression");
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should return progression points with correct response shape", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/progression");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.message).toBe("The resource was returned successfully!");
+    expect(response.body.request_url).toBe("/api/users/johnhaack/progression");
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
+
+  it("each point has required progression fields", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/progression");
+    const point = response.body.data[0];
+    expect(point).toHaveProperty("date");
+    expect(point).toHaveProperty("meet");
+    expect(point).toHaveProperty("federation");
+    expect(point).toHaveProperty("equipment");
+    expect(point).toHaveProperty("total");
+    expect(point).toHaveProperty("dots");
+    expect(point).toHaveProperty("place");
+  });
+
+  it("points are sorted ascending by date", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/progression");
+    const points = response.body.data as Array<{ date: string }>;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i - 1]!.date && points[i]!.date) {
+        expect(points[i - 1]!.date.localeCompare(points[i]!.date)).toBeLessThanOrEqual(0);
+      }
+    }
+  });
+
+  it("should accept units=kg query parameter", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack/progression?units=kg",
+    );
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 400 for invalid units value", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/johnhaack/progression?units=stones",
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 404 for non-existent username", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/nonexistent-user-xyz-12345/progression",
+    );
+    expect(response.status).toBe(404);
+    expect(response.body.status).toBe("fail");
+  });
+});
+
+describe("GET /api/users/:username/personal-bests", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get(
+      "/api/users/johnhaack/personal-bests",
+    );
+    expect(response.status).toBe(401);
+  });
+
+  it("should return personal bests grouped by equipment", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/personal-bests");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThan(0);
+  });
+
+  it("each PB entry exposes equipment and lift entries with value/meet/date/federation", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/personal-bests");
+    const entry = response.body.data[0];
+
+    expect(entry).toHaveProperty("equipment");
+    expect(entry).toHaveProperty("squat");
+    expect(entry).toHaveProperty("bench");
+    expect(entry).toHaveProperty("deadlift");
+    expect(entry).toHaveProperty("total");
+    expect(entry).toHaveProperty("dots");
+
+    expect(entry.total).toHaveProperty("value");
+    expect(entry.total).toHaveProperty("meet");
+    expect(entry.total).toHaveProperty("date");
+    expect(entry.total).toHaveProperty("federation");
+  });
+
+  it("should return 404 for non-existent username", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/nonexistent-user-xyz-12345/personal-bests",
+    );
+    expect(response.status).toBe(404);
+  });
+});
+
+describe("GET /api/users/:username/rank", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get("/api/users/johnhaack/rank");
+    expect(response.status).toBe(401);
+  });
+
+  it("should return rank info with correct response shape", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/rank");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.data).toHaveProperty("username", "johnhaack");
+    expect(response.body.data).toHaveProperty("name");
+    expect(response.body.data).toHaveProperty("sex");
+    expect(response.body.data).toHaveProperty("best_total");
+    expect(response.body.data).toHaveProperty("best_dots");
+    expect(response.body.data).toHaveProperty("best_equipment");
+    expect(response.body.data).toHaveProperty("best_weight_class");
+    expect(response.body.data).toHaveProperty("global_rank");
+  });
+
+  it("global_rank is positive (search/rankings stub returns next_index 0 → rank 1)", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/rank");
+    expect(response.body.data.global_rank).toBe(1);
+  });
+
+  it("should return 404 for non-existent username", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/nonexistent-user-xyz-12345/rank",
+    );
+    expect(response.status).toBe(404);
+  });
+});
+
+describe("GET /api/users/compare", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get(
+      "/api/users/compare?a=johnhaack&b=kristyhawkins",
+    );
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should return comparison with a, b, and shared_meets", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/compare?a=johnhaack&b=kristyhawkins",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body.data).toHaveProperty("a");
+    expect(response.body.data).toHaveProperty("b");
+    expect(response.body.data).toHaveProperty("shared_meets");
+    expect(Array.isArray(response.body.data.shared_meets)).toBe(true);
+  });
+
+  it("each summary side has best_total, best_dots, total_meets, first/last meet date", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/compare?a=johnhaack&b=kristyhawkins",
+    );
+
+    const a = response.body.data.a;
+    expect(a).toHaveProperty("name");
+    expect(a).toHaveProperty("username", "johnhaack");
+    expect(a).toHaveProperty("best_total");
+    expect(a).toHaveProperty("best_dots");
+    expect(a).toHaveProperty("total_meets");
+    expect(a).toHaveProperty("first_meet_date");
+    expect(a).toHaveProperty("last_meet_date");
+
+    const b = response.body.data.b;
+    expect(b).toHaveProperty("username", "kristyhawkins");
+  });
+
+  it("should return 400 when missing required query params", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/users/compare?a=johnhaack");
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 400 when usernames contain invalid characters", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/compare?a=john_haack&b=kristyhawkins",
+    );
+    expect(response.status).toBe(400);
+  });
+
+  it("should return 404 when one of the lifters doesn't exist", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/users/compare?a=johnhaack&b=nonexistent-user-xyz-12345",
+    );
+    expect(response.status).toBe(404);
+  });
+});
