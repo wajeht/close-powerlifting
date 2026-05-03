@@ -65,7 +65,7 @@ describe("health-check service", () => {
     "Account",
     "Public",
   ];
-  const TOTAL_ROUTES = 62;
+  const TOTAL_ROUTES = 65;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -250,7 +250,7 @@ describe("health-check service", () => {
 
       const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
       expect(recordsGroup).toBeDefined();
-      expect(recordsGroup!.routes.length).toBe(5);
+      expect(recordsGroup!.routes.length).toBe(8);
     });
 
     it("Users group has correct number of routes", async () => {

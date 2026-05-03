@@ -234,3 +234,58 @@ describe("GET /api/records/:equipment/:weight_class/:sex", () => {
     expect(response.body.status).toBe("fail");
   });
 });
+
+describe("age_class query parameter", () => {
+  it("should accept age_class on /api/records", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/records?age_class=40-44");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept age_class on /api/records/:equipment", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/records/raw?age_class=20-23");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept age_class on /api/records/:equipment/:sex", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/records/raw/men?age_class=50-59",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept age_class on /api/records/:equipment/:weight_class/:sex", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/records/raw/ipf-classes/men?age_class=over80",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+  });
+
+  it("should accept the over80 age_class slug", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/records?age_class=over80");
+
+    expect(response.status).toBe(200);
+  });
+
+  it("should return 400 for invalid age_class", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/records?age_class=masters-40");
+
+    expect(response.status).toBe(400);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should return 400 for invalid age_class on filtered route", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/records/raw/men?age_class=invalid",
+    );
+
+    expect(response.status).toBe(400);
+  });
+});

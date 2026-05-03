@@ -100,6 +100,11 @@ Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-
 | \`include_attempts\` | \`true\` \\| \`false\` | Include individual attempt data in competition results (default: \`false\`) |
 | \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
 
+### Records endpoints (\`/api/records\`)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| \`age_class\` | string | Filter by age class (e.g., \`5-12\`, \`13-15\`, \`16-17\`, \`18-19\`, \`20-23\`, \`24-34\`, \`35-39\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`, \`80-84\`, \`85-89\`, \`40-49\`, \`50-59\`, \`60-69\`, \`70-79\`, \`over80\`) |
+
 ## Rate Limits
 Rate limits protect the upstream OpenPowerlifting data source and ensure fair usage for all developers.
 
@@ -171,6 +176,10 @@ Rate limits protect the upstream OpenPowerlifting data source and ensure fair us
     {
       name: "Users",
       description: "Athlete profiles and competition history",
+    },
+    {
+      name: "Quota",
+      description: "Per-user API quota and usage information",
     },
     {
       name: "Status",

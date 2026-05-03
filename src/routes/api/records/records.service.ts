@@ -36,15 +36,18 @@ export function createRecordService(scraper: ScraperType) {
     return parseRecordsHtml(doc);
   }
 
-  async function getRecords(_options: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
-    return scraper.withCache<RecordCategory[]>("records", () => fetchRecordsData());
+  async function getRecords(options: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
+    const filterPath = options.age_class ? `/${options.age_class}` : "";
+    const cacheKey = `records${filterPath}`;
+    return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));
   }
 
-  function buildRecordsFilterPath(filters: GetFilteredRecordsParamType): string {
+  function buildRecordsFilterPath(filters: GetFilteredRecordsParamType, ageClass?: string): string {
     const parts: string[] = [];
     if (filters.equipment) parts.push(filters.equipment);
     if (filters.weight_class) parts.push(filters.weight_class);
     if (filters.sex) parts.push(filters.sex);
+    if (ageClass) parts.push(ageClass);
     return parts.length > 0 ? `/${parts.join("/")}` : "";
   }
 
@@ -77,9 +80,9 @@ export function createRecordService(scraper: ScraperType) {
 
   async function getFilteredRecords(
     filters: GetFilteredRecordsParamType,
-    _query: GetFilteredRecordsQueryType,
+    query: GetFilteredRecordsQueryType,
   ): Promise<ApiResponse<RecordCategory[]>> {
-    const filterPath = buildRecordsFilterPath(filters);
+    const filterPath = buildRecordsFilterPath(filters, query.age_class);
     const cacheKey = `records${filterPath}`;
 
     return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));

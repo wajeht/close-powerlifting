@@ -70,6 +70,7 @@ export function createRecordsRouter(context: AppContext) {
    * @summary Get all powerlifting records
    * @description Returns all-time powerlifting world records organized by category (lift type and sex). Records are grouped into categories like "Men's Raw Squat", "Women's Unlimited Deadlift", etc.
    * @security BearerAuth
+   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
    * @return {RecordsResponse} 200 - All records organized by category
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Records not found
@@ -120,8 +121,8 @@ export function createRecordsRouter(context: AppContext) {
     middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
-    async (req: Request<{}, {}, GetRecordsType>, res: Response) => {
-      const records = await recordService.getRecords({});
+    async (req: Request<{}, {}, {}, GetRecordsType>, res: Response) => {
+      const records = await recordService.getRecords(req.query);
 
       if (!records?.data) throw new NotFoundError("The resource cannot be found!");
 
@@ -143,6 +144,7 @@ export function createRecordsRouter(context: AppContext) {
    * @description Returns powerlifting records filtered by equipment category. Equipment types correspond to different levels of supportive gear allowed in competition.
    * @security BearerAuth
    * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
+   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
    * @return {RecordsResponse} 200 - Records filtered by equipment
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Records not found
@@ -237,6 +239,7 @@ export function createRecordsRouter(context: AppContext) {
    * @security BearerAuth
    * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
    * @param {string} sex_or_weight_class.path.required - Either sex (men, women) or weight class system (expanded-classes, ipf-classes, para-classes, wp-classes)
+   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
    * @return {RecordsResponse} 200 - Records filtered by equipment and sex/weight class
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Not found - Invalid sex or weight class parameter
@@ -300,6 +303,7 @@ export function createRecordsRouter(context: AppContext) {
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({ query: getFilteredRecordsQueryValidation }),
     async (
       req: Request<
         { equipment: string; sex_or_weight_class: string },
@@ -340,6 +344,7 @@ export function createRecordsRouter(context: AppContext) {
    * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
    * @param {string} weight_class.path.required - Weight class system - enum:expanded-classes,ipf-classes,para-classes,wp-classes
    * @param {string} sex.path.required - Sex - enum:men,women
+   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
    * @return {RecordsResponse} 200 - Records filtered by all criteria
    * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
    * @return {RecordsErrorResponse} 404 - Records not found

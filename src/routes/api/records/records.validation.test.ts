@@ -4,8 +4,10 @@ import {
   recordsEquipmentEnum,
   recordsWeightClassEnum,
   recordsSexEnum,
+  recordsAgeClassEnum,
   getRecordsValidation,
   getFilteredRecordsParamValidation,
+  getFilteredRecordsQueryValidation,
 } from "./records.validation";
 
 describe.concurrent("records validation", () => {
@@ -49,9 +51,74 @@ describe.concurrent("records validation", () => {
     });
   });
 
+  describe("recordsAgeClassEnum", () => {
+    it("accepts all valid age class slugs", () => {
+      const validValues = [
+        "5-12",
+        "13-15",
+        "16-17",
+        "18-19",
+        "20-23",
+        "24-34",
+        "35-39",
+        "40-44",
+        "45-49",
+        "50-54",
+        "55-59",
+        "60-64",
+        "65-69",
+        "70-74",
+        "75-79",
+        "80-84",
+        "85-89",
+        "40-49",
+        "50-59",
+        "60-69",
+        "70-79",
+        "over80",
+      ];
+      for (const value of validValues) {
+        expect(recordsAgeClassEnum.safeParse(value).success).toBe(true);
+      }
+    });
+
+    it("rejects invalid age class value", () => {
+      expect(recordsAgeClassEnum.safeParse("masters-40").success).toBe(false);
+      expect(recordsAgeClassEnum.safeParse("over90").success).toBe(false);
+      expect(recordsAgeClassEnum.safeParse("").success).toBe(false);
+    });
+  });
+
   describe("getRecordsValidation", () => {
     it("accepts empty object", () => {
       expect(getRecordsValidation.safeParse({}).success).toBe(true);
+    });
+
+    it("accepts valid age_class", () => {
+      const result = getRecordsValidation.safeParse({ age_class: "40-44" });
+      expect(result.success).toBe(true);
+    });
+
+    it("rejects invalid age_class", () => {
+      expect(getRecordsValidation.safeParse({ age_class: "bad" }).success).toBe(false);
+    });
+  });
+
+  describe("getFilteredRecordsQueryValidation", () => {
+    it("accepts empty object", () => {
+      expect(getFilteredRecordsQueryValidation.safeParse({}).success).toBe(true);
+    });
+
+    it("accepts valid age_class", () => {
+      expect(getFilteredRecordsQueryValidation.safeParse({ age_class: "over80" }).success).toBe(
+        true,
+      );
+    });
+
+    it("rejects invalid age_class", () => {
+      expect(getFilteredRecordsQueryValidation.safeParse({ age_class: "ancient" }).success).toBe(
+        false,
+      );
     });
   });
 

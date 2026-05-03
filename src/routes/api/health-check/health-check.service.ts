@@ -77,6 +77,9 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Records", path: "/api/records/raw/men" },
   { group: "Records", path: "/api/records/raw/ipf-classes" },
   { group: "Records", path: "/api/records/raw/ipf-classes/men" },
+  { group: "Records", path: "/api/records?age_class=40-44" },
+  { group: "Records", path: "/api/records/raw/men?age_class=20-23" },
+  { group: "Records", path: "/api/records/raw/ipf-classes/men?age_class=over80" },
 
   // Users
   { group: "Users", path: "/api/users/johnhaack" },

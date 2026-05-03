@@ -80,6 +80,11 @@ const ROUTES = [
   { path: "/api/users/johnhaack/rank", requiresAuth: true },
   { path: "/api/users/compare?a=johnhaack&b=kristyhawkins", requiresAuth: true },
 
+  // Records by age class
+  { path: "/api/records?age_class=40-44", requiresAuth: true },
+  { path: "/api/records/raw/men?age_class=20-23", requiresAuth: true },
+  { path: "/api/records/raw/ipf-classes/men?age_class=over80", requiresAuth: true },
+
   // Account
   { path: "/api/quota", requiresAuth: true },
 ];
