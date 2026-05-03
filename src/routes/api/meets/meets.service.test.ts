@@ -308,4 +308,120 @@ describe("meets service", () => {
       fetchSpy.mockRestore();
     });
   });
+
+  describe("parseMeetCacheKey", () => {
+    it("returns null for non-meet keys", () => {
+      expect(meetService.parseMeetCacheKey("status")).toBeNull();
+      expect(meetService.parseMeetCacheKey("user-johnhaack-lbs")).toBeNull();
+    });
+
+    it("parses base meet key", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969")).toEqual({
+        path: "uspa/1969",
+        isHighlights: false,
+      });
+    });
+
+    it("parses meet key with units", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-kg")).toEqual({
+        path: "uspa/1969",
+        units: "kg",
+        isHighlights: false,
+      });
+    });
+
+    it("parses meet key with sort", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-wilks")).toEqual({
+        path: "uspa/1969",
+        sort: "by-wilks",
+        isHighlights: false,
+      });
+    });
+
+    it("parses meet key with multi-segment sort", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-schwartz-malone")).toEqual({
+        path: "uspa/1969",
+        sort: "by-schwartz-malone",
+        isHighlights: false,
+      });
+    });
+
+    it("parses meet key with sort + units", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-wilks-kg")).toEqual({
+        path: "uspa/1969",
+        sort: "by-wilks",
+        units: "kg",
+        isHighlights: false,
+      });
+    });
+
+    it("parses highlights key", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-highlights")).toEqual({
+        path: "uspa/1969",
+        isHighlights: true,
+      });
+    });
+
+    it("parses highlights key with units", () => {
+      expect(meetService.parseMeetCacheKey("meet-uspa/1969-highlights-kg")).toEqual({
+        path: "uspa/1969",
+        units: "kg",
+        isHighlights: true,
+      });
+    });
+
+    it("handles meet path with multi-segment fed code", () => {
+      expect(meetService.parseMeetCacheKey("meet-wrpf-ru/2301")).toEqual({
+        path: "wrpf-ru/2301",
+        isHighlights: false,
+      });
+    });
+  });
+
+  describe("refreshCacheKey", () => {
+    it("returns false for non-meet keys", async () => {
+      expect(await meetService.refreshCacheKey("status")).toBe(false);
+      expect(await meetService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
+    });
+
+    it("returns true and re-fetches for a base meet key", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      const refreshSpy = vi
+        .spyOn(scraper, "refreshCache")
+        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
+
+      const result = await meetService.refreshCacheKey("meet-uspa/1969");
+
+      expect(result).toBe(true);
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", undefined);
+      fetchSpy.mockRestore();
+      refreshSpy.mockRestore();
+    });
+
+    it("re-fetches sorted variant with correct sort path", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      const refreshSpy = vi
+        .spyOn(scraper, "refreshCache")
+        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
+
+      await meetService.refreshCacheKey("meet-uspa/1969-by-wilks-kg");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-wilks", "kg");
+      fetchSpy.mockRestore();
+      refreshSpy.mockRestore();
+    });
+
+    it("re-fetches highlights variant", async () => {
+      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
+      const refreshSpy = vi
+        .spyOn(scraper, "refreshCache")
+        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
+
+      await meetService.refreshCacheKey("meet-uspa/1969-highlights-kg");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", "kg");
+      fetchSpy.mockRestore();
+      refreshSpy.mockRestore();
+    });
+  });
 });

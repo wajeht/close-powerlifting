@@ -512,13 +512,113 @@ export function createUserService(scraper: ScraperType) {
     };
   }
 
+  function parseUserCacheKey(key: string): {
+    kind: "profile" | "rank" | "search";
+    username?: string;
+    includeAttempts?: boolean;
+    units?: string;
+    search?: string;
+    current_page?: number;
+    per_page?: number;
+  } | null {
+    if (key.startsWith("users-search-")) {
+      const remainder = key.slice("users-search-".length);
+      const lastDash = remainder.lastIndexOf("-");
+      if (lastDash === -1) return null;
+      const secondLastDash = remainder.lastIndexOf("-", lastDash - 1);
+      if (secondLastDash === -1) return null;
+      const thirdLastDash = remainder.lastIndexOf("-", secondLastDash - 1);
+      if (thirdLastDash === -1) return null;
+
+      const units = remainder.slice(lastDash + 1);
+      const perPage = parseInt(remainder.slice(secondLastDash + 1, lastDash), 10);
+      const currentPage = parseInt(remainder.slice(thirdLastDash + 1, secondLastDash), 10);
+      const encoded = remainder.slice(0, thirdLastDash);
+
+      if ((units !== "lbs" && units !== "kg") || isNaN(currentPage) || isNaN(perPage)) {
+        return null;
+      }
+
+      return {
+        kind: "search",
+        search: decodeURIComponent(encoded),
+        current_page: currentPage,
+        per_page: perPage,
+        units,
+      };
+    }
+
+    if (!key.startsWith("user-")) return null;
+    let remainder = key.slice("user-".length);
+
+    if (remainder.endsWith("-rank")) {
+      const username = remainder.slice(0, -"-rank".length);
+      if (!username) return null;
+      return { kind: "rank", username };
+    }
+
+    let units: string | undefined;
+    if (remainder.endsWith("-kg")) {
+      units = "kg";
+      remainder = remainder.slice(0, -"-kg".length);
+    } else if (remainder.endsWith("-lbs")) {
+      units = "lbs";
+      remainder = remainder.slice(0, -"-lbs".length);
+    } else {
+      return null;
+    }
+
+    let includeAttempts = false;
+    if (remainder.endsWith("-attempts")) {
+      includeAttempts = true;
+      remainder = remainder.slice(0, -"-attempts".length);
+    }
+
+    if (!remainder) return null;
+    return { kind: "profile", username: remainder, includeAttempts, units };
+  }
+
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    const parsed = parseUserCacheKey(key);
+    if (!parsed) return false;
+
+    if (parsed.kind === "profile") {
+      await scraper.refreshCache<UserProfile>(key, () =>
+        fetchUserProfile(parsed.username!, parsed.includeAttempts!, parsed.units!),
+      );
+      return true;
+    }
+
+    if (parsed.kind === "rank") {
+      await scraper.refreshCache<number | null>(key, () => fetchGlobalRank(parsed.username!));
+      return true;
+    }
+
+    if (parsed.kind === "search") {
+      const units = parsed.units === "kg" ? "kg" : "lbs";
+      await scraper.refreshCache<{ rows: RankingRow[]; pagination: SearchPagination }>(key, () =>
+        fetchUserSearchData({
+          search: parsed.search!,
+          per_page: parsed.per_page!,
+          current_page: parsed.current_page!,
+          units,
+        }),
+      );
+      return true;
+    }
+
+    return false;
+  }
+
   return {
     parseUserProfileHtml,
+    parseUserCacheKey,
     getUser,
     searchUser,
     getProgression,
     getPersonalBests,
     compareUsers,
     getRank,
+    refreshCacheKey,
   };
 }

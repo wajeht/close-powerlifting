@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createRecordService } from "./records.service";
@@ -216,5 +216,48 @@ describe.concurrent("records service", () => {
         expect(result.sex).toBe("men");
       }
     });
+  });
+
+  describe("parseRecordsCacheKey", () => {
+    it("returns null for non-records keys", () => {
+      expect(recordService.parseRecordsCacheKey("status")).toBeNull();
+      expect(recordService.parseRecordsCacheKey("user-johnhaack-lbs")).toBeNull();
+    });
+
+    it("parses base records key", () => {
+      expect(recordService.parseRecordsCacheKey("records")).toEqual({ filterPath: "" });
+    });
+
+    it("parses records key with filter path", () => {
+      expect(recordService.parseRecordsCacheKey("records/raw")).toEqual({ filterPath: "/raw" });
+      expect(recordService.parseRecordsCacheKey("records/raw/men")).toEqual({
+        filterPath: "/raw/men",
+      });
+      expect(recordService.parseRecordsCacheKey("records/raw/ipf-classes/men/over80")).toEqual({
+        filterPath: "/raw/ipf-classes/men/over80",
+      });
+    });
+  });
+});
+
+describe("records service refreshCacheKey", () => {
+  it("returns false for non-records keys", async () => {
+    expect(await recordService.refreshCacheKey("status")).toBe(false);
+  });
+
+  it("returns true for base records key", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+    const result = await recordService.refreshCacheKey("records");
+    expect(result).toBe(true);
+    refreshSpy.mockRestore();
+  });
+
+  it("returns true for filtered records key", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+    const result = await recordService.refreshCacheKey("records/raw/men/40-44");
+    expect(result).toBe(true);
+    refreshSpy.mockRestore();
   });
 });

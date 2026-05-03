@@ -7,24 +7,19 @@ import type { ApiCallLogRepositoryType } from "./db/api-call-log";
 import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
-import type {
-  RankingsApiResponse,
-  Meet,
-  MeetData,
-  MeetResult,
-  RecordCategory,
-  UserProfile,
-  PersonalBest,
-} from "./types";
-import { transformRankingRow } from "./routes/api/rankings/rankings.service";
-import { transformCompetitionResults } from "./routes/api/users/users.service";
 import { createHealthCheckService } from "./routes/api/health-check/health-check.service";
+import { createMeetService } from "./routes/api/meets/meets.service";
+import { createUserService } from "./routes/api/users/users.service";
+import { createFederationService } from "./routes/api/federations/federations.service";
+import { createRankingService } from "./routes/api/rankings/rankings.service";
+import { createRecordService } from "./routes/api/records/records.service";
+import { createStatusService } from "./routes/api/status/status.service";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
 const API_CALL_RESET_MONTH_KEY = "api-call-count-last-reset-month";
 
-const INTERNAL_CACHE_KEYS = [
+export const INTERNAL_CACHE_KEYS = [
   "hostname",
   "close-powerlifting-global-status-call-cache",
   API_CALL_RESET_MONTH_KEY,
@@ -85,297 +80,27 @@ export function createCron(
     }
   }
 
-  function parseStatusHtml(doc: Document): {
-    server_version: string;
-    meets: string;
-    federations: Record<string, string>[];
-  } {
-    const textContent = scraper.getElementByClass(doc, "text-content");
-    if (!textContent) {
-      throw new Error("Could not find text-content element on status page");
-    }
+  const meetService = createMeetService(scraper);
+  const userService = createUserService(scraper);
+  const federationService = createFederationService(scraper);
+  const rankingService = createRankingService(scraper);
+  const recordService = createRecordService(scraper);
+  const statusService = createStatusService(scraper);
+  const healthCheckService = createHealthCheckService(cache, scraper, logger);
 
-    let serverVersion = "";
-    const h2s = textContent.querySelectorAll("h2");
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Server Version")) {
-        const p = h2.nextElementSibling;
-        const link = p?.querySelector("a");
-        const href = link?.getAttribute("href") || "";
-        const match = href.match(/commits\/([a-f0-9]+)/);
-        serverVersion = match?.[1] ?? "";
-        break;
-      }
-    }
-
-    let meetsInfo = "";
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Meets")) {
-        let sibling = h2.nextSibling;
-        while (sibling) {
-          if (sibling.nodeType === 3) {
-            const text = sibling.textContent?.trim() || "";
-            if (text.includes("Tracking")) {
-              meetsInfo = text;
-              break;
-            }
-          }
-          if (sibling.nodeType === 1) break;
-          sibling = sibling.nextSibling;
-        }
-        break;
-      }
-    }
-
-    const table = textContent.querySelector("table");
-    const federations = scraper.tableToJson(table);
-
-    return {
-      server_version: serverVersion,
-      meets: meetsInfo,
-      federations,
-    };
-  }
-
-  function parseRecordsHtml(doc: Document): RecordCategory[] {
-    const recordCols = doc.getElementsByClassName("records-col");
-    const data: RecordCategory[] = [];
-
-    for (const col of recordCols) {
-      const heading = col.querySelector("h2, h3");
-      const table = col.querySelector("table");
-
-      if (heading && table) {
-        data.push({
-          title: heading.textContent?.trim() || "",
-          records: scraper.tableToJson<Record<string, string>>(table),
-        });
-      }
-    }
-
-    return data;
-  }
-
-  function parseMeetHtml(doc: Document): MeetData {
-    const h1 = doc.querySelector("h1#meet");
-    const title = h1?.textContent?.trim() || "";
-
-    const p = h1?.nextElementSibling;
-    const dateLocationText = p?.textContent?.trim().split("\n")[0] || "";
-    const [date, ...locationParts] = dateLocationText.split(",").map((s) => s.trim());
-    const location = locationParts.join(", ");
-
-    const table = doc.querySelector("table");
-    const results = scraper.tableToJson<MeetResult>(table);
-
-    return {
-      title,
-      date: date || "",
-      location: location || "",
-      results,
-    };
-  }
-
-  function parseUserProfileHtml(doc: Document, username: string): UserProfile {
-    const mixedContent = scraper.getElementByClass(doc, "mixed-content");
-    if (!mixedContent) {
-      throw new Error(`User profile not found: ${username}`);
-    }
-
-    const h1 = mixedContent.querySelector("h1");
-    const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
-    const name = nameSpan?.textContent?.trim() || username;
-
-    const h1Text = h1?.textContent || "";
-    const sexMatch = h1Text.match(/\(([MF])\)/);
-    const sex = sexMatch?.[1] ?? "";
-
-    const igLink = h1?.querySelector("a.instagram");
-    const igHref = igLink?.getAttribute("href") || "";
-    const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
-    const instagram = igMatch?.[1] ?? "";
-
-    const tables = mixedContent.querySelectorAll("table");
-    const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
-    const rawCompetitionResults = tables[1]
-      ? scraper.tableToJson<Record<string, string>>(tables[1])
-      : [];
-    const competitionResults = transformCompetitionResults(rawCompetitionResults);
-
-    return {
-      name,
-      username,
-      sex,
-      instagram,
-      instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
-      personal_best: personalBest,
-      competition_results: competitionResults,
-    };
-  }
+  const refreshers = [
+    statusService.refreshCacheKey,
+    federationService.refreshCacheKey,
+    meetService.refreshCacheKey,
+    userService.refreshCacheKey,
+    recordService.refreshCacheKey,
+    rankingService.refreshCacheKey,
+  ];
 
   async function refreshCacheKey(key: string): Promise<void> {
-    // Status
-    if (key === "status") {
-      const html = await scraper.fetchHtml("/status");
-      const doc = scraper.parseHtml(html);
-      const data = parseStatusHtml(doc);
-      await cache.set(key, JSON.stringify(data));
-      return;
+    for (const refresher of refreshers) {
+      if (await refresher(key)) return;
     }
-
-    // Federations list
-    if (key === "federations-list") {
-      const html = await scraper.fetchHtml("/mlist");
-      const doc = scraper.parseHtml(html);
-      const table = doc.querySelector("table");
-      const data = scraper.tableToJson<Meet>(table);
-      await cache.set(key, JSON.stringify(data));
-      return;
-    }
-
-    // Federation (with optional year): federation-{fed} or federation-{fed}-{year}
-    if (key.startsWith("federation-")) {
-      const remainder = key.replace("federation-", "");
-      // Check if ends with -YYYY (4 digit year)
-      const yearMatch = remainder.match(/-(\d{4})$/);
-      let federation: string;
-      let year: string | undefined;
-
-      if (yearMatch) {
-        year = yearMatch[1];
-        federation = remainder.slice(0, -5); // Remove -YYYY
-      } else {
-        federation = remainder;
-      }
-
-      const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
-      const html = await scraper.fetchHtml(path);
-      const doc = scraper.parseHtml(html);
-      const table = doc.querySelector("table");
-      const data = scraper.tableToJson<Meet>(table);
-      await cache.set(key, JSON.stringify(data));
-      return;
-    }
-
-    // Meet: meet-{meetCode}
-    if (key.startsWith("meet-")) {
-      const meetCode = key.replace("meet-", "");
-      const html = await scraper.fetchHtml(`/m/${meetCode}`);
-      const doc = scraper.parseHtml(html);
-      const data = parseMeetHtml(doc);
-      await cache.set(key, JSON.stringify({ data }));
-      return;
-    }
-
-    // Records: records or records/{filterPath}
-    if (key === "records" || key.startsWith("records/")) {
-      const filterPath = key === "records" ? "" : key.replace("records", "");
-      const html = await scraper.fetchHtml(`/records${filterPath}`);
-      const doc = scraper.parseHtml(html);
-      const data = parseRecordsHtml(doc);
-      await cache.set(key, JSON.stringify({ data }));
-      return;
-    }
-
-    // User: user-{username}
-    if (key.startsWith("user-")) {
-      const username = key.replace("user-", "");
-      const html = await scraper.fetchHtml(`/u/${username}`);
-      const doc = scraper.parseHtml(html);
-      const data = parseUserProfileHtml(doc, username);
-      await cache.set(key, JSON.stringify({ data }));
-      return;
-    }
-
-    // User search: users-search-{encodedSearch}-{page}-{perPage}-{units}
-    if (key.startsWith("users-search-")) {
-      const remainder = key.replace("users-search-", "");
-      const lastDashIdx = remainder.lastIndexOf("-");
-      const secondLastDashIdx = remainder.lastIndexOf("-", lastDashIdx - 1);
-      const thirdLastDashIdx = remainder.lastIndexOf("-", secondLastDashIdx - 1);
-
-      if (lastDashIdx === -1 || secondLastDashIdx === -1 || thirdLastDashIdx === -1) {
-        logger.warn(`refreshCacheKey: invalid users search key format: ${key}`);
-        return;
-      }
-
-      const units = remainder.substring(lastDashIdx + 1);
-      const perPage = parseInt(remainder.substring(secondLastDashIdx + 1, lastDashIdx), 10);
-      const currentPage = parseInt(
-        remainder.substring(thirdLastDashIdx + 1, secondLastDashIdx),
-        10,
-      );
-      const encodedSearch = remainder.substring(0, thirdLastDashIdx);
-
-      if ((units !== "lbs" && units !== "kg") || isNaN(currentPage) || isNaN(perPage)) {
-        logger.warn(`refreshCacheKey: invalid users search key values: ${key}`);
-        return;
-      }
-
-      const search = decodeURIComponent(encodedSearch);
-      const offset = (currentPage - 1) * perPage;
-      const searchResult = await scraper.fetchJson<{ next_index: number }>(
-        `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
-      );
-
-      if (!Number.isInteger(searchResult.next_index) || searchResult.next_index < 0) {
-        logger.warn(`refreshCacheKey: invalid users search next_index for key: ${key}`);
-        return;
-      }
-
-      const startIndex = searchResult.next_index;
-      const endIndex = startIndex + perPage;
-      const response = await scraper.fetchJson<RankingsApiResponse>(
-        `/rankings?start=${startIndex}&end=${endIndex}&lang=en&units=${units}`,
-      );
-      const data = {
-        rows: response.rows.map(transformRankingRow),
-        pagination: {
-          per_page: perPage,
-          current_page: currentPage,
-        },
-      };
-      await cache.set(key, JSON.stringify(data));
-      return;
-    }
-
-    // Rankings: rankings-{page}-{perPage} or rankings/{filterPath}-{page}-{perPage}
-    if (key.startsWith("rankings")) {
-      // Parse the key to extract filterPath, page, and perPage
-      // Format: rankings-{page}-{perPage} or rankings/{filterPath}-{page}-{perPage}
-      const lastDashIdx = key.lastIndexOf("-");
-      const secondLastDashIdx = key.lastIndexOf("-", lastDashIdx - 1);
-
-      if (lastDashIdx === -1 || secondLastDashIdx === -1) {
-        logger.warn(`refreshCacheKey: invalid rankings key format: ${key}`);
-        return;
-      }
-
-      const perPage = parseInt(key.substring(lastDashIdx + 1), 10);
-      const page = parseInt(key.substring(secondLastDashIdx + 1, lastDashIdx), 10);
-      const prefix = key.substring(0, secondLastDashIdx);
-
-      if (isNaN(page) || isNaN(perPage)) {
-        logger.warn(`refreshCacheKey: invalid page/perPage in key: ${key}`);
-        return;
-      }
-
-      // prefix is either "rankings" or "rankings/{filterPath}"
-      const filterPath = prefix === "rankings" ? "" : prefix.replace("rankings", "");
-      const start = page === 1 ? 0 : (page - 1) * perPage;
-      const end = start + perPage;
-      const query = `start=${start}&end=${end}&lang=en&units=lbs`;
-      const response = await scraper.fetchJson<RankingsApiResponse>(
-        `/rankings${filterPath}?${query}`,
-      );
-      const data = {
-        rows: response.rows.map(transformRankingRow),
-        totalLength: response.total_length,
-      };
-      await cache.set(key, JSON.stringify(data));
-      return;
-    }
-
     logger.warn(`refreshCacheKey: unknown key type: ${key}`);
   }
 
@@ -395,7 +120,6 @@ export function createCron(
         return;
       }
 
-      const healthCheckService = createHealthCheckService(cache, scraper, logger);
       await healthCheckService.refreshAPIStatus({ apiKey: adminUser.api_key, url: hostname });
 
       logger.info("cron job completed: refreshHealthCheck");

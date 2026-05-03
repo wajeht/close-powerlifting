@@ -88,10 +88,25 @@ export function createRecordService(scraper: ScraperType) {
     return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));
   }
 
+  function parseRecordsCacheKey(key: string): { filterPath: string } | null {
+    if (key !== "records" && !key.startsWith("records/")) return null;
+    return { filterPath: key === "records" ? "" : key.slice("records".length) };
+  }
+
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    const parsed = parseRecordsCacheKey(key);
+    if (!parsed) return false;
+
+    await scraper.refreshCache<RecordCategory[]>(key, () => fetchRecordsData(parsed.filterPath));
+    return true;
+  }
+
   return {
     parseRecordsHtml,
+    parseRecordsCacheKey,
     getRecords,
     getFilteredRecords,
     parseSexOrWeightClass,
+    refreshCacheKey,
   };
 }

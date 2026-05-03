@@ -43,6 +43,7 @@ export interface ScraperType {
   getElementText: (parent: Element | Document, selector: string, index?: number) => string | null;
   getElementByClass: (doc: Document, className: string, index?: number) => Element | null;
   withCache: <T>(key: string, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
+  refreshCache: <T>(key: string, fetcher: () => Promise<T>) => Promise<ApiResponse<T>>;
   buildPaginationQuery: (currentPage: number, perPage: number, units?: string) => string;
   calculatePagination: (totalItems: number, currentPage: number, perPage: number) => Pagination;
   fetchWithAuth: (
@@ -211,6 +212,23 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     return fetchPromise;
   }
 
+  async function refreshCache<T>(key: string, fetcher: () => Promise<T>): Promise<ApiResponse<T>> {
+    try {
+      const data = await fetcher();
+      try {
+        await cache.set(key, JSON.stringify(data));
+      } catch (error) {
+        logger.warn(
+          `Cache write error for ${key}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+      return { data };
+    } catch (error) {
+      logScraperError(error, key);
+      throw error;
+    }
+  }
+
   function logScraperError(error: unknown, context: string): void {
     if (error instanceof ScraperError) {
       if (error.isNotFound()) {
@@ -292,6 +310,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     getElementText,
     getElementByClass,
     withCache,
+    refreshCache,
     buildPaginationQuery,
     calculatePagination,
     fetchWithAuth,

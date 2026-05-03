@@ -173,10 +173,61 @@ export function createRankingService(scraper: ScraperType) {
     };
   }
 
+  function parseRankingsCacheKey(key: string): {
+    filterPath: string;
+    currentPage: number;
+    perPage: number;
+    units: string;
+    federation?: string;
+  } | null {
+    if (!key.startsWith("rankings")) return null;
+
+    const match = key.match(
+      /^(rankings(?:\/[^?\s]*)?)-(\d+)-(\d+)-(lbs|kg)(?:-([a-z][a-z0-9-]*))?$/,
+    );
+    if (!match) return null;
+
+    const prefix = match[1] ?? "rankings";
+    const pageStr = match[2] ?? "";
+    const perPageStr = match[3] ?? "";
+    const units = match[4] ?? "lbs";
+    const federation = match[5];
+
+    const currentPage = parseInt(pageStr, 10);
+    const perPage = parseInt(perPageStr, 10);
+
+    if (isNaN(currentPage) || isNaN(perPage)) return null;
+
+    const filterPath = prefix === "rankings" ? "" : prefix.slice("rankings".length);
+
+    return { filterPath, currentPage, perPage, units, federation };
+  }
+
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    const parsed = parseRankingsCacheKey(key);
+    if (!parsed) return false;
+
+    await scraper.refreshCache<{ rows: RankingRow[]; totalLength: number }>(key, async () => {
+      const query = scraper.buildPaginationQuery(parsed.currentPage, parsed.perPage, parsed.units);
+      const fedPath = parsed.federation ? `/${parsed.federation}` : "";
+      const response = await scraper.fetchJson<RankingsApiResponse>(
+        `/rankings${parsed.filterPath}${fedPath}?${query}`,
+      );
+      return {
+        rows: response.rows.map(transformRankingRow),
+        totalLength: response.total_length,
+      };
+    });
+
+    return true;
+  }
+
   return {
     getRankings,
     getRank,
     getFilteredRankings,
     fetchRankingsData,
+    parseRankingsCacheKey,
+    refreshCacheKey,
   };
 }

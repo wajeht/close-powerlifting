@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 
 import type { AppContext } from "../../context";
+import { INTERNAL_CACHE_KEYS } from "../../cron";
 import { createMiddleware } from "../middleware";
 import { createAdminService } from "./admin.service";
 import {
@@ -230,6 +231,11 @@ export function createAdminRouter(context: AppContext) {
     middleware.validationMiddleware({ body: cacheKeyValidation }),
     async (req: Request, res: Response) => {
       const key = req.body.key as string;
+
+      if (INTERNAL_CACHE_KEYS.includes(key)) {
+        req.flash("error", `Cache entry "${key}" is managed internally and cannot be refreshed`);
+        return res.redirect("/admin/cache");
+      }
 
       try {
         await context.cron.tasks.refreshCacheKey(key);

@@ -58,7 +58,7 @@ function createTestLogger(): LoggerType {
   } as unknown as LoggerType;
 }
 
-function createTestScraper(): ScraperType {
+function createTestScraper(cache?: CacheType): ScraperType {
   const mockDoc = {
     querySelectorAll: () => [],
     querySelector: () => null,
@@ -80,6 +80,11 @@ function createTestScraper(): ScraperType {
     stripHtml: vi.fn(),
     getElementText: vi.fn(),
     withCache: vi.fn(),
+    refreshCache: vi.fn(async (key: string, fetcher: () => Promise<unknown>) => {
+      const data = await fetcher();
+      if (cache) await cache.set(key, JSON.stringify(data));
+      return { data };
+    }),
     calculatePagination: vi.fn(),
     fetchWithAuth: vi.fn(),
   } as unknown as ScraperType;
@@ -96,7 +101,7 @@ describe("cron", () => {
   beforeEach(() => {
     cache = createTestCache();
     logger = createTestLogger();
-    scraper = createTestScraper();
+    scraper = createTestScraper(cache);
     userRepository = {
       findVerified: vi.fn().mockResolvedValue([]),
       resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
@@ -178,9 +183,7 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      const cached = await cache.get("status");
-      expect(cached).not.toBeNull();
-      expect(JSON.parse(cached!)).toHaveProperty("server_version");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/status");
     });
 
     it("should refresh federations list from cache", async () => {
@@ -202,23 +205,24 @@ describe("cron", () => {
     });
 
     it("should refresh rankings keys from cache", async () => {
-      await seedCache(cache, ["rankings-1-100", "rankings-2-100"]);
+      await seedCache(cache, ["rankings-1-100-lbs", "rankings-2-100-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      const cached1 = await cache.get("rankings-1-100");
-      const cached2 = await cache.get("rankings-2-100");
+      const cached1 = await cache.get("rankings-1-100-lbs");
+      const cached2 = await cache.get("rankings-2-100-lbs");
       expect(cached1).not.toBeNull();
       expect(cached2).not.toBeNull();
+      expect(JSON.parse(cached1!)).not.toEqual({ placeholder: true });
     });
 
     it("should refresh filtered rankings keys", async () => {
-      await seedCache(cache, ["rankings/raw-1-100", "rankings/raw/men-1-100"]);
+      await seedCache(cache, ["rankings/raw-1-100-lbs", "rankings/raw/men-1-100-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      const cached1 = await cache.get("rankings/raw-1-100");
-      const cached2 = await cache.get("rankings/raw/men-1-100");
+      const cached1 = await cache.get("rankings/raw-1-100-lbs");
+      const cached2 = await cache.get("rankings/raw/men-1-100-lbs");
       expect(cached1).not.toBeNull();
       expect(cached2).not.toBeNull();
     });
@@ -246,15 +250,15 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/uspa/1969");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/uspa/1969", undefined);
     });
 
     it("should refresh user keys", async () => {
-      await seedCache(cache, ["user-johnhaack"]);
+      await seedCache(cache, ["user-johnhaack-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/johnhaack");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/johnhaack", "lbs");
     });
 
     it("should refresh records with filter path", async () => {
@@ -314,14 +318,14 @@ describe("cron", () => {
     });
 
     it("should handle fetchJson errors for rankings", async () => {
-      await seedCache(cache, ["rankings-1-100"]);
+      await seedCache(cache, ["rankings-1-100-lbs"]);
       vi.mocked(scraper.fetchJson).mockRejectedValueOnce(new Error("API error"));
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh rankings-1-100",
+        "refreshCache: failed to refresh rankings-1-100-lbs",
         expect.any(Object),
       );
     });
@@ -375,18 +379,20 @@ describe("cron", () => {
 
     // Edge cases for rankings
     it("should handle rankings with page > 1 correctly", async () => {
-      await seedCache(cache, ["rankings-3-100"]);
+      await seedCache(cache, ["rankings-3-100-lbs"]);
+      vi.mocked(scraper.buildPaginationQuery).mockReturnValueOnce(
+        "start=200&end=300&lang=en&units=lbs",
+      );
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      // page 3 with perPage 100: start = (3-1)*100 = 200, end = 300
       expect(scraper.fetchJson).toHaveBeenCalledWith(
         "/rankings?start=200&end=300&lang=en&units=lbs",
       );
     });
 
     it("should handle deep filter path rankings from prod", async () => {
-      await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100"]);
+      await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
@@ -396,7 +402,10 @@ describe("cron", () => {
     });
 
     it("should handle rankings with small perPage", async () => {
-      await seedCache(cache, ["rankings-1-9"]);
+      await seedCache(cache, ["rankings-1-9-lbs"]);
+      vi.mocked(scraper.buildPaginationQuery).mockReturnValueOnce(
+        "start=0&end=9&lang=en&units=lbs",
+      );
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
@@ -409,17 +418,17 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
-        "refreshCacheKey: invalid rankings key format: rankings-invalid",
+        "refreshCacheKey: unknown key type: rankings-invalid",
       );
     });
 
     it("should warn on rankings key with non-numeric page/perPage", async () => {
-      await seedCache(cache, ["rankings-abc-def"]);
+      await seedCache(cache, ["rankings-abc-def-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
-        "refreshCacheKey: invalid page/perPage in key: rankings-abc-def",
+        "refreshCacheKey: unknown key type: rankings-abc-def-lbs",
       );
     });
 
@@ -463,30 +472,30 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/wrpf-ru/2301");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/gpc/aus-vic/2023");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/wrpf-ru/2301", undefined);
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/gpc/aus-vic/2023", undefined);
     });
 
     // Edge cases for users
     it("should handle user profile fetch failure", async () => {
-      await seedCache(cache, ["user-nonexistent"]);
+      await seedCache(cache, ["user-nonexistent-lbs"]);
       vi.mocked(scraper.getElementByClass).mockReturnValueOnce(null);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
       expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh user-nonexistent",
+        "refreshCache: failed to refresh user-nonexistent-lbs",
         expect.objectContaining({ error: "User profile not found: nonexistent" }),
       );
     });
 
     it("should handle usernames with hyphens", async () => {
-      await seedCache(cache, ["user-john-doe"]);
+      await seedCache(cache, ["user-john-doe-lbs"]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/john-doe");
+      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/john-doe", "lbs");
     });
 
     it("should refresh cached user search keys", async () => {
@@ -511,7 +520,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
-        "refreshCacheKey: invalid users search key format: users-search-haack-invalid",
+        "refreshCacheKey: unknown key type: users-search-haack-invalid",
       );
     });
 
@@ -534,8 +543,8 @@ describe("cron", () => {
         "federation-ipf-2024",
         "meet-uspa/1969",
         "records/raw/men",
-        "user-johnhaack",
-        "rankings-1-100",
+        "user-johnhaack-lbs",
+        "rankings-1-100-lbs",
       ]);
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.refreshCache();

@@ -126,10 +126,69 @@ export function createFederationService(scraper: ScraperType) {
     });
   }
 
+  function parseFederationCacheKey(key: string):
+    | { kind: "list" }
+    | { kind: "federation"; federation: string; year?: number }
+    | {
+        kind: "stats";
+        federation: string;
+      }
+    | null {
+    if (key === "federations-list") {
+      return { kind: "list" };
+    }
+
+    if (!key.startsWith("federation-")) return null;
+    const remainder = key.slice("federation-".length);
+
+    if (remainder.endsWith("-stats")) {
+      const federation = remainder.slice(0, -"-stats".length);
+      if (!federation) return null;
+      return { kind: "stats", federation };
+    }
+
+    const yearMatch = remainder.match(/^(.+)-(\d{4})$/);
+    if (yearMatch && yearMatch[1] && yearMatch[2]) {
+      return { kind: "federation", federation: yearMatch[1], year: parseInt(yearMatch[2], 10) };
+    }
+
+    if (!remainder) return null;
+    return { kind: "federation", federation: remainder };
+  }
+
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    const parsed = parseFederationCacheKey(key);
+    if (!parsed) return false;
+
+    if (parsed.kind === "list") {
+      await scraper.refreshCache<FederationMeet[]>(key, fetchFederationsList);
+      return true;
+    }
+
+    if (parsed.kind === "federation") {
+      await scraper.refreshCache<FederationMeet[]>(key, () =>
+        fetchFederationMeets(parsed.federation, parsed.year),
+      );
+      return true;
+    }
+
+    if (parsed.kind === "stats") {
+      await scraper.refreshCache<FederationStats>(key, async () => {
+        const meets = await fetchFederationMeets(parsed.federation);
+        return buildFederationStats(parsed.federation, meets);
+      });
+      return true;
+    }
+
+    return false;
+  }
+
   return {
     parseFederationMeetsHtml,
+    parseFederationCacheKey,
     getFederations,
     getFederation,
     getFederationStats,
+    refreshCacheKey,
   };
 }

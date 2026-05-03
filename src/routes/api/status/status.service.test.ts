@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createStatusService } from "./status.service";
@@ -63,5 +63,21 @@ describe.concurrent("status service", () => {
         expect(hasMeets).toBe(true);
       }
     });
+  });
+});
+
+describe("status service refreshCacheKey", () => {
+  it("returns false for non-status keys", async () => {
+    expect(await statusService.refreshCacheKey("federations-list")).toBe(false);
+    expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
+  });
+
+  it("returns true for status key and triggers refresh", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+    const result = await statusService.refreshCacheKey("status");
+    expect(result).toBe(true);
+    expect(refreshSpy).toHaveBeenCalledWith("status", expect.any(Function));
+    refreshSpy.mockRestore();
   });
 });

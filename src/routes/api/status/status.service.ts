@@ -63,8 +63,15 @@ export function createStatusService(scraper: ScraperType) {
     return scraper.withCache<StatusData>(CACHE_KEY, fetchStatus);
   }
 
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    if (key !== CACHE_KEY) return false;
+    await scraper.refreshCache<StatusData>(key, fetchStatus);
+    return true;
+  }
+
   return {
     parseStatusHtml,
     getStatus,
+    refreshCacheKey,
   };
 }

@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vite-plus/test";
+import { describe, expect, it, vi } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
+import { createRankingService } from "./rankings.service";
 
 const context = createContext();
 const scraper = context.scraper;
+const rankingService = createRankingService(scraper);
 import {
   rankingsDefault,
   rankingsRawMen,
@@ -260,5 +262,95 @@ describe.concurrent("rankings service", () => {
       expect(query).toContain("start=100");
       expect(query).toContain("end=200");
     });
+  });
+
+  describe("parseRankingsCacheKey", () => {
+    it("returns null for non-rankings keys", () => {
+      expect(rankingService.parseRankingsCacheKey("status")).toBeNull();
+      expect(rankingService.parseRankingsCacheKey("user-johnhaack-lbs")).toBeNull();
+    });
+
+    it("parses base unfiltered rankings key", () => {
+      expect(rankingService.parseRankingsCacheKey("rankings-1-100-lbs")).toEqual({
+        filterPath: "",
+        currentPage: 1,
+        perPage: 100,
+        units: "lbs",
+        federation: undefined,
+      });
+    });
+
+    it("parses unfiltered rankings key with federation", () => {
+      expect(rankingService.parseRankingsCacheKey("rankings-1-100-lbs-uspa")).toEqual({
+        filterPath: "",
+        currentPage: 1,
+        perPage: 100,
+        units: "lbs",
+        federation: "uspa",
+      });
+    });
+
+    it("parses filtered rankings key", () => {
+      expect(rankingService.parseRankingsCacheKey("rankings/raw/men-1-100-lbs")).toEqual({
+        filterPath: "/raw/men",
+        currentPage: 1,
+        perPage: 100,
+        units: "lbs",
+        federation: undefined,
+      });
+    });
+
+    it("parses deep filter path with age class containing dash", () => {
+      expect(rankingService.parseRankingsCacheKey("rankings/raw/men/40-44-1-100-lbs")).toEqual({
+        filterPath: "/raw/men/40-44",
+        currentPage: 1,
+        perPage: 100,
+        units: "lbs",
+        federation: undefined,
+      });
+    });
+
+    it("parses very deep filter path", () => {
+      expect(
+        rankingService.parseRankingsCacheKey(
+          "rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs",
+        ),
+      ).toEqual({
+        filterPath: "/raw/men/100/2024/full-power/by-dots",
+        currentPage: 1,
+        perPage: 100,
+        units: "lbs",
+        federation: undefined,
+      });
+    });
+
+    it("returns null for keys missing units suffix", () => {
+      expect(rankingService.parseRankingsCacheKey("rankings-1-100")).toBeNull();
+      expect(rankingService.parseRankingsCacheKey("rankings-invalid")).toBeNull();
+      expect(rankingService.parseRankingsCacheKey("rankings-abc-def")).toBeNull();
+    });
+  });
+});
+
+describe("rankings service refreshCacheKey", () => {
+  it("returns false for non-rankings keys", async () => {
+    expect(await rankingService.refreshCacheKey("status")).toBe(false);
+  });
+
+  it("returns true for unfiltered rankings", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+    const result = await rankingService.refreshCacheKey("rankings-1-100-lbs");
+    expect(result).toBe(true);
+    expect(refreshSpy).toHaveBeenCalledWith("rankings-1-100-lbs", expect.any(Function));
+    refreshSpy.mockRestore();
+  });
+
+  it("returns true for filtered rankings", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+    const result = await rankingService.refreshCacheKey("rankings/raw/men-1-100-lbs");
+    expect(result).toBe(true);
+    refreshSpy.mockRestore();
   });
 });

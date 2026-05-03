@@ -114,9 +114,61 @@ export function createMeetService(scraper: ScraperType) {
     });
   }
 
+  function parseMeetCacheKey(
+    key: string,
+  ): { path: string; sort?: string; units?: string; isHighlights: boolean } | null {
+    if (!key.startsWith("meet-")) return null;
+    let remainder = key.slice("meet-".length);
+
+    let units: string | undefined;
+    if (remainder.endsWith("-kg")) {
+      units = "kg";
+      remainder = remainder.slice(0, -"-kg".length);
+    } else if (remainder.endsWith("-lbs")) {
+      units = "lbs";
+      remainder = remainder.slice(0, -"-lbs".length);
+    }
+
+    let isHighlights = false;
+    if (remainder.endsWith("-highlights")) {
+      isHighlights = true;
+      remainder = remainder.slice(0, -"-highlights".length);
+    }
+
+    let sort: string | undefined;
+    const sortMatch = remainder.match(/-(by-[a-z0-9-]+)$/);
+    if (sortMatch) {
+      sort = sortMatch[1];
+      remainder = remainder.slice(0, -sortMatch[0].length);
+    }
+
+    if (!remainder) return null;
+    return { path: remainder, sort, units, isHighlights };
+  }
+
+  async function refreshCacheKey(key: string): Promise<boolean> {
+    const parsed = parseMeetCacheKey(key);
+    if (!parsed) return false;
+
+    if (parsed.isHighlights) {
+      await scraper.refreshCache<MeetHighlights>(key, async () => {
+        const data = await fetchMeetData(parsed.path, undefined, parsed.units);
+        return buildMeetHighlights(data);
+      });
+    } else {
+      await scraper.refreshCache<MeetData>(key, () =>
+        fetchMeetData(parsed.path, parsed.sort, parsed.units),
+      );
+    }
+
+    return true;
+  }
+
   return {
     parseMeetHtml,
+    parseMeetCacheKey,
     getMeet,
     getMeetHighlights,
+    refreshCacheKey,
   };
 }

@@ -648,4 +648,116 @@ describe("users service", () => {
       expect(fetchJsonSpy).toHaveBeenNthCalledWith(2, "/rankings?start=42&end=47&lang=en&units=kg");
     });
   });
+
+  describe("parseUserCacheKey", () => {
+    it("returns null for non-user keys", () => {
+      expect(userService.parseUserCacheKey("status")).toBeNull();
+      expect(userService.parseUserCacheKey("meet-uspa/1969")).toBeNull();
+    });
+
+    it("parses profile key with units", () => {
+      expect(userService.parseUserCacheKey("user-johnhaack-lbs")).toEqual({
+        kind: "profile",
+        username: "johnhaack",
+        includeAttempts: false,
+        units: "lbs",
+      });
+      expect(userService.parseUserCacheKey("user-johnhaack-kg")).toEqual({
+        kind: "profile",
+        username: "johnhaack",
+        includeAttempts: false,
+        units: "kg",
+      });
+    });
+
+    it("parses profile key with attempts", () => {
+      expect(userService.parseUserCacheKey("user-johnhaack-attempts-lbs")).toEqual({
+        kind: "profile",
+        username: "johnhaack",
+        includeAttempts: true,
+        units: "lbs",
+      });
+    });
+
+    it("parses rank key", () => {
+      expect(userService.parseUserCacheKey("user-johnhaack-rank")).toEqual({
+        kind: "rank",
+        username: "johnhaack",
+      });
+    });
+
+    it("parses search key", () => {
+      expect(userService.parseUserCacheKey("users-search-haack-1-100-lbs")).toEqual({
+        kind: "search",
+        search: "haack",
+        current_page: 1,
+        per_page: 100,
+        units: "lbs",
+      });
+    });
+
+    it("decodes URL-encoded search query", () => {
+      expect(userService.parseUserCacheKey("users-search-john%20haack-2-5-kg")).toEqual({
+        kind: "search",
+        search: "john haack",
+        current_page: 2,
+        per_page: 5,
+        units: "kg",
+      });
+    });
+
+    it("returns null for user key without units suffix", () => {
+      expect(userService.parseUserCacheKey("user-johnhaack")).toBeNull();
+    });
+
+    it("handles usernames with hyphens", () => {
+      expect(userService.parseUserCacheKey("user-john-doe-lbs")).toEqual({
+        kind: "profile",
+        username: "john-doe",
+        includeAttempts: false,
+        units: "lbs",
+      });
+    });
+
+    it("returns null for invalid search key", () => {
+      expect(userService.parseUserCacheKey("users-search-haack-invalid")).toBeNull();
+    });
+  });
+
+  describe("refreshCacheKey", () => {
+    it("returns false for non-user keys", async () => {
+      expect(await userService.refreshCacheKey("status")).toBe(false);
+      expect(await userService.refreshCacheKey("meet-uspa/1969")).toBe(false);
+    });
+
+    it("returns true for a profile key", async () => {
+      const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+      const result = await userService.refreshCacheKey("user-johnhaack-lbs");
+
+      expect(result).toBe(true);
+      expect(refreshSpy).toHaveBeenCalledWith("user-johnhaack-lbs", expect.any(Function));
+      refreshSpy.mockRestore();
+    });
+
+    it("returns true for a rank key", async () => {
+      const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+      const result = await userService.refreshCacheKey("user-johnhaack-rank");
+
+      expect(result).toBe(true);
+      expect(refreshSpy).toHaveBeenCalledWith("user-johnhaack-rank", expect.any(Function));
+      refreshSpy.mockRestore();
+    });
+
+    it("returns true for a search key", async () => {
+      const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+
+      const result = await userService.refreshCacheKey("users-search-haack-1-100-lbs");
+
+      expect(result).toBe(true);
+      expect(refreshSpy).toHaveBeenCalledWith("users-search-haack-1-100-lbs", expect.any(Function));
+      refreshSpy.mockRestore();
+    });
+  });
 });
