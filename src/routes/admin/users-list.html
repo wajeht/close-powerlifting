@@ -51,7 +51,8 @@
             id: 'dropdown-user-' + user.id,
             items: [
               { label: 'Update API Limit', modal: 'modal-limit-' + user.id },
-              { label: 'Resend Verification', modal: 'modal-resend-' + user.id, disabled: user.verified }
+              { label: 'Resend Verification', modal: 'modal-resend-' + user.id, disabled: user.verified },
+              { label: 'Delete User', modal: 'modal-delete-' + user.id, variant: 'danger', disabled: it.user && it.user.id === user.id }
             ]
           }) %>
         </td>
@@ -83,6 +84,16 @@
   title: 'Resend Verification Email',
   description: 'Send a new verification email to <span class="text-white">' + escapedName + '</span>.',
   confirmText: 'Send Email'
+}) %>
+<% } %>
+<% if (!(it.user && it.user.id === user.id)) { %>
+<%~ include('../_components/modal.html', {
+  id: 'modal-delete-' + user.id,
+  action: '/admin/users/' + user.id + '/delete',
+  title: 'Delete User',
+  description: 'Permanently delete <span class="text-white">' + escapedName + '</span>. This cannot be undone.',
+  confirmText: 'Delete User',
+  confirmVariant: 'danger'
 }) %>
 <% } %>
 <% } %>

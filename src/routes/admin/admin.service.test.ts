@@ -247,4 +247,40 @@ describe("AdminService", () => {
       sendSpy.mockRestore();
     });
   });
+
+  describe("deleteUser", () => {
+    let testUserId: number | undefined;
+
+    afterEach(async () => {
+      if (testUserId) {
+        await knex("users").where("id", testUserId).delete();
+        testUserId = undefined;
+      }
+    });
+
+    it("returns false for non-existent user", async () => {
+      const result = await adminService.deleteUser(999999);
+      expect(result).toBe(false);
+    });
+
+    it("deletes the user and returns true", async () => {
+      const [user] = await knex("users")
+        .insert({
+          name: "Delete Me",
+          email: "delete-me@example.com",
+          verified: true,
+        })
+        .returning("*");
+      testUserId = user.id;
+
+      const result = await adminService.deleteUser(user.id);
+
+      expect(result).toBe(true);
+
+      const found = await knex("users").where("id", user.id).first();
+      expect(found).toBeUndefined();
+
+      testUserId = undefined;
+    });
+  });
 });

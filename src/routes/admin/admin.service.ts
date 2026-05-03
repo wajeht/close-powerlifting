@@ -24,6 +24,7 @@ export interface AdminServiceType {
   updateUserApiCallCount: (userId: number, count: number) => Promise<User | undefined>;
   updateUserApiCallLimit: (userId: number, limit: number) => Promise<User | undefined>;
   resendVerificationEmail: (userId: number, hostname: string) => Promise<boolean>;
+  deleteUser: (userId: number) => Promise<boolean>;
   getCacheEntries: (options?: {
     page?: number;
     limit?: number;
@@ -146,6 +147,19 @@ export function createAdminService(
     return true;
   }
 
+  async function deleteUser(userId: number): Promise<boolean> {
+    const user = await userRepository.findById(userId);
+
+    if (!user) {
+      return false;
+    }
+
+    await userRepository.delete(userId);
+    logger.info(`Admin deleted user ${user.id} (${user.email})`);
+
+    return true;
+  }
+
   async function getCacheEntries(
     options: {
       page?: number;
@@ -208,6 +222,7 @@ export function createAdminService(
     updateUserApiCallCount,
     updateUserApiCallLimit,
     resendVerificationEmail,
+    deleteUser,
     getCacheEntries,
     clearAllCache,
     deleteCacheEntry,

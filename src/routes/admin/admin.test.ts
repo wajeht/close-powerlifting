@@ -85,6 +85,13 @@ describe("Admin Routes", () => {
       expect(response.headers.location).toBe("/login");
     });
 
+    it("should redirect POST /admin/users/:id/delete to login", async () => {
+      const response = await request(app).post("/admin/users/1/delete");
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+    });
+
     it("should redirect POST /admin/cache/clear to login", async () => {
       const response = await request(app).post("/admin/cache/clear");
 
@@ -156,6 +163,16 @@ describe("Admin Routes", () => {
 
       const user = await knex("users").where({ id: regularUserId }).first();
       expect(user.api_call_limit).not.toBe(99999);
+    });
+
+    it("should redirect POST /admin/users/:id/delete to login for non-admin user", async () => {
+      const response = await nonAdminAgent.post(`/admin/users/${regularUserId}/delete`);
+
+      expect(response.status).toBe(302);
+      expect(response.headers.location).toBe("/login");
+
+      const user = await knex("users").where({ id: regularUserId }).first();
+      expect(user).toBeDefined();
     });
 
     it("should redirect POST /admin/cache/clear to login for non-admin user", async () => {
@@ -255,6 +272,49 @@ describe("Admin Routes", () => {
 
         const user = await knex("users").where({ id: regularUserId }).first();
         expect(user.api_call_limit).toBe(1000);
+      });
+    });
+
+    describe("POST /admin/users/:id/delete", () => {
+      it("should delete the user", async () => {
+        const [doomedUser] = await knex("users")
+          .insert({
+            name: "Doomed User",
+            email: "doomed-user@example.com",
+            api_key: "doomed-key",
+            verified: true,
+          })
+          .returning("*");
+
+        const usersPage = await agent.get("/admin/users");
+        const csrfToken = extractCsrfToken(usersPage.text);
+
+        const response = await agent
+          .post(`/admin/users/${doomedUser.id}/delete`)
+          .type("form")
+          .send({ _csrf: csrfToken });
+
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe("/admin/users");
+
+        const found = await knex("users").where({ id: doomedUser.id }).first();
+        expect(found).toBeUndefined();
+      });
+
+      it("should refuse to delete the current admin", async () => {
+        const usersPage = await agent.get("/admin/users");
+        const csrfToken = extractCsrfToken(usersPage.text);
+
+        const response = await agent
+          .post(`/admin/users/${adminUserId}/delete`)
+          .type("form")
+          .send({ _csrf: csrfToken });
+
+        expect(response.status).toBe(302);
+        expect(response.headers.location).toBe("/admin/users");
+
+        const stillThere = await knex("users").where({ id: adminUserId }).first();
+        expect(stillThere).toBeDefined();
       });
     });
 

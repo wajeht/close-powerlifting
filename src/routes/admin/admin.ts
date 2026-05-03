@@ -114,6 +114,30 @@ export function createAdminRouter(context: AppContext) {
     },
   );
 
+  router.post(
+    "/admin/users/:id/delete",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    middleware.validationMiddleware({ params: userIdParamValidation }),
+    async (req: Request, res: Response) => {
+      const id = req.params.id as unknown as number;
+
+      if (req.session?.user?.id === id) {
+        req.flash("error", "You cannot delete your own account");
+        return res.redirect("/admin/users");
+      }
+
+      const success = await adminService.deleteUser(id);
+
+      if (!success) {
+        req.flash("error", "User not found");
+      } else {
+        req.flash("success", "User deleted");
+      }
+      return res.redirect("/admin/users");
+    },
+  );
+
   router.get(
     "/admin/users/:id",
     middleware.sessionAdminAuthenticationMiddleware,
