@@ -5,6 +5,7 @@ interface RouteStatus {
   method: string;
   url: string;
   date: string;
+  body: string | null;
 }
 
 interface RouteGroup {
@@ -154,6 +155,7 @@ export function createHealthCheckService(
         method: "GET",
         url: routeDefinition.path,
         date: result?.date || new Date().toISOString(),
+        body: result?.ok ? (result.body ?? null) : null,
       };
 
       groupMap.get(routeDefinition.group)?.push(routeStatus);

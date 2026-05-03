@@ -40,7 +40,9 @@ function createMockLogger(): LoggerType {
   };
 }
 
-function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperType {
+function createMockScraper(
+  responses: { ok: boolean; date: string; body?: string | null }[],
+): ScraperType {
   let callIndex = 0;
   return {
     fetchWithAuth: vi.fn(() => {
@@ -50,6 +52,7 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
         ok: response.ok,
         url: "",
         date: response.date,
+        body: response.body !== undefined ? response.body : '{"status":"success"}',
       });
     }),
   } as unknown as ScraperType;
@@ -334,6 +337,50 @@ describe("health-check service", () => {
 
       expect(cache.set).toHaveBeenCalledTimes(1);
       expect(logger.info).toHaveBeenCalledWith("Global status cache was updated!");
+    });
+
+    it("includes response body on each successful route", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({
+        ok: true,
+        date: "2024-01-01T00:00:00Z",
+        body: '{"status":"success","data":[]}',
+      });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.refreshAPIStatus({
+        apiKey: "test-key",
+        url: "http://localhost",
+      });
+
+      const allBodies = result.flatMap((g: { routes: { body: string | null }[] }) =>
+        g.routes.map((r) => r.body),
+      );
+      expect(allBodies.every((b) => b === '{"status":"success","data":[]}')).toBe(true);
+    });
+
+    it("leaves body null for failed routes", async () => {
+      const mockResponses = Array(TOTAL_ROUTES).fill({
+        ok: false,
+        date: "2024-01-01T00:00:00Z",
+        body: '{"error":"oops"}',
+      });
+      const cache = createMockCache();
+      const scraper = createMockScraper(mockResponses);
+      const logger = createMockLogger();
+      const service = createHealthCheckService(cache, scraper, logger);
+
+      const result = await service.refreshAPIStatus({
+        apiKey: "test-key",
+        url: "http://localhost",
+      });
+
+      const allBodies = result.flatMap((g: { routes: { body: string | null }[] }) =>
+        g.routes.map((r) => r.body),
+      );
+      expect(allBodies.every((b) => b === null)).toBe(true);
     });
 
     it("new feature routes are present in rankings group", async () => {

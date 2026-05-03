@@ -8,15 +8,16 @@ An intuitive REST API for the OpenPowerlifting database.
 
 ## API Endpoints
 
-| Endpoint            | Description                                                 |
-| ------------------- | ----------------------------------------------------------- |
-| `/api/rankings`     | Global powerlifting rankings sorted by DOTS score           |
-| `/api/federations`  | Powerlifting federation data and meet results               |
-| `/api/meets`        | Individual competition/meet results with attempt data       |
-| `/api/records`      | All-time powerlifting records by equipment and weight class |
-| `/api/users`        | Athlete profiles and competition history                    |
-| `/api/status`       | Data source status and statistics (no auth required)        |
-| `/api/health-check` | API health monitoring (no auth required)                    |
+| Endpoint            | Description                                                                      |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `/api/rankings`     | Global powerlifting rankings sorted by DOTS score                                |
+| `/api/federations`  | Powerlifting federation data and meet results                                    |
+| `/api/meets`        | Individual competition/meet results with attempt data                            |
+| `/api/records`      | All-time powerlifting records by equipment, weight class, and age class          |
+| `/api/users`        | Athlete profiles and competition history                                         |
+| `/api/quota`        | Current API quota usage for the authenticated key (does not count against quota) |
+| `/api/status`       | Data source status and statistics (no auth required)                             |
+| `/api/health-check` | API health monitoring (no auth required)                                         |
 
 See full query parameters, sort options, and filtering docs at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api)
 

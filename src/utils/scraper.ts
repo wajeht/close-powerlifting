@@ -49,7 +49,7 @@ export interface ScraperType {
     baseUrl: string,
     path: string,
     token: string,
-  ) => Promise<{ ok: boolean; url: string; date: string | null }>;
+  ) => Promise<{ ok: boolean; url: string; date: string | null; body: string | null }>;
 }
 
 export function createScraper(cache: CacheType, logger: LoggerType): ScraperType {
@@ -260,22 +260,25 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
     baseUrl: string,
     path: string,
     token: string,
-  ): Promise<{ ok: boolean; url: string; date: string | null }> {
+  ): Promise<{ ok: boolean; url: string; date: string | null; body: string | null }> {
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         headers: { authorization: `Bearer ${token}` },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
+      const body = await response.text();
       return {
         ok: response.ok,
         url: path,
         date: response.headers.get("date"),
+        body,
       };
     } catch {
       return {
         ok: false,
         url: path,
         date: new Date().toISOString(),
+        body: null,
       };
     }
   }
