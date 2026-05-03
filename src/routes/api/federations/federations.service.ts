@@ -15,6 +15,7 @@ import type {
 
 const { defaultPerPage } = configuration.pagination;
 const REGEX_YEAR_PREFIX = /^(\d{4})/;
+const REGEX_FEDERATION_YEAR_SUFFIX = /^(.+)-(\d{4})$/;
 
 type FederationMeet = Meet;
 
@@ -147,7 +148,7 @@ export function createFederationService(scraper: ScraperType) {
       return { kind: "stats", federation };
     }
 
-    const yearMatch = remainder.match(/^(.+)-(\d{4})$/);
+    const yearMatch = remainder.match(REGEX_FEDERATION_YEAR_SUFFIX);
     if (yearMatch && yearMatch[1] && yearMatch[2]) {
       return { kind: "federation", federation: yearMatch[1], year: parseInt(yearMatch[2], 10) };
     }

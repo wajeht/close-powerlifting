@@ -9,6 +9,8 @@ import type {
 } from "./rankings.validation";
 
 const { defaultPerPage } = configuration.pagination;
+const REGEX_RANKINGS_CACHE_KEY =
+  /^(rankings(?:\/[^?\s]*)?)-(\d+)-(\d+)-(lbs|kg)(?:-([a-z][a-z0-9-]*))?$/;
 
 export function transformRankingRow(row: (string | number)[]): RankingRow {
   const username = String(row[3] || "");
@@ -182,9 +184,7 @@ export function createRankingService(scraper: ScraperType) {
   } | null {
     if (!key.startsWith("rankings")) return null;
 
-    const match = key.match(
-      /^(rankings(?:\/[^?\s]*)?)-(\d+)-(\d+)-(lbs|kg)(?:-([a-z][a-z0-9-]*))?$/,
-    );
+    const match = key.match(REGEX_RANKINGS_CACHE_KEY);
     if (!match) return null;
 
     const prefix = match[1] ?? "rankings";

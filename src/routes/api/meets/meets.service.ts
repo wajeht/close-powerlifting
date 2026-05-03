@@ -9,6 +9,7 @@ import type {
 import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
 
 const HIGHLIGHTS_TOP_N = 3;
+const REGEX_MEET_SORT_SUFFIX = /-(by-[a-z0-9-]+)$/;
 
 function meetField(row: MeetResult, ...candidates: string[]): string {
   for (const candidate of candidates) {
@@ -136,7 +137,7 @@ export function createMeetService(scraper: ScraperType) {
     }
 
     let sort: string | undefined;
-    const sortMatch = remainder.match(/-(by-[a-z0-9-]+)$/);
+    const sortMatch = remainder.match(REGEX_MEET_SORT_SUFFIX);
     if (sortMatch) {
       sort = sortMatch[1];
       remainder = remainder.slice(0, -sortMatch[0].length);
