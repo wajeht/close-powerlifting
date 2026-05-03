@@ -79,8 +79,6 @@
       monospace;
     --color-red-300: oklch(80.8% 0.114 19.571);
     --color-red-400: oklch(70.4% 0.191 22.216);
-    --color-red-600: oklch(57.7% 0.245 27.325);
-    --color-red-700: oklch(50.5% 0.213 27.518);
     --color-yellow-400: oklch(85.2% 0.199 91.936);
     --color-yellow-600: oklch(68.1% 0.162 75.834);
     --color-yellow-700: oklch(55.4% 0.135 66.442);
@@ -479,6 +477,9 @@
   .z-30 {
     z-index: 30 !important;
   }
+  .z-40 {
+    z-index: 40 !important;
+  }
   .z-50 {
     z-index: 50 !important;
   }
@@ -658,6 +659,9 @@
   }
   .w-44 {
     width: calc(var(--spacing) * 44) !important;
+  }
+  .w-56 {
+    width: calc(var(--spacing) * 56) !important;
   }
   .w-68 {
     width: calc(var(--spacing) * 68) !important;
@@ -989,9 +993,6 @@
     .bg-purple-900\/50 {
       background-color: color-mix(in oklab, var(--color-purple-900) 50%, transparent) !important;
     }
-  }
-  .bg-red-600 {
-    background-color: var(--color-red-600) !important;
   }
   .bg-transparent {
     background-color: #0000 !important;
@@ -1329,6 +1330,9 @@
     --tw-outline-style: none !important;
     outline-style: none !important;
   }
+  .group-open\:rotate-180:is(:where(.group):is([open], :popover-open, :open) *) {
+    rotate: 180deg !important;
+  }
   .group-open\:bg-neutral-800:is(:where(.group):is([open], :popover-open, :open) *) {
     background-color: var(--color-neutral-800) !important;
   }
@@ -1388,9 +1392,6 @@
     }
     .hover\:bg-power-dark:hover {
       background-color: var(--color-power-dark) !important;
-    }
-    .hover\:bg-red-700:hover {
-      background-color: var(--color-red-700) !important;
     }
     .hover\:bg-yellow-700:hover {
       background-color: var(--color-yellow-700) !important;

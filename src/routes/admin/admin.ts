@@ -223,5 +223,41 @@ export function createAdminRouter(context: AppContext) {
     },
   );
 
+  router.post(
+    "/admin/cache/refresh",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    middleware.validationMiddleware({ body: cacheKeyValidation }),
+    async (req: Request, res: Response) => {
+      const key = req.body.key as string;
+
+      try {
+        await context.cron.tasks.refreshCacheKey(key);
+        req.flash("success", `Refreshed cache entry "${key}"`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        context.logger.error(`Admin failed to refresh cache entry ${key}`, { error: message });
+        req.flash("error", `Failed to refresh cache entry "${key}"`);
+      }
+
+      return res.redirect("/admin/cache");
+    },
+  );
+
+  router.post(
+    "/admin/cache/refresh-all",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    async (req: Request, res: Response) => {
+      void context.cron.tasks.refreshCache().catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        context.logger.error("Admin-triggered refresh-all failed", { error: message });
+      });
+
+      req.flash("success", "Cache refresh started — entries will update in the background");
+      return res.redirect("/admin/cache");
+    },
+  );
+
   return router;
 }

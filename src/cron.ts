@@ -36,6 +36,7 @@ export interface CronType {
   getStatus: () => { isRunning: boolean; jobCount: number };
   tasks: {
     refreshCache: () => Promise<void>;
+    refreshCacheKey: (key: string) => Promise<void>;
     refreshHealthCheck: () => Promise<void>;
     resetApiCallCount: () => Promise<void>;
     sendReachingApiLimitEmail: () => Promise<void>;
@@ -553,6 +554,7 @@ export function createCron(
     getStatus,
     tasks: {
       refreshCache: refreshCacheTask,
+      refreshCacheKey,
       refreshHealthCheck: refreshHealthCheckTask,
       resetApiCallCount: resetApiCallCountTask,
       sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
