@@ -90,6 +90,9 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Users", path: "/api/users/johnhaack/rank" },
   { group: "Users", path: "/api/users/compare?a=johnhaack&b=kristyhawkins" },
 
+  // Account
+  { group: "Account", path: "/api/quota" },
+
   // Public (no auth)
   { group: "Public", path: "/api/status" },
   { group: "Public", path: "/api/health-check" },
@@ -121,7 +124,15 @@ export function createHealthCheckService(
       ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
     );
 
-    const groupOrder = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
+    const groupOrder = [
+      "Rankings",
+      "Federations",
+      "Meets",
+      "Records",
+      "Users",
+      "Account",
+      "Public",
+    ];
     const groupMap = new Map<string, RouteStatus[]>();
 
     for (const groupName of groupOrder) {

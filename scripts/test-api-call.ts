@@ -79,6 +79,9 @@ const ROUTES = [
   { path: "/api/users/johnhaack/personal-bests", requiresAuth: true },
   { path: "/api/users/johnhaack/rank", requiresAuth: true },
   { path: "/api/users/compare?a=johnhaack&b=kristyhawkins", requiresAuth: true },
+
+  // Account
+  { path: "/api/quota", requiresAuth: true },
 ];
 
 interface TestResult {

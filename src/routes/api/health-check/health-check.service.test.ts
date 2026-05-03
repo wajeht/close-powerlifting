@@ -56,8 +56,16 @@ function createMockScraper(responses: { ok: boolean; date: string }[]): ScraperT
 }
 
 describe("health-check service", () => {
-  const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 61;
+  const EXPECTED_GROUPS = [
+    "Rankings",
+    "Federations",
+    "Meets",
+    "Records",
+    "Users",
+    "Account",
+    "Public",
+  ];
+  const TOTAL_ROUTES = 62;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
