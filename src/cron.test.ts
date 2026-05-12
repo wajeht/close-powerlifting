@@ -103,7 +103,7 @@ describe("cron", () => {
     logger = createTestLogger();
     scraper = createTestScraper(cache);
     userRepository = {
-      findVerified: vi.fn().mockResolvedValue([]),
+      findVerifiedWithUsage: vi.fn().mockResolvedValue([]),
       resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
       findByApiCallCount: vi.fn().mockResolvedValue([]),
       findByEmail: vi.fn().mockResolvedValue(null),
@@ -613,8 +613,8 @@ describe("cron", () => {
     it("should reset and set marker when no previous reset is recorded", async () => {
       vi.setSystemTime(new Date("2024-04-15T00:05:00Z"));
 
-      const mockUsers = [{ email: "test@test.com", name: "Test" }];
-      vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
+      const mockUsers = [{ email: "test@test.com", name: "Test", api_call_count: 42 }];
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
@@ -691,11 +691,11 @@ describe("cron", () => {
       vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
 
       const mockUsers = [
-        { email: "user1@test.com", name: "User 1" },
-        { email: "user2@test.com", name: "User 2" },
-        { email: "user3@test.com", name: "User 3" },
+        { email: "user1@test.com", name: "User 1", api_call_count: 1 },
+        { email: "user2@test.com", name: "User 2", api_call_count: 50 },
+        { email: "user3@test.com", name: "User 3", api_call_count: 100 },
       ];
-      vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
@@ -703,9 +703,24 @@ describe("cron", () => {
       expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
     });
 
-    it("should handle findVerified error", async () => {
+    it("should send no emails when no verified user has usage (DB returns empty)", async () => {
       vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerified).mockRejectedValue(new Error("DB error"));
+      // findVerifiedWithUsage filters at the SQL layer, so a DB with all-zero
+      // users surfaces here as an empty list — we still reset and set the
+      // marker so the cron doesn't retry later in the month.
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([]);
+
+      const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
+      await cron.tasks.resetApiCallCount();
+
+      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
+      expect(mail.sendApiLimitResetEmail).not.toHaveBeenCalled();
+      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
+    });
+
+    it("should handle findVerifiedWithUsage error", async () => {
+      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
+      vi.mocked(userRepository.findVerifiedWithUsage).mockRejectedValue(new Error("DB error"));
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
@@ -720,8 +735,8 @@ describe("cron", () => {
 
     it("should handle resetAllApiCallCounts error and not set marker", async () => {
       vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerified).mockResolvedValue([
-        { email: "a@b.com", name: "A" },
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([
+        { email: "a@b.com", name: "A", api_call_count: 5 },
       ] as never);
       vi.mocked(userRepository.resetAllApiCallCounts).mockRejectedValue(new Error("DB error"));
 
@@ -737,7 +752,7 @@ describe("cron", () => {
 
     it("should log completion on success", async () => {
       vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerified).mockResolvedValue([]);
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([]);
 
       const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
       await cron.tasks.resetApiCallCount();
@@ -749,11 +764,11 @@ describe("cron", () => {
       vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
 
       const mockUsers = [
-        { email: "user1@test.com", name: "User 1" },
-        { email: "user2@test.com", name: "User 2" },
-        { email: "user3@test.com", name: "User 3" },
+        { email: "user1@test.com", name: "User 1", api_call_count: 10 },
+        { email: "user2@test.com", name: "User 2", api_call_count: 20 },
+        { email: "user3@test.com", name: "User 3", api_call_count: 30 },
       ];
-      vi.mocked(userRepository.findVerified).mockResolvedValue(mockUsers as never);
+      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
       vi.mocked(mail.sendApiLimitResetEmail)
         .mockResolvedValueOnce(undefined)
         .mockRejectedValueOnce(new Error("SMTP error"))
