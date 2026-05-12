@@ -18,7 +18,7 @@ export interface UserRepositoryType {
   findOne: (where: Partial<UserType>) => Promise<UserType | undefined>;
   findAll: (options?: FindAllOptions) => Promise<UserType[]>;
   count: (where?: Partial<UserType>, search?: string) => Promise<number>;
-  findVerified: () => Promise<UserType[]>;
+  findVerifiedWithUsage: () => Promise<UserType[]>;
   findByApiCallCount: (count: number) => Promise<UserType[]>;
   create: (data: CreateUserInput) => Promise<UserType>;
   update: (email: string, data: UpdateUserInput) => Promise<UserType | undefined>;
@@ -87,8 +87,8 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return Number(result?.count || 0);
   }
 
-  async function findVerified(): Promise<UserType[]> {
-    return knex<UserType>("users").where({ verified: true });
+  async function findVerifiedWithUsage(): Promise<UserType[]> {
+    return knex<UserType>("users").where({ verified: true }).andWhere("api_call_count", ">", 0);
   }
 
   async function findByApiCallCount(count: number): Promise<UserType[]> {
@@ -163,7 +163,10 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
   }
 
   async function resetAllApiCallCounts(): Promise<void> {
-    await knex<UserType>("users").where({ verified: true }).update({ api_call_count: 0 });
+    await knex<UserType>("users")
+      .where({ verified: true })
+      .andWhere("api_call_count", ">", 0)
+      .update({ api_call_count: 0 });
   }
 
   async function deleteUser(id: number): Promise<void> {
@@ -178,7 +181,7 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     findOne,
     findAll,
     count,
-    findVerified,
+    findVerifiedWithUsage,
     findByApiCallCount,
     create,
     update,
