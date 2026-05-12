@@ -177,10 +177,8 @@ export function createCron(
         return;
       }
 
-      const users = await userRepository.findVerified();
+      const users = await userRepository.findVerifiedWithUsage();
       await userRepository.resetAllApiCallCounts();
-      // Persist marker before sending emails so a partial email failure
-      // doesn't cause duplicate resets/emails on the next cron firing.
       await cache.set(API_CALL_RESET_MONTH_KEY, currentMonth);
 
       const results = await Promise.allSettled(
