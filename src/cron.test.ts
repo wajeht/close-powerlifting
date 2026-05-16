@@ -326,7 +326,7 @@ describe("cron", () => {
       expect(cached2).not.toBeNull();
     });
 
-    it("should refresh federation keys", async () => {
+    it("should claim federation keys without re-scraping (data served from lifts)", async () => {
       await seedCache(cache, ["federation-ipf", "federation-uspa-2024"]);
       const cron = createCron(
         cache,
@@ -340,26 +340,8 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/ipf");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/uspa/2024");
-    });
-
-    it("should handle federation keys with hyphenated names and year", async () => {
-      await seedCache(cache, ["federation-usa-pl-2020", "federation-all-russia"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/usa-pl/2020");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/all-russia");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/mlist/ipf");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/mlist/uspa/2024");
     });
 
     it("should refresh meet keys", async () => {
@@ -646,9 +628,9 @@ describe("cron", () => {
       expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/all-tested/women");
     });
 
-    // Edge cases for federations
-    it("should not treat short numbers as years", async () => {
-      // federation-365strong should NOT be parsed as year=365
+    // Federation cache-key parsing edges — refresh is now a no-op since data
+    // comes from the lifts table; we only verify the cron didn't scrape.
+    it("should claim federation-365strong without re-scraping", async () => {
       await seedCache(cache, ["federation-365strong"]);
       const cron = createCron(
         cache,
@@ -662,25 +644,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/365strong");
-    });
-
-    it("should handle federation ending in 3 digit number", async () => {
-      await seedCache(cache, ["federation-uspa-123"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      // 123 is not 4 digits, so it's part of the federation name
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/mlist/uspa-123");
+      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Edge cases for meets
