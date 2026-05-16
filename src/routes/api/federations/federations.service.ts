@@ -80,27 +80,27 @@ export function createFederationService(knex: Knex, _scraper: ScraperType) {
     federation?: string;
     year?: number;
   }): Promise<MeetDbRow[]> {
-    let query = knex("lifts").distinct(
-      "federation",
-      "date",
-      "meet_name",
-      "meet_country",
-      "meet_state",
-    );
+    let query = knex("meets")
+      .join("federations", "federations.id", "meets.federation_id")
+      .select<MeetDbRow[]>(
+        knex.ref("federations.code").as("federation"),
+        "meets.date",
+        "meets.meet_name",
+        "meets.meet_country",
+        "meets.meet_state",
+      );
 
     if (filter?.federation) {
-      const fed = filter.federation.toUpperCase();
+      const slug = filter.federation.toLowerCase().replace(/[^a-z0-9]/g, "");
       query = query.where((qb) =>
-        qb
-          .whereRaw("UPPER(federation) = ?", [fed])
-          .orWhereRaw("UPPER(parent_federation) = ?", [fed]),
+        qb.where("federations.slug", slug).orWhere("federations.parent_slug", slug),
       );
     }
     if (filter?.year) {
-      query = query.where("date", "like", `${filter.year}-%`);
+      query = query.where("meets.date", "like", `${filter.year}-%`);
     }
 
-    return (await query.orderBy("date", "desc")) as MeetDbRow[];
+    return (await query.orderBy("meets.date", "desc")) as MeetDbRow[];
   }
 
   async function getFederations({
