@@ -7,6 +7,7 @@ import type { ApiCallLogRepositoryType } from "./db/api-call-log";
 import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
+import type { IngestServiceType } from "./utils/ingest";
 import { createHealthCheckService } from "./routes/api/health-check/health-check.service";
 import { createMeetService } from "./routes/api/meets/meets.service";
 import { createUserService } from "./routes/api/users/users.service";
@@ -36,6 +37,7 @@ export interface CronType {
     resetApiCallCount: () => Promise<void>;
     sendReachingApiLimitEmail: () => Promise<void>;
     cleanupOldApiCallLogs: () => Promise<void>;
+    runIngest: () => Promise<void>;
   };
 }
 
@@ -53,6 +55,7 @@ export function createCron(
   logger: LoggerType,
   scraper: ScraperType,
   apiCallLogRepository: ApiCallLogRepositoryType,
+  ingest: IngestServiceType,
 ): CronType {
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
@@ -226,6 +229,18 @@ export function createCron(
     }
   }
 
+  async function runIngestTask() {
+    try {
+      logger.info("cron job started: runIngest");
+      const result = await ingest.runNightly();
+      logger.info(
+        `cron job completed: runIngest (status=${result.status}, rows=${result.rowCount}, durationMs=${result.durationMs})`,
+      );
+    } catch (error) {
+      logger.error("cron job failed: runIngest", error);
+    }
+  }
+
   async function cleanupOldApiCallLogsTask() {
     try {
       logger.info("cron job started: cleanupOldApiCallLogs");
@@ -252,6 +267,7 @@ export function createCron(
     cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
     cronJobs.push(cron.schedule("5 0 * * *", resetApiCallCountTask)); // Daily 12:05 AM check (server local time); resets once per UTC month — see API_CALL_RESET_MONTH_KEY guard. Self-heals if a firing is missed.
     cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
+    cronJobs.push(cron.schedule("0 4 * * *", runIngestTask)); // Daily OpenPowerlifting CSV ingest: every day at 4:00 AM UTC
 
     isRunning = true;
     logger.info("cron service started", { jobs: cronJobs.length });
@@ -281,6 +297,7 @@ export function createCron(
       resetApiCallCount: resetApiCallCountTask,
       sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
       cleanupOldApiCallLogs: cleanupOldApiCallLogsTask,
+      runIngest: runIngestTask,
     },
   };
 }
