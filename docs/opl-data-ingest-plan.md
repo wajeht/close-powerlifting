@@ -2,218 +2,317 @@
 
 ## Problem
 
-Close Powerlifting today is a scrape-and-cache proxy over OpenPowerlifting's HTML pages. Every novel query (different filter combination, different pagination, fuzzy athlete search) is a fresh upstream fetch + HTML parse + table-to-JSON conversion. The cache stores opaque JSON blobs keyed by request URL, which means:
+Close Powerlifting is currently a scrape-and-cache proxy over OpenPowerlifting's HTML pages. Every API call risks an upstream fetch + DOM parse. We can't add per-lifter metadata, can't search efficiently, can't aggregate, can't dedupe — the cache stores opaque JSON blobs keyed by request URL.
 
-- No aggregations, no filtering across cached entries, no FTS
-- Cache misses are devastating: network fetch + DOM parse + serialize on the hot path
-- A search for "John" and "Jon" are completely separate cache entries
-- Cache is forever per current policy, so stale data accumulates with no good story for freshness
-- Every optimization we make (UPSERT, linkedom, LRU, skip parse/stringify) is a workaround for not owning the data
+OpenPowerlifting publishes the entire dataset as a nightly bulk CSV explicitly intended for downstream use ([source](https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html)). The right architecture is to own that data in our own normalized SQLite, transform it cleanly at ingest, then serve every API endpoint from indexed local queries.
 
 ## Goal
 
-Stop being a proxy. Become a database. Ingest OpenPowerlifting's published bulk CSV nightly into our own normalized SQLite tables, with proper indexes and FTS5 for athlete/meet search. Every API endpoint becomes a local SQL query — sub-millisecond response, no upstream dependency on the read path, no parse cost, no cache layer needed.
+Replace the proxy with a database. Nightly ingest pulls the CSV, transforms it into a clean normalized schema, and atomically swaps it in. Every API endpoint becomes a SQL query against locally-owned data: no upstream dependency on the read path, no DOM parsing, no cache layer, sub-millisecond hot queries.
 
-## Data
+API contract stays unchanged for existing endpoints; only the implementation moves to SQL.
 
-Source: [openpowerlifting.gitlab.io/opl-csv/bulk-csv.html](https://openpowerlifting.gitlab.io/opl-csv/bulk-csv.html)
+## Source data (what the CSV looks like)
 
-- **Download URL:** `https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip`
+- **URL:** `https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip`
 - **Size:** 158 MB zipped (~700–900 MB unzipped)
-- **Rows:** ~3.9 million (one row per lifter per event per meet)
-- **Update frequency:** Nightly
-- **Format:** Single CSV, ~30 columns, explicitly intended for downstream use (CC0 / ODbL)
+- **Rows:** ~3.9 million
+- **Update cadence:** nightly
+- **Format:** one CSV file, ~30 columns. License: ODbL/CC0, downstream use encouraged.
 
-### CSV columns (mapped to our schema)
+Each row is **one lifter's performance in one event at one meet**. Lifter info, meet info, federation, and outcome are all packed into the same row. The same lifter appears 1–100+ times. The same meet appears once per competitor.
 
-| CSV column                                  | Type | Notes                                                |
-| ------------------------------------------- | ---- | ---------------------------------------------------- |
-| Name                                        | TEXT | Lifter name, includes disambiguation numbers         |
-| Sex                                         | TEXT | M, F, Mx                                             |
-| Event                                       | TEXT | SBD, BD, SD, SB, S, B, D                             |
-| Equipment                                   | TEXT | Raw, Wraps, Single-ply, Multi-ply, Unlimited, Straps |
-| Age                                         | REAL | Exact or n+0.5 for approximate                       |
-| AgeClass                                    | TEXT | e.g. "40-44"                                         |
-| BirthYearClass                              | TEXT | IPF-style                                            |
-| Division                                    | TEXT | Free-form                                            |
-| BodyweightKg                                | REAL | 2 decimals                                           |
-| WeightClassKg                               | REAL | 2 decimals                                           |
-| Squat1Kg..Squat4Kg                          | REAL | Attempts; negative = failed                          |
-| Bench1Kg..Bench4Kg                          | REAL | Attempts; negative = failed                          |
-| Deadlift1Kg..Deadlift4Kg                    | REAL | Attempts; negative = failed                          |
-| Best3SquatKg, Best3BenchKg, Best3DeadliftKg | REAL | Best of first three                                  |
-| TotalKg                                     | REAL | Sum of three best lifts                              |
-| Place                                       | TEXT | Position, or G/DQ/DD/NS                              |
-| Dots, Wilks, Glossbrenner, Goodlift         | REAL | Scoring formulae                                     |
-| Tested                                      | TEXT | "Yes" or empty                                       |
-| Country, State                              | TEXT | Lifter origin                                        |
-| Federation, ParentFederation                | TEXT | Hosting + sanctioning                                |
-| Date                                        | TEXT | ISO 8601 YYYY-MM-DD                                  |
-| MeetCountry, MeetState, MeetName            | TEXT | Meet location/name                                   |
-| Sanctioned                                  | TEXT | Yes/No                                               |
+```
+lifts (3.9M rows — denormalized, every row repeats lifter/meet/fed info)
+┌──────────────┬─────┬──────┬──────────┬─────┬──────────────┬────────────┬──────────┬─────┬────────────┐
+│ Name         │ Sex │ Age  │ Bw_kg    │ Wcl │ MeetName     │ Federation │ Date     │ Eq  │ Total_Kg   │
+├──────────────┼─────┼──────┼──────────┼─────┼──────────────┼────────────┼──────────┼─────┼────────────┤
+│ John Haack   │ M   │ 30   │ 99.5     │ 100 │ WRPF Am Pro  │ WRPF       │ 2024-05  │ Raw │ 1020       │
+│ John Haack   │ M   │ 31   │ 100.0    │ 100 │ Raw Nationals│ USAPL      │ 2025-03  │ Raw │ 1015       │
+│ K. Hawkins   │ F   │ 35   │ 74.5     │ 75  │ WRPF Am Pro  │ WRPF       │ 2024-05  │ Raw │ 607.5      │
+└──────────────┴─────┴──────┴──────────┴─────┴──────────────┴────────────┴──────────┴─────┴────────────┘
+```
 
-## Target Footprint
+### CSV columns (mapped to our target)
 
-- Raw CSV unzipped: ~700–900 MB
-- Loaded into SQLite with appropriate indexes: ~1.0–1.5 GB
-- FTS5 index on (Name, MeetName): +200–400 MB
-- **Total SQLite DB: ~1.5–2 GB.** Fits trivially on any modest server.
+| Group                      | Columns                                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| Lifter identity            | Name, Sex, Country, State                                                                       |
+| Lifter at the time of meet | Age, AgeClass, BirthYearClass, BodyweightKg, WeightClassKg, Division                            |
+| Meet                       | Federation, ParentFederation, Date, MeetCountry, MeetState, MeetName, Sanctioned                |
+| Event                      | Event (SBD/B/D/BD/S/SB/SD), Equipment (Raw/Wraps/Single-ply/Multi-ply/Unlimited/Straps), Tested |
+| Attempts                   | Squat1Kg..Squat4Kg, Bench1Kg..Bench4Kg, Deadlift1Kg..Deadlift4Kg (negatives = failed lifts)     |
+| Best                       | Best3SquatKg, Best3BenchKg, Best3DeadliftKg, TotalKg                                            |
+| Outcome                    | Place ("1", "2", … or "DQ"/"DD"/"G"/"NS"), Dots, Wilks, Glossbrenner, Goodlift                  |
 
-## Schema
+Key data quirks we'll normalize:
 
-One main `lifts` table holding every row from the CSV. We do **not** normalize lifters/meets into separate tables in phase 1 — the CSV row IS the unit of truth, and queries are simpler against a flat table. We can normalize later if storage or update cost becomes a problem.
+- `Place` is mixed numeric + status codes.
+- `Tested`, `Sanctioned` are `"Yes"`/`""` strings.
+- Federation casing varies (`WRPF`, `wrpf`, `WRPF-UK`).
+- Names have disambiguation suffixes (`John Smith #1`).
+- Some `WeightClassKg` rows are stored as negative for "below X" classes.
+
+## Target schema (normalized)
+
+Four tables. The flat CSV row gets decomposed into three entities + one fact table that holds only what's actually unique per performance.
+
+```
+federations                   meets                                 lifters
+┌─────┬───────┬────────┐      ┌─────┬─────┬──────┬──────┬────────┐  ┌──────┬──────────┬──────┬─────┬──────┐
+│ id  │ slug  │ parent │      │ id  │ fed │ date │ slug │ name   │  │ id   │ name     │ slug │ sex │ ig   │
+├─────┼───────┼────────┤      ├─────┼─────┼──────┼──────┼────────┤  ├──────┼──────────┼──────┼─────┼──────┤
+│ 100 │ wrpf  │ NULL   │      │ 10  │ 100 │ ...  │ wamp │ WRPF…  │  │ 1    │ John H.  │ jh   │ M   │ ...  │
+│ 101 │ usapl │ NULL   │      │ 11  │ 101 │ ...  │ rn   │ Raw N. │  │ 2    │ Kristy   │ kh   │ F   │ ...  │
+└─────┴───────┴────────┘      └─────┴─────┴──────┴──────┴────────┘  └──────┴──────────┴──────┴─────┴──────┘
+~465 rows                      ~62k rows                              ~989k rows
+
+                       lifts (fact table — performance data only)
+                       ┌────┬───────────┬─────────┬───────┬──────┬─────┬───────┬───────┐
+                       │ id │ lifter_id │ meet_id │ event │ age  │ bw  │ total │ ...   │
+                       ├────┼───────────┼─────────┼───────┼──────┼─────┼───────┼───────┤
+                       │ 1  │ 1         │ 10      │ SBD   │ 30   │ 99.5│ 1020  │ ...   │
+                       └────┴───────────┴─────────┴───────┴──────┴─────┴───────┴───────┘
+                       ~3.9M rows
+```
+
+### Why this shape
+
+- "Add an Instagram handle to John Haack" = one row update on `lifters`, not 100+ rows of `lifts`.
+- "Federation typo: USAPL → USA-PL" = one row update on `federations`.
+- FTS indexes shrink dramatically:
+  - `lifters_fts` over ~989k names (vs. 3.9M today)
+  - `meets_fts` over ~62k meet names (vs. embedded in lifts today)
+- Search returns distinct lifters/meets natively — no `ROW_NUMBER() PARTITION BY` dedup gymnastics.
+
+### Schema (concrete)
 
 ```sql
-CREATE TABLE lifts (
-  id              INTEGER PRIMARY KEY,
-  name            TEXT NOT NULL,
-  sex             TEXT,
-  event           TEXT,
-  equipment       TEXT,
-  age             REAL,
-  age_class       TEXT,
-  birth_year_class TEXT,
-  division        TEXT,
-  bodyweight_kg   REAL,
-  weight_class_kg REAL,
-  squat1_kg       REAL, squat2_kg REAL, squat3_kg REAL, squat4_kg REAL,
-  bench1_kg       REAL, bench2_kg REAL, bench3_kg REAL, bench4_kg REAL,
-  deadlift1_kg    REAL, deadlift2_kg REAL, deadlift3_kg REAL, deadlift4_kg REAL,
-  best3_squat_kg  REAL,
-  best3_bench_kg  REAL,
-  best3_deadlift_kg REAL,
-  total_kg        REAL,
-  place           TEXT,
-  dots            REAL,
-  wilks           REAL,
-  glossbrenner    REAL,
-  goodlift        REAL,
-  tested          TEXT,
-  country         TEXT,
-  state           TEXT,
-  federation      TEXT,
-  parent_federation TEXT,
-  date            TEXT NOT NULL,        -- ISO 8601
-  meet_country    TEXT,
-  meet_state      TEXT,
-  meet_name       TEXT,
-  sanctioned      TEXT
+CREATE TABLE federations (
+  id            INTEGER PRIMARY KEY,
+  slug          TEXT NOT NULL UNIQUE,    -- lowercased, alphanumeric (e.g. "wrpf")
+  code          TEXT NOT NULL,           -- original casing from CSV (e.g. "WRPF")
+  parent_slug   TEXT                     -- e.g. "ipf" for federations under it
 );
-```
+CREATE INDEX idx_federations_parent ON federations (parent_slug);
 
-### Indexes
+CREATE TABLE lifters (
+  id            INTEGER PRIMARY KEY,
+  name          TEXT NOT NULL,           -- "John Haack", "John Smith #1"
+  name_slug     TEXT NOT NULL UNIQUE,    -- "johnhaack", "johnsmith1"
+  sex           TEXT,                    -- M / F / Mx
+  -- room for metadata we add ourselves:
+  instagram     TEXT,
+  country       TEXT,
+  state         TEXT
+);
 
-```sql
--- Athlete lookup
-CREATE INDEX idx_lifts_name ON lifts (name);
-
--- Date range queries / latest meets
-CREATE INDEX idx_lifts_date ON lifts (date);
-
--- Common rankings filter combinations
-CREATE INDEX idx_lifts_rankings ON lifts (sex, equipment, weight_class_kg, total_kg DESC);
-CREATE INDEX idx_lifts_dots ON lifts (sex, equipment, dots DESC);
-
--- Federation drill-down
-CREATE INDEX idx_lifts_federation ON lifts (federation, date);
-
--- Meet results
-CREATE INDEX idx_lifts_meet ON lifts (meet_name, date);
-```
-
-Index list is a first cut — we tune based on actual query plans (`EXPLAIN QUERY PLAN`) once endpoints are wired up.
-
-### FTS5 search
-
-```sql
-CREATE VIRTUAL TABLE lifts_fts USING fts5(
+CREATE VIRTUAL TABLE lifters_fts USING fts5(
   name,
-  meet_name,
-  content='lifts',
-  content_rowid='id',
+  content='lifters', content_rowid='id',
   tokenize='unicode61 remove_diacritics 2',
   prefix='2 3'
 );
+
+CREATE TABLE meets (
+  id              INTEGER PRIMARY KEY,
+  federation_id   INTEGER NOT NULL REFERENCES federations(id),
+  date            TEXT NOT NULL,         -- ISO 8601
+  meet_name       TEXT NOT NULL,
+  meet_slug       TEXT NOT NULL,         -- nameToSlug(meet_name)
+  meet_country    TEXT,
+  meet_state      TEXT,
+  sanctioned      INTEGER NOT NULL DEFAULT 0,  -- boolean
+  UNIQUE (federation_id, date, meet_slug)
+);
+CREATE INDEX idx_meets_date ON meets (date);
+CREATE INDEX idx_meets_fed_date ON meets (federation_id, date);
+
+CREATE VIRTUAL TABLE meets_fts USING fts5(
+  meet_name,
+  content='meets', content_rowid='id',
+  tokenize='unicode61 remove_diacritics 2',
+  prefix='2 3'
+);
+
+CREATE TABLE lifts (
+  id                  INTEGER PRIMARY KEY,
+  lifter_id           INTEGER NOT NULL REFERENCES lifters(id),
+  meet_id             INTEGER NOT NULL REFERENCES meets(id),
+  event               TEXT NOT NULL,      -- SBD / BD / SD / SB / S / B / D
+  equipment           TEXT NOT NULL,      -- Raw / Wraps / Single-ply / Multi-ply / Unlimited / Straps
+  age                 REAL,
+  age_class           TEXT,
+  birth_year_class    TEXT,
+  division            TEXT,
+  bodyweight_kg       REAL,
+  weight_class_kg     REAL,
+  squat1_kg           REAL, squat2_kg REAL, squat3_kg REAL, squat4_kg REAL,
+  bench1_kg           REAL, bench2_kg REAL, bench3_kg REAL, bench4_kg REAL,
+  deadlift1_kg        REAL, deadlift2_kg REAL, deadlift3_kg REAL, deadlift4_kg REAL,
+  best3_squat_kg      REAL,
+  best3_bench_kg      REAL,
+  best3_deadlift_kg   REAL,
+  total_kg            REAL,
+  place_rank          INTEGER,            -- 1, 2, 3, … (NULL for non-numeric)
+  place_status        TEXT,               -- 'DQ' / 'DD' / 'G' / 'NS' (NULL if placed)
+  dots                REAL,
+  wilks               REAL,
+  glossbrenner        REAL,
+  goodlift            REAL,
+  tested              INTEGER NOT NULL DEFAULT 0  -- boolean
+);
+CREATE INDEX idx_lifts_lifter ON lifts (lifter_id);
+CREATE INDEX idx_lifts_meet ON lifts (meet_id);
+CREATE INDEX idx_lifts_rankings_total ON lifts (event, equipment, weight_class_kg, total_kg DESC);
+CREATE INDEX idx_lifts_rankings_dots ON lifts (event, equipment, dots DESC);
+
+CREATE TABLE ingest_runs (
+  id                   INTEGER PRIMARY KEY,
+  started_at           TEXT NOT NULL,
+  finished_at          TEXT,
+  row_count            INTEGER,
+  byte_size            INTEGER,
+  source_last_modified TEXT,
+  status               TEXT NOT NULL,   -- completed / skipped / failed
+  error                TEXT
+);
 ```
 
-Populated and kept in sync via triggers (per the bang pattern in `~/Dev/bang/src/db/migrations/20260515120000_add_fts_search_indexes.ts`).
+### Data normalizations applied at ingest
 
-## Ingest Pipeline
+| Raw CSV value                    | Stored value                                                                |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| `Name = "John Haack"`            | `lifters.name = "John Haack"`, `name_slug = "johnhaack"`                    |
+| `Federation = "WRPF-UK"`         | `federations.code = "WRPF-UK"`, `slug = "wrpfuk"`                           |
+| `MeetName = "WRPF AMERICAN PRO"` | `meets.meet_name = "WRPF AMERICAN PRO"`, `meet_slug = "wrpfamericanpro"`    |
+| `Tested = "Yes"` / `""`          | `lifts.tested = 1` / `0`                                                    |
+| `Sanctioned = "Yes"` / `"No"`    | `meets.sanctioned = 1` / `0`                                                |
+| `Place = "1"`                    | `place_rank = 1`, `place_status = NULL`                                     |
+| `Place = "DQ"`                   | `place_rank = NULL`, `place_status = "DQ"`                                  |
+| `Date = "2024-05-12"`            | validated as `YYYY-MM-DD`; row skipped if malformed                         |
+| Names with `Ā`, `é`, etc.        | `name` preserved; `name_slug` is NFKD + diacritic-strip + alphanumeric-only |
 
-Scheduled job (`context.cron`) runs nightly at 04:00 UTC (after OpenPowerlifting's nightly publish, before US morning traffic):
+## Ingest pipeline (performance-focused)
 
-1. **Download** `openpowerlifting-latest.zip` to a tmp file. Skip if `Last-Modified` matches stored value.
-2. **Unzip** to streaming CSV reader. Don't materialize the full file in memory.
-3. **Ingest into a staging table** (`lifts_new`) using batched `INSERT` (e.g. 1000 rows per transaction). Disable FTS triggers during bulk load.
-4. **Build indexes** on `lifts_new` after the bulk insert (faster than indexing while inserting).
-5. **Populate FTS** from `lifts_new` in one shot.
-6. **Atomic swap:** `DROP TABLE lifts; ALTER TABLE lifts_new RENAME TO lifts;` inside a transaction. Reads continue from the old table until the swap completes.
-7. **VACUUM** weekly (not nightly) to reclaim space.
-8. **Log** row counts, duration, byte size to a small `ingest_runs` table for observability.
+The ingest is a single nightly job in `context.cron`. It must handle 3.9M rows in ~3-5 minutes inside one atomic transaction so readers see consistent state.
 
-Expected ingest time: 30 seconds to 2 minutes depending on disk + index strategy.
+### Bypassing knex for the hot path
 
-## API Endpoint Migration
+Knex's bulk-insert emits `INSERT … SELECT … UNION ALL SELECT …`, which hits SQLite's 32 766 bound-parameter ceiling fast. For ingest we go straight to `better-sqlite3`:
 
-Each endpoint moves from `scraper.withCache(...)` to a direct SQL query. The route handlers stay the same; we swap out the service implementation.
+```ts
+const insertLift = db.prepare(
+  `INSERT INTO lifts (lifter_id, meet_id, event, equipment, age, ...) VALUES (@lifter_id, @meet_id, @event, @equipment, @age, ...)`,
+);
+const insertManyLifts = db.transaction((rows) => {
+  for (const row of rows) insertLift.run(row);
+});
+```
 
-| Endpoint                  | Today                        | After                                                                |
-| ------------------------- | ---------------------------- | -------------------------------------------------------------------- |
-| `/api/rankings`           | Scrape + parse rankings HTML | `SELECT ... FROM lifts WHERE ... ORDER BY ... LIMIT`                 |
-| `/api/users/{name}`       | Scrape lifter profile page   | `SELECT * FROM lifts WHERE name = ? ORDER BY date`                   |
-| `/api/users?search=`      | Scrape rankings search JSON  | `SELECT DISTINCT name FROM lifts_fts(?)`                             |
-| `/api/meets/{fed}/{code}` | Scrape meet results page     | `SELECT * FROM lifts WHERE meet_name = ? AND date = ?`               |
-| `/api/federations`        | Scrape federation index page | `SELECT DISTINCT federation FROM lifts` (cached in memory)           |
-| `/api/records`            | Scrape records pages         | `SELECT name, MAX(best3_squat_kg) FROM lifts WHERE ... GROUP BY ...` |
-| `/api/status`             | Internal — keep as is        | Add `last_ingest_at` from `ingest_runs`                              |
+Prepared statement + transaction is the standard better-sqlite3 fast-path: typical throughput is ~100k inserts/sec. 3.9M rows lands in 30-60 seconds of pure insert time.
 
-The existing `cache` table stays for the transition. We can decommission it later, or repurpose it as an HTTP-level response cache (small, short TTL) if request-level memoization helps.
+### Pipeline stages
+
+1. **Download.** Fetch the zip to a temp file. Compare `Last-Modified` against the last successful `ingest_runs` row; skip if unchanged unless `--force`.
+2. **Stream-unzip + stream-parse CSV.** Never materialize the full file in RAM. `unzipper` for the zip stream, `csv-parse` (streaming mode) for rows. Memory stays bounded.
+3. **First-pass aggregation in memory.** As rows stream in, build three lookup `Map`s:
+   - `federationsByCode: Map<string, FederationDraft>`
+   - `meetsByKey: Map<string, MeetDraft>` (key = `${federation_slug}|${date}|${meet_slug}`)
+   - `liftersByNameSlug: Map<string, LifterDraft>`
+     These dedupe automatically. Memory for ~989k lifters + 62k meets + 465 federations is well under 200 MB.
+4. **Begin transaction.** Everything from here is atomic from a reader's view.
+5. **Truncate target tables.** `DELETE FROM lifts; DELETE FROM meets; DELETE FROM lifters; DELETE FROM federations;` — fast in WAL mode.
+6. **Insert federations** (small, ~465 rows). Capture each `id`.
+7. **Insert lifters** in batches via prepared-statement transactions. Map `name_slug → lifter_id` for the next stage.
+8. **Insert meets** in batches. Map `(federation_id, date, meet_slug) → meet_id`.
+9. **Second pass over the CSV** (or buffered rows from pass 1 if memory permits): build lift rows with the right `lifter_id` / `meet_id` via the maps; bulk insert.
+10. **Rebuild FTS.** `INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')`, same for `meets_fts`. FTS5 is ~5x faster rebuilt at end than maintained via triggers during bulk insert.
+11. **Commit.** Readers see the new state.
+12. **Record run.** Write to `ingest_runs` with row counts + duration + source `Last-Modified`.
+
+### Why we do two passes
+
+To assign FKs at row-level, we need lifter/meet IDs _before_ inserting lifts. Options:
+
+- (a) Single pass, accumulate everything in memory, insert at the end. Simple, ~1 GB peak memory for the full CSV.
+- (b) Two passes from a saved temp file. Lower memory (~200 MB), but disk I/O cost.
+- (c) Single pass with progressive lifter/meet inserts and `RETURNING id` per row. Slow, lots of round trips.
+
+**Pick (a)** if peak memory is OK on the deploy box (it should be — 1 GB transient is fine). Drop to (b) if not. Avoid (c).
+
+### Atomicity
+
+One transaction, single writer, WAL mode. Readers continue against the old snapshot for the duration of the ingest. Commit makes the new state visible. No DROP/RENAME swap dance needed.
+
+### Cron + manual trigger
+
+- Nightly at 04:00 UTC (after OpenPowerlifting's nightly publish, before US-morning traffic).
+- `npm run ingest:run [-- --force]` for manual one-shot.
+- Logs: start, finish, row count, duration, last-modified header. Failures log + alert, do not crash the process.
+
+## How endpoints map (API contract preserved)
+
+| Endpoint                           | Query (sketch)                                                                |
+| ---------------------------------- | ----------------------------------------------------------------------------- |
+| `/api/users/{slug}`                | `lifters WHERE name_slug = ?` → join `lifts` for history                      |
+| `/api/users?search=q`              | `lifters_fts MATCH '<tokens>*'` → return lifters                              |
+| `/api/users/{slug}/progression`    | profile query → derive in JS                                                  |
+| `/api/users/{slug}/personal-bests` | profile query → derive in JS                                                  |
+| `/api/users/compare`               | two lifter lookups → derive in JS                                             |
+| `/api/rankings[...]`               | `lifts JOIN lifters JOIN meets WHERE … ORDER BY <sort_col>`                   |
+| `/api/meets/{fed}/{date}/{slug}`   | `meets WHERE federation_id = ? AND date = ? AND meet_slug = ?` → join `lifts` |
+| `/api/federations`                 | `meets ORDER BY date DESC` joined to `federations`                            |
+| `/api/federations/{slug}`          | `federations WHERE slug = ?` → join `meets`                                   |
+| `/api/federations/{slug}/stats`    | aggregate `meets` by year, count                                              |
+| `/api/records[...]`                | `lifts JOIN lifters JOIN meets WHERE … ROW_NUMBER() … per weight class`       |
+| `/api/status`                      | unchanged (no data dependency)                                                |
+
+All responses keep their existing shape. The change is **inside** each service: from "scrape + cache + parse" or "ROW_NUMBER over 3.9M rows" to "indexed lookup + small join."
 
 ## Phases
 
-### Phase 1 — Ingest infrastructure (no user-visible change)
+### Phase 1 — Schema + ingest pipeline
 
-- New migration: create `lifts`, `lifts_fts`, `ingest_runs` tables
-- Implement `createIngestService(context)` with download + parse + bulk insert + atomic swap
-- Wire into `context.cron` as a nightly job
-- Add `npm run ingest:run` for manual triggering
-- Tests: small fixture CSV (~100 rows) through the full pipeline
+- Single migration creating all four tables, FTS, and `ingest_runs`.
+- New `createIngestService(knex, logger)` using `better-sqlite3` directly for inserts.
+- Wired into `context.cron` and `npm run ingest:run`.
+- Integration tests against a small fixture CSV cover: row counts on all four tables, FK integrity, FTS hit, Place split, slug computation, boolean coercion, atomic swap behavior.
 
-### Phase 2 — Endpoint migration (one at a time, behind feature flag)
+### Phase 2 — Endpoint migration
 
-- Start with `/api/users/{name}` — simplest query, smallest blast radius
-- Then `/api/rankings` — highest traffic, biggest perf win
-- Then `/api/users?search=` — unlocks real FTS, biggest UX win
-- Then `/api/meets`, `/api/records`, `/api/federations`
-- Each migration keeps the scraper fallback wired up behind a flag, so we can flip back if a query is wrong
+One commit per endpoint, in this order (smallest blast radius first):
+
+1. `/api/users/{slug}` (and progression / personal-bests / compare / rank)
+2. `/api/users?search=` (FTS5)
+3. `/api/meets/{fed}/{date}/{slug}`
+4. `/api/federations`
+5. `/api/rankings`
+6. `/api/records`
+
+Each commit:
+
+- Swap the service implementation.
+- Keep API request/response shape stable.
+- Update integration tests to seed the four tables in `test-setup` rather than mocking the scraper.
+- Delete the scraper code paths that are no longer reachable.
 
 ### Phase 3 — Cleanup
 
-- Remove scraper-based service code for migrated endpoints
-- Delete the `cache` table (or keep for HTTP response cache)
-- Update `/api/status` to expose ingest health
-- Update docs (swagger description, README)
+- Drop the legacy `cache` table (if no consumers left).
+- Delete dead scraper code (`createScraper.fetchHtml`, `parseHtml`, `tableToJson` — keep `fetchJson` only if `/api/status` still needs it).
+- Update Swagger / docs to reflect the new `meet_code` URL convention.
 
-## Tradeoffs / Risks
+## Open questions
 
-- **Disk:** 1.5–2 GB on the server. Need to check production volume size.
-- **Ingest failure:** If a nightly run fails, we serve yesterday's data. Surface this in `/api/status` and alert on N consecutive failures.
-- **Atomic swap window:** During the rename, there's a brief moment readers might see an empty/old table. SQLite's transaction guarantees should make this invisible, but worth load-testing.
-- **Schema drift:** OpenPowerlifting could add/remove columns. Ingest needs to be defensive — skip unknown columns, default-null missing ones, log changes.
-- **Initial backfill:** First production deploy needs to download + ingest the full dataset before serving. Plan for a one-time bootstrap, not a hot rolling deploy.
-- **CSV quirks:** Lifter disambiguation numbers in `Name` field, mixed types in `Place` (numeric vs G/DQ/DD/NS), trailing decimals in numeric fields. Need to handle these in the parser, not in the queries.
-- **Existing API consumers:** Response shapes must stay stable. We test each migrated endpoint against fixtures captured from the current scraper path.
+- **Deploy disk:** target SQLite size is ~1.5–2 GB. Production volume needs to handle that plus WAL during ingest (transient ~3 GB peak). Need to confirm.
+- **First production deploy:** the first ingest takes 3-5 minutes. Either deploy with the migration disabled and trigger ingest manually, or block startup until the first ingest completes.
+- **Backups:** SQLite snapshot strategy needs to be defined separately. Recommend nightly `VACUUM INTO` to a separate file before each ingest.
+- **OPL CSV schema changes:** they could add/remove columns. Ingest needs to be defensive — log unknown columns, default-NULL missing ones, alert if expected columns disappear.
 
-## Open Questions
+## Out of scope
 
-- Where does the SQLite file live in production? Same volume as today's? Backup story?
-- Do we want a Postgres path eventually, or is SQLite enough at this scale? (Probably SQLite for now — single-machine, read-heavy, fits in RAM.)
-- Should we preserve OpenPowerlifting's data versioning (their git history of changes)? Probably no — we only need the latest snapshot per nightly cycle.
-- For `/api/users/{name}`, OpenPowerlifting includes social links (Instagram) by scraping the profile page HTML. The CSV doesn't have these. Either drop the field from the response or keep a thin scrape pass for profile-specific data not in the dump.
-
-## Not in Scope
-
-- Building our own scoring formulae (Dots/Wilks/etc.) — they're in the CSV.
-- Real-time ingest (sub-day freshness). Nightly is fine and matches the upstream cadence.
-- Writeable API (athletes editing their data). Read-only, mirrors upstream.
-- Federation-specific endpoints beyond what we expose today.
+- Editing user-provided data (read-only API mirroring OPL).
+- Computing scoring formulae (already in CSV).
+- Sub-day data freshness (nightly matches upstream cadence).
+- Backporting older CSV snapshots (only the latest is ingested).
