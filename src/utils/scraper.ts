@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { configuration } from "../configuration";
 import { ScraperError } from "../error";
 import type { ApiResponse, Pagination } from "../types";
@@ -85,8 +85,7 @@ export function createScraper(cache: CacheType, logger: LoggerType): ScraperType
   }
 
   function parseHtml(html: string): Document {
-    const dom = new JSDOM(html);
-    return dom.window.document;
+    return parseHTML(html).document as unknown as Document;
   }
 
   function tableToJson<T extends Record<string, string> = Record<string, string>>(

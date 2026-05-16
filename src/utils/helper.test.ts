@@ -1,4 +1,4 @@
-import { JSDOM } from "jsdom";
+import { parseHTML } from "linkedom";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../context";
@@ -16,7 +16,7 @@ describe.concurrent("tableToJson", () => {
   let table: any;
 
   beforeEach(() => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Header 1</th>
@@ -33,7 +33,7 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    table = dom.window.document.querySelector("table");
+    table = document.querySelector("table");
   });
 
   it("converts table to JSON", () => {
@@ -46,7 +46,7 @@ describe.concurrent("tableToJson", () => {
   });
 
   it("handles empty table correctly", () => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Header 1</th>
@@ -55,12 +55,12 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    const table = dom.window.document.querySelector("table");
+    const table = document.querySelector("table");
     expect(scraper.tableToJson(table)).toEqual([]);
   });
 
   it("handles table with only headers correctly", () => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Header 1</th>
@@ -69,12 +69,12 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    const table = dom.window.document.querySelector("table");
+    const table = document.querySelector("table");
     expect(scraper.tableToJson(table)).toEqual([]);
   });
 
   it("handles table with only one row correctly", () => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Header 1</th>
@@ -87,12 +87,12 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    const table = dom.window.document.querySelector("table");
+    const table = document.querySelector("table");
     expect(scraper.tableToJson(table)).toEqual([{ header1: "Data 1-1", header2: "Data 1-2" }]);
   });
 
   it("expands colspan headers with numbered suffixes", () => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Name</th>
@@ -109,14 +109,14 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    const table = dom.window.document.querySelector("table");
+    const table = document.querySelector("table");
     expect(scraper.tableToJson(table)).toEqual([
       { name: "John", squat1: "300", squat2: "320", squat3: "-340", total: "620" },
     ]);
   });
 
   it("handles table with only one column correctly", () => {
-    const dom = new JSDOM(`
+    const { document } = parseHTML(`
       <table>
         <tr>
           <th>Header 1</th>
@@ -130,7 +130,7 @@ describe.concurrent("tableToJson", () => {
       </table>
     `);
 
-    const table = dom.window.document.querySelector("table");
+    const table = document.querySelector("table");
     expect(scraper.tableToJson(table)).toEqual([{ header1: "Data 1-1" }, { header1: "Data 2-1" }]);
   });
 });
