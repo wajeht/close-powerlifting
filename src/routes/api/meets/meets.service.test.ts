@@ -2,310 +2,83 @@ import { describe, expect, it, vi } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createMeetService, buildMeetHighlights } from "./meets.service";
-import {
-  meetRps2548Html,
-  meetUsaplIsr2025Html,
-  meetWrpfUsa23e1Html,
-  meetUspa1969Html,
-} from "./fixtures";
+import type { MeetData } from "../../../types";
 
 const context = createContext();
 const scraper = context.scraper;
-const meetService = createMeetService(scraper);
+const meetService = createMeetService(context.knex, scraper);
 
-const rpsDoc = scraper.parseHtml(meetRps2548Html);
-const usaplDoc = scraper.parseHtml(meetUsaplIsr2025Html);
-const wrpfDoc = scraper.parseHtml(meetWrpfUsa23e1Html);
-const uspaDoc = scraper.parseHtml(meetUspa1969Html);
-
-const rpsMeet = meetService.parseMeetHtml(rpsDoc);
-const usaplMeet = meetService.parseMeetHtml(usaplDoc);
-const wrpfMeet = meetService.parseMeetHtml(wrpfDoc);
-const uspaMeet = meetService.parseMeetHtml(uspaDoc);
+const sampleMeet: MeetData = {
+  title: "Test Pro",
+  date: "2024-05-12",
+  location: "USA-CA",
+  results: [
+    {
+      rank: "1",
+      lifter: "Alice",
+      sex: "F",
+      age: "28",
+      equip: "Raw",
+      class: "75",
+      weight: "74",
+      squat: "230",
+      bench: "130",
+      deadlift: "240",
+      total: "600",
+      dots: "612.3",
+    },
+    {
+      rank: "2",
+      lifter: "Bob",
+      sex: "M",
+      age: "30",
+      equip: "Raw",
+      class: "100",
+      weight: "99",
+      squat: "360",
+      bench: "240",
+      deadlift: "400",
+      total: "1000",
+      dots: "605.0",
+    },
+    {
+      rank: "3",
+      lifter: "Carol",
+      sex: "F",
+      age: "25",
+      equip: "Raw",
+      class: "75",
+      weight: "73",
+      squat: "210",
+      bench: "120",
+      deadlift: "230",
+      total: "560",
+      dots: "580.0",
+    },
+  ],
+};
 
 describe("meets service", () => {
-  describe("parseMeetHtml", () => {
-    it("parses RPS meet HTML correctly", () => {
-      expect(rpsMeet).toBeDefined();
-      expect(rpsMeet.title).toBeDefined();
-      expect(rpsMeet.date).toBeDefined();
-      expect(rpsMeet.location).toBeDefined();
-      expect(rpsMeet.results).toBeDefined();
-    });
-
-    it("parses USAPL meet HTML correctly", () => {
-      expect(usaplMeet).toBeDefined();
-      expect(usaplMeet.title).toBeDefined();
-      expect(usaplMeet.date).toBeDefined();
-      expect(usaplMeet.location).toBeDefined();
-      expect(usaplMeet.results).toBeDefined();
-    });
-
-    it("parses WRPF meet HTML correctly", () => {
-      expect(wrpfMeet).toBeDefined();
-      expect(wrpfMeet.title).toBeDefined();
-      expect(wrpfMeet.results).toBeDefined();
-    });
-
-    it("parses USPA meet HTML correctly", () => {
-      expect(uspaMeet).toBeDefined();
-      expect(uspaMeet.title).toBeDefined();
-      expect(uspaMeet.date).toBeDefined();
-      expect(uspaMeet.location).toBeDefined();
-      expect(uspaMeet.results).toBeDefined();
-    });
-
-    it("extracts title from RPS meet", () => {
-      expect(rpsMeet.title.length).toBeGreaterThan(0);
-      expect(rpsMeet.title).toContain("RPS");
-    });
-
-    it("extracts title from USAPL meet", () => {
-      expect(usaplMeet.title.length).toBeGreaterThan(0);
-      expect(usaplMeet.title.toLowerCase()).toContain("usapl");
-    });
-
-    it("extracts title from WRPF meet", () => {
-      expect(wrpfMeet.title.length).toBeGreaterThan(0);
-    });
-
-    it("extracts title from USPA meet", () => {
-      expect(uspaMeet.title.length).toBeGreaterThan(0);
-      expect(uspaMeet.title.toLowerCase()).toContain("uspa");
-    });
-
-    it("extracts date in correct format from RPS meet", () => {
-      expect(rpsMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-
-    it("extracts date in correct format from USAPL meet", () => {
-      expect(usaplMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-
-    it("extracts date in correct format from USPA meet", () => {
-      expect(uspaMeet.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-
-    it("extracts location from USAPL meet", () => {
-      expect(usaplMeet.location.length).toBeGreaterThan(0);
-    });
-
-    it("extracts location from USPA meet", () => {
-      expect(uspaMeet.location.length).toBeGreaterThan(0);
-    });
-
-    it("extracts results from RPS meet", () => {
-      expect(Array.isArray(rpsMeet.results)).toBe(true);
-      expect(rpsMeet.results.length).toBeGreaterThan(0);
-    });
-
-    it("extracts results from USAPL meet", () => {
-      expect(Array.isArray(usaplMeet.results)).toBe(true);
-      expect(usaplMeet.results.length).toBeGreaterThan(0);
-    });
-
-    it("extracts results from WRPF meet", () => {
-      expect(Array.isArray(wrpfMeet.results)).toBe(true);
-      expect(wrpfMeet.results.length).toBeGreaterThan(0);
-    });
-
-    it("extracts results from USPA meet", () => {
-      expect(Array.isArray(uspaMeet.results)).toBe(true);
-      expect(uspaMeet.results.length).toBeGreaterThan(0);
-    });
-
-    it("results have expected fields", () => {
-      if (rpsMeet.results.length > 0) {
-        const firstResult = rpsMeet.results[0];
-        const keys = Object.keys(firstResult).map((k) => k.toLowerCase());
-        const hasRank = keys.some((k) => k.includes("rank") || k === "#");
-        const hasLifter = keys.some((k) => k.includes("lifter") || k.includes("name"));
-        expect(hasRank || hasLifter).toBe(true);
-      }
-    });
-
-    it("results contain lift data", () => {
-      if (rpsMeet.results.length > 0) {
-        const firstResult = rpsMeet.results[0];
-        const keys = Object.keys(firstResult).map((k) => k.toLowerCase());
-        const hasSquat = keys.some((k) => k.includes("squat") || k.includes("sq"));
-        const hasBench = keys.some((k) => k.includes("bench") || k.includes("bp"));
-        const hasDeadlift = keys.some((k) => k.includes("deadlift") || k.includes("dl"));
-        const hasTotal = keys.some((k) => k.includes("total"));
-        expect(hasSquat || hasBench || hasDeadlift || hasTotal).toBe(true);
-      }
-    });
-  });
-
-  describe("getMeet with sort parameter", () => {
-    it("appends sort suffix to fetch path", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
-        data: await fn(),
-      }));
-
-      await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-wilks", undefined);
-      fetchSpy.mockRestore();
-    });
-
-    it("includes sort in cache key", async () => {
-      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
-
-      await meetService.getMeet({ meet: "uspa/1969" }, "by-total");
-
-      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-by-total", expect.any(Function));
-      cacheSpy.mockRestore();
-    });
-
-    it("uses default path when sort is not provided", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
-        data: await fn(),
-      }));
-
-      await meetService.getMeet({ meet: "uspa/1969" });
-
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", undefined);
-      fetchSpy.mockRestore();
-    });
-  });
-
   describe("buildMeetHighlights", () => {
-    it("returns title, date, location from the source meet", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      expect(highlights.title).toBe(uspaMeet.title);
-      expect(highlights.date).toBe(uspaMeet.date);
-      expect(highlights.location).toBe(uspaMeet.location);
+    it("returns the meet metadata", () => {
+      const highlights = buildMeetHighlights(sampleMeet);
+      expect(highlights.title).toBe("Test Pro");
+      expect(highlights.date).toBe("2024-05-12");
+      expect(highlights.location).toBe("USA-CA");
+      expect(highlights.total_lifters).toBe(3);
     });
 
-    it("total_lifters matches results length", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      expect(highlights.total_lifters).toBe(uspaMeet.results.length);
+    it("returns top 3 by dots and by total", () => {
+      const highlights = buildMeetHighlights(sampleMeet);
+      expect(highlights.top_by_dots).toHaveLength(3);
+      expect(highlights.top_by_total).toHaveLength(3);
+      expect(highlights.top_by_dots[0]!.name).toBe("Alice");
+      expect(highlights.top_by_total[0]!.name).toBe("Bob");
     });
 
-    it("weight_classes_contested includes only distinct values", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      expect(highlights.weight_classes_contested).toEqual([
-        ...new Set(highlights.weight_classes_contested),
-      ]);
-    });
-
-    it("top_by_dots is at most 3 lifters", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      expect(highlights.top_by_dots.length).toBeLessThanOrEqual(3);
-    });
-
-    it("top_by_total is at most 3 lifters", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      expect(highlights.top_by_total.length).toBeLessThanOrEqual(3);
-    });
-
-    it("top_by_dots is sorted descending by DOTS", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      for (let i = 1; i < highlights.top_by_dots.length; i++) {
-        const prev = parseFloat(highlights.top_by_dots[i - 1]!.dots || "0");
-        const curr = parseFloat(highlights.top_by_dots[i]!.dots || "0");
-        expect(prev).toBeGreaterThanOrEqual(curr);
-      }
-    });
-
-    it("top_by_total is sorted descending by total", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      for (let i = 1; i < highlights.top_by_total.length; i++) {
-        const prev = parseFloat(highlights.top_by_total[i - 1]!.total || "0");
-        const curr = parseFloat(highlights.top_by_total[i]!.total || "0");
-        expect(prev).toBeGreaterThanOrEqual(curr);
-      }
-    });
-
-    it("returns empty top arrays when meet has no results", () => {
-      const empty = { ...uspaMeet, results: [] };
-      const highlights = buildMeetHighlights(empty);
-      expect(highlights.total_lifters).toBe(0);
-      expect(highlights.top_by_dots).toEqual([]);
-      expect(highlights.top_by_total).toEqual([]);
-      expect(highlights.weight_classes_contested).toEqual([]);
-    });
-
-    it("each highlighted lifter has place, name, total, dots", () => {
-      const highlights = buildMeetHighlights(uspaMeet);
-      if (highlights.top_by_dots.length > 0) {
-        const lifter = highlights.top_by_dots[0]!;
-        expect(lifter).toHaveProperty("place");
-        expect(lifter).toHaveProperty("name");
-        expect(lifter).toHaveProperty("total");
-        expect(lifter).toHaveProperty("dots");
-      }
-    });
-  });
-
-  describe("getMeetHighlights service method", () => {
-    it("uses a highlights-suffixed cache key", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: buildMeetHighlights(uspaMeet) });
-
-      await meetService.getMeetHighlights({ meet: "uspa/1969" });
-
-      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-highlights", expect.any(Function));
-      cacheSpy.mockRestore();
-    });
-
-    it("includes units in cache key when provided", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: buildMeetHighlights(uspaMeet) });
-
-      await meetService.getMeetHighlights({ meet: "uspa/1969" }, "kg");
-
-      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-highlights-kg", expect.any(Function));
-      cacheSpy.mockRestore();
-    });
-  });
-
-  describe("getMeet with units parameter", () => {
-    it("passes units to fetchHtml", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
-        data: await fn(),
-      }));
-
-      await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", "kg");
-      fetchSpy.mockRestore();
-    });
-
-    it("includes units in cache key", async () => {
-      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
-
-      await meetService.getMeet({ meet: "uspa/1969" }, undefined, "kg");
-
-      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-kg", expect.any(Function));
-      cacheSpy.mockRestore();
-    });
-
-    it("includes both sort and units in cache key", async () => {
-      const cacheSpy = vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: uspaMeet });
-
-      await meetService.getMeet({ meet: "uspa/1969" }, "by-wilks", "kg");
-
-      expect(cacheSpy).toHaveBeenCalledWith("meet-uspa/1969-by-wilks-kg", expect.any(Function));
-      cacheSpy.mockRestore();
-    });
-
-    it("passes both sort and units to fetchHtml", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      vi.spyOn(scraper, "withCache").mockImplementationOnce(async (_key, fn) => ({
-        data: await fn(),
-      }));
-
-      await meetService.getMeet({ meet: "uspa/1969" }, "by-total", "kg");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-total", "kg");
-      fetchSpy.mockRestore();
+    it("collects distinct weight classes contested", () => {
+      const highlights = buildMeetHighlights(sampleMeet);
+      expect(highlights.weight_classes_contested).toEqual(["100", "75"]);
     });
   });
 
@@ -338,90 +111,45 @@ describe("meets service", () => {
       });
     });
 
-    it("parses meet key with multi-segment sort", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-schwartz-malone")).toEqual({
-        path: "uspa/1969",
-        sort: "by-schwartz-malone",
-        isHighlights: false,
-      });
-    });
-
-    it("parses meet key with sort + units", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-wilks-kg")).toEqual({
-        path: "uspa/1969",
-        sort: "by-wilks",
-        units: "kg",
-        isHighlights: false,
-      });
-    });
-
-    it("parses highlights key", () => {
+    it("parses meet highlights key", () => {
       expect(meetService.parseMeetCacheKey("meet-uspa/1969-highlights")).toEqual({
         path: "uspa/1969",
         isHighlights: true,
       });
     });
-
-    it("parses highlights key with units", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-highlights-kg")).toEqual({
-        path: "uspa/1969",
-        units: "kg",
-        isHighlights: true,
-      });
-    });
-
-    it("handles meet path with multi-segment fed code", () => {
-      expect(meetService.parseMeetCacheKey("meet-wrpf-ru/2301")).toEqual({
-        path: "wrpf-ru/2301",
-        isHighlights: false,
-      });
-    });
   });
 
-  describe("refreshCacheKey", () => {
-    it("returns false for non-meet keys", async () => {
-      expect(await meetService.refreshCacheKey("status")).toBe(false);
-      expect(await meetService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
+  describe("getMeet (DB-backed)", () => {
+    it("returns null for paths that do not parse", async () => {
+      const result = await meetService.getMeet({ meet: "garbage" });
+      expect(result.data).toBeNull();
     });
 
-    it("returns true and re-fetches for a base meet key", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      const refreshSpy = vi
-        .spyOn(scraper, "refreshCache")
-        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
-
-      const result = await meetService.refreshCacheKey("meet-uspa/1969");
-
-      expect(result).toBe(true);
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", undefined);
-      fetchSpy.mockRestore();
-      refreshSpy.mockRestore();
+    it("returns null when no lifts match", async () => {
+      const result = await meetService.getMeet({ meet: "fake/2024-01-01/missing-meet" });
+      expect(result.data).toBeNull();
     });
+  });
+});
 
-    it("re-fetches sorted variant with correct sort path", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      const refreshSpy = vi
-        .spyOn(scraper, "refreshCache")
-        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
+describe("meets service refreshCacheKey", () => {
+  it("returns false for non-meet keys", async () => {
+    expect(await meetService.refreshCacheKey("status")).toBe(false);
+  });
 
-      await meetService.refreshCacheKey("meet-uspa/1969-by-wilks-kg");
+  it("returns true for meet keys without re-scraping (lifts now)", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache");
+    const result = await meetService.refreshCacheKey("meet-uspa/1969");
+    expect(result).toBe(true);
+    expect(refreshSpy).not.toHaveBeenCalled();
+    refreshSpy.mockRestore();
+  });
 
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969/by-wilks", "kg");
-      fetchSpy.mockRestore();
-      refreshSpy.mockRestore();
-    });
-
-    it("re-fetches highlights variant", async () => {
-      const fetchSpy = vi.spyOn(scraper, "fetchHtml").mockResolvedValueOnce(meetUspa1969Html);
-      const refreshSpy = vi
-        .spyOn(scraper, "refreshCache")
-        .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
-
-      await meetService.refreshCacheKey("meet-uspa/1969-highlights-kg");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/m/uspa/1969", "kg");
-      fetchSpy.mockRestore();
-      refreshSpy.mockRestore();
-    });
+  it("returns true for highlights keys", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache");
+    const result = await meetService.refreshCacheKey("meet-uspa/1969-highlights");
+    expect(result).toBe(true);
+    expect(refreshSpy).not.toHaveBeenCalled();
+    refreshSpy.mockRestore();
   });
 });

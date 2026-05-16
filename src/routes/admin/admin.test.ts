@@ -505,7 +505,7 @@ describe("Admin Routes", () => {
       beforeEach(async () => {
         await knex("cache").del();
         await knex("cache").insert({
-          key: "meet-uspa/1969",
+          key: "status",
           value: '{"data":{"stale":true}}',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -519,12 +519,12 @@ describe("Admin Routes", () => {
         const response = await agent
           .post("/admin/cache/refresh")
           .type("form")
-          .send({ key: "meet-uspa/1969", _csrf: csrfToken });
+          .send({ key: "status", _csrf: csrfToken });
 
         expect(response.status).toBe(302);
         expect(response.headers.location).toBe("/admin/cache");
 
-        const refreshed = await knex("cache").where({ key: "meet-uspa/1969" }).first();
+        const refreshed = await knex("cache").where({ key: "status" }).first();
         expect(refreshed).toBeDefined();
         expect(refreshed.value).not.toBe('{"data":{"stale":true}}');
       });

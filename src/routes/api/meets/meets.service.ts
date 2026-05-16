@@ -1,3 +1,5 @@
+import type { Knex } from "knex";
+
 import type { ScraperType } from "../../../context";
 import type {
   MeetData,
@@ -6,10 +8,77 @@ import type {
   MeetHighlights,
   MeetHighlightLifter,
 } from "../../../types";
+import { nameToSlug } from "../../../utils/ingest";
 import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
 
 const HIGHLIGHTS_TOP_N = 3;
 const REGEX_MEET_SORT_SUFFIX = /-(by-[a-z0-9-]+)$/;
+const KG_TO_LBS = 2.20462;
+
+const SORT_COLUMN: Record<string, "dots" | "wilks" | "glossbrenner" | "goodlift" | "total_kg"> = {
+  "by-dots": "dots",
+  "by-wilks": "wilks",
+  "by-wilks2020": "wilks",
+  "by-glossbrenner": "glossbrenner",
+  "by-goodlift": "goodlift",
+  "by-ipf-points": "goodlift",
+  "by-mcculloch": "dots",
+  "by-total": "total_kg",
+  "by-ah": "dots",
+  "by-nasa": "dots",
+  "by-reshel": "dots",
+  "by-schwartz-malone": "dots",
+};
+
+interface MeetLiftRow {
+  name: string;
+  sex: string | null;
+  age: number | null;
+  equipment: string | null;
+  weight_class_kg: number | null;
+  bodyweight_kg: number | null;
+  best3_squat_kg: number | null;
+  best3_bench_kg: number | null;
+  best3_deadlift_kg: number | null;
+  total_kg: number | null;
+  dots: number | null;
+  wilks: number | null;
+  glossbrenner: number | null;
+  goodlift: number | null;
+  division: string | null;
+  meet_name: string | null;
+  meet_country: string | null;
+  meet_state: string | null;
+}
+
+function convertKg(value: number | null, units: "kg" | "lbs"): string {
+  if (value == null) return "";
+  const converted = units === "lbs" ? value * KG_TO_LBS : value;
+  if (Number.isInteger(converted)) return String(converted);
+  return converted.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function buildLocation(country: string | null, state: string | null): string {
+  if (country && state) return `${country}-${state}`;
+  return country ?? "";
+}
+
+function toMeetResult(row: MeetLiftRow, rank: number, units: "kg" | "lbs"): MeetResult {
+  return {
+    rank: String(rank),
+    lifter: row.name,
+    sex: row.sex ?? "",
+    age: row.age == null ? "" : String(Math.floor(row.age)),
+    equip: row.equipment ?? "",
+    class: row.weight_class_kg == null ? "" : convertKg(row.weight_class_kg, units),
+    weight: convertKg(row.bodyweight_kg, units),
+    squat: convertKg(row.best3_squat_kg, units),
+    bench: convertKg(row.best3_bench_kg, units),
+    deadlift: convertKg(row.best3_deadlift_kg, units),
+    total: convertKg(row.total_kg, units),
+    dots: row.dots == null ? "" : String(row.dots),
+  };
+}
 
 function meetField(row: MeetResult, ...candidates: string[]): string {
   for (const candidate of candidates) {
@@ -66,32 +135,79 @@ export function buildMeetHighlights(meet: MeetData): MeetHighlights {
   };
 }
 
-export function createMeetService(scraper: ScraperType) {
-  function parseMeetHtml(doc: Document): MeetData {
-    const h1 = doc.querySelector("h1#meet");
-    const title = h1?.textContent?.trim() || "";
+interface ParsedMeetPath {
+  federation: string;
+  date: string;
+  slug: string;
+}
 
-    const p = h1?.nextElementSibling;
-    const dateLocationText = p?.textContent?.trim().split("\n")[0] || "";
-    const [date, ...locationParts] = dateLocationText.split(",").map((s) => s.trim());
-    const location = locationParts.join(", ");
+function parseMeetPath(meet: string): ParsedMeetPath | null {
+  const parts = meet.split("/");
+  if (parts.length < 3) return null;
+  const [federation, date, ...slugParts] = parts;
+  if (!federation || !date || slugParts.length === 0) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  return { federation, date, slug: slugParts.join("/") };
+}
 
-    const table = doc.querySelector("table");
-    const results = scraper.tableToJson(table) as MeetResult[];
+export function createMeetService(knex: Knex, _scraper: ScraperType) {
+  async function fetchMeetData(
+    meet: string,
+    sort?: string,
+    units: string = "lbs",
+  ): Promise<MeetData | null> {
+    const parsed = parseMeetPath(meet);
+    if (!parsed) return null;
+
+    const normalizedUnits: "kg" | "lbs" = units === "kg" ? "kg" : "lbs";
+
+    const rows = (await knex("lifts")
+      .select<MeetLiftRow[]>(
+        "name",
+        "sex",
+        "age",
+        "equipment",
+        "weight_class_kg",
+        "bodyweight_kg",
+        "best3_squat_kg",
+        "best3_bench_kg",
+        "best3_deadlift_kg",
+        "total_kg",
+        "dots",
+        "wilks",
+        "glossbrenner",
+        "goodlift",
+        "division",
+        "meet_name",
+        "meet_country",
+        "meet_state",
+      )
+      .where({ date: parsed.date })
+      .whereRaw("UPPER(federation) = ?", [parsed.federation.toUpperCase()])) as MeetLiftRow[];
+
+    const matching = rows.filter(
+      (row) => row.meet_name != null && nameToSlug(row.meet_name) === parsed.slug,
+    );
+    if (matching.length === 0) return null;
+
+    const first = matching[0]!;
+    const sortColumn = sort ? SORT_COLUMN[sort] : "dots";
+    const effectiveSort: keyof MeetLiftRow = sortColumn ?? "dots";
+
+    const sorted = [...matching].sort((a, b) => {
+      const av = (a[effectiveSort] as number | null) ?? 0;
+      const bv = (b[effectiveSort] as number | null) ?? 0;
+      return bv - av;
+    });
+
+    const results = sorted.map((row, idx) => toMeetResult(row, idx + 1, normalizedUnits));
 
     return {
-      title,
-      date: date || "",
-      location: location || "",
+      title: first.meet_name ?? "",
+      date: parsed.date,
+      location: buildLocation(first.meet_country, first.meet_state),
       results,
     };
-  }
-
-  async function fetchMeetData(meet: string, sort?: string, units?: string): Promise<MeetData> {
-    const sortPath = sort ? `/${sort}` : "";
-    const html = await scraper.fetchHtml(`/m/${meet}${sortPath}`, units);
-    const doc = scraper.parseHtml(html);
-    return parseMeetHtml(doc);
   }
 
   async function getMeet(
@@ -99,20 +215,17 @@ export function createMeetService(scraper: ScraperType) {
     sort?: string,
     units?: string,
   ): Promise<ApiResponse<MeetData>> {
-    const cacheKey = `meet-${meet}${sort ? `-${sort}` : ""}${units ? `-${units}` : ""}`;
-    return scraper.withCache<MeetData>(cacheKey, () => fetchMeetData(meet, sort, units));
+    const data = await fetchMeetData(meet, sort, units);
+    return { data };
   }
 
   async function getMeetHighlights(
     { meet }: GetMeetHighlightsParamType,
     units?: string,
   ): Promise<ApiResponse<MeetHighlights>> {
-    const meetPath = meet;
-    const cacheKey = `meet-${meetPath}-highlights${units ? `-${units}` : ""}`;
-    return scraper.withCache<MeetHighlights>(cacheKey, async () => {
-      const data = await fetchMeetData(meetPath, undefined, units);
-      return buildMeetHighlights(data);
-    });
+    const data = await fetchMeetData(meet, undefined, units);
+    if (!data) return { data: null };
+    return { data: buildMeetHighlights(data) };
   }
 
   function parseMeetCacheKey(
@@ -150,23 +263,12 @@ export function createMeetService(scraper: ScraperType) {
   async function refreshCacheKey(key: string): Promise<boolean> {
     const parsed = parseMeetCacheKey(key);
     if (!parsed) return false;
-
-    if (parsed.isHighlights) {
-      await scraper.refreshCache<MeetHighlights>(key, async () => {
-        const data = await fetchMeetData(parsed.path, undefined, parsed.units);
-        return buildMeetHighlights(data);
-      });
-    } else {
-      await scraper.refreshCache<MeetData>(key, () =>
-        fetchMeetData(parsed.path, parsed.sort, parsed.units),
-      );
-    }
-
+    // Meets now served from lifts table; legacy cache keys are claimed
+    // without re-scraping.
     return true;
   }
 
   return {
-    parseMeetHtml,
     parseMeetCacheKey,
     getMeet,
     getMeetHighlights,

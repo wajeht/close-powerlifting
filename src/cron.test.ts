@@ -344,7 +344,7 @@ describe("cron", () => {
       expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/mlist/uspa/2024");
     });
 
-    it("should refresh meet keys", async () => {
+    it("should claim meet keys without re-scraping (data served from lifts)", async () => {
       await seedCache(cache, ["meet-uspa/1969"]);
       const cron = createCron(
         cache,
@@ -358,7 +358,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/uspa/1969", undefined);
+      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     it("should claim user profile keys without re-scraping (data served from lifts)", async () => {
@@ -496,8 +496,8 @@ describe("cron", () => {
     });
 
     it("should report partial failures in summary", async () => {
-      // Seed two meet keys (still scrape-backed) and one no-op key.
-      await seedCache(cache, ["meet-uspa/1969", "meet-failing/123", "records"]);
+      // "status" still hits the scraper; "records" + "federation-x" are no-ops.
+      await seedCache(cache, ["status", "records", "federation-ipf"]);
       vi.mocked(scraper.fetchHtml).mockRejectedValueOnce(new Error("Error 1"));
 
       const cron = createCron(
@@ -643,8 +643,8 @@ describe("cron", () => {
       expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
-    // Edge cases for meets
-    it("should handle meet codes with multiple path segments", async () => {
+    // Meet keys claim without re-scraping now.
+    it("should claim deep meet path keys without re-scraping", async () => {
       await seedCache(cache, ["meet-wrpf-ru/2301", "meet-gpc/aus-vic/2023"]);
       const cron = createCron(
         cache,
@@ -658,8 +658,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/wrpf-ru/2301", undefined);
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/gpc/aus-vic/2023", undefined);
+      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Profile keys are now served from the lifts table and no longer re-scrape.

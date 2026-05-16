@@ -71,7 +71,7 @@ export function createMeetsRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const meetService = createMeetService(context.scraper);
+  const meetService = createMeetService(context.knex, context.scraper);
 
   const router = express.Router();
 
@@ -171,7 +171,7 @@ export function createMeetsRouter(context: AppContext) {
    * @return {ErrorResponse} 429 - Rate limit exceeded
    */
   router.get(
-    "/api/meets/:federation/:code/highlights",
+    "/api/meets/:federation/:date/:slug/highlights",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
     middleware.trackAPICallsMiddleware,
@@ -180,10 +180,15 @@ export function createMeetsRouter(context: AppContext) {
       query: getMeetHighlightsQueryValidation,
     }),
     async (
-      req: Request<{ federation: string; code: string }, {}, {}, GetMeetHighlightsQueryType>,
+      req: Request<
+        { federation: string; date: string; slug: string },
+        {},
+        {},
+        GetMeetHighlightsQueryType
+      >,
       res: Response,
     ) => {
-      const meetPath = `${req.params.federation}/${req.params.code}`;
+      const meetPath = `${req.params.federation}/${req.params.date}/${req.params.slug}`;
       const parsed = getMeetHighlightsParamValidation.safeParse({ meet: meetPath });
       if (!parsed.success) throw new NotFoundError("The resource cannot be found!");
 

@@ -85,7 +85,7 @@ export function createCron(
     }
   }
 
-  const meetService = createMeetService(scraper);
+  const meetService = createMeetService(knex, scraper);
   const userService = createUserService(knex, scraper);
   const federationService = createFederationService(knex, scraper);
   const rankingService = createRankingService(knex, scraper);
