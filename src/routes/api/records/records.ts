@@ -60,7 +60,7 @@ export function createRecordsRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const recordService = createRecordService(context.scraper);
+  const recordService = createRecordService(context.knex, context.scraper);
 
   const router = express.Router();
 
