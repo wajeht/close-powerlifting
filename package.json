@@ -22,6 +22,7 @@
     "minify": "tsx scripts/minify.ts",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
+    "rebuild:native": "npm rebuild better-sqlite3 sharp --ignore-scripts=false",
     "test:watch": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test watch",
     "test": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test",
     "test:coverage": "APP_ENV=testing NODE_ENV=testing vp test --coverage",
@@ -46,29 +47,29 @@
     "prepare": "[ -z \"$CI\" ] && vp config || true"
   },
   "dependencies": {
-    "@tailwindcss/cli": "^4.2.4",
-    "better-sqlite3": "^12.6.2",
-    "compression": "^1.8.1",
-    "concurrently": "^9.2.1",
-    "connect-flash": "^0.1.1",
-    "connect-session-knex": "^5.0.0",
-    "cookie-parser": "^1.4.7",
-    "cors": "^2.8.6",
-    "csrf-sync": "^4.2.1",
-    "dotenv": "^17.2.4",
-    "eta": "^4.6.0",
-    "express": "^5.2.1",
-    "express-jsdoc-swagger": "^1.8.0",
-    "express-rate-limit": "^8.2.1",
-    "express-session": "^1.19.0",
-    "helmet": "^8.1.0",
-    "jsdom": "^29.0.0",
-    "jsonwebtoken": "^9.0.3",
-    "knex": "^3.1.0",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^8.0.1",
-    "tailwindcss": "^4.2.4",
-    "zod": "^4.4.2"
+    "@tailwindcss/cli": "4.3.0",
+    "better-sqlite3": "12.10.0",
+    "compression": "1.8.1",
+    "concurrently": "9.2.1",
+    "connect-flash": "0.1.1",
+    "connect-session-knex": "5.0.0",
+    "cookie-parser": "1.4.7",
+    "cors": "2.8.6",
+    "csrf-sync": "4.2.1",
+    "dotenv": "17.4.2",
+    "eta": "4.6.0",
+    "express": "5.2.1",
+    "express-jsdoc-swagger": "1.8.0",
+    "express-rate-limit": "8.5.2",
+    "express-session": "1.19.0",
+    "helmet": "8.1.0",
+    "jsdom": "29.1.1",
+    "jsonwebtoken": "9.0.3",
+    "knex": "3.2.10",
+    "node-cron": "4.2.1",
+    "nodemailer": "8.0.7",
+    "tailwindcss": "4.3.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "@types/better-sqlite3": "7.6.13",
@@ -81,6 +82,7 @@
     "@types/html-minifier-terser": "7.0.2",
     "@types/jsdom": "28.0.3",
     "@types/jsonwebtoken": "9.0.10",
+    "@types/node": "25.8.0",
     "@types/node-cron": "3.0.11",
     "@types/nodemailer": "8.0.0",
     "@types/supertest": "7.2.0",
@@ -92,16 +94,17 @@
     "sharp": "0.34.5",
     "supertest": "7.2.2",
     "terser": "5.47.1",
-    "tsx": "4.21.1",
+    "tsx": "4.22.0",
     "vite-plus": "0.1.21",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.21"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.21",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.21"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=26.1.0",
+    "npm": ">=11.13.0"
   },
   "packageManager": "npm@11.14.0"
 }
