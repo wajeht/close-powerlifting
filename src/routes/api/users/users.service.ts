@@ -303,8 +303,9 @@ export function transformCompetitionResults(
 }
 
 interface LiftDbRow {
-  name: string;
-  sex: string | null;
+  lifter_name: string;
+  lifter_sex: string | null;
+  lifter_instagram: string | null;
   event: string | null;
   equipment: string | null;
   age: number | null;
@@ -328,7 +329,8 @@ interface LiftDbRow {
   best3_bench_kg: number | null;
   best3_deadlift_kg: number | null;
   total_kg: number | null;
-  place: string | null;
+  place_rank: number | null;
+  place_status: string | null;
   dots: number | null;
   federation: string | null;
   date: string;
@@ -366,8 +368,9 @@ function liftRowToCompetitionResult(
   includeAttempts: boolean,
   units: "kg" | "lbs",
 ): CompetitionResult {
+  const place = row.place_rank != null ? String(row.place_rank) : (row.place_status ?? "");
   const base: Record<string, string> = {
-    place: formatValue(row.place),
+    place,
     fed: formatValue(row.federation),
     date: row.date,
     location: buildLocation(row.meet_country, row.meet_state),
@@ -460,8 +463,9 @@ export function buildUserProfileFromLifts(
   if (rows.length === 0) return null;
 
   const first = rows[0]!;
-  const name = first.name;
-  const sex = first.sex ?? "";
+  const name = first.lifter_name;
+  const sex = first.lifter_sex ?? "";
+  const instagram = first.lifter_instagram ?? "";
 
   const competitionResults = rows.map((row) =>
     liftRowToCompetitionResult(row, includeAttempts, units),
@@ -472,8 +476,8 @@ export function buildUserProfileFromLifts(
     name,
     username: slug,
     sex,
-    instagram: "",
-    instagram_url: "",
+    instagram,
+    instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
     personal_best: personalBest,
     competition_results: competitionResults,
   };
@@ -485,43 +489,48 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     includeAttempts: boolean = false,
     units: "kg" | "lbs" = "lbs",
   ): Promise<UserProfile | null> {
-    const rows = await knex<LiftDbRow>("lifts")
-      .select(
-        "name",
-        "sex",
-        "event",
-        "equipment",
-        "age",
-        "age_class",
-        "division",
-        "bodyweight_kg",
-        "weight_class_kg",
-        "squat1_kg",
-        "squat2_kg",
-        "squat3_kg",
-        "squat4_kg",
-        "bench1_kg",
-        "bench2_kg",
-        "bench3_kg",
-        "bench4_kg",
-        "deadlift1_kg",
-        "deadlift2_kg",
-        "deadlift3_kg",
-        "deadlift4_kg",
-        "best3_squat_kg",
-        "best3_bench_kg",
-        "best3_deadlift_kg",
-        "total_kg",
-        "place",
-        "dots",
-        "federation",
-        "date",
-        "meet_country",
-        "meet_state",
-        "meet_name",
+    const rows = (await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .join("meets", "meets.id", "lifts.meet_id")
+      .join("federations", "federations.id", "meets.federation_id")
+      .select<LiftDbRow[]>(
+        knex.ref("lifters.name").as("lifter_name"),
+        knex.ref("lifters.sex").as("lifter_sex"),
+        knex.ref("lifters.instagram").as("lifter_instagram"),
+        "lifts.event",
+        "lifts.equipment",
+        "lifts.age",
+        "lifts.age_class",
+        "lifts.division",
+        "lifts.bodyweight_kg",
+        "lifts.weight_class_kg",
+        "lifts.squat1_kg",
+        "lifts.squat2_kg",
+        "lifts.squat3_kg",
+        "lifts.squat4_kg",
+        "lifts.bench1_kg",
+        "lifts.bench2_kg",
+        "lifts.bench3_kg",
+        "lifts.bench4_kg",
+        "lifts.deadlift1_kg",
+        "lifts.deadlift2_kg",
+        "lifts.deadlift3_kg",
+        "lifts.deadlift4_kg",
+        "lifts.best3_squat_kg",
+        "lifts.best3_bench_kg",
+        "lifts.best3_deadlift_kg",
+        "lifts.total_kg",
+        "lifts.place_rank",
+        "lifts.place_status",
+        "lifts.dots",
+        knex.ref("federations.code").as("federation"),
+        "meets.date",
+        "meets.meet_country",
+        "meets.meet_state",
+        "meets.meet_name",
       )
-      .where({ name_slug: slug })
-      .orderBy("date", "desc");
+      .where("lifters.name_slug", slug)
+      .orderBy("meets.date", "desc")) as LiftDbRow[];
 
     return buildUserProfileFromLifts(rows, slug, includeAttempts, units);
   }
@@ -686,37 +695,38 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     const offset = (current_page - 1) * per_page;
     const normalizedUnits: "kg" | "lbs" = units === "kg" ? "kg" : "lbs";
 
-    const matchedSubquery = knex("lifts")
-      .distinct("name_slug")
-      .whereRaw("id IN (SELECT rowid FROM lifts_fts WHERE lifts_fts MATCH ?)", [ftsQuery]);
-
     const innerQuery = knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .join("meets", "meets.id", "lifts.meet_id")
+      .join("federations", "federations.id", "meets.federation_id")
       .select(
-        "name",
-        "name_slug",
-        "sex",
-        "event",
-        "equipment",
-        "age",
-        "bodyweight_kg",
-        "weight_class_kg",
-        "best3_squat_kg",
-        "best3_bench_kg",
-        "best3_deadlift_kg",
-        "total_kg",
-        "dots",
-        "wilks",
-        "glossbrenner",
-        "goodlift",
-        "federation",
-        "parent_federation",
-        "date",
-        "meet_country",
-        "meet_state",
-        "meet_name",
-        knex.raw("ROW_NUMBER() OVER (PARTITION BY name_slug ORDER BY dots DESC) AS rn"),
+        knex.ref("lifters.name").as("name"),
+        knex.ref("lifters.name_slug").as("name_slug"),
+        knex.ref("lifters.sex").as("sex"),
+        "lifts.event",
+        "lifts.equipment",
+        "lifts.age",
+        "lifts.bodyweight_kg",
+        "lifts.weight_class_kg",
+        "lifts.best3_squat_kg",
+        "lifts.best3_bench_kg",
+        "lifts.best3_deadlift_kg",
+        "lifts.total_kg",
+        "lifts.dots",
+        "lifts.wilks",
+        "lifts.glossbrenner",
+        "lifts.goodlift",
+        knex.ref("federations.code").as("federation"),
+        knex.ref("federations.parent_slug").as("parent_federation"),
+        "meets.date",
+        "meets.meet_country",
+        "meets.meet_state",
+        "meets.meet_name",
+        knex.raw("ROW_NUMBER() OVER (PARTITION BY lifters.id ORDER BY lifts.dots DESC) AS rn"),
       )
-      .whereIn("name_slug", matchedSubquery);
+      .whereRaw("lifts.lifter_id IN (SELECT rowid FROM lifters_fts WHERE lifters_fts MATCH ?)", [
+        ftsQuery,
+      ]);
 
     const deduped = (await knex
       .select<RankingLiftRow[]>("*")
