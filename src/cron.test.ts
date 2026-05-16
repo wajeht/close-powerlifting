@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vite-plus/test";
 import { createCron } from "./cron";
+import { knex } from "./tests/test-setup";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
 import type { ApiCallLogRepositoryType } from "./db/api-call-log";
@@ -143,6 +144,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
 
       expect(cron).toHaveProperty("start");
@@ -160,6 +162,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
 
       expect(cron.getStatus()).toEqual({ isRunning: false, jobCount: 0 });
@@ -174,6 +177,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       cron.start();
 
@@ -193,6 +197,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       cron.start();
       cron.stop();
@@ -209,6 +214,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       cron.start();
 
@@ -240,6 +246,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -256,6 +263,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -273,6 +281,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -290,6 +299,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -310,6 +320,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -329,6 +340,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -346,6 +358,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -363,6 +376,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -379,6 +393,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -395,6 +410,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -412,6 +428,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -434,6 +451,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -461,6 +479,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -485,6 +504,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -506,6 +526,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -530,6 +551,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -552,6 +574,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -579,6 +602,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -597,6 +621,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -618,6 +643,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -634,6 +660,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -652,6 +679,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -675,6 +703,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -695,6 +724,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -711,6 +741,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -729,6 +760,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -749,6 +781,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -768,6 +801,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -788,6 +822,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -808,6 +843,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -827,6 +863,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -854,6 +891,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshCache();
 
@@ -878,6 +916,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshHealthCheck();
 
@@ -897,6 +936,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshHealthCheck();
 
@@ -919,6 +959,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshHealthCheck();
 
@@ -937,6 +978,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.refreshHealthCheck();
 
@@ -964,6 +1006,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -987,6 +1030,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1010,6 +1054,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1032,6 +1077,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1050,6 +1096,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
       await cron.tasks.resetApiCallCount();
@@ -1069,6 +1116,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1093,6 +1141,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1114,6 +1163,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1134,6 +1184,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1160,6 +1211,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1182,6 +1234,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1210,6 +1263,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.resetApiCallCount();
 
@@ -1234,6 +1288,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1255,6 +1310,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1276,6 +1332,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1293,6 +1350,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1313,6 +1371,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1337,6 +1396,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.sendReachingApiLimitEmail();
 
@@ -1361,6 +1421,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.cleanupOldApiCallLogs();
 
@@ -1381,6 +1442,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.cleanupOldApiCallLogs();
 
@@ -1400,6 +1462,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.cleanupOldApiCallLogs();
 
@@ -1419,6 +1482,7 @@ describe("cron", () => {
         scraper,
         apiCallLogRepository,
         ingest,
+        knex,
       );
       await cron.tasks.cleanupOldApiCallLogs();
 

@@ -111,7 +111,7 @@ export function createUsersRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const userService = createUserService(context.scraper);
+  const userService = createUserService(context.knex, context.scraper);
 
   const router = express.Router();
 

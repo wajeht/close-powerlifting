@@ -70,6 +70,7 @@ export function createContext(): AppContext {
     scraper,
     apiCallLogRepository,
     ingest,
+    knex,
   );
   const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
 

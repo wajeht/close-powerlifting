@@ -4,8 +4,9 @@ async function main(): Promise<void> {
   const context = createContext();
   await context.database.init();
 
+  const force = process.argv.includes("--force");
   try {
-    const result = await context.ingest.runNightly();
+    const result = await context.ingest.runNightly({ force });
     context.logger.info(
       `ingest finished: status=${result.status} rows=${result.rowCount} durationMs=${result.durationMs}`,
     );

@@ -1,3 +1,5 @@
+import type { Knex } from "knex";
+
 import type { ScraperType } from "../../../context";
 import { configuration } from "../../../configuration";
 import type {
@@ -301,7 +303,205 @@ export function transformCompetitionResults(
   return results;
 }
 
-export function createUserService(scraper: ScraperType) {
+interface LiftDbRow {
+  name: string;
+  sex: string | null;
+  event: string | null;
+  equipment: string | null;
+  age: number | null;
+  age_class: string | null;
+  division: string | null;
+  bodyweight_kg: number | null;
+  weight_class_kg: number | null;
+  squat1_kg: number | null;
+  squat2_kg: number | null;
+  squat3_kg: number | null;
+  squat4_kg: number | null;
+  bench1_kg: number | null;
+  bench2_kg: number | null;
+  bench3_kg: number | null;
+  bench4_kg: number | null;
+  deadlift1_kg: number | null;
+  deadlift2_kg: number | null;
+  deadlift3_kg: number | null;
+  deadlift4_kg: number | null;
+  best3_squat_kg: number | null;
+  best3_bench_kg: number | null;
+  best3_deadlift_kg: number | null;
+  total_kg: number | null;
+  place: string | null;
+  dots: number | null;
+  federation: string | null;
+  date: string;
+  meet_country: string | null;
+  meet_state: string | null;
+  meet_name: string | null;
+}
+
+function formatValue(value: number | string | null | undefined): string {
+  if (value == null || value === "") return "";
+  return String(value);
+}
+
+function buildLocation(country: string | null, state: string | null): string {
+  if (country && state) return `${country}-${state}`;
+  return country ?? "";
+}
+
+function liftRowToCompetitionResult(row: LiftDbRow, includeAttempts: boolean): CompetitionResult {
+  const base: Record<string, string> = {
+    place: formatValue(row.place),
+    fed: formatValue(row.federation),
+    date: row.date,
+    location: buildLocation(row.meet_country, row.meet_state),
+    competition: formatValue(row.meet_name),
+    division: formatValue(row.division),
+    age: formatValue(row.age),
+    equip: formatValue(row.equipment),
+    class: formatValue(row.weight_class_kg),
+    weight: formatValue(row.bodyweight_kg),
+    total: formatValue(row.total_kg),
+    dots: formatValue(row.dots),
+  };
+
+  if (includeAttempts) {
+    base.squat1 = formatValue(row.squat1_kg);
+    base.squat2 = formatValue(row.squat2_kg);
+    base.squat3 = formatValue(row.squat3_kg);
+    base.squat4 = formatValue(row.squat4_kg);
+    base.bench1 = formatValue(row.bench1_kg);
+    base.bench2 = formatValue(row.bench2_kg);
+    base.bench3 = formatValue(row.bench3_kg);
+    base.bench4 = formatValue(row.bench4_kg);
+    base.deadlift1 = formatValue(row.deadlift1_kg);
+    base.deadlift2 = formatValue(row.deadlift2_kg);
+    base.deadlift3 = formatValue(row.deadlift3_kg);
+    base.deadlift4 = formatValue(row.deadlift4_kg);
+  } else {
+    base.squat = formatValue(row.best3_squat_kg);
+    base.bench = formatValue(row.best3_bench_kg);
+    base.deadlift = formatValue(row.best3_deadlift_kg);
+  }
+
+  return base as CompetitionResult;
+}
+
+function buildPersonalBestsFromLifts(rows: ReadonlyArray<LiftDbRow>): PersonalBest[] {
+  const byEquipment = new Map<
+    string,
+    {
+      equip: string;
+      squat: number;
+      bench: number;
+      deadlift: number;
+      total: number;
+      dots: number;
+    }
+  >();
+
+  for (const row of rows) {
+    const equip = row.equipment ?? "";
+    if (!equip) continue;
+    const current = byEquipment.get(equip) ?? {
+      equip,
+      squat: 0,
+      bench: 0,
+      deadlift: 0,
+      total: 0,
+      dots: 0,
+    };
+
+    if ((row.best3_squat_kg ?? 0) > current.squat) current.squat = row.best3_squat_kg ?? 0;
+    if ((row.best3_bench_kg ?? 0) > current.bench) current.bench = row.best3_bench_kg ?? 0;
+    if ((row.best3_deadlift_kg ?? 0) > current.deadlift)
+      current.deadlift = row.best3_deadlift_kg ?? 0;
+    if ((row.total_kg ?? 0) > current.total) current.total = row.total_kg ?? 0;
+    if ((row.dots ?? 0) > current.dots) current.dots = row.dots ?? 0;
+
+    byEquipment.set(equip, current);
+  }
+
+  return [...byEquipment.values()].map((entry) => ({
+    equip: entry.equip,
+    squat: entry.squat ? String(entry.squat) : "",
+    bench: entry.bench ? String(entry.bench) : "",
+    deadlift: entry.deadlift ? String(entry.deadlift) : "",
+    total: entry.total ? String(entry.total) : "",
+    dots: entry.dots ? String(entry.dots) : "",
+  })) as PersonalBest[];
+}
+
+export function buildUserProfileFromLifts(
+  rows: ReadonlyArray<LiftDbRow>,
+  slug: string,
+  includeAttempts: boolean,
+): UserProfile | null {
+  if (rows.length === 0) return null;
+
+  const first = rows[0]!;
+  const name = first.name;
+  const sex = first.sex ?? "";
+
+  const competitionResults = rows.map((row) => liftRowToCompetitionResult(row, includeAttempts));
+  const personalBest = buildPersonalBestsFromLifts(rows);
+
+  return {
+    name,
+    username: slug,
+    sex,
+    instagram: "",
+    instagram_url: "",
+    personal_best: personalBest,
+    competition_results: competitionResults,
+  };
+}
+
+export function createUserService(knex: Knex, scraper: ScraperType) {
+  async function fetchUserProfileFromDb(
+    slug: string,
+    includeAttempts: boolean = false,
+  ): Promise<UserProfile | null> {
+    const rows = await knex<LiftDbRow>("lifts")
+      .select(
+        "name",
+        "sex",
+        "event",
+        "equipment",
+        "age",
+        "age_class",
+        "division",
+        "bodyweight_kg",
+        "weight_class_kg",
+        "squat1_kg",
+        "squat2_kg",
+        "squat3_kg",
+        "squat4_kg",
+        "bench1_kg",
+        "bench2_kg",
+        "bench3_kg",
+        "bench4_kg",
+        "deadlift1_kg",
+        "deadlift2_kg",
+        "deadlift3_kg",
+        "deadlift4_kg",
+        "best3_squat_kg",
+        "best3_bench_kg",
+        "best3_deadlift_kg",
+        "total_kg",
+        "place",
+        "dots",
+        "federation",
+        "date",
+        "meet_country",
+        "meet_state",
+        "meet_name",
+      )
+      .where({ name_slug: slug })
+      .orderBy("date", "desc");
+
+    return buildUserProfileFromLifts(rows, slug, includeAttempts);
+  }
+
   function parseUserProfileHtml(
     doc: Document,
     username: string,
@@ -613,6 +813,7 @@ export function createUserService(scraper: ScraperType) {
   return {
     parseUserProfileHtml,
     parseUserCacheKey,
+    fetchUserProfileFromDb,
     getUser,
     searchUser,
     getProgression,
