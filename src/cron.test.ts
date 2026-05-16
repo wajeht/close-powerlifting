@@ -378,7 +378,7 @@ describe("cron", () => {
       expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/johnhaack", "lbs");
     });
 
-    it("should refresh records with filter path", async () => {
+    it("should claim records keys without re-scraping (data served from lifts)", async () => {
       await seedCache(cache, ["records/raw", "records/raw/men"]);
       const cron = createCron(
         cache,
@@ -392,8 +392,8 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw/men");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/records/raw");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/records/raw/men");
     });
 
     it("should skip internal cache keys", async () => {
@@ -496,11 +496,9 @@ describe("cron", () => {
     });
 
     it("should report partial failures in summary", async () => {
-      await seedCache(cache, ["status", "federations-list", "records"]);
-      vi.mocked(scraper.fetchHtml)
-        .mockRejectedValueOnce(new Error("Error 1"))
-        .mockRejectedValueOnce(new Error("Error 2"))
-        .mockResolvedValue("<html></html>");
+      // Seed two meet keys (still scrape-backed) and one no-op key.
+      await seedCache(cache, ["meet-uspa/1969", "meet-failing/123", "records"]);
+      vi.mocked(scraper.fetchHtml).mockRejectedValueOnce(new Error("Error 1"));
 
       const cron = createCron(
         cache,
@@ -518,8 +516,8 @@ describe("cron", () => {
         "cron job completed: refreshCache",
         expect.objectContaining({
           total: 3,
-          successful: 1,
-          failed: 2,
+          successful: 2,
+          failed: 1,
         }),
       );
     });
@@ -604,8 +602,8 @@ describe("cron", () => {
       );
     });
 
-    // Edge cases for records
-    it("should handle deep records filter paths from prod", async () => {
+    // Records keys claim without re-scraping now.
+    it("should claim deep records filter paths without re-scraping", async () => {
       await seedCache(cache, [
         "records/unlimited/para-classes/women",
         "records/raw/expanded-classes/men",
@@ -623,9 +621,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/unlimited/para-classes/women");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/raw/expanded-classes/men");
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/records/all-tested/women");
+      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Federation cache-key parsing edges — refresh is now a no-op since data

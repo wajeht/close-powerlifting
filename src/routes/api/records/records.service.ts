@@ -1,3 +1,5 @@
+import type { Knex } from "knex";
+
 import type { ScraperType } from "../../../context";
 import { NotFoundError, ValidationError } from "../../../error";
 import type { RecordCategory, ApiResponse } from "../../../types";
@@ -10,45 +12,181 @@ import {
   type GetFilteredRecordsQueryType,
 } from "./records.validation";
 
-export function createRecordService(scraper: ScraperType) {
-  function parseRecordsHtml(doc: Document): RecordCategory[] {
-    const recordCols = doc.getElementsByClassName("records-col");
-    const data: RecordCategory[] = [];
+const TOP_N_PER_CLASS = 3;
 
-    for (const col of recordCols) {
-      const heading = col.querySelector("h2, h3");
-      const table = col.querySelector("table");
+const EQUIPMENT_MAP: Record<string, string[] | "tested"> = {
+  raw: ["Raw"],
+  wraps: ["Wraps"],
+  single: ["Single-ply"],
+  multi: ["Multi-ply"],
+  unlimited: ["Unlimited"],
+  "all-tested": "tested",
+};
 
-      if (heading && table) {
-        data.push({
-          title: heading.textContent?.trim() || "",
-          records: scraper.tableToJson<Record<string, string>>(table),
-        });
-      }
+const SEX_MAP: Record<string, string> = {
+  men: "M",
+  women: "F",
+};
+
+interface CategoryConfig {
+  title: string;
+  liftColumn: "best3_squat_kg" | "best3_bench_kg" | "best3_deadlift_kg" | "total_kg";
+  events: string[];
+  liftKey: "squat" | "bench" | "deadlift" | "total";
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  {
+    title: "Squat (Full Power)",
+    liftColumn: "best3_squat_kg",
+    events: ["SBD"],
+    liftKey: "squat",
+  },
+  {
+    title: "Squat (All Events)",
+    liftColumn: "best3_squat_kg",
+    events: ["SBD", "S", "SB", "SD"],
+    liftKey: "squat",
+  },
+  {
+    title: "Bench (Full Power)",
+    liftColumn: "best3_bench_kg",
+    events: ["SBD"],
+    liftKey: "bench",
+  },
+  {
+    title: "Bench (All Events)",
+    liftColumn: "best3_bench_kg",
+    events: ["SBD", "B", "SB", "BD"],
+    liftKey: "bench",
+  },
+  {
+    title: "Deadlift (Full Power)",
+    liftColumn: "best3_deadlift_kg",
+    events: ["SBD"],
+    liftKey: "deadlift",
+  },
+  {
+    title: "Deadlift (All Events)",
+    liftColumn: "best3_deadlift_kg",
+    events: ["SBD", "D", "SD", "BD"],
+    liftKey: "deadlift",
+  },
+  {
+    title: "Total",
+    liftColumn: "total_kg",
+    events: ["SBD"],
+    liftKey: "total",
+  },
+];
+
+interface RecordsFilters {
+  equipment?: string;
+  sex?: string;
+  ageClass?: string;
+}
+
+interface RankedLiftRow {
+  weight_class_kg: number | null;
+  name: string;
+  lift_value: number | null;
+  date: string;
+  federation: string | null;
+  rn: number;
+}
+
+function applyFilters(
+  query: Knex.QueryBuilder,
+  filters: RecordsFilters,
+  liftColumn: string,
+  events: string[],
+): Knex.QueryBuilder {
+  query = query.whereIn("event", events).whereNotNull(liftColumn).whereNotNull("weight_class_kg");
+
+  if (filters.equipment) {
+    const mapped = EQUIPMENT_MAP[filters.equipment];
+    if (mapped === "tested") {
+      query = query.where("tested", "Yes");
+    } else if (mapped) {
+      query = query.whereIn("equipment", mapped);
     }
-
-    return data;
   }
 
-  async function fetchRecordsData(filterPath: string = ""): Promise<RecordCategory[]> {
-    const html = await scraper.fetchHtml(`/records${filterPath}`);
-    const doc = scraper.parseHtml(html);
-    return parseRecordsHtml(doc);
+  if (filters.sex) {
+    const mapped = SEX_MAP[filters.sex];
+    if (mapped) query = query.where("sex", mapped);
+  }
+
+  if (filters.ageClass) {
+    query = query.where("age_class", filters.ageClass);
+  }
+
+  return query;
+}
+
+function formatRecord(row: RankedLiftRow, category: CategoryConfig): Record<string, string> {
+  const lift = row.lift_value == null ? "" : String(row.lift_value);
+  return {
+    class: row.rn === 1 && row.weight_class_kg != null ? String(row.weight_class_kg) : "",
+    rank: String(row.rn),
+    lifter: row.name,
+    [category.liftKey]: lift,
+    date: row.date,
+    fed: row.federation ?? "",
+  };
+}
+
+export function createRecordService(knex: Knex, _scraper: ScraperType) {
+  async function queryCategory(
+    category: CategoryConfig,
+    filters: RecordsFilters,
+  ): Promise<RankedLiftRow[]> {
+    const inner = applyFilters(
+      knex("lifts").select(
+        "weight_class_kg",
+        "name",
+        knex.raw("?? as lift_value", [category.liftColumn]),
+        "date",
+        "federation",
+        knex.raw(
+          `ROW_NUMBER() OVER (PARTITION BY weight_class_kg ORDER BY ${category.liftColumn} DESC) AS rn`,
+        ),
+      ),
+      filters,
+      category.liftColumn,
+      category.events,
+    );
+
+    return (await knex
+      .select<RankedLiftRow[]>("*")
+      .from(inner.as("ranked"))
+      .where("rn", "<=", TOP_N_PER_CLASS)
+      .orderBy([
+        { column: "weight_class_kg", order: "asc" },
+        { column: "rn", order: "asc" },
+      ])) as RankedLiftRow[];
+  }
+
+  async function queryRecords(filters: RecordsFilters): Promise<RecordCategory[]> {
+    const categories = await Promise.all(
+      CATEGORIES.map(async (category) => {
+        const rows = await queryCategory(category, filters);
+        return {
+          title: category.title,
+          records: rows.map((row) => formatRecord(row, category)),
+        };
+      }),
+    );
+    return categories;
   }
 
   async function getRecords(options: GetRecordsType): Promise<ApiResponse<RecordCategory[]>> {
-    const filterPath = options.age_class ? `/${options.age_class}` : "";
-    const cacheKey = `records${filterPath}`;
-    return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));
-  }
-
-  function buildRecordsFilterPath(filters: GetFilteredRecordsParamType, ageClass?: string): string {
-    const parts: string[] = [];
-    if (filters.equipment) parts.push(filters.equipment);
-    if (filters.weight_class) parts.push(filters.weight_class);
-    if (filters.sex) parts.push(filters.sex);
-    if (ageClass) parts.push(ageClass);
-    return parts.length > 0 ? `/${parts.join("/")}` : "";
+    const data = await queryRecords({
+      equipment: "raw",
+      sex: "men",
+      ageClass: options.age_class,
+    });
+    return { data };
   }
 
   function validateEquipment(equipment: string): GetFilteredRecordsParamType["equipment"] {
@@ -82,10 +220,12 @@ export function createRecordService(scraper: ScraperType) {
     filters: GetFilteredRecordsParamType,
     query: GetFilteredRecordsQueryType,
   ): Promise<ApiResponse<RecordCategory[]>> {
-    const filterPath = buildRecordsFilterPath(filters, query.age_class);
-    const cacheKey = `records${filterPath}`;
-
-    return scraper.withCache<RecordCategory[]>(cacheKey, () => fetchRecordsData(filterPath));
+    const data = await queryRecords({
+      equipment: filters.equipment ?? "raw",
+      sex: filters.sex ?? "men",
+      ageClass: query.age_class,
+    });
+    return { data };
   }
 
   function parseRecordsCacheKey(key: string): { filterPath: string } | null {
@@ -96,13 +236,12 @@ export function createRecordService(scraper: ScraperType) {
   async function refreshCacheKey(key: string): Promise<boolean> {
     const parsed = parseRecordsCacheKey(key);
     if (!parsed) return false;
-
-    await scraper.refreshCache<RecordCategory[]>(key, () => fetchRecordsData(parsed.filterPath));
+    // Records now served from lifts table; legacy cache keys are claimed
+    // without re-scraping.
     return true;
   }
 
   return {
-    parseRecordsHtml,
     parseRecordsCacheKey,
     getRecords,
     getFilteredRecords,
