@@ -148,6 +148,7 @@
     --default-mono-font-family: var(--font-mono);
     --color-power: #dc2626;
     --color-power-dark: #b91c1c;
+    --color-power-glow: #dc262640;
   }
 }
 @layer base {
@@ -1256,6 +1257,18 @@
       var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
       var(--tw-ring-shadow), var(--tw-shadow) !important;
   }
+  .shadow-power-glow {
+    --tw-shadow-color: #dc262640 !important;
+  }
+  @supports (color: color-mix(in lab, red, red)) {
+    .shadow-power-glow {
+      --tw-shadow-color: color-mix(
+        in oklab,
+        var(--color-power-glow) var(--tw-shadow-alpha),
+        transparent
+      ) !important;
+    }
+  }
   .filter {
     filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,)
       var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,)
@@ -1385,6 +1398,26 @@
     }
     .hover\:text-white:hover {
       color: var(--color-white) !important;
+    }
+    .hover\:shadow-xl:hover {
+      --tw-shadow:
+        0 20px 25px -5px var(--tw-shadow-color, #0000001a),
+        0 8px 10px -6px var(--tw-shadow-color, #0000001a) !important;
+      box-shadow:
+        var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow),
+        var(--tw-ring-shadow), var(--tw-shadow) !important;
+    }
+    .hover\:shadow-power-glow:hover {
+      --tw-shadow-color: #dc262640 !important;
+    }
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:shadow-power-glow:hover {
+        --tw-shadow-color: color-mix(
+          in oklab,
+          var(--color-power-glow) var(--tw-shadow-alpha),
+          transparent
+        ) !important;
+      }
     }
   }
   .focus\:ring-2:focus {
