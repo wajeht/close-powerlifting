@@ -9,6 +9,12 @@
   --color-power-glow: #dc262640;
 }
 
+@layer components {
+  .frosted {
+    @apply bg-black/60 backdrop-blur-xl;
+  }
+}
+
 @layer base {
   * {
     -ms-overflow-style: none; /* Internet Explorer 10+ */
