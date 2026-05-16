@@ -44,21 +44,10 @@ export function createCache(knex: Knex, logger: LoggerType): CacheType {
 
   async function set(key: string, value: string): Promise<void> {
     const now = new Date().toISOString();
-    const existing = await knex<CacheEntry>("cache").where({ key }).first();
-
-    if (existing) {
-      await knex<CacheEntry>("cache").where({ key }).update({
-        value,
-        updated_at: now,
-      });
-    } else {
-      await knex<CacheEntry>("cache").insert({
-        key,
-        value,
-        created_at: now,
-        updated_at: now,
-      });
-    }
+    await knex<CacheEntry>("cache")
+      .insert({ key, value, created_at: now, updated_at: now })
+      .onConflict("key")
+      .merge({ value, updated_at: now });
   }
 
   async function del(key: string): Promise<void> {
