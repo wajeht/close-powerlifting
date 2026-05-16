@@ -251,11 +251,19 @@ function harvestDimensions(
 }
 
 export function createIngestService(knex: Knex, logger: LoggerType): IngestServiceType {
-  async function getDb(): Promise<BetterSqliteDatabase> {
-    const client = knex.client as unknown as {
-      acquireRawConnection: () => Promise<BetterSqliteDatabase>;
-    };
-    return client.acquireRawConnection();
+  interface KnexClient {
+    acquireConnection: () => Promise<BetterSqliteDatabase>;
+    releaseConnection: (conn: BetterSqliteDatabase) => Promise<void>;
+  }
+
+  async function withDb<T>(fn: (db: BetterSqliteDatabase) => T): Promise<T> {
+    const client = knex.client as unknown as KnexClient;
+    const db = await client.acquireConnection();
+    try {
+      return fn(db);
+    } finally {
+      await client.releaseConnection(db);
+    }
   }
 
   async function getLastSuccessfulSourceLastModified(): Promise<string | null> {
@@ -328,59 +336,59 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       );
 
       // Pass 2: bulk insert in one transaction using better-sqlite3 prepared statements.
-      const db = await getDb();
-      const writeAll = db.transaction(() => {
-        db.exec("DELETE FROM lifts");
-        db.exec("DELETE FROM meets");
-        db.exec("DELETE FROM lifters");
-        db.exec("DELETE FROM federations");
+      await withDb((db) => {
+        const writeAll = db.transaction(() => {
+          db.exec("DELETE FROM lifts");
+          db.exec("DELETE FROM meets");
+          db.exec("DELETE FROM lifters");
+          db.exec("DELETE FROM federations");
 
-        const federationIds = new Map<string, number>();
-        const insertFederation = db.prepare(
-          "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
-        );
-        for (const fed of federations.values()) {
-          const result = insertFederation.run(fed.slug, fed.code, fed.parent_slug);
-          federationIds.set(fed.slug, Number(result.lastInsertRowid));
-        }
-
-        const lifterIds = new Map<string, number>();
-        const insertLifter = db.prepare(
-          "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
-        );
-        for (const lifter of lifters.values()) {
-          const result = insertLifter.run(
-            lifter.name,
-            lifter.name_slug,
-            lifter.sex,
-            lifter.country,
-            lifter.state,
+          const federationIds = new Map<string, number>();
+          const insertFederation = db.prepare(
+            "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
           );
-          lifterIds.set(lifter.name_slug, Number(result.lastInsertRowid));
-        }
+          for (const fed of federations.values()) {
+            const result = insertFederation.run(fed.slug, fed.code, fed.parent_slug);
+            federationIds.set(fed.slug, Number(result.lastInsertRowid));
+          }
 
-        const meetIds = new Map<string, number>();
-        const insertMeet = db.prepare(
-          "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        );
-        for (const meet of meets.values()) {
-          const federationId = federationIds.get(meet.federation_slug)!;
-          const result = insertMeet.run(
-            federationId,
-            meet.date,
-            meet.meet_name,
-            meet.meet_slug,
-            meet.meet_country,
-            meet.meet_state,
-            meet.sanctioned,
+          const lifterIds = new Map<string, number>();
+          const insertLifter = db.prepare(
+            "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
           );
-          meetIds.set(
-            meetKey(meet.federation_slug, meet.date, meet.meet_slug),
-            Number(result.lastInsertRowid),
-          );
-        }
+          for (const lifter of lifters.values()) {
+            const result = insertLifter.run(
+              lifter.name,
+              lifter.name_slug,
+              lifter.sex,
+              lifter.country,
+              lifter.state,
+            );
+            lifterIds.set(lifter.name_slug, Number(result.lastInsertRowid));
+          }
 
-        const insertLift = db.prepare(`
+          const meetIds = new Map<string, number>();
+          const insertMeet = db.prepare(
+            "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          );
+          for (const meet of meets.values()) {
+            const federationId = federationIds.get(meet.federation_slug)!;
+            const result = insertMeet.run(
+              federationId,
+              meet.date,
+              meet.meet_name,
+              meet.meet_slug,
+              meet.meet_country,
+              meet.meet_state,
+              meet.sanctioned,
+            );
+            meetIds.set(
+              meetKey(meet.federation_slug, meet.date, meet.meet_slug),
+              Number(result.lastInsertRowid),
+            );
+          }
+
+          const insertLift = db.prepare(`
           INSERT INTO lifts (
             lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
             bodyweight_kg, weight_class_kg,
@@ -400,53 +408,54 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
           )
         `);
 
-        for (let i = 0; i < pending.length; i += LIFTS_BATCH_SIZE) {
-          const slice = pending.slice(i, i + LIFTS_BATCH_SIZE);
-          for (const lift of slice) {
-            const lifterId = lifterIds.get(lift.lifter_slug)!;
-            const meetIdValue = meetIds.get(lift.meet_key)!;
-            insertLift.run(
-              lifterId,
-              meetIdValue,
-              lift.event,
-              lift.equipment,
-              lift.age,
-              lift.age_class,
-              lift.birth_year_class,
-              lift.division,
-              lift.bodyweight_kg,
-              lift.weight_class_kg,
-              lift.squat1_kg,
-              lift.squat2_kg,
-              lift.squat3_kg,
-              lift.squat4_kg,
-              lift.bench1_kg,
-              lift.bench2_kg,
-              lift.bench3_kg,
-              lift.bench4_kg,
-              lift.deadlift1_kg,
-              lift.deadlift2_kg,
-              lift.deadlift3_kg,
-              lift.deadlift4_kg,
-              lift.best3_squat_kg,
-              lift.best3_bench_kg,
-              lift.best3_deadlift_kg,
-              lift.total_kg,
-              lift.place_rank,
-              lift.place_status,
-              lift.dots,
-              lift.wilks,
-              lift.glossbrenner,
-              lift.goodlift,
-              lift.tested,
-            );
+          for (let i = 0; i < pending.length; i += LIFTS_BATCH_SIZE) {
+            const slice = pending.slice(i, i + LIFTS_BATCH_SIZE);
+            for (const lift of slice) {
+              const lifterId = lifterIds.get(lift.lifter_slug)!;
+              const meetIdValue = meetIds.get(lift.meet_key)!;
+              insertLift.run(
+                lifterId,
+                meetIdValue,
+                lift.event,
+                lift.equipment,
+                lift.age,
+                lift.age_class,
+                lift.birth_year_class,
+                lift.division,
+                lift.bodyweight_kg,
+                lift.weight_class_kg,
+                lift.squat1_kg,
+                lift.squat2_kg,
+                lift.squat3_kg,
+                lift.squat4_kg,
+                lift.bench1_kg,
+                lift.bench2_kg,
+                lift.bench3_kg,
+                lift.bench4_kg,
+                lift.deadlift1_kg,
+                lift.deadlift2_kg,
+                lift.deadlift3_kg,
+                lift.deadlift4_kg,
+                lift.best3_squat_kg,
+                lift.best3_bench_kg,
+                lift.best3_deadlift_kg,
+                lift.total_kg,
+                lift.place_rank,
+                lift.place_status,
+                lift.dots,
+                lift.wilks,
+                lift.glossbrenner,
+                lift.goodlift,
+                lift.tested,
+              );
+            }
           }
-        }
 
-        db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
-        db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
+          db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
+          db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
+        });
+        writeAll();
       });
-      writeAll();
 
       const result: IngestResult = {
         status: "completed",

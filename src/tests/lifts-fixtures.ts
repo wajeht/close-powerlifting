@@ -58,10 +58,7 @@ interface LiftSeed {
   tested?: boolean;
 }
 
-const federations: FederationSeed[] = [
-  { code: "WRPF" },
-  { code: "USAPL" },
-];
+const federations: FederationSeed[] = [{ code: "WRPF" }, { code: "USAPL" }];
 
 const lifters: LifterSeed[] = [
   { name: "John Haack", sex: "M", country: "USA", state: "WI" },
