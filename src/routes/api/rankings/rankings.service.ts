@@ -100,7 +100,7 @@ function applyFilters(query: Knex.QueryBuilder, filters: RankingsFilters): Knex.
   return query;
 }
 
-interface LiftRow {
+export interface LiftRow {
   name: string;
   name_slug: string;
   sex: string | null;
@@ -130,7 +130,7 @@ function convertKg(value: number | null, units: "kg" | "lbs"): number {
   return units === "lbs" ? Number((value * KG_TO_LBS).toFixed(2)) : value;
 }
 
-function liftRowToRankingRow(row: LiftRow, rank: number, units: "kg" | "lbs"): RankingRow {
+export function liftRowToRankingRow(row: LiftRow, rank: number, units: "kg" | "lbs"): RankingRow {
   const username = row.name_slug ?? nameToSlug(row.name);
   const meetCode = row.meet_name ? `${(row.federation ?? "").toLowerCase()}/${row.date}` : "";
 

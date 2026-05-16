@@ -12,7 +12,6 @@ import {
   buildUserRank,
 } from "./users.service";
 import { userKristyHawkinsHtml, userJohnHaackHtml } from "./fixtures";
-import { rankingsDefault } from "../rankings/fixtures";
 
 const context = createContext();
 const scraper = context.scraper;
@@ -609,27 +608,32 @@ describe("users service", () => {
   });
 
   describe("searchUser", () => {
-    it("uses an exclusive end index when fetching search rankings", async () => {
-      await context.cache.del("users-search-unique-haack-search-1-5-kg");
-
-      const fetchJsonSpy = vi
-        .spyOn(scraper, "fetchJson")
-        .mockImplementationOnce(async () => ({ next_index: 42 }))
-        .mockImplementationOnce(async () => rankingsDefault);
+    it("returns ranking rows from FTS5 without hitting the upstream API", async () => {
+      const fetchJsonSpy = vi.spyOn(scraper, "fetchJson");
 
       const result = await userService.searchUser({
-        search: "unique-haack-search",
+        search: "haack",
         per_page: 5,
         current_page: 1,
         units: "kg",
       });
 
       expect(result.data).not.toBeNull();
-      expect(fetchJsonSpy).toHaveBeenNthCalledWith(
-        1,
-        "/search/rankings?q=unique-haack-search&start=0",
-      );
-      expect(fetchJsonSpy).toHaveBeenNthCalledWith(2, "/rankings?start=42&end=47&lang=en&units=kg");
+      expect(result.data!.length).toBeGreaterThan(0);
+      expect(result.data!.some((row) => row.full_name.toLowerCase().includes("haack"))).toBe(true);
+      expect(fetchJsonSpy).not.toHaveBeenCalled();
+      fetchJsonSpy.mockRestore();
+    });
+
+    it("returns empty rows for a query that tokenizes to nothing", async () => {
+      const result = await userService.searchUser({
+        search: "!!!",
+        per_page: 5,
+        current_page: 1,
+        units: "kg",
+      });
+
+      expect(result.data).toEqual([]);
     });
   });
 
@@ -734,13 +738,13 @@ describe("users service", () => {
       refreshSpy.mockRestore();
     });
 
-    it("returns true for a search key", async () => {
-      const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+    it("returns true for a search key without re-scraping (FTS now)", async () => {
+      const refreshSpy = vi.spyOn(scraper, "refreshCache");
 
       const result = await userService.refreshCacheKey("users-search-haack-1-100-lbs");
 
       expect(result).toBe(true);
-      expect(refreshSpy).toHaveBeenCalledWith("users-search-haack-1-100-lbs", expect.any(Function));
+      expect(refreshSpy).not.toHaveBeenCalled();
       refreshSpy.mockRestore();
     });
   });
