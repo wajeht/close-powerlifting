@@ -218,6 +218,11 @@ beforeAll(async () => {
     throw error;
   }
 
+  const { liftSeedRows } = await import("./lifts-fixtures");
+  await knex("lifts").delete();
+  await knex("lifts").insert(liftSeedRows);
+  await knex.raw("INSERT INTO lifts_fts(lifts_fts) VALUES('rebuild')");
+
   const existingUser = await knex("users").where({ email: "test@example.com" }).first();
 
   if (existingUser) {
