@@ -24,8 +24,8 @@
     "rootDir": "./",
     "sourceMap": true,
 
-    /* If your code doesn't run in the DOM: */
-    "lib": ["es2022"]
+    /* DOM types needed for linkedom (W3C-compatible DOM used in scraper) */
+    "lib": ["es2022", "DOM"]
   },
   "exclude": [
     "node_modules",
