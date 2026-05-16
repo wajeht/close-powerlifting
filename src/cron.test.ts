@@ -383,7 +383,7 @@ describe("cron", () => {
       expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/uspa/1969", undefined);
     });
 
-    it("should refresh user keys", async () => {
+    it("should claim user profile keys without re-scraping (data served from lifts)", async () => {
       await seedCache(cache, ["user-johnhaack-lbs"]);
       const cron = createCron(
         cache,
@@ -397,7 +397,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/johnhaack", "lbs");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/johnhaack", "lbs");
     });
 
     it("should refresh records with filter path", async () => {
@@ -768,30 +768,8 @@ describe("cron", () => {
       expect(scraper.fetchHtml).toHaveBeenCalledWith("/m/gpc/aus-vic/2023", undefined);
     });
 
-    // Edge cases for users
-    it("should handle user profile fetch failure", async () => {
-      await seedCache(cache, ["user-nonexistent-lbs"]);
-      vi.mocked(scraper.getElementByClass).mockReturnValueOnce(null);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh user-nonexistent-lbs",
-        expect.objectContaining({ error: "User profile not found: nonexistent" }),
-      );
-    });
-
-    it("should handle usernames with hyphens", async () => {
+    // Profile keys are now served from the lifts table and no longer re-scrape.
+    it("should claim usernames-with-hyphens profile keys without re-scraping", async () => {
       await seedCache(cache, ["user-john-doe-lbs"]);
       const cron = createCron(
         cache,
@@ -805,7 +783,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/u/john-doe", "lbs");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/john-doe", "lbs");
     });
 
     it("should refresh cached user search keys", async () => {

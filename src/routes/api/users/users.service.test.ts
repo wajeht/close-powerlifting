@@ -545,29 +545,25 @@ describe("users service", () => {
   });
 
   describe("getProgression service method", () => {
-    it("returns null when profile cannot be fetched", async () => {
-      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+    it("returns null for unknown user", async () => {
       const result = await userService.getProgression({ username: "ghost" });
       expect(result).toBeNull();
     });
 
     it("returns sorted progression points when profile exists", async () => {
-      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: johnProfile });
       const result = await userService.getProgression({ username: "johnhaack" });
       expect(result).not.toBeNull();
-      expect(result!.length).toBe(johnProfile.competition_results.length);
+      expect(result!.length).toBeGreaterThan(0);
     });
   });
 
   describe("getPersonalBests service method", () => {
-    it("returns null when profile cannot be fetched", async () => {
-      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+    it("returns null for unknown user", async () => {
       const result = await userService.getPersonalBests({ username: "ghost" });
       expect(result).toBeNull();
     });
 
     it("returns PBs grouped by equipment when profile exists", async () => {
-      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: johnProfile });
       const result = await userService.getPersonalBests({ username: "johnhaack" });
       expect(result).not.toBeNull();
       expect(Array.isArray(result)).toBe(true);
@@ -575,35 +571,22 @@ describe("users service", () => {
   });
 
   describe("compareUsers service method", () => {
-    it("returns null when either profile is missing", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: johnProfile })
-        .mockResolvedValueOnce({ data: null });
-
+    it("returns null when either user is missing", async () => {
       const result = await userService.compareUsers({ a: "johnhaack", b: "ghost" });
       expect(result).toBeNull();
-      cacheSpy.mockRestore();
     });
 
     it("returns a UserComparison when both profiles exist", async () => {
-      const cacheSpy = vi
-        .spyOn(scraper, "withCache")
-        .mockResolvedValueOnce({ data: johnProfile })
-        .mockResolvedValueOnce({ data: kristyProfile });
-
       const result = await userService.compareUsers({ a: "johnhaack", b: "kristyhawkins" });
       expect(result).not.toBeNull();
       expect(result!.a.username).toBe("johnhaack");
       expect(result!.b.username).toBe("kristyhawkins");
       expect(Array.isArray(result!.shared_meets)).toBe(true);
-      cacheSpy.mockRestore();
     });
   });
 
   describe("getRank service method", () => {
-    it("returns null when profile is missing", async () => {
-      vi.spyOn(scraper, "withCache").mockResolvedValueOnce({ data: null });
+    it("returns null for unknown user", async () => {
       const result = await userService.getRank({ username: "ghost" });
       expect(result).toBeNull();
     });
@@ -611,7 +594,6 @@ describe("users service", () => {
     it("returns rank with global_rank when profile + search succeed", async () => {
       const cacheSpy = vi
         .spyOn(scraper, "withCache")
-        .mockImplementationOnce(async () => ({ data: johnProfile }))
         .mockImplementationOnce(async (_key, fn) => ({ data: await fn() }));
       const fetchSpy = vi
         .spyOn(scraper, "fetchJson")
@@ -628,6 +610,8 @@ describe("users service", () => {
 
   describe("searchUser", () => {
     it("uses an exclusive end index when fetching search rankings", async () => {
+      await context.cache.del("users-search-unique-haack-search-1-5-kg");
+
       const fetchJsonSpy = vi
         .spyOn(scraper, "fetchJson")
         .mockImplementationOnce(async () => ({ next_index: 42 }))
@@ -730,13 +714,13 @@ describe("users service", () => {
       expect(await userService.refreshCacheKey("meet-uspa/1969")).toBe(false);
     });
 
-    it("returns true for a profile key", async () => {
-      const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+    it("returns true for a profile key without re-scraping (data now served from lifts)", async () => {
+      const refreshSpy = vi.spyOn(scraper, "refreshCache");
 
       const result = await userService.refreshCacheKey("user-johnhaack-lbs");
 
       expect(result).toBe(true);
-      expect(refreshSpy).toHaveBeenCalledWith("user-johnhaack-lbs", expect.any(Function));
+      expect(refreshSpy).not.toHaveBeenCalled();
       refreshSpy.mockRestore();
     });
 

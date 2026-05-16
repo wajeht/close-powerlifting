@@ -338,9 +338,23 @@ interface LiftDbRow {
   meet_name: string | null;
 }
 
+const KG_TO_LBS = 2.20462;
+
 function formatValue(value: number | string | null | undefined): string {
   if (value == null || value === "") return "";
   return String(value);
+}
+
+function formatWeight(value: number | null | undefined, units: "kg" | "lbs"): string {
+  if (value == null) return "";
+  const converted = units === "lbs" ? value * KG_TO_LBS : value;
+  return formatWeightNumber(converted);
+}
+
+function formatWeightNumber(value: number): string {
+  if (!Number.isFinite(value)) return "";
+  if (Number.isInteger(value)) return String(value);
+  return value.toFixed(2).replace(/\.?0+$/, "");
 }
 
 function buildLocation(country: string | null, state: string | null): string {
@@ -348,7 +362,11 @@ function buildLocation(country: string | null, state: string | null): string {
   return country ?? "";
 }
 
-function liftRowToCompetitionResult(row: LiftDbRow, includeAttempts: boolean): CompetitionResult {
+function liftRowToCompetitionResult(
+  row: LiftDbRow,
+  includeAttempts: boolean,
+  units: "kg" | "lbs",
+): CompetitionResult {
   const base: Record<string, string> = {
     place: formatValue(row.place),
     fed: formatValue(row.federation),
@@ -358,35 +376,38 @@ function liftRowToCompetitionResult(row: LiftDbRow, includeAttempts: boolean): C
     division: formatValue(row.division),
     age: formatValue(row.age),
     equip: formatValue(row.equipment),
-    class: formatValue(row.weight_class_kg),
-    weight: formatValue(row.bodyweight_kg),
-    total: formatValue(row.total_kg),
+    class: formatWeight(row.weight_class_kg, units),
+    weight: formatWeight(row.bodyweight_kg, units),
+    total: formatWeight(row.total_kg, units),
     dots: formatValue(row.dots),
   };
 
   if (includeAttempts) {
-    base.squat1 = formatValue(row.squat1_kg);
-    base.squat2 = formatValue(row.squat2_kg);
-    base.squat3 = formatValue(row.squat3_kg);
-    base.squat4 = formatValue(row.squat4_kg);
-    base.bench1 = formatValue(row.bench1_kg);
-    base.bench2 = formatValue(row.bench2_kg);
-    base.bench3 = formatValue(row.bench3_kg);
-    base.bench4 = formatValue(row.bench4_kg);
-    base.deadlift1 = formatValue(row.deadlift1_kg);
-    base.deadlift2 = formatValue(row.deadlift2_kg);
-    base.deadlift3 = formatValue(row.deadlift3_kg);
-    base.deadlift4 = formatValue(row.deadlift4_kg);
+    base.squat1 = formatWeight(row.squat1_kg, units);
+    base.squat2 = formatWeight(row.squat2_kg, units);
+    base.squat3 = formatWeight(row.squat3_kg, units);
+    base.squat4 = formatWeight(row.squat4_kg, units);
+    base.bench1 = formatWeight(row.bench1_kg, units);
+    base.bench2 = formatWeight(row.bench2_kg, units);
+    base.bench3 = formatWeight(row.bench3_kg, units);
+    base.bench4 = formatWeight(row.bench4_kg, units);
+    base.deadlift1 = formatWeight(row.deadlift1_kg, units);
+    base.deadlift2 = formatWeight(row.deadlift2_kg, units);
+    base.deadlift3 = formatWeight(row.deadlift3_kg, units);
+    base.deadlift4 = formatWeight(row.deadlift4_kg, units);
   } else {
-    base.squat = formatValue(row.best3_squat_kg);
-    base.bench = formatValue(row.best3_bench_kg);
-    base.deadlift = formatValue(row.best3_deadlift_kg);
+    base.squat = formatWeight(row.best3_squat_kg, units);
+    base.bench = formatWeight(row.best3_bench_kg, units);
+    base.deadlift = formatWeight(row.best3_deadlift_kg, units);
   }
 
   return base as CompetitionResult;
 }
 
-function buildPersonalBestsFromLifts(rows: ReadonlyArray<LiftDbRow>): PersonalBest[] {
+function buildPersonalBestsFromLifts(
+  rows: ReadonlyArray<LiftDbRow>,
+  units: "kg" | "lbs",
+): PersonalBest[] {
   const byEquipment = new Map<
     string,
     {
@@ -423,10 +444,10 @@ function buildPersonalBestsFromLifts(rows: ReadonlyArray<LiftDbRow>): PersonalBe
 
   return [...byEquipment.values()].map((entry) => ({
     equip: entry.equip,
-    squat: entry.squat ? String(entry.squat) : "",
-    bench: entry.bench ? String(entry.bench) : "",
-    deadlift: entry.deadlift ? String(entry.deadlift) : "",
-    total: entry.total ? String(entry.total) : "",
+    squat: entry.squat ? formatWeight(entry.squat, units) : "",
+    bench: entry.bench ? formatWeight(entry.bench, units) : "",
+    deadlift: entry.deadlift ? formatWeight(entry.deadlift, units) : "",
+    total: entry.total ? formatWeight(entry.total, units) : "",
     dots: entry.dots ? String(entry.dots) : "",
   })) as PersonalBest[];
 }
@@ -435,6 +456,7 @@ export function buildUserProfileFromLifts(
   rows: ReadonlyArray<LiftDbRow>,
   slug: string,
   includeAttempts: boolean,
+  units: "kg" | "lbs" = "lbs",
 ): UserProfile | null {
   if (rows.length === 0) return null;
 
@@ -442,8 +464,10 @@ export function buildUserProfileFromLifts(
   const name = first.name;
   const sex = first.sex ?? "";
 
-  const competitionResults = rows.map((row) => liftRowToCompetitionResult(row, includeAttempts));
-  const personalBest = buildPersonalBestsFromLifts(rows);
+  const competitionResults = rows.map((row) =>
+    liftRowToCompetitionResult(row, includeAttempts, units),
+  );
+  const personalBest = buildPersonalBestsFromLifts(rows, units);
 
   return {
     name,
@@ -460,6 +484,7 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
   async function fetchUserProfileFromDb(
     slug: string,
     includeAttempts: boolean = false,
+    units: "kg" | "lbs" = "lbs",
   ): Promise<UserProfile | null> {
     const rows = await knex<LiftDbRow>("lifts")
       .select(
@@ -499,7 +524,7 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
       .where({ name_slug: slug })
       .orderBy("date", "desc");
 
-    return buildUserProfileFromLifts(rows, slug, includeAttempts);
+    return buildUserProfileFromLifts(rows, slug, includeAttempts, units);
   }
 
   function parseUserProfileHtml(
@@ -545,14 +570,8 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     };
   }
 
-  async function fetchUserProfile(
-    username: string,
-    includeAttempts: boolean = false,
-    units: string = "lbs",
-  ): Promise<UserProfile> {
-    const html = await scraper.fetchHtml(`/u/${username}`, units);
-    const doc = scraper.parseHtml(html);
-    return parseUserProfileHtml(doc, username, includeAttempts);
+  function normalizeUnits(units: string): "kg" | "lbs" {
+    return units === "kg" ? "kg" : "lbs";
   }
 
   async function getUser(
@@ -560,27 +579,16 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     includeAttempts: boolean = false,
     units: string = "lbs",
   ): Promise<UserProfile[] | null> {
-    const cacheKey = `user-${username}${includeAttempts ? "-attempts" : ""}-${units}`;
-    const result = await scraper.withCache<UserProfile>(cacheKey, () =>
-      fetchUserProfile(username, includeAttempts, units),
-    );
-
-    if (!result.data) {
-      return null;
-    }
-
-    return [result.data];
+    const profile = await fetchUserProfileFromDb(username, includeAttempts, normalizeUnits(units));
+    if (!profile) return null;
+    return [profile];
   }
 
   async function getUserProfileCached(
     username: string,
     units: string = "lbs",
   ): Promise<UserProfile | null> {
-    const cacheKey = `user-${username}-${units}`;
-    const result = await scraper.withCache<UserProfile>(cacheKey, () =>
-      fetchUserProfile(username, false, units),
-    );
-    return result.data ?? null;
+    return fetchUserProfileFromDb(username, false, normalizeUnits(units));
   }
 
   async function getProgression(
@@ -783,9 +791,8 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     if (!parsed) return false;
 
     if (parsed.kind === "profile") {
-      await scraper.refreshCache<UserProfile>(key, () =>
-        fetchUserProfile(parsed.username!, parsed.includeAttempts!, parsed.units!),
-      );
+      // Profile data is served from the lifts table now; legacy cache keys
+      // can no longer be refreshed. Claim the key so the cron does not warn.
       return true;
     }
 

@@ -91,7 +91,7 @@ describe("users db profile", () => {
   });
 
   it("returns profile shaped like the HTML scrape path", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     expect(profile).not.toBeNull();
     expect(profile?.name).toBe("John Haack");
     expect(profile?.username).toBe("johnhaack");
@@ -102,13 +102,13 @@ describe("users db profile", () => {
   });
 
   it("orders competition results by date descending", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     const dates = profile!.competition_results.map((r) => r.date);
     expect(dates).toEqual(["2024-05-12", "2023-08-15"]);
   });
 
   it("strips numbered attempt columns by default", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     const first = profile!.competition_results[0]!;
     expect(first).toHaveProperty("squat");
     expect(first).toHaveProperty("bench");
@@ -118,7 +118,7 @@ describe("users db profile", () => {
   });
 
   it("includes attempts when requested", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack", true);
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", true, "kg");
     const first = profile!.competition_results[0]!;
     expect(first).toHaveProperty("squat1");
     expect(first.squat1).toBe("350");
@@ -127,7 +127,7 @@ describe("users db profile", () => {
   });
 
   it("uses best3 lifts for stripped view", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     const first = profile!.competition_results[0]!;
     expect(first.squat).toBe("360");
     expect(first.bench).toBe("240");
@@ -136,13 +136,13 @@ describe("users db profile", () => {
   });
 
   it("formats location as country-state when both present", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     expect(profile!.competition_results[0]!.location).toBe("USA-CA");
     expect(profile!.competition_results[1]!.location).toBe("USA");
   });
 
   it("groups personal bests by equipment with max values", async () => {
-    const profile = await userService.fetchUserProfileFromDb("johnhaack");
+    const profile = await userService.fetchUserProfileFromDb("johnhaack", false, "kg");
     const bests = profile!.personal_best;
     expect(bests.length).toBe(2);
     const raw = bests.find((b) => b.equip === "Raw");
