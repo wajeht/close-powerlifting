@@ -236,7 +236,7 @@ export function createCron(
       logger.info("cron job started: runIngest");
       const result = await ingest.runNightly();
       logger.info(
-        `cron job completed: runIngest (status=${result.status}, rows=${result.rowCount}, durationMs=${result.durationMs})`,
+        `cron job completed: runIngest (status=${result.status}, lifts=${result.stats.lifts}, durationMs=${result.durationMs})`,
       );
     } catch (error) {
       logger.error("cron job failed: runIngest", error);

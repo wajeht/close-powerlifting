@@ -8,7 +8,7 @@ async function main(): Promise<void> {
   try {
     const result = await context.ingest.runNightly({ force });
     context.logger.info(
-      `ingest finished: status=${result.status} rows=${result.rowCount} durationMs=${result.durationMs}`,
+      `ingest finished: status=${result.status} lifts=${result.stats.lifts} lifters=${result.stats.lifters} meets=${result.stats.meets} durationMs=${result.durationMs}`,
     );
     process.exitCode = result.status === "failed" ? 1 : 0;
   } finally {
