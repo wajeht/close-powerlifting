@@ -101,24 +101,27 @@ function applyFilters(
   liftColumn: string,
   events: string[],
 ): Knex.QueryBuilder {
-  query = query.whereIn("event", events).whereNotNull(liftColumn).whereNotNull("weight_class_kg");
+  query = query
+    .whereIn("lifts.event", events)
+    .whereNotNull(`lifts.${liftColumn}`)
+    .whereNotNull("lifts.weight_class_kg");
 
   if (filters.equipment) {
     const mapped = EQUIPMENT_MAP[filters.equipment];
     if (mapped === "tested") {
-      query = query.where("tested", "Yes");
+      query = query.where("lifts.tested", 1);
     } else if (mapped) {
-      query = query.whereIn("equipment", mapped);
+      query = query.whereIn("lifts.equipment", mapped);
     }
   }
 
   if (filters.sex) {
     const mapped = SEX_MAP[filters.sex];
-    if (mapped) query = query.where("sex", mapped);
+    if (mapped) query = query.where("lifters.sex", mapped);
   }
 
   if (filters.ageClass) {
-    query = query.where("age_class", filters.ageClass);
+    query = query.where("lifts.age_class", filters.ageClass);
   }
 
   return query;
@@ -142,16 +145,20 @@ export function createRecordService(knex: Knex, _scraper: ScraperType) {
     filters: RecordsFilters,
   ): Promise<RankedLiftRow[]> {
     const inner = applyFilters(
-      knex("lifts").select(
-        "weight_class_kg",
-        "name",
-        knex.raw("?? as lift_value", [category.liftColumn]),
-        "date",
-        "federation",
-        knex.raw(
-          `ROW_NUMBER() OVER (PARTITION BY weight_class_kg ORDER BY ${category.liftColumn} DESC) AS rn`,
+      knex("lifts")
+        .join("lifters", "lifters.id", "lifts.lifter_id")
+        .join("meets", "meets.id", "lifts.meet_id")
+        .join("federations", "federations.id", "meets.federation_id")
+        .select(
+          "lifts.weight_class_kg",
+          knex.ref("lifters.name").as("name"),
+          knex.raw("?? as lift_value", [`lifts.${category.liftColumn}`]),
+          knex.ref("meets.date").as("date"),
+          knex.ref("federations.code").as("federation"),
+          knex.raw(
+            `ROW_NUMBER() OVER (PARTITION BY lifts.weight_class_kg ORDER BY lifts.${category.liftColumn} DESC) AS rn`,
+          ),
         ),
-      ),
       filters,
       category.liftColumn,
       category.events,

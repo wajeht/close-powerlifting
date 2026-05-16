@@ -161,33 +161,35 @@ export function createMeetService(knex: Knex, _scraper: ScraperType) {
 
     const normalizedUnits: "kg" | "lbs" = units === "kg" ? "kg" : "lbs";
 
-    const rows = (await knex("lifts")
+    const federationSlug = nameToSlug(parsed.federation);
+    const matching = (await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .join("meets", "meets.id", "lifts.meet_id")
+      .join("federations", "federations.id", "meets.federation_id")
       .select<MeetLiftRow[]>(
-        "name",
-        "sex",
-        "age",
-        "equipment",
-        "weight_class_kg",
-        "bodyweight_kg",
-        "best3_squat_kg",
-        "best3_bench_kg",
-        "best3_deadlift_kg",
-        "total_kg",
-        "dots",
-        "wilks",
-        "glossbrenner",
-        "goodlift",
-        "division",
-        "meet_name",
-        "meet_country",
-        "meet_state",
+        knex.ref("lifters.name").as("name"),
+        knex.ref("lifters.sex").as("sex"),
+        "lifts.age",
+        "lifts.equipment",
+        "lifts.weight_class_kg",
+        "lifts.bodyweight_kg",
+        "lifts.best3_squat_kg",
+        "lifts.best3_bench_kg",
+        "lifts.best3_deadlift_kg",
+        "lifts.total_kg",
+        "lifts.dots",
+        "lifts.wilks",
+        "lifts.glossbrenner",
+        "lifts.goodlift",
+        "lifts.division",
+        "meets.meet_name",
+        "meets.meet_country",
+        "meets.meet_state",
       )
-      .where({ date: parsed.date })
-      .whereRaw("UPPER(federation) = ?", [parsed.federation.toUpperCase()])) as MeetLiftRow[];
+      .where("federations.slug", federationSlug)
+      .where("meets.date", parsed.date)
+      .where("meets.meet_slug", parsed.slug)) as MeetLiftRow[];
 
-    const matching = rows.filter(
-      (row) => row.meet_name != null && nameToSlug(row.meet_name) === parsed.slug,
-    );
     if (matching.length === 0) return null;
 
     const first = matching[0]!;
