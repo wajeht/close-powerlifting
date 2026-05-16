@@ -289,7 +289,7 @@ describe("cron", () => {
       expect(cached).not.toBeNull();
     });
 
-    it("should refresh rankings keys from cache", async () => {
+    it("should claim rankings keys without re-scraping (data served from lifts)", async () => {
       await seedCache(cache, ["rankings-1-100-lbs", "rankings-2-100-lbs"]);
       const cron = createCron(
         cache,
@@ -303,11 +303,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      const cached1 = await cache.get("rankings-1-100-lbs");
-      const cached2 = await cache.get("rankings-2-100-lbs");
-      expect(cached1).not.toBeNull();
-      expect(cached2).not.toBeNull();
-      expect(JSON.parse(cached1!)).not.toEqual({ placeholder: true });
+      expect(scraper.fetchJson).not.toHaveBeenCalled();
     });
 
     it("should refresh filtered rankings keys", async () => {
@@ -492,27 +488,8 @@ describe("cron", () => {
       expect(fedCached).not.toBeNull();
     });
 
-    it("should handle fetchJson errors for rankings", async () => {
-      await seedCache(cache, ["rankings-1-100-lbs"]);
-      vi.mocked(scraper.fetchJson).mockRejectedValueOnce(new Error("API error"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh rankings-1-100-lbs",
-        expect.any(Object),
-      );
-    });
+    // Rankings refresh is a no-op now (data served from lifts), so fetchJson
+    // is never called and can't fail. The legacy error-path test is obsolete.
 
     it("should handle missing text-content element", async () => {
       await seedCache(cache, ["status"]);
@@ -588,30 +565,9 @@ describe("cron", () => {
       );
     });
 
-    // Edge cases for rankings
-    it("should handle rankings with page > 1 correctly", async () => {
-      await seedCache(cache, ["rankings-3-100-lbs"]);
-      vi.mocked(scraper.buildPaginationQuery).mockReturnValueOnce(
-        "start=200&end=300&lang=en&units=lbs",
-      );
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(scraper.fetchJson).toHaveBeenCalledWith(
-        "/rankings?start=200&end=300&lang=en&units=lbs",
-      );
-    });
-
-    it("should handle deep filter path rankings from prod", async () => {
+    // Rankings keys are claimed without re-scraping now that data comes from
+    // the lifts table; legacy fetchJson-based assertions no longer apply.
+    it("should claim deep filter path rankings keys without re-scraping", async () => {
       await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs"]);
       const cron = createCron(
         cache,
@@ -625,29 +581,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchJson).toHaveBeenCalledWith(
-        "/rankings/raw/men/100/2024/full-power/by-dots?start=0&end=100&lang=en&units=lbs",
-      );
-    });
-
-    it("should handle rankings with small perPage", async () => {
-      await seedCache(cache, ["rankings-1-9-lbs"]);
-      vi.mocked(scraper.buildPaginationQuery).mockReturnValueOnce(
-        "start=0&end=9&lang=en&units=lbs",
-      );
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(scraper.fetchJson).toHaveBeenCalledWith("/rankings?start=0&end=9&lang=en&units=lbs");
+      expect(scraper.fetchJson).not.toHaveBeenCalled();
     });
 
     it("should warn on invalid rankings key format", async () => {

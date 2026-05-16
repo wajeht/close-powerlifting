@@ -28,7 +28,7 @@ export function createGeneralRouter(context: AppContext) {
     context.scraper,
     context.logger,
   );
-  const rankingService = createRankingService(context.scraper);
+  const rankingService = createRankingService(context.knex, context.scraper);
 
   const router = express.Router();
 
