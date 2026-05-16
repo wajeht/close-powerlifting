@@ -59,8 +59,20 @@ const CSV_COLUMNS = [
   "Sanctioned",
 ] as const;
 
+const REGEX_DIACRITICS = /\p{Mn}/gu;
+const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
+
+export function nameToSlug(name: string): string {
+  return name
+    .normalize("NFKD")
+    .replace(REGEX_DIACRITICS, "")
+    .toLowerCase()
+    .replace(REGEX_SLUG_STRIP, "");
+}
+
 interface LiftRow {
   name: string;
+  name_slug: string;
   sex: string | null;
   event: string | null;
   equipment: string | null;
@@ -124,6 +136,7 @@ function rowFromCsv(record: Record<string, string>): LiftRow | null {
 
   return {
     name,
+    name_slug: nameToSlug(name),
     sex: text(record.Sex),
     event: text(record.Event),
     equipment: text(record.Equipment),
@@ -177,7 +190,7 @@ export interface IngestResult {
 }
 
 export interface IngestServiceType {
-  runNightly: () => Promise<IngestResult>;
+  runNightly: (options?: { force?: boolean }) => Promise<IngestResult>;
   ingestFromStream: (
     csvStream: Readable,
     options?: { sourceLastModified?: string | null; byteSize?: number | null },
@@ -323,7 +336,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     return { stream: stream as unknown as Readable, cleanup };
   }
 
-  async function runNightly(): Promise<IngestResult> {
+  async function runNightly(options: { force?: boolean } = {}): Promise<IngestResult> {
     const startedAt = new Date();
     let downloadInfo: {
       filePath: string;
@@ -332,11 +345,11 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     } | null = null;
 
     try {
-      logger.info("ingest: starting nightly run");
+      logger.info(`ingest: starting nightly run${options.force ? " (forced)" : ""}`);
       downloadInfo = await downloadToTempFile();
 
       const lastModified = downloadInfo.sourceLastModified;
-      if (lastModified) {
+      if (lastModified && !options.force) {
         const previous = await getLastSuccessfulSourceLastModified();
         if (previous && previous === lastModified) {
           logger.info(`ingest: source unchanged (last-modified=${lastModified}), skipping`);

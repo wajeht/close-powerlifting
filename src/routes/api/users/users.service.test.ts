@@ -16,7 +16,7 @@ import { rankingsDefault } from "../rankings/fixtures";
 
 const context = createContext();
 const scraper = context.scraper;
-const userService = createUserService(scraper);
+const userService = createUserService(context.knex, scraper);
 const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 const kristyDoc = scraper.parseHtml(userKristyHawkinsHtml);

@@ -1,4 +1,5 @@
 import cron, { ScheduledTask } from "node-cron";
+import type { Knex } from "knex";
 
 import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
@@ -56,6 +57,7 @@ export function createCron(
   scraper: ScraperType,
   apiCallLogRepository: ApiCallLogRepositoryType,
   ingest: IngestServiceType,
+  knex: Knex,
 ): CronType {
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
@@ -84,7 +86,7 @@ export function createCron(
   }
 
   const meetService = createMeetService(scraper);
-  const userService = createUserService(scraper);
+  const userService = createUserService(knex, scraper);
   const federationService = createFederationService(scraper);
   const rankingService = createRankingService(scraper);
   const recordService = createRecordService(scraper);
