@@ -11,71 +11,82 @@ import unzipper from "unzipper";
 import type { LoggerType } from "./logger";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
-// SQLite caps bound parameters at ~32,766. With 41 columns per row, we keep
-// (BATCH_SIZE * columns) comfortably under that ceiling.
-const BATCH_SIZE = 500;
-
-const CSV_COLUMNS = [
-  "Name",
-  "Sex",
-  "Event",
-  "Equipment",
-  "Age",
-  "AgeClass",
-  "BirthYearClass",
-  "Division",
-  "BodyweightKg",
-  "WeightClassKg",
-  "Squat1Kg",
-  "Squat2Kg",
-  "Squat3Kg",
-  "Squat4Kg",
-  "Bench1Kg",
-  "Bench2Kg",
-  "Bench3Kg",
-  "Bench4Kg",
-  "Deadlift1Kg",
-  "Deadlift2Kg",
-  "Deadlift3Kg",
-  "Deadlift4Kg",
-  "Best3SquatKg",
-  "Best3BenchKg",
-  "Best3DeadliftKg",
-  "TotalKg",
-  "Place",
-  "Dots",
-  "Wilks",
-  "Glossbrenner",
-  "Goodlift",
-  "Tested",
-  "Country",
-  "State",
-  "Federation",
-  "ParentFederation",
-  "Date",
-  "MeetCountry",
-  "MeetState",
-  "MeetName",
-  "Sanctioned",
-] as const;
-
+const LIFTS_BATCH_SIZE = 5000;
 const REGEX_DIACRITICS = /\p{Mn}/gu;
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
+const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const REGEX_PLACE_NUMERIC = /^\d+$/;
 
-export function nameToSlug(name: string): string {
-  return name
+export function nameToSlug(value: string): string {
+  return value
     .normalize("NFKD")
     .replace(REGEX_DIACRITICS, "")
     .toLowerCase()
     .replace(REGEX_SLUG_STRIP, "");
 }
 
-interface LiftRow {
+function trimToNull(value: string | undefined): string | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function toNumber(value: string | undefined): number | null {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const parsed = parseFloat(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function toBool(value: string | undefined): 0 | 1 {
+  if (value == null) return 0;
+  return value.trim().toLowerCase() === "yes" ? 1 : 0;
+}
+
+interface PlaceSplit {
+  rank: number | null;
+  status: string | null;
+}
+
+function splitPlace(value: string | undefined): PlaceSplit {
+  const text = trimToNull(value);
+  if (text == null) return { rank: null, status: null };
+  if (REGEX_PLACE_NUMERIC.test(text)) {
+    return { rank: parseInt(text, 10), status: null };
+  }
+  return { rank: null, status: text };
+}
+
+interface FederationDraft {
+  slug: string;
+  code: string;
+  parent_slug: string | null;
+}
+
+interface LifterDraft {
   name: string;
   name_slug: string;
   sex: string | null;
-  event: string | null;
-  equipment: string | null;
+  country: string | null;
+  state: string | null;
+}
+
+interface MeetDraft {
+  federation_slug: string;
+  date: string;
+  meet_name: string;
+  meet_slug: string;
+  meet_country: string | null;
+  meet_state: string | null;
+  sanctioned: 0 | 1;
+}
+
+interface PendingLift {
+  lifter_slug: string;
+  meet_key: string;
+  event: string;
+  equipment: string;
   age: number | null;
   age_class: string | null;
   birth_year_class: string | null;
@@ -98,91 +109,26 @@ interface LiftRow {
   best3_bench_kg: number | null;
   best3_deadlift_kg: number | null;
   total_kg: number | null;
-  place: string | null;
+  place_rank: number | null;
+  place_status: string | null;
   dots: number | null;
   wilks: number | null;
   glossbrenner: number | null;
   goodlift: number | null;
-  tested: string | null;
-  country: string | null;
-  state: string | null;
-  federation: string | null;
-  parent_federation: string | null;
-  date: string;
-  meet_country: string | null;
-  meet_state: string | null;
-  meet_name: string | null;
-  sanctioned: string | null;
+  tested: 0 | 1;
 }
 
-function text(value: string | undefined): string | null {
-  if (value == null) return null;
-  const trimmed = value.trim();
-  return trimmed === "" ? null : trimmed;
-}
-
-function numeric(value: string | undefined): number | null {
-  if (value == null) return null;
-  const trimmed = value.trim();
-  if (trimmed === "") return null;
-  const parsed = parseFloat(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function rowFromCsv(record: Record<string, string>): LiftRow | null {
-  const name = text(record.Name);
-  const date = text(record.Date);
-  if (!name || !date) return null;
-
-  return {
-    name,
-    name_slug: nameToSlug(name),
-    sex: text(record.Sex),
-    event: text(record.Event),
-    equipment: text(record.Equipment),
-    age: numeric(record.Age),
-    age_class: text(record.AgeClass),
-    birth_year_class: text(record.BirthYearClass),
-    division: text(record.Division),
-    bodyweight_kg: numeric(record.BodyweightKg),
-    weight_class_kg: numeric(record.WeightClassKg),
-    squat1_kg: numeric(record.Squat1Kg),
-    squat2_kg: numeric(record.Squat2Kg),
-    squat3_kg: numeric(record.Squat3Kg),
-    squat4_kg: numeric(record.Squat4Kg),
-    bench1_kg: numeric(record.Bench1Kg),
-    bench2_kg: numeric(record.Bench2Kg),
-    bench3_kg: numeric(record.Bench3Kg),
-    bench4_kg: numeric(record.Bench4Kg),
-    deadlift1_kg: numeric(record.Deadlift1Kg),
-    deadlift2_kg: numeric(record.Deadlift2Kg),
-    deadlift3_kg: numeric(record.Deadlift3Kg),
-    deadlift4_kg: numeric(record.Deadlift4Kg),
-    best3_squat_kg: numeric(record.Best3SquatKg),
-    best3_bench_kg: numeric(record.Best3BenchKg),
-    best3_deadlift_kg: numeric(record.Best3DeadliftKg),
-    total_kg: numeric(record.TotalKg),
-    place: text(record.Place),
-    dots: numeric(record.Dots),
-    wilks: numeric(record.Wilks),
-    glossbrenner: numeric(record.Glossbrenner),
-    goodlift: numeric(record.Goodlift),
-    tested: text(record.Tested),
-    country: text(record.Country),
-    state: text(record.State),
-    federation: text(record.Federation),
-    parent_federation: text(record.ParentFederation),
-    date,
-    meet_country: text(record.MeetCountry),
-    meet_state: text(record.MeetState),
-    meet_name: text(record.MeetName),
-    sanctioned: text(record.Sanctioned),
-  };
+interface IngestStats {
+  federations: number;
+  lifters: number;
+  meets: number;
+  lifts: number;
+  skippedRows: number;
 }
 
 export interface IngestResult {
   status: "completed" | "skipped" | "failed";
-  rowCount: number;
+  stats: IngestStats;
   byteSize: number | null;
   durationMs: number;
   sourceLastModified: string | null;
@@ -197,7 +143,121 @@ export interface IngestServiceType {
   ) => Promise<IngestResult>;
 }
 
+interface BetterSqliteDatabase {
+  prepare: (sql: string) => {
+    run: (...params: unknown[]) => { lastInsertRowid: number | bigint };
+    all: (...params: unknown[]) => unknown[];
+  };
+  transaction: <T extends (...args: never[]) => unknown>(fn: T) => T;
+  exec: (sql: string) => void;
+}
+
+function meetKey(federationSlug: string, date: string, meetSlug: string): string {
+  return `${federationSlug}|${date}|${meetSlug}`;
+}
+
+function buildPending(record: Record<string, string>): PendingLift | null {
+  const name = trimToNull(record.Name);
+  const date = trimToNull(record.Date);
+  const event = trimToNull(record.Event);
+  const equipment = trimToNull(record.Equipment);
+  const federation = trimToNull(record.Federation);
+  if (!name || !date || !event || !equipment || !federation) return null;
+  if (!REGEX_ISO_DATE.test(date)) return null;
+
+  const meetName = trimToNull(record.MeetName);
+  if (!meetName) return null;
+
+  const place = splitPlace(record.Place);
+  const federationSlug = nameToSlug(federation);
+  const meetSlug = nameToSlug(meetName);
+
+  return {
+    lifter_slug: nameToSlug(name),
+    meet_key: meetKey(federationSlug, date, meetSlug),
+    event,
+    equipment,
+    age: toNumber(record.Age),
+    age_class: trimToNull(record.AgeClass),
+    birth_year_class: trimToNull(record.BirthYearClass),
+    division: trimToNull(record.Division),
+    bodyweight_kg: toNumber(record.BodyweightKg),
+    weight_class_kg: toNumber(record.WeightClassKg),
+    squat1_kg: toNumber(record.Squat1Kg),
+    squat2_kg: toNumber(record.Squat2Kg),
+    squat3_kg: toNumber(record.Squat3Kg),
+    squat4_kg: toNumber(record.Squat4Kg),
+    bench1_kg: toNumber(record.Bench1Kg),
+    bench2_kg: toNumber(record.Bench2Kg),
+    bench3_kg: toNumber(record.Bench3Kg),
+    bench4_kg: toNumber(record.Bench4Kg),
+    deadlift1_kg: toNumber(record.Deadlift1Kg),
+    deadlift2_kg: toNumber(record.Deadlift2Kg),
+    deadlift3_kg: toNumber(record.Deadlift3Kg),
+    deadlift4_kg: toNumber(record.Deadlift4Kg),
+    best3_squat_kg: toNumber(record.Best3SquatKg),
+    best3_bench_kg: toNumber(record.Best3BenchKg),
+    best3_deadlift_kg: toNumber(record.Best3DeadliftKg),
+    total_kg: toNumber(record.TotalKg),
+    place_rank: place.rank,
+    place_status: place.status,
+    dots: toNumber(record.Dots),
+    wilks: toNumber(record.Wilks),
+    glossbrenner: toNumber(record.Glossbrenner),
+    goodlift: toNumber(record.Goodlift),
+    tested: toBool(record.Tested),
+  };
+}
+
+function harvestDimensions(
+  record: Record<string, string>,
+  pending: PendingLift,
+  federations: Map<string, FederationDraft>,
+  lifters: Map<string, LifterDraft>,
+  meets: Map<string, MeetDraft>,
+): void {
+  const federation = record.Federation!.trim();
+  const federationSlug = nameToSlug(federation);
+  if (!federations.has(federationSlug)) {
+    const parent = trimToNull(record.ParentFederation);
+    federations.set(federationSlug, {
+      slug: federationSlug,
+      code: federation,
+      parent_slug: parent ? nameToSlug(parent) : null,
+    });
+  }
+
+  if (!lifters.has(pending.lifter_slug)) {
+    lifters.set(pending.lifter_slug, {
+      name: record.Name!.trim(),
+      name_slug: pending.lifter_slug,
+      sex: trimToNull(record.Sex),
+      country: trimToNull(record.Country),
+      state: trimToNull(record.State),
+    });
+  }
+
+  if (!meets.has(pending.meet_key)) {
+    meets.set(pending.meet_key, {
+      federation_slug: federationSlug,
+      date: record.Date!.trim(),
+      meet_name: record.MeetName!.trim(),
+      meet_slug: nameToSlug(record.MeetName!),
+      meet_country: trimToNull(record.MeetCountry),
+      meet_state: trimToNull(record.MeetState),
+      sanctioned: toBool(record.Sanctioned),
+    });
+  }
+}
+
 export function createIngestService(knex: Knex, logger: LoggerType): IngestServiceType {
+  async function getDb(): Promise<BetterSqliteDatabase> {
+    const client = knex.client as unknown as {
+      acquireRawConnection: () => Promise<BetterSqliteDatabase>;
+    };
+    return client.acquireRawConnection();
+  }
+
   async function getLastSuccessfulSourceLastModified(): Promise<string | null> {
     const row = await knex("ingest_runs")
       .where({ status: "completed" })
@@ -211,7 +271,10 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     await knex("ingest_runs").insert({
       started_at: startedAt.toISOString(),
       finished_at: new Date().toISOString(),
-      row_count: result.rowCount,
+      federation_count: result.stats.federations,
+      lifter_count: result.stats.lifters,
+      meet_count: result.stats.meets,
+      lift_count: result.stats.lifts,
       byte_size: result.byteSize,
       source_last_modified: result.sourceLastModified,
       status: result.status,
@@ -226,67 +289,189 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     const startedAt = new Date();
     const sourceLastModified = options.sourceLastModified ?? null;
     const byteSize = options.byteSize ?? null;
-    let rowCount = 0;
+    const stats: IngestStats = {
+      federations: 0,
+      lifters: 0,
+      meets: 0,
+      lifts: 0,
+      skippedRows: 0,
+    };
 
-    const parser = csvStream.pipe(
-      parseCsv({
-        columns: true,
-        skip_empty_lines: true,
-        relax_column_count: true,
-      }),
-    );
-
-    let batch: LiftRow[] = [];
-
-    async function flushBatch(trx: Knex.Transaction): Promise<void> {
-      if (batch.length === 0) return;
-      await trx("lifts").insert(batch);
-      batch = [];
-    }
+    const federations = new Map<string, FederationDraft>();
+    const lifters = new Map<string, LifterDraft>();
+    const meets = new Map<string, MeetDraft>();
+    const pending: PendingLift[] = [];
 
     try {
-      await knex.transaction(async (trx) => {
-        await trx("lifts").delete();
+      const parser = csvStream.pipe(
+        parseCsv({ columns: true, skip_empty_lines: true, relax_column_count: true }),
+      );
 
-        for await (const record of parser as AsyncIterable<Record<string, string>>) {
-          const row = rowFromCsv(record);
-          if (!row) continue;
-          batch.push(row);
-          rowCount++;
-          if (batch.length >= BATCH_SIZE) {
-            await flushBatch(trx);
+      // Pass 1: stream the CSV and accumulate dimensions + buffered lifts.
+      for await (const record of parser as AsyncIterable<Record<string, string>>) {
+        const lift = buildPending(record);
+        if (!lift) {
+          stats.skippedRows++;
+          continue;
+        }
+        harvestDimensions(record, lift, federations, lifters, meets);
+        pending.push(lift);
+      }
+
+      stats.federations = federations.size;
+      stats.lifters = lifters.size;
+      stats.meets = meets.size;
+      stats.lifts = pending.length;
+
+      logger.info(
+        `ingest: parsed ${stats.lifts} lifts, ${stats.lifters} lifters, ${stats.meets} meets, ${stats.federations} federations (skipped ${stats.skippedRows})`,
+      );
+
+      // Pass 2: bulk insert in one transaction using better-sqlite3 prepared statements.
+      const db = await getDb();
+      const writeAll = db.transaction(() => {
+        db.exec("DELETE FROM lifts");
+        db.exec("DELETE FROM meets");
+        db.exec("DELETE FROM lifters");
+        db.exec("DELETE FROM federations");
+
+        const federationIds = new Map<string, number>();
+        const insertFederation = db.prepare(
+          "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
+        );
+        for (const fed of federations.values()) {
+          const result = insertFederation.run(fed.slug, fed.code, fed.parent_slug);
+          federationIds.set(fed.slug, Number(result.lastInsertRowid));
+        }
+
+        const lifterIds = new Map<string, number>();
+        const insertLifter = db.prepare(
+          "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
+        );
+        for (const lifter of lifters.values()) {
+          const result = insertLifter.run(
+            lifter.name,
+            lifter.name_slug,
+            lifter.sex,
+            lifter.country,
+            lifter.state,
+          );
+          lifterIds.set(lifter.name_slug, Number(result.lastInsertRowid));
+        }
+
+        const meetIds = new Map<string, number>();
+        const insertMeet = db.prepare(
+          "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        );
+        for (const meet of meets.values()) {
+          const federationId = federationIds.get(meet.federation_slug)!;
+          const result = insertMeet.run(
+            federationId,
+            meet.date,
+            meet.meet_name,
+            meet.meet_slug,
+            meet.meet_country,
+            meet.meet_state,
+            meet.sanctioned,
+          );
+          meetIds.set(
+            meetKey(meet.federation_slug, meet.date, meet.meet_slug),
+            Number(result.lastInsertRowid),
+          );
+        }
+
+        const insertLift = db.prepare(`
+          INSERT INTO lifts (
+            lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
+            bodyweight_kg, weight_class_kg,
+            squat1_kg, squat2_kg, squat3_kg, squat4_kg,
+            bench1_kg, bench2_kg, bench3_kg, bench4_kg,
+            deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
+            best3_squat_kg, best3_bench_kg, best3_deadlift_kg, total_kg,
+            place_rank, place_status, dots, wilks, glossbrenner, goodlift, tested
+          ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?
+          )
+        `);
+
+        for (let i = 0; i < pending.length; i += LIFTS_BATCH_SIZE) {
+          const slice = pending.slice(i, i + LIFTS_BATCH_SIZE);
+          for (const lift of slice) {
+            const lifterId = lifterIds.get(lift.lifter_slug)!;
+            const meetIdValue = meetIds.get(lift.meet_key)!;
+            insertLift.run(
+              lifterId,
+              meetIdValue,
+              lift.event,
+              lift.equipment,
+              lift.age,
+              lift.age_class,
+              lift.birth_year_class,
+              lift.division,
+              lift.bodyweight_kg,
+              lift.weight_class_kg,
+              lift.squat1_kg,
+              lift.squat2_kg,
+              lift.squat3_kg,
+              lift.squat4_kg,
+              lift.bench1_kg,
+              lift.bench2_kg,
+              lift.bench3_kg,
+              lift.bench4_kg,
+              lift.deadlift1_kg,
+              lift.deadlift2_kg,
+              lift.deadlift3_kg,
+              lift.deadlift4_kg,
+              lift.best3_squat_kg,
+              lift.best3_bench_kg,
+              lift.best3_deadlift_kg,
+              lift.total_kg,
+              lift.place_rank,
+              lift.place_status,
+              lift.dots,
+              lift.wilks,
+              lift.glossbrenner,
+              lift.goodlift,
+              lift.tested,
+            );
           }
         }
 
-        await flushBatch(trx);
-
-        await trx.raw("INSERT INTO lifts_fts(lifts_fts) VALUES('rebuild')");
+        db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
+        db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
       });
+      writeAll();
 
       const result: IngestResult = {
         status: "completed",
-        rowCount,
+        stats,
         byteSize,
         durationMs: Date.now() - startedAt.getTime(),
         sourceLastModified,
       };
       await recordRun(startedAt, result);
       logger.info(
-        `ingest: completed (${rowCount} rows, ${result.durationMs}ms, last-modified=${sourceLastModified ?? "n/a"})`,
+        `ingest: completed (${stats.lifts} lifts in ${result.durationMs}ms, last-modified=${sourceLastModified ?? "n/a"})`,
       );
       return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const result: IngestResult = {
         status: "failed",
-        rowCount,
+        stats,
         byteSize,
         durationMs: Date.now() - startedAt.getTime(),
         sourceLastModified,
         error: message,
       };
       await recordRun(startedAt, result);
-      logger.error(`ingest: failed after ${rowCount} rows: ${message}`);
+      logger.error(`ingest: failed: ${message}`);
       return result;
     }
   }
@@ -300,39 +485,31 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     if (!response.ok || !response.body) {
       throw new Error(`Failed to download dataset: HTTP ${response.status}`);
     }
-
     const sourceLastModified = response.headers.get("last-modified");
     const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "opl-ingest-"));
     const filePath = path.join(tempDir, "opl.zip");
-    const fileStream = fs.createWriteStream(filePath);
-
-    await pipeline(Readable.fromWeb(response.body as never), fileStream);
+    await pipeline(Readable.fromWeb(response.body as never), fs.createWriteStream(filePath));
     const stat = await fs.promises.stat(filePath);
-
     return { filePath, sourceLastModified, byteSize: stat.size };
   }
 
-  async function findCsvEntry(
-    zipPath: string,
-  ): Promise<{ stream: Readable; cleanup: () => Promise<void> }> {
+  async function findCsvEntry(zipPath: string): Promise<{
+    stream: Readable;
+    cleanup: () => Promise<void>;
+  }> {
     const directory = await unzipper.Open.file(zipPath);
     const csvEntry = directory.files.find(
       (file) => file.path.endsWith(".csv") && file.type === "File",
     );
-    if (!csvEntry) {
-      throw new Error("Zip archive contains no CSV file");
-    }
-
+    if (!csvEntry) throw new Error("Zip archive contains no CSV file");
     const stream = csvEntry.stream();
-
     async function cleanup(): Promise<void> {
       try {
         await fs.promises.rm(path.dirname(zipPath), { recursive: true, force: true });
       } catch {
-        // best-effort cleanup
+        // best effort
       }
     }
-
     return { stream: stream as unknown as Readable, cleanup };
   }
 
@@ -355,7 +532,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
           logger.info(`ingest: source unchanged (last-modified=${lastModified}), skipping`);
           const result: IngestResult = {
             status: "skipped",
-            rowCount: 0,
+            stats: { federations: 0, lifters: 0, meets: 0, lifts: 0, skippedRows: 0 },
             byteSize: downloadInfo.byteSize,
             durationMs: Date.now() - startedAt.getTime(),
             sourceLastModified: lastModified,
@@ -382,7 +559,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       const message = error instanceof Error ? error.message : String(error);
       const result: IngestResult = {
         status: "failed",
-        rowCount: 0,
+        stats: { federations: 0, lifters: 0, meets: 0, lifts: 0, skippedRows: 0 },
         byteSize: downloadInfo?.byteSize ?? null,
         durationMs: Date.now() - startedAt.getTime(),
         sourceLastModified: downloadInfo?.sourceLastModified ?? null,
@@ -404,8 +581,3 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     ingestFromStream,
   };
 }
-
-export const __test_only__ = {
-  CSV_COLUMNS,
-  rowFromCsv,
-};

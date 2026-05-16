@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import { describe, expect, beforeEach, it } from "vite-plus/test";
 
 import { knex, logger } from "../tests/test-setup";
-import { createIngestService } from "./ingest";
+import { createIngestService, nameToSlug } from "./ingest";
 
 const CSV_HEADER = [
   "Name",
@@ -103,178 +103,245 @@ function streamFromString(input: string): Readable {
   return Readable.from([Buffer.from(input)]);
 }
 
+const REQUIRED = {
+  Event: "SBD",
+  Equipment: "Raw",
+  Federation: "WRPF",
+  MeetName: "AMERICAN PRO",
+  Date: "2024-05-12",
+};
+
 describe("ingest", () => {
   const ingest = createIngestService(knex, logger);
 
   beforeEach(async () => {
     await knex("lifts").delete();
+    await knex("meets").delete();
+    await knex("lifters").delete();
+    await knex("federations").delete();
     await knex("ingest_runs").delete();
-    await knex.raw("INSERT INTO lifts_fts(lifts_fts) VALUES('rebuild')");
+    await knex.raw("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
+    await knex.raw("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
   });
 
-  it("ingests CSV rows into lifts table", async () => {
+  it("ingests CSV into four normalized tables", async () => {
     const csv = buildCsv([
-      {
-        Name: "John Haack",
-        Sex: "M",
-        Event: "SBD",
-        Equipment: "Raw",
-        TotalKg: 1005,
-        Date: "2024-05-12",
-        MeetName: "WRPF AMERICAN PRO",
-        Federation: "WRPF",
-      },
-      {
-        Name: "Jane Doe",
-        Sex: "F",
-        Event: "SBD",
-        Equipment: "Raw",
-        TotalKg: 500,
-        Date: "2024-06-01",
-        MeetName: "USAPL Nationals",
-        Federation: "USAPL",
-      },
+      { ...REQUIRED, Name: "John Haack", Sex: "M", TotalKg: 1005 },
+      { ...REQUIRED, Name: "Jane Doe", Sex: "F", TotalKg: 500 },
     ]);
-
     const result = await ingest.ingestFromStream(streamFromString(csv));
 
     expect(result.status).toBe("completed");
-    expect(result.rowCount).toBe(2);
+    expect(result.stats.lifters).toBe(2);
+    expect(result.stats.meets).toBe(1);
+    expect(result.stats.federations).toBe(1);
+    expect(result.stats.lifts).toBe(2);
 
-    const count = await knex("lifts").count<{ c: number }[]>({ c: "*" });
-    expect(Number(count[0]?.c)).toBe(2);
+    const lifterCount = await knex("lifters").count<{ c: number }[]>({ c: "*" });
+    const meetCount = await knex("meets").count<{ c: number }[]>({ c: "*" });
+    const liftCount = await knex("lifts").count<{ c: number }[]>({ c: "*" });
+    expect(Number(lifterCount[0]?.c)).toBe(2);
+    expect(Number(meetCount[0]?.c)).toBe(1);
+    expect(Number(liftCount[0]?.c)).toBe(2);
+  });
+
+  it("dedupes a lifter who appears at multiple meets", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "John Haack", TotalKg: 1000, MeetName: "Meet A" },
+      {
+        ...REQUIRED,
+        Name: "John Haack",
+        TotalKg: 1010,
+        MeetName: "Meet B",
+        Date: "2024-08-20",
+      },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const lifters = await knex("lifters").count<{ c: number }[]>({ c: "*" });
+    const meets = await knex("meets").count<{ c: number }[]>({ c: "*" });
+    const lifts = await knex("lifts").count<{ c: number }[]>({ c: "*" });
+    expect(Number(lifters[0]?.c)).toBe(1);
+    expect(Number(meets[0]?.c)).toBe(2);
+    expect(Number(lifts[0]?.c)).toBe(2);
+  });
+
+  it("dedupes a meet that has many competitors", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "Alice", TotalKg: 500 },
+      { ...REQUIRED, Name: "Bob", TotalKg: 1000 },
+      { ...REQUIRED, Name: "Carol", TotalKg: 600 },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const meets = await knex("meets").count<{ c: number }[]>({ c: "*" });
+    expect(Number(meets[0]?.c)).toBe(1);
+  });
+
+  it("computes slugs at ingest time", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "John Smith #1", Federation: "WRPF-UK", MeetName: "U.K. Open" },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const lifter = await knex("lifters").first<{ name_slug: string }>();
+    const fed = await knex("federations").first<{ slug: string; code: string }>();
+    const meet = await knex("meets").first<{ meet_slug: string }>();
+    expect(lifter?.name_slug).toBe("johnsmith1");
+    expect(fed?.slug).toBe("wrpfuk");
+    expect(fed?.code).toBe("WRPF-UK");
+    expect(meet?.meet_slug).toBe("ukopen");
+  });
+
+  it("normalizes diacritics in slugs but preserves the display name", async () => {
+    const csv = buildCsv([{ ...REQUIRED, Name: "Māris Rāzmanis" }]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const lifter = await knex("lifters").first<{ name: string; name_slug: string }>();
+    expect(lifter?.name).toBe("Māris Rāzmanis");
+    expect(lifter?.name_slug).toBe("marisrazmanis");
+  });
+
+  it("splits Place into place_rank and place_status", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "Winner", Place: "1" },
+      { ...REQUIRED, Name: "DQ Lifter", Place: "DQ" },
+      { ...REQUIRED, Name: "Guest", Place: "G" },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const rows = (await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .select<Array<{ name: string; place_rank: number | null; place_status: string | null }>>(
+        "lifters.name",
+        "lifts.place_rank",
+        "lifts.place_status",
+      )
+      .orderBy("lifters.name")) as Array<{
+      name: string;
+      place_rank: number | null;
+      place_status: string | null;
+    }>;
+
+    const byName = Object.fromEntries(rows.map((row) => [row.name, row]));
+    expect(byName["Winner"]?.place_rank).toBe(1);
+    expect(byName["Winner"]?.place_status).toBeNull();
+    expect(byName["DQ Lifter"]?.place_rank).toBeNull();
+    expect(byName["DQ Lifter"]?.place_status).toBe("DQ");
+    expect(byName["Guest"]?.place_status).toBe("G");
+  });
+
+  it("coerces Tested and Sanctioned to booleans", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "Tested Lifter", Tested: "Yes", Sanctioned: "Yes" },
+      { ...REQUIRED, Name: "Untested Lifter", Tested: "", Sanctioned: "No", Date: "2024-09-01" },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
+
+    const lifts = (await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .select<Array<{ name: string; tested: number }>>("lifters.name", "lifts.tested")) as Array<{
+      name: string;
+      tested: number;
+    }>;
+    const byName = Object.fromEntries(lifts.map((r) => [r.name, r]));
+    expect(byName["Tested Lifter"]?.tested).toBe(1);
+    expect(byName["Untested Lifter"]?.tested).toBe(0);
+
+    const meets = (await knex("meets").select<Array<{ meet_name: string; sanctioned: number }>>(
+      "meet_name",
+      "sanctioned",
+    )) as Array<{ meet_name: string; sanctioned: number }>;
+    expect(meets[0]?.sanctioned).toBeDefined();
   });
 
   it("preserves negative attempts as failures", async () => {
     const csv = buildCsv([
       {
+        ...REQUIRED,
         Name: "Test Lifter",
-        Sex: "M",
-        Equipment: "Raw",
         Squat1Kg: 250,
         Squat2Kg: 270,
         Squat3Kg: -290,
         Best3SquatKg: 270,
-        Date: "2024-01-01",
-        MeetName: "Test Meet",
       },
     ]);
-
     await ingest.ingestFromStream(streamFromString(csv));
 
-    const row = await knex("lifts").first<{
+    const lift = await knex("lifts").first<{
       squat1_kg: number;
       squat2_kg: number;
       squat3_kg: number;
       best3_squat_kg: number;
     }>();
-    expect(row?.squat1_kg).toBe(250);
-    expect(row?.squat2_kg).toBe(270);
-    expect(row?.squat3_kg).toBe(-290);
-    expect(row?.best3_squat_kg).toBe(270);
+    expect(lift?.squat1_kg).toBe(250);
+    expect(lift?.squat3_kg).toBe(-290);
+    expect(lift?.best3_squat_kg).toBe(270);
   });
 
-  it("stores empty cells as NULL", async () => {
+  it("skips rows with missing or malformed required fields", async () => {
     const csv = buildCsv([
-      {
-        Name: "Sparse Lifter",
-        Sex: "M",
-        Date: "2024-03-15",
-      },
+      { ...REQUIRED, Name: "Valid Lifter" },
+      { ...REQUIRED, Name: "" },
+      { ...REQUIRED, Name: "Bad Date", Date: "not-a-date" },
+      { ...REQUIRED, Name: "No Federation", Federation: "" },
     ]);
-
-    await ingest.ingestFromStream(streamFromString(csv));
-
-    const row = await knex("lifts").first<{
-      event: string | null;
-      equipment: string | null;
-      total_kg: number | null;
-      country: string | null;
-    }>();
-    expect(row?.event).toBeNull();
-    expect(row?.equipment).toBeNull();
-    expect(row?.total_kg).toBeNull();
-    expect(row?.country).toBeNull();
-  });
-
-  it("preserves disambiguation suffix in name", async () => {
-    const csv = buildCsv([
-      { Name: "John Smith #1", Sex: "M", Date: "2024-01-01" },
-      { Name: "John Smith #2", Sex: "M", Date: "2024-02-01" },
-    ]);
-
-    await ingest.ingestFromStream(streamFromString(csv));
-
-    const rows = await knex("lifts").select<{ name: string }[]>("name").orderBy("date");
-    expect(rows.map((r) => r.name)).toEqual(["John Smith #1", "John Smith #2"]);
-  });
-
-  it("skips rows missing required fields", async () => {
-    const csv = buildCsv([
-      { Name: "Valid Lifter", Date: "2024-01-01" },
-      { Name: "", Date: "2024-01-02" },
-      { Name: "No Date", Date: "" },
-    ]);
-
     const result = await ingest.ingestFromStream(streamFromString(csv));
-    expect(result.rowCount).toBe(1);
 
-    const rows = await knex("lifts").select<{ name: string }[]>("name");
-    expect(rows.map((r) => r.name)).toEqual(["Valid Lifter"]);
+    expect(result.stats.lifts).toBe(1);
+    expect(result.stats.skippedRows).toBe(3);
   });
 
-  it("rebuilds FTS index and supports name search", async () => {
+  it("rebuilds FTS so lifter name search works", async () => {
     const csv = buildCsv([
-      { Name: "Jonathan Cayco", Sex: "M", Date: "2024-01-01", MeetName: "USAPL Raw Nationals" },
-      { Name: "Kristy Hawkins", Sex: "F", Date: "2024-01-02", MeetName: "WRPF American Pro" },
-      { Name: "John Haack", Sex: "M", Date: "2024-01-03", MeetName: "WRPF American Pro" },
+      { ...REQUIRED, Name: "Jonathan Cayco" },
+      { ...REQUIRED, Name: "Kristy Hawkins" },
+      { ...REQUIRED, Name: "John Haack" },
     ]);
-
     await ingest.ingestFromStream(streamFromString(csv));
 
-    const jonMatches = await knex.raw<{ name: string }[]>(
-      `SELECT name FROM lifts_fts WHERE lifts_fts MATCH 'jon*' ORDER BY name`,
-    );
-    expect((jonMatches as unknown as { name: string }[]).map((row) => row.name)).toContain(
-      "Jonathan Cayco",
-    );
-
-    const wrpfMatches = await knex.raw<{ name: string }[]>(
-      `SELECT name FROM lifts_fts WHERE lifts_fts MATCH 'wrpf' ORDER BY name`,
-    );
-    const wrpfNames = (wrpfMatches as unknown as { name: string }[]).map((row) => row.name);
-    expect(wrpfNames).toContain("John Haack");
-    expect(wrpfNames).toContain("Kristy Hawkins");
+    const matches = (await knex.raw<Array<{ name: string }>>(
+      "SELECT name FROM lifters_fts WHERE lifters_fts MATCH 'jon*'",
+    )) as unknown as Array<{ name: string }>;
+    const names = matches.map((row) => row.name);
+    expect(names).toContain("Jonathan Cayco");
   });
 
-  it("replaces existing rows on re-ingest", async () => {
-    await ingest.ingestFromStream(
-      streamFromString(buildCsv([{ Name: "Old Lifter", Date: "2024-01-01" }])),
-    );
+  it("rebuilds FTS so meet name search works", async () => {
+    const csv = buildCsv([
+      { ...REQUIRED, Name: "A", MeetName: "WRPF AMERICAN PRO" },
+      { ...REQUIRED, Name: "B", MeetName: "USAPL Raw Nationals", Federation: "USAPL" },
+    ]);
+    await ingest.ingestFromStream(streamFromString(csv));
 
-    let count = await knex("lifts").count<{ c: number }[]>({ c: "*" });
-    expect(Number(count[0]?.c)).toBe(1);
+    const matches = (await knex.raw<Array<{ meet_name: string }>>(
+      "SELECT meet_name FROM meets_fts WHERE meets_fts MATCH 'american*'",
+    )) as unknown as Array<{ meet_name: string }>;
+    const names = matches.map((row) => row.meet_name);
+    expect(names).toContain("WRPF AMERICAN PRO");
+  });
+
+  it("replaces all rows on re-ingest", async () => {
+    await ingest.ingestFromStream(
+      streamFromString(buildCsv([{ ...REQUIRED, Name: "Old Lifter" }])),
+    );
+    expect(Number((await knex("lifts").count<{ c: number }[]>({ c: "*" }))[0]?.c)).toBe(1);
 
     await ingest.ingestFromStream(
       streamFromString(
         buildCsv([
-          { Name: "New Lifter A", Date: "2024-02-01" },
-          { Name: "New Lifter B", Date: "2024-02-02" },
+          { ...REQUIRED, Name: "New A" },
+          { ...REQUIRED, Name: "New B" },
         ]),
       ),
     );
-
-    count = await knex("lifts").count<{ c: number }[]>({ c: "*" });
-    expect(Number(count[0]?.c)).toBe(2);
-
-    const names = await knex("lifts").pluck<string[]>("name");
-    expect(names).toEqual(expect.arrayContaining(["New Lifter A", "New Lifter B"]));
+    const names = await knex("lifters").pluck<string[]>("name");
+    expect(names).toEqual(expect.arrayContaining(["New A", "New B"]));
     expect(names).not.toContain("Old Lifter");
   });
 
-  it("records ingest_runs row with metadata", async () => {
-    const csv = buildCsv([{ Name: "Tracker", Date: "2024-01-01" }]);
-
+  it("records ingest_runs row with per-table counts", async () => {
+    const csv = buildCsv([{ ...REQUIRED, Name: "Tracker" }]);
     await ingest.ingestFromStream(streamFromString(csv), {
       sourceLastModified: "Fri, 16 May 2026 00:00:00 GMT",
       byteSize: 1024,
@@ -282,13 +349,22 @@ describe("ingest", () => {
 
     const run = await knex("ingest_runs").orderBy("id", "desc").first<{
       status: string;
-      row_count: number;
+      lift_count: number;
+      meet_count: number;
+      lifter_count: number;
+      federation_count: number;
       byte_size: number;
-      source_last_modified: string;
     }>();
     expect(run?.status).toBe("completed");
-    expect(run?.row_count).toBe(1);
+    expect(run?.lift_count).toBe(1);
+    expect(run?.lifter_count).toBe(1);
+    expect(run?.meet_count).toBe(1);
+    expect(run?.federation_count).toBe(1);
     expect(Number(run?.byte_size)).toBe(1024);
-    expect(run?.source_last_modified).toBe("Fri, 16 May 2026 00:00:00 GMT");
+  });
+
+  it("exposes nameToSlug for downstream code", () => {
+    expect(nameToSlug("John Haack")).toBe("johnhaack");
+    expect(nameToSlug("Māris #1")).toBe("maris1");
   });
 });
