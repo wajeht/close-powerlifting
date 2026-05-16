@@ -6,7 +6,7 @@ import { createRankingService } from "./rankings.service";
 
 const context = createContext();
 const scraper = context.scraper;
-const rankingService = createRankingService(scraper);
+const rankingService = createRankingService(context.knex, scraper);
 import {
   rankingsDefault,
   rankingsRawMen,
@@ -337,20 +337,21 @@ describe("rankings service refreshCacheKey", () => {
     expect(await rankingService.refreshCacheKey("status")).toBe(false);
   });
 
-  it("returns true for unfiltered rankings", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+  it("returns true for unfiltered rankings without re-scraping (data now served from lifts)", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache");
 
     const result = await rankingService.refreshCacheKey("rankings-1-100-lbs");
     expect(result).toBe(true);
-    expect(refreshSpy).toHaveBeenCalledWith("rankings-1-100-lbs", expect.any(Function));
+    expect(refreshSpy).not.toHaveBeenCalled();
     refreshSpy.mockRestore();
   });
 
-  it("returns true for filtered rankings", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
+  it("returns true for filtered rankings without re-scraping", async () => {
+    const refreshSpy = vi.spyOn(scraper, "refreshCache");
 
     const result = await rankingService.refreshCacheKey("rankings/raw/men-1-100-lbs");
     expect(result).toBe(true);
+    expect(refreshSpy).not.toHaveBeenCalled();
     refreshSpy.mockRestore();
   });
 });
