@@ -720,12 +720,8 @@ describe("cron", () => {
       expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/john-doe", "lbs");
     });
 
-    it("should refresh cached user search keys", async () => {
+    it("should claim user search keys without re-scraping (FTS now)", async () => {
       await seedCache(cache, ["users-search-john%20haack-2-5-kg"]);
-      vi.mocked(scraper.fetchJson)
-        .mockResolvedValueOnce({ next_index: 42 })
-        .mockResolvedValueOnce({ rows: [], total_length: 0 });
-
       const cron = createCron(
         cache,
         userRepository,
@@ -738,8 +734,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchJson).toHaveBeenCalledWith("/search/rankings?q=john%20haack&start=5");
-      expect(scraper.fetchJson).toHaveBeenCalledWith("/rankings?start=42&end=47&lang=en&units=kg");
+      expect(scraper.fetchJson).not.toHaveBeenCalled();
       expect(logger.warn).not.toHaveBeenCalledWith(
         "refreshCacheKey: unknown key type: users-search-john%20haack-2-5-kg",
       );

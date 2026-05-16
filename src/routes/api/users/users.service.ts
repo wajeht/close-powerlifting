@@ -7,7 +7,6 @@ import type {
   PersonalBest,
   CompetitionResult,
   RankingRow,
-  RankingsApiResponse,
   ProgressionPoint,
   PersonalBestEntry,
   PersonalBestsByEquipment,
@@ -17,7 +16,7 @@ import type {
   UserRank,
 } from "../../../types";
 import type { GetUserType, GetUsersType, GetCompareType } from "./users.validation";
-import { transformRankingRow } from "../rankings/rankings.service";
+import { liftRowToRankingRow, type LiftRow as RankingLiftRow } from "../rankings/rankings.service";
 
 const { defaultPerPage } = configuration.pagination;
 
@@ -658,6 +657,18 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     current_page: number;
   }
 
+  function buildFtsQuery(search: string): string {
+    const tokens = search
+      .normalize("NFKD")
+      .replace(/[\p{Mn}]/gu, "")
+      .toLowerCase()
+      .split(/\s+/)
+      .map((token) => token.replace(/[^a-z0-9]/g, ""))
+      .filter((token) => token.length > 0);
+    if (tokens.length === 0) return "";
+    return tokens.map((token) => `${token}*`).join(" ");
+  }
+
   async function fetchUserSearchData({
     search,
     per_page,
@@ -667,26 +678,61 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     rows: RankingRow[];
     pagination: SearchPagination;
   }> {
-    const offset = (current_page - 1) * per_page;
-    const searchResult = await scraper.fetchJson<{ next_index: number }>(
-      `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
-    );
-
-    const startIndex = searchResult.next_index;
-    if (!Number.isInteger(startIndex) || startIndex < 0) {
-      throw new Error("Search endpoint returned an invalid next_index");
+    const ftsQuery = buildFtsQuery(search);
+    if (!ftsQuery) {
+      return { rows: [], pagination: { per_page, current_page } };
     }
 
-    const endIndex = startIndex + per_page;
-    const query = `start=${startIndex}&end=${endIndex}&lang=en&units=${units}`;
-    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
+    const offset = (current_page - 1) * per_page;
+    const normalizedUnits: "kg" | "lbs" = units === "kg" ? "kg" : "lbs";
+
+    const matchedSubquery = knex("lifts")
+      .distinct("name_slug")
+      .whereRaw("id IN (SELECT rowid FROM lifts_fts WHERE lifts_fts MATCH ?)", [ftsQuery]);
+
+    const innerQuery = knex("lifts")
+      .select(
+        "name",
+        "name_slug",
+        "sex",
+        "event",
+        "equipment",
+        "age",
+        "bodyweight_kg",
+        "weight_class_kg",
+        "best3_squat_kg",
+        "best3_bench_kg",
+        "best3_deadlift_kg",
+        "total_kg",
+        "dots",
+        "wilks",
+        "glossbrenner",
+        "goodlift",
+        "federation",
+        "parent_federation",
+        "date",
+        "meet_country",
+        "meet_state",
+        "meet_name",
+        knex.raw("ROW_NUMBER() OVER (PARTITION BY name_slug ORDER BY dots DESC) AS rn"),
+      )
+      .whereIn("name_slug", matchedSubquery);
+
+    const deduped = (await knex
+      .select<RankingLiftRow[]>("*")
+      .from(innerQuery.as("ranked"))
+      .where("rn", 1)
+      .orderBy("dots", "desc")
+      .limit(per_page)
+      .offset(offset)) as RankingLiftRow[];
+
+    const rows = deduped.map((row, idx) =>
+      liftRowToRankingRow(row, offset + idx + 1, normalizedUnits),
+    );
 
     return {
-      rows: response.rows.map(transformRankingRow),
-      pagination: {
-        per_page,
-        current_page,
-      },
+      rows,
+      pagination: { per_page, current_page },
     };
   }
 
@@ -704,19 +750,16 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
       return { data: null };
     }
 
-    const cacheKey = `users-search-${encodeURIComponent(normalizedSearch)}-${current_page}-${per_page}-${units}`;
-    const result = await scraper.withCache<{ rows: RankingRow[]; pagination: SearchPagination }>(
-      cacheKey,
-      () => fetchUserSearchData({ search: normalizedSearch, per_page, current_page, units }),
-    );
-
-    if (!result.data) {
-      return { data: null };
-    }
+    const result = await fetchUserSearchData({
+      search: normalizedSearch,
+      per_page,
+      current_page,
+      units,
+    });
 
     return {
-      data: result.data.rows,
-      pagination: result.data.pagination,
+      data: result.rows,
+      pagination: result.pagination,
     };
   }
 
@@ -802,15 +845,8 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     }
 
     if (parsed.kind === "search") {
-      const units = parsed.units === "kg" ? "kg" : "lbs";
-      await scraper.refreshCache<{ rows: RankingRow[]; pagination: SearchPagination }>(key, () =>
-        fetchUserSearchData({
-          search: parsed.search!,
-          per_page: parsed.per_page!,
-          current_page: parsed.current_page!,
-          units,
-        }),
-      );
+      // Search now hits the lifts FTS index; legacy cache keys are claimed
+      // without re-scraping.
       return true;
     }
 
