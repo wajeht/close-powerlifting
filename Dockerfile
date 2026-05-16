@@ -1,12 +1,13 @@
-FROM node:25-slim@sha256:67134eb99e14d566f2882a38a374b8351ea474656487dbb1e0c79e4064cc1725 AS build
+FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30 AS build
 
 WORKDIR /usr/src/app
 
 # Copy only package files first for better layer caching
-COPY package*.json ./
+COPY package*.json .npmrc ./
 
-# Install all dependencies including dev for build tools
-RUN npm ci --no-audit --no-fund
+# Install all dependencies including dev for build tools, then rebuild native modules
+RUN npm ci --no-audit --no-fund && \
+    npm rebuild better-sqlite3 sharp --ignore-scripts=false
 
 # Copy only TypeScript config first (changes less frequently)
 COPY tsconfig*.json ./
@@ -26,17 +27,18 @@ RUN npm run build:prod && \
     rm -rf vitest.config.* && \
     rm -rf src/routes/**/fixtures
 
-FROM node:25-slim@sha256:67134eb99e14d566f2882a38a374b8351ea474656487dbb1e0c79e4064cc1725
+FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
+    apt-get install -y --no-install-recommends curl sqlite3 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
-COPY --chown=node:node package*.json ./
+COPY --chown=node:node package*.json .npmrc ./
 RUN npm ci --only=production --no-audit --no-fund && \
+    npm rebuild better-sqlite3 sharp --ignore-scripts=false && \
     npm cache clean --force
 
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist

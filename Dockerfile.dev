@@ -1,12 +1,16 @@
-FROM node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30
 
-RUN apk --no-cache add curl python3 make g++
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl sqlite3 python3 make g++ && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 
-RUN npm install
+RUN npm install && \
+    npm rebuild better-sqlite3 sharp --ignore-scripts=false
 
 COPY ./ ./
 
