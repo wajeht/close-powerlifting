@@ -64,46 +64,54 @@ interface RankingsFilters {
 function applyFilters(query: Knex.QueryBuilder, filters: RankingsFilters): Knex.QueryBuilder {
   if (filters.equipment) {
     const mapped = EQUIPMENT_MAP[filters.equipment];
-    if (mapped) query = query.whereIn("equipment", mapped);
+    if (mapped) query = query.whereIn("lifts.equipment", mapped);
   }
 
   if (filters.sex) {
     const mapped = SEX_MAP[filters.sex];
-    if (mapped) query = query.where("sex", mapped);
+    if (mapped) query = query.where("lifters.sex", mapped);
   }
 
   if (filters.event) {
     const mapped = EVENT_MAP[filters.event];
-    if (mapped) query = query.where("event", mapped);
+    if (mapped) query = query.where("lifts.event", mapped);
   }
 
   if (filters.weightClass) {
     const numeric = parseFloat(filters.weightClass);
-    if (Number.isFinite(numeric)) query = query.where("weight_class_kg", numeric);
+    if (Number.isFinite(numeric)) query = query.where("lifts.weight_class_kg", numeric);
   }
 
   if (filters.year) {
-    query = query.where("date", "like", `${filters.year}-%`);
+    query = query.where("meets.date", "like", `${filters.year}-%`);
   }
 
   if (filters.ageClass) {
-    query = query.where("age_class", filters.ageClass);
+    query = query.where("lifts.age_class", filters.ageClass);
   }
 
   if (filters.federation) {
-    const fed = filters.federation.toUpperCase();
+    const slug = nameToSlug(filters.federation);
     query = query.where((qb) =>
-      qb.whereRaw("UPPER(federation) = ?", [fed]).orWhereRaw("UPPER(parent_federation) = ?", [fed]),
+      qb.where("federations.slug", slug).orWhere("federations.parent_slug", slug),
     );
   }
 
   return query;
 }
 
+function joinedLiftsBase(knex: Knex): Knex.QueryBuilder {
+  return knex("lifts")
+    .join("lifters", "lifters.id", "lifts.lifter_id")
+    .join("meets", "meets.id", "lifts.meet_id")
+    .join("federations", "federations.id", "meets.federation_id");
+}
+
 export interface LiftRow {
   name: string;
   name_slug: string;
   sex: string | null;
+  instagram: string | null;
   event: string | null;
   equipment: string | null;
   age: number | null;
@@ -132,7 +140,10 @@ function convertKg(value: number | null, units: "kg" | "lbs"): number {
 
 export function liftRowToRankingRow(row: LiftRow, rank: number, units: "kg" | "lbs"): RankingRow {
   const username = row.name_slug ?? nameToSlug(row.name);
-  const meetCode = row.meet_name ? `${(row.federation ?? "").toLowerCase()}/${row.date}` : "";
+  const meetCode = row.meet_name
+    ? `${(row.federation ?? "").toLowerCase()}/${row.date}/${nameToSlug(row.meet_name)}`
+    : "";
+  const instagram = row.instagram ?? "";
 
   return {
     id: 0,
@@ -140,8 +151,8 @@ export function liftRowToRankingRow(row: LiftRow, rank: number, units: "kg" | "l
     full_name: row.name,
     username,
     user_profile: `/api/users/${username}`,
-    instagram: "",
-    instagram_url: "",
+    instagram,
+    instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
     username_color: "",
     country: row.meet_country ?? "",
     location: row.meet_country
@@ -219,11 +230,13 @@ export function createRankingService(knex: Knex, _scraper: ScraperType) {
     const sortColumn = SORT_COLUMN[filters.sort ?? "by-dots"] ?? "dots";
     const offset = (currentPage - 1) * perPage;
 
-    const filteredBase = applyFilters(knex("lifts"), filters).whereNotNull(sortColumn);
+    const filteredBase = applyFilters(joinedLiftsBase(knex), filters).whereNotNull(
+      `lifts.${sortColumn}`,
+    );
 
     const totalResult = await filteredBase
       .clone()
-      .countDistinct({ count: "name_slug" })
+      .countDistinct({ count: "lifters.id" })
       .first<{ count: number | string }>();
     const totalLength = Number(totalResult?.count ?? 0);
 
@@ -231,34 +244,36 @@ export function createRankingService(knex: Knex, _scraper: ScraperType) {
       return { rows: [], totalLength: 0 };
     }
 
-    const innerQuery = applyFilters(
-      knex("lifts").select(
-        "name",
-        "name_slug",
-        "sex",
-        "event",
-        "equipment",
-        "age",
-        "bodyweight_kg",
-        "weight_class_kg",
-        "best3_squat_kg",
-        "best3_bench_kg",
-        "best3_deadlift_kg",
-        "total_kg",
-        "dots",
-        "wilks",
-        "glossbrenner",
-        "goodlift",
-        "federation",
-        "parent_federation",
-        "date",
-        "meet_country",
-        "meet_state",
-        "meet_name",
-        knex.raw(`ROW_NUMBER() OVER (PARTITION BY name_slug ORDER BY ${sortColumn} DESC) AS rn`),
-      ),
-      filters,
-    ).whereNotNull(sortColumn);
+    const innerQuery = applyFilters(joinedLiftsBase(knex), filters)
+      .whereNotNull(`lifts.${sortColumn}`)
+      .select(
+        knex.ref("lifters.name").as("name"),
+        knex.ref("lifters.name_slug").as("name_slug"),
+        knex.ref("lifters.sex").as("sex"),
+        knex.ref("lifters.instagram").as("instagram"),
+        "lifts.event",
+        "lifts.equipment",
+        "lifts.age",
+        "lifts.bodyweight_kg",
+        "lifts.weight_class_kg",
+        "lifts.best3_squat_kg",
+        "lifts.best3_bench_kg",
+        "lifts.best3_deadlift_kg",
+        "lifts.total_kg",
+        "lifts.dots",
+        "lifts.wilks",
+        "lifts.glossbrenner",
+        "lifts.goodlift",
+        knex.ref("federations.code").as("federation"),
+        knex.ref("federations.parent_slug").as("parent_federation"),
+        "meets.date",
+        "meets.meet_country",
+        "meets.meet_state",
+        "meets.meet_name",
+        knex.raw(
+          `ROW_NUMBER() OVER (PARTITION BY lifters.id ORDER BY lifts.${sortColumn} DESC) AS rn`,
+        ),
+      );
 
     const deduped = (await knex
       .select<LiftRow[]>("*")
