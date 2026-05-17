@@ -1,3 +1,22 @@
+// Nightly ingest of the OpenPowerlifting CSV dump into our normalized SQLite
+// schema (federations, lifters, meets, lifts).
+//
+// Design:
+//   - Download → temp file (~157 MB zip).
+//   - Skip if Last-Modified matches the previous successful run (no work done).
+//   - Single streaming pass: parse CSV row-by-row, lazily insert dimensions
+//     (federation/lifter/meet) the first time each is seen, then immediately
+//     insert the lift row with the resolved foreign keys.
+//   - Whole import runs inside ONE manual BEGIN/COMMIT — atomic. Any failure
+//     ROLLBACKs and leaves the previous data set untouched.
+//
+// Memory: bounded. We never buffer rows — backpressure flows through pipeline()
+// down to the CSV parser. The only growth-with-input structures are 3
+// Map<slug, fk_id> dictionaries (~50 MB at full scale, integer values).
+//
+// History: previously was a scrape-and-cache proxy over OpenPowerlifting's HTML.
+// Now we own the data; this file is what makes that possible.
+
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -13,15 +32,30 @@ import type { LoggerType } from "./logger";
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
 const REGEX_DIACRITICS = /\p{Mn}/gu;
 
-// PRAGMAs scoped to the ingest connection. Reverted to steady-state values
-// (matching src/db/knexfile.ts afterCreate) once the import finishes so the
-// pooled connection is safe to hand back to read traffic.
+// SQLite PRAGMAs applied to the ingest connection only. Reverted to the
+// steady-state values (matching src/db/knexfile.ts `afterCreate`) in a
+// `finally` block before the connection is returned to the knex pool, so
+// read traffic sees the normal serving config.
+//
+// Container memory impact: peak ~2 GB RSS during ingest. See the matching
+// note in ~/dev/home-ops/apps/close-powerlifting/docker-compose.yml.
 const INGEST_PRAGMAS: ReadonlyArray<string> = [
-  "PRAGMA cache_size = -524288", // 512 MB page cache during ingest
-  "PRAGMA mmap_size = 268435456", // 256 MB mmap for index lookups
-  "PRAGMA wal_autocheckpoint = 0", // hold WAL until explicit checkpoint
-  "PRAGMA cache_spill = OFF", // keep dirty pages in-memory through the txn
-  "PRAGMA locking_mode = EXCLUSIVE", // skip per-statement filesystem locks
+  // 512 MB page cache. Big enough to hold the entire lifts table's dirty pages
+  // in RAM through the import, so we don't constantly spill to the WAL.
+  "PRAGMA cache_size = -524288",
+  // 256 MB mmap. Lets the OS pagecache serve dimension-table b-tree lookups
+  // without copying pages through SQLite's cache. Helps the per-row INSERT path.
+  "PRAGMA mmap_size = 268435456",
+  // Don't auto-checkpoint mid-transaction. We do one explicit
+  // `wal_checkpoint(TRUNCATE)` after COMMIT.
+  "PRAGMA wal_autocheckpoint = 0",
+  // Keep dirty pages in cache through the txn — don't flush opportunistically.
+  // Combined with the 512 MB cache_size above, the whole import lives in RAM
+  // until COMMIT.
+  "PRAGMA cache_spill = OFF",
+  // Hold the file lock for the duration of the connection. Skips per-statement
+  // syscalls. Safe because the nightly cron is the only writer in this app.
+  "PRAGMA locking_mode = EXCLUSIVE",
 ];
 
 const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
@@ -35,6 +69,9 @@ const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_PLACE_NUMERIC = /^\d+$/;
 
+// Stable URL-safe identifier for a lifter / federation / meet. NFKD + diacritic
+// strip means "Māris Rāzmanis" and "Maris Razmanis" collapse to the same slug,
+// matching what OpenPowerlifting itself does on their site URLs.
 export function nameToSlug(value: string): string {
   return value
     .normalize("NFKD")
@@ -67,6 +104,9 @@ interface PlaceSplit {
   status: string | null;
 }
 
+// OPL's `Place` column is overloaded: a number means finishing rank, a code
+// (DQ / DD / NS / G / etc.) means non-finishing status. We split into two
+// columns so SQL queries can filter on either without parsing strings.
 function splitPlace(value: string | undefined): PlaceSplit {
   const text = trimToNull(value);
   if (text == null) return { rank: null, status: null };
@@ -148,6 +188,9 @@ interface BetterSqliteDatabase {
   exec: (sql: string) => void;
 }
 
+// The OPL CSV has no stable meet id, but (federation, date, meet name) is
+// unique enough in practice. We hash these three together to dedup meets
+// across the millions of lift rows that reference them.
 function meetKey(federationSlug: string, date: string, meetSlug: string): string {
   return `${federationSlug}|${date}|${meetSlug}`;
 }
@@ -214,6 +257,10 @@ function buildColumnIndex(header: string[]): ColumnIndex {
   return lookup as ColumnIndex;
 }
 
+// Converts one CSV row into the shape we want to write. Returns null for
+// unusable rows (missing required fields, bad date format, etc.); the caller
+// counts those as `skippedRows` rather than aborting the whole import.
+// `row` is a positional string[] (not an object) — see csvParser() for why.
 function normalizeRow(row: string[], col: ColumnIndex): NormalizedLift | null {
   const name = trimToNull(row[col.Name]);
   const date = trimToNull(row[col.Date]);
@@ -273,6 +320,10 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     releaseConnection: (conn: BetterSqliteDatabase) => Promise<void>;
   }
 
+  // We need direct access to the raw `better-sqlite3` handle (not knex's query
+  // builder) so we can use prepared statements and a manual BEGIN/COMMIT.
+  // Acquiring + releasing a pooled connection via the knex client API keeps
+  // the rest of the app's connection lifecycle intact.
   async function withDb<T>(fn: (db: BetterSqliteDatabase) => Promise<T> | T): Promise<T> {
     const client = knex.client as unknown as KnexClient;
     const db = await client.acquireConnection();
@@ -307,9 +358,12 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     });
   }
 
+  // `columns: false` is the key knob: csv-parse emits string[] per row instead
+  // of allocating a fresh {Name, Date, ...} object each time. At 3.9M rows
+  // that's ~3.9M fewer object allocations and a big drop in GC pressure.
+  // The header is consumed as the first row of the stream and used to build
+  // a `ColumnIndex` (see buildColumnIndex), so we never lose access by name.
   function csvParser(): Transform {
-    // columns: false returns string[] per row (no object allocation per row).
-    // Header parsing happens once at the start of the stream below.
     return parseCsv({ columns: false, skip_empty_lines: true, relax_column_count: true });
   }
 
@@ -336,9 +390,18 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       await withDb(async (db) => {
         for (const pragma of INGEST_PRAGMAS) db.exec(pragma);
         try {
+          // Manual BEGIN/COMMIT (instead of better-sqlite3's `db.transaction()`)
+          // because the streaming pipeline below is async — db.transaction()
+          // requires a synchronous body.
           db.exec("BEGIN");
+          // Skip FK validation on every lift INSERT; SQLite checks at COMMIT
+          // instead. We resolve FK ids in JS Maps so they're always correct,
+          // and the deferred check catches any bug in that logic atomically.
           db.exec("PRAGMA defer_foreign_keys = ON");
           try {
+            // Order matters: child tables before parents (FK constraints).
+            // Wiping inside the txn means readers still see the previous data
+            // until COMMIT swaps it in.
             db.exec("DELETE FROM lifts");
             db.exec("DELETE FROM meets");
             db.exec("DELETE FROM lifters");
@@ -352,6 +415,10 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_total");
             db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_dots");
 
+            // FK lookup tables. We learn each dimension's id from the
+            // `lastInsertRowid` of its first INSERT, then reuse for every
+            // subsequent lift that references the same dimension.
+            // Memory floor: ~50 MB at full scale (978k lifter entries dominate).
             const federationIds = new Map<string, number>();
             const lifterIds = new Map<string, number>();
             const meetIds = new Map<string, number>();
@@ -377,13 +444,23 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
+            // Built from the first row of the stream (CSV header), then reused
+            // for every data row that follows.
             let col: ColumnIndex | null = null;
 
+            // pipeline() gives us proper Node-stream backpressure end-to-end:
+            // when the SQLite write side falls behind, the CSV parser pauses,
+            // and ultimately the zip read pauses too. We never buffer rows.
+            // The terminal "sink" is a plain async function (Erick Wendel
+            // pattern) — same backpressure semantics as a Writable, no
+            // callback ceremony.
             await pipeline(
               csvStreamFactory(),
               csvParser(),
               async function (source: AsyncIterable<string[]>) {
                 for await (const row of source) {
+                  // First emitted row is the CSV header — consume it to build
+                  // the index map and validate every column we need exists.
                   if (col == null) {
                     col = buildColumnIndex(row);
                     continue;
@@ -394,6 +471,11 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
                     stats.skippedRows++;
                     continue;
                   }
+
+                  // Lazy dimension insert: the first time we see a federation /
+                  // lifter / meet, INSERT it now and cache the returned id.
+                  // Safe because we're inside one transaction — if the import
+                  // fails halfway, ROLLBACK undoes the partial dimensions too.
 
                   const federationCode = row[col.Federation]!.trim();
                   const federationSlug = nameToSlug(federationCode);
@@ -478,13 +560,16 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
               },
             );
 
+            // The Map sizes ARE the dimension counts — derived, not tracked
+            // separately. Saves a counter per dimension type.
             stats.federations = federationIds.size;
             stats.lifters = lifterIds.size;
             stats.meets = meetIds.size;
 
             // Rebuild secondary indexes now that all rows are in. CREATE INDEX
             // does a single sequential scan + sort, way faster than 3.9M
-            // incremental b-tree inserts.
+            // incremental b-tree inserts. Must match the index definitions in
+            // the migration (20260518000000_create_powerlifting_tables.ts).
             db.exec("CREATE INDEX idx_lifts_lifter ON lifts(lifter_id)");
             db.exec("CREATE INDEX idx_lifts_meet ON lifts(meet_id)");
             db.exec(
@@ -492,6 +577,9 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             );
             db.exec("CREATE INDEX idx_lifts_rankings_dots ON lifts(event, equipment, dots)");
 
+            // FTS5 'rebuild' is the documented optimal way to populate
+            // external-content FTS tables — does one big scan-and-build instead
+            // of triggering on every row insert.
             db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
             db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
             db.exec("COMMIT");
@@ -499,9 +587,16 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             db.exec("ROLLBACK");
             throw error;
           }
+          // After the big commit, TRUNCATE the WAL so the next reader doesn't
+          // have to do an auto-checkpoint of however many GB we just wrote.
           db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+          // Refresh the query planner's stats now that row counts changed
+          // dramatically — keeps SELECT plans reasonable for serving traffic.
           db.exec("PRAGMA optimize");
         } finally {
+          // ALWAYS reset to steady-state, even on error. Otherwise this
+          // connection goes back into the knex pool with EXCLUSIVE locking
+          // mode + 512 MB cache, which would break read traffic.
           for (const pragma of STEADY_STATE_PRAGMAS) db.exec(pragma);
         }
       });
@@ -560,6 +655,14 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     return csvEntry.path;
   }
 
+  // Returns a factory the ingest pipeline can call to get a fresh stream over
+  // the CSV inside the zip. Implemented as a proxy Readable that lazily opens
+  // the zip + entry. Backpressure is propagated by pausing/resuming the
+  // underlying unzipper stream when the proxy's internal buffer fills.
+  //
+  // Why a factory at all (instead of just a stream): keeps the API symmetric
+  // with how tests work (they can pass `() => Readable.from(buffer)`) and
+  // future-proof for any pass that needs to re-read.
   function csvStreamFactoryForZip(zipPath: string, csvEntryName: string): CsvStreamFactory {
     return () => {
       let stream: Readable | null = null;
@@ -601,6 +704,10 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       logger.info(`ingest: starting nightly run${options.force ? " (forced)" : ""}`);
       downloadInfo = await downloadToTempFile();
 
+      // Cheap dedup: if the upstream Last-Modified header matches the last
+      // successful run, the CSV is byte-identical to what we already have.
+      // Skip the (expensive) parse + reload entirely; record the run as
+      // "skipped" so the audit log is honest about why nothing changed.
       const lastModified = downloadInfo.sourceLastModified;
       if (lastModified && !options.force) {
         const previous = await getLastSuccessfulSourceLastModified();
