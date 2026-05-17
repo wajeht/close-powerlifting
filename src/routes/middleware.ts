@@ -1,5 +1,3 @@
-import crypto from "node:crypto";
-
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { Context, MiddlewareHandler, NotFoundHandler, ErrorHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -65,9 +63,7 @@ function getClientIp(c: Context): string {
 
 export function createMiddleware(helpers: HelpersType, logger: LoggerType): MiddlewareType {
   const requestLoggerMiddleware: MiddlewareHandler = async (c, next) => {
-    const requestId = crypto.randomUUID().slice(0, 8);
     const start = Date.now();
-    c.header("X-Request-Id", requestId);
 
     await next();
 
@@ -76,7 +72,7 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     const hasQuery = Object.keys(query).length > 0;
 
     logger.info("request", {
-      id: requestId,
+      id: c.get("requestId"),
       method: c.req.method,
       path: c.req.path,
       query: hasQuery ? JSON.stringify(query) : undefined,
