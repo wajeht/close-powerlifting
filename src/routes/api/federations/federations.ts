@@ -21,10 +21,11 @@ export function createFederationsRouter(context: AppContext) {
 
   router.get("/api/federations/:slug", (req: Request, res: Response) => {
     const data = context.store.get();
-    const slug = req.params.slug.toLowerCase();
+    const rawSlug = String(req.params.slug ?? "");
+    const slug = rawSlug.toLowerCase();
     const federation = data.federations.find((f) => f.slug === slug);
     if (federation == null) {
-      throw new NotFoundError(`Federation "${req.params.slug}" not found`);
+      throw new NotFoundError(`Federation "${rawSlug}" not found`);
     }
     const meetIds = data.meetsByFederation.get(slug) ?? [];
     const meets = meetIds

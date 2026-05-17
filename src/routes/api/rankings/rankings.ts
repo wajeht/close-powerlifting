@@ -44,12 +44,13 @@ export function createRankingsRouter(context: AppContext) {
   router.get("/api/rankings/:rank(\\d+)", (req: Request, res: Response) => {
     const data = context.store.get();
     const metric = parseMetric(req.query.metric);
-    const rank = parseInt(req.params.rank, 10);
+    const rawRank = String(req.params.rank ?? "");
+    const rank = parseInt(rawRank, 10);
     const ranking = data.rankByMetric[metric];
     if (!Number.isFinite(rank) || rank < 1 || rank > ranking.length) {
       res.status(404).json({
         status: "fail",
-        message: `Rank ${req.params.rank} is out of range for metric=${metric} (max=${ranking.length})`,
+        message: `Rank ${rawRank} is out of range for metric=${metric} (max=${ranking.length})`,
         data: null,
       });
       return;
