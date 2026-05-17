@@ -1,18 +1,22 @@
-// API router. Sub-routers are wired in phase 3 as each endpoint gets
-// rewritten against the in-memory store.
-
 import express from "express";
 
 import type { AppContext } from "../../context";
+import { createFederationsRouter } from "./federations/federations";
+import { createHealthCheckRouter } from "./health-check/health-check";
+import { createMeetsRouter } from "./meets/meets";
+import { createRankingsRouter } from "./rankings/rankings";
+import { createRecordsRouter } from "./records/records";
+import { createStatusRouter } from "./status/status";
+import { createUsersRouter } from "./users/users";
 
-export function createApiRouter(_context: AppContext) {
+export function createApiRouter(context: AppContext) {
   const router = express.Router();
-  // Sub-routers go here as they land:
-  //   router.use(createRankingsRouter(_context));
-  //   router.use(createRecordsRouter(_context));
-  //   router.use(createUsersRouter(_context));
-  //   router.use(createMeetsRouter(_context));
-  //   router.use(createFederationsRouter(_context));
-  //   router.use(createStatusRouter(_context));
+  router.use(createStatusRouter(context));
+  router.use(createHealthCheckRouter(context));
+  router.use(createRankingsRouter(context));
+  router.use(createRecordsRouter(context));
+  router.use(createUsersRouter(context));
+  router.use(createMeetsRouter(context));
+  router.use(createFederationsRouter(context));
   return router;
 }
