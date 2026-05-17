@@ -81,7 +81,7 @@ describe("meets service", () => {
     });
   });
 
-  describe("getMeet (DB-backed)", () => {
+  describe("getMeet", () => {
     it("returns null for paths that do not parse", async () => {
       const result = await meetService.getMeet({ meet: "garbage" });
       expect(result.data).toBeNull();
