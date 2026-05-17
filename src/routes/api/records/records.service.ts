@@ -1,6 +1,5 @@
 import type { Knex } from "knex";
 
-import type { ScraperType } from "../../../context";
 import { NotFoundError, ValidationError } from "../../../error";
 import type { RecordCategory, ApiResponse } from "../../../types";
 import {
@@ -139,7 +138,7 @@ function formatRecord(row: RankedLiftRow, category: CategoryConfig): Record<stri
   };
 }
 
-export function createRecordService(knex: Knex, _scraper: ScraperType) {
+export function createRecordService(knex: Knex) {
   async function queryCategory(
     category: CategoryConfig,
     filters: RecordsFilters,

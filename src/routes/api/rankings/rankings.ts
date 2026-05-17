@@ -75,7 +75,7 @@ export function createRankingsRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const rankingService = createRankingService(context.knex, context.scraper);
+  const rankingService = createRankingService(context.knex);
 
   const router = express.Router();
 
