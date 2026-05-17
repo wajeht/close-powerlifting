@@ -58,7 +58,6 @@ export function createRecordsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const recordService = createRecordService(context.knex);
 
@@ -118,7 +117,6 @@ export function createRecordsRouter(context: AppContext) {
     "/api/records",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getRecordsValidation }),
     async (req: Request<{}, {}, {}, GetRecordsType>, res: Response) => {
@@ -201,7 +199,6 @@ export function createRecordsRouter(context: AppContext) {
     "/api/records/:equipment",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation.pick({ equipment: true }),
@@ -301,7 +298,6 @@ export function createRecordsRouter(context: AppContext) {
     "/api/records/:equipment/:sex_or_weight_class",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getFilteredRecordsQueryValidation }),
     async (
@@ -401,7 +397,6 @@ export function createRecordsRouter(context: AppContext) {
     "/api/records/:equipment/:weight_class/:sex",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRecordsParamValidation,

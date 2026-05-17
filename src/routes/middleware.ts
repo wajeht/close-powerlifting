@@ -42,7 +42,6 @@ export interface MiddlewareType {
     validators: RequestValidators,
   ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
   apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  trackAPICallsMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
   csrfMiddleware: (req: Request, res: Response, next: NextFunction) => void;
@@ -75,7 +74,6 @@ export function createMiddleware(
   logger: LoggerType,
   knex: Knex,
   authService: AuthServiceType,
-  apiCallLogRepository: ApiCallLogRepositoryType,
 ): MiddlewareType {
   const SLOW_REQUEST_MS = 1000;
 
@@ -288,93 +286,6 @@ export function createMiddleware(
       }
       req.user = validatedUser;
 
-      next();
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  async function trackAPICallsMiddleware(req: Request, res: Response, next: NextFunction) {
-    const startTime = Date.now();
-
-    try {
-      const id = req.user?.id;
-      if (id != null) {
-        // Register API call log listener FIRST so ALL requests get logged
-        // (including over-limit rejections)
-        res.on("finish", () => {
-          apiCallLogRepository
-            .create({
-              user_id: id,
-              method: req.method,
-              endpoint: req.originalUrl,
-              status_code: res.statusCode,
-              response_time_ms: Date.now() - startTime,
-              ip_address:
-                (typeof req.headers["cf-connecting-ip"] === "string"
-                  ? req.headers["cf-connecting-ip"]
-                  : undefined) ??
-                req.ip ??
-                null,
-              user_agent: req.headers["user-agent"]?.substring(0, 512) || null,
-            })
-            .catch((err) => {
-              logger.error(err);
-            });
-        });
-
-        // Check if non-admin is already at/over limit BEFORE incrementing
-        const currentUser = await userRepository.findById(id);
-
-        if (!currentUser) {
-          return next();
-        }
-
-        if (!currentUser.admin && currentUser.api_call_count >= currentUser.api_call_limit) {
-          // Don't increment — just set headers and reject
-          const now = new Date();
-          const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-          res.set("X-RateLimit-Limit", String(currentUser.api_call_limit));
-          res.set("X-RateLimit-Remaining", "0");
-          res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
-
-          throw new APICallsExceededError("API Calls exceeded!");
-        }
-
-        // Safe to increment — user is under the limit (or is admin)
-        const user = await userRepository.incrementApiCallCount(id);
-
-        if (!user) {
-          return next();
-        }
-
-        const remaining = Math.max(0, user.api_call_limit - user.api_call_count);
-        const now = new Date();
-        const resetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        res.set("X-RateLimit-Limit", String(user.api_call_limit));
-        res.set("X-RateLimit-Remaining", String(remaining));
-        res.set("X-RateLimit-Reset", String(Math.floor(resetDate.getTime() / 1000)));
-
-        // After increment, check if non-admin just hit the limit
-        if (user.api_call_count >= user.api_call_limit && !user.admin) {
-          if (user.api_call_count === user.api_call_limit) {
-            await mail.sendReachingApiLimitEmail({
-              email: user.email,
-              name: user.name,
-              percent: 100,
-            });
-          }
-          throw new APICallsExceededError("API Calls exceeded!");
-        }
-
-        if (user.api_call_count === Math.floor(user.api_call_limit / 2) && !user.admin) {
-          await mail.sendReachingApiLimitEmail({
-            email: user.email,
-            name: user.name,
-            percent: 50,
-          });
-        }
-      }
       next();
     } catch (e) {
       next(e);
@@ -646,7 +557,6 @@ export function createMiddleware(
     validationMiddleware,
     apiValidationMiddleware,
     apiAuthenticationMiddleware,
-    trackAPICallsMiddleware,
     hostNameMiddleware,
     sessionMiddleware,
     csrfMiddleware,

@@ -69,7 +69,6 @@ export function createMeetsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const meetService = createMeetService(context.knex);
 
@@ -174,7 +173,6 @@ export function createMeetsRouter(context: AppContext) {
     "/api/meets/:federation/:date/:slug/highlights",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       query: getMeetHighlightsQueryValidation,
@@ -211,7 +209,6 @@ export function createMeetsRouter(context: AppContext) {
     "/api/meets/*meet",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getMeetParamValidation,

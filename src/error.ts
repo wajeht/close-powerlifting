@@ -25,9 +25,3 @@ export class ValidationError extends AppError {
     super(message, 422);
   }
 }
-
-export class APICallsExceededError extends AppError {
-  constructor(message: string) {
-    super(message, 429);
-  }
-}

@@ -53,7 +53,6 @@ export function createStatusRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const statusService = createStatusService(context.knex);
 
@@ -96,7 +95,6 @@ export function createStatusRouter(context: AppContext) {
     "/api/status",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getStatusValidation }),
     async (req: Request<{}, {}, GetStatusType>, res: Response) => {

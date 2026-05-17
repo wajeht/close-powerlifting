@@ -26,9 +26,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  api_call_count: number;
   api_key_version: number;
-  api_call_limit: number;
   api_key: string | null;
   admin: boolean;
   verification_token: string | null;

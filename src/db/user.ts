@@ -18,15 +18,10 @@ export interface UserRepositoryType {
   findOne: (where: Partial<UserType>) => Promise<UserType | undefined>;
   findAll: (options?: FindAllOptions) => Promise<UserType[]>;
   count: (where?: Partial<UserType>, search?: string) => Promise<number>;
-  findVerifiedWithUsage: () => Promise<UserType[]>;
-  findByApiCallCount: (count: number) => Promise<UserType[]>;
   create: (data: CreateUserInput) => Promise<UserType>;
   update: (email: string, data: UpdateUserInput) => Promise<UserType | undefined>;
   updateById: (id: number, data: UpdateUserInput) => Promise<UserType | undefined>;
   consumeToken: (userId: number, expectedToken: string) => Promise<boolean>;
-  incrementApiCallCount: (id: number) => Promise<UserType | undefined>;
-  setApiCallCount: (id: number, count: number) => Promise<UserType | undefined>;
-  resetAllApiCallCounts: () => Promise<void>;
   delete: (id: number) => Promise<void>;
 }
 
@@ -87,18 +82,6 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return Number(result?.count || 0);
   }
 
-  async function findVerifiedWithUsage(): Promise<UserType[]> {
-    return knex<UserType>("users").where({ verified: true }).andWhere("api_call_count", ">", 0);
-  }
-
-  async function findByApiCallCount(count: number): Promise<UserType[]> {
-    return knex<UserType>("users").where({
-      api_call_count: count,
-      verified: true,
-      admin: false,
-    });
-  }
-
   async function create(data: CreateUserInput): Promise<UserType> {
     const [insertedId] = await knex<UserType>("users").insert({
       ...data,
@@ -146,29 +129,6 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     return updatedCount > 0;
   }
 
-  async function incrementApiCallCount(id: number): Promise<UserType | undefined> {
-    const rows = await knex<UserType>("users")
-      .where({ id })
-      .increment("api_call_count", 1)
-      .returning("*");
-    return rows[0] as UserType | undefined;
-  }
-
-  async function setApiCallCount(id: number, count: number): Promise<UserType | undefined> {
-    await knex<UserType>("users").where({ id }).update({
-      api_call_count: count,
-      updated_at: new Date().toISOString(),
-    });
-    return findById(id);
-  }
-
-  async function resetAllApiCallCounts(): Promise<void> {
-    await knex<UserType>("users")
-      .where({ verified: true })
-      .andWhere("api_call_count", ">", 0)
-      .update({ api_call_count: 0 });
-  }
-
   async function deleteUser(id: number): Promise<void> {
     await knex<UserType>("users").where({ id }).delete();
   }
@@ -181,15 +141,10 @@ export function createUserRepository(knex: Knex): UserRepositoryType {
     findOne,
     findAll,
     count,
-    findVerifiedWithUsage,
-    findByApiCallCount,
     create,
     update,
     updateById,
     consumeToken,
-    incrementApiCallCount,
-    setApiCallCount,
-    resetAllApiCallCounts,
     delete: deleteUser,
   };
 }
