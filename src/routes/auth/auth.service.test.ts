@@ -250,8 +250,6 @@ describe("Security: Deleted User API Access", () => {
         name: "Deleted User API Test",
         email: testEmail,
         api_key_version: 1,
-        api_call_count: 0,
-        api_call_limit: 100,
         verified: true,
       })
       .returning("*");
@@ -279,8 +277,6 @@ describe("Security: Deleted User API Access", () => {
         name: "Delete API Test",
         email: "delete-api-test@example.com",
         api_key_version: 1,
-        api_call_count: 0,
-        api_call_limit: 100,
         verified: true,
       })
       .returning("*");

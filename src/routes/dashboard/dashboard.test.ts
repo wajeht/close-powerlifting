@@ -21,8 +21,6 @@ describe("Dashboard Routes", () => {
         email: testEmail,
         verification_token: testMagicToken,
         api_key: "test-dashboard-key",
-        api_call_count: 50,
-        api_call_limit: 100,
         admin: false,
         verified: true,
       })
@@ -61,8 +59,7 @@ describe("Dashboard Routes", () => {
 
       expect(response.status).toBe(200);
       expect(response.text).toContain("Dashboard");
-      expect(response.text).toContain("API Usage");
-      expect(response.text).toContain("50");
+      expect(response.text).toContain(testName);
     });
 
     it("should redirect to login if session user is deleted from database", async () => {
