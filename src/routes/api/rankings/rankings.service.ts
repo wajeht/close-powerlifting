@@ -126,7 +126,7 @@ export function createRankingsService(store: DataStoreType) {
     };
   }
 
-  function getRank(rank: number): unknown | null {
+  function getRank(rank: number): Record<string, unknown> | null {
     const data = store.get();
     const ranking = data.rankByMetric.dots;
     if (rank < 1 || rank > ranking.length) return null;
