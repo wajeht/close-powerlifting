@@ -28,7 +28,7 @@ import { parse as parseCsv } from "csv-parse";
 import unzipper from "unzipper";
 
 import { createLogger } from "../src/utils/logger";
-import { buildColumnIndex, normalizeRow, type ColumnIndex } from "../src/data/normalize";
+import { buildColumnIndex, normalizeRow, type ColumnIndex } from "../src/data/store";
 import type { Entry, Lifter, Meet } from "../src/data/types";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
