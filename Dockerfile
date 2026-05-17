@@ -42,14 +42,12 @@ RUN mkdir -p src/data/snapshot && \
     curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$BASE/meta.json"     && \
     ls -lh src/data/snapshot/
 
-# Compile TS + minify CSS, strip artefacts we don't ship.
+# Compile TS + minify CSS. The runtime reads exclusively from dist/ and
+# public/ — src/ is never copied to the final image (Hono JSX compiles
+# down to dist/), so the only post-build cleanup needed is dropping the
+# sourcemaps we don't ship.
 RUN npm run build:prod && \
-    rm -rf src/tests src/**/*.test.* && \
-    find dist -name "*.map" -delete && \
-    find src/routes -name "*.ts" -delete && \
-    find src/routes -name "*.js" -delete && \
-    rm -rf vitest.config.* && \
-    rm -rf src/routes/**/fixtures
+    find dist -name "*.map" -delete
 
 FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30
 
@@ -63,12 +61,10 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json .npmrc ./
 RUN npm ci --only=production --no-audit --no-fund && \
-    npm rebuild sharp --ignore-scripts=false && \
     npm cache clean --force
 
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/public ./public
-COPY --chown=node:node --from=build /usr/src/app/src/routes ./src/routes
 
 # Snapshot was downloaded into the build stage above; the loader reads it
 # from dist/src/data/snapshot via __dirname-relative resolution at runtime.
