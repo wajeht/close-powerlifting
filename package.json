@@ -21,6 +21,7 @@
     "build:tailwind:minify": "rm ./public/css/style.css && npx @tailwindcss/cli -i ./public/css/tailwind.css -o ./public/css/style.css --minify",
     "minify": "tsx scripts/minify.ts",
     "ingest:run": "tsx scripts/ingest.ts",
+    "ingest:run:prod": "node dist/scripts/ingest.js",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
     "rebuild:native": "npm rebuild better-sqlite3 sharp --ignore-scripts=false",
