@@ -3,11 +3,6 @@ import type { Options } from "express-jsdoc-swagger";
 
 import { configuration } from "../configuration";
 
-const link =
-  configuration.app.env === "production"
-    ? configuration.app.domain
-    : `http://localhost:${configuration.app.port}`;
-
 const swaggerConfig = {
   info: {
     title: "Close Powerlifting API",
@@ -27,6 +22,8 @@ All endpoints return:
 \`\`\`json
 {
   "status": "success",
+  "request_url": "/api/...",
+  "message": "The resource was returned successfully!",
   "data": { ... }
 }
 \`\`\`
@@ -42,13 +39,17 @@ Errors return \`status: "fail"\` with an HTTP code that matches the failure type
 
 ## Data refresh
 
-The full dataset is re-downloaded and re-parsed nightly at 04:00 UTC. When upstream has a new CSV, the server exits and the orchestrator restarts it — boot re-parses the fresh file. A ~60 s window of \`503 warming up\` is the only impact.
+The snapshot is rebuilt weekly by a GitHub Actions workflow (\`update-data.yml\`, Saturday 12:00 UTC). The fresh JSON files are published as assets on the \`snapshot-latest\` GitHub Release; the Dockerfile fetches them at image-build time. There's no in-container refresh — restarts pick up whatever the latest build baked in.
 
 ## Pagination
 
-List endpoints (\`/api/rankings\`, \`/api/meets\`) accept \`?limit=\` (default 50, max 500) and \`?offset=\` (default 0). \`/api/users?search=\` accepts \`?limit=\` (default 50, max 200).
+List endpoints accept \`?current_page=\` (default 1) and \`?per_page=\` (default 100, max 500). The response envelope includes a \`pagination\` object with \`current_page\`, \`per_page\`, \`items\`, \`pages\`, \`from\`, \`to\`, \`first_page\`, \`last_page\`.
+
+## Units
+
+Endpoints that return weights accept \`?units=lbs\` (default) or \`?units=kg\`. Score columns (\`dots\`, \`wilks\`, \`glossbrenner\`, \`goodlift\`) are always unitless.
     `,
-    termsOfService: `${link}/terms`,
+    termsOfService: "/terms",
     contact: {
       name: "Issues",
       url: "https://github.com/wajeht/close-powerlifting/issues",
@@ -61,19 +62,22 @@ List endpoints (\`/api/rankings\`, \`/api/meets\`) accept \`?limit=\` (default 5
   },
   servers: [
     {
-      url: link,
-      description:
-        configuration.app.env === "production" ? "Production server" : "Development server",
+      // Relative server URL — Swagger UI resolves this against whichever
+      // origin loaded the spec. That makes Try-It-Out fire same-origin on
+      // every deploy (prod, temp PR previews, localhost) without needing
+      // to relax CSP `connect-src` or CORS `origin`.
+      url: "/",
+      description: "Current host",
     },
   ],
   tags: [
-    { name: "Rankings", description: "Global leaderboards sorted by metric (Dots default)" },
+    { name: "Rankings", description: "Global leaderboards sorted by metric (DOTS default)" },
     { name: "Records", description: "Top-N per (category, sex, equipment, weight class)" },
     { name: "Users", description: "Lifter profiles + competition history" },
     { name: "Meets", description: "Per-meet results" },
     { name: "Federations", description: "Federation index + meets per federation" },
     { name: "Status", description: "Snapshot metadata + counts" },
-    { name: "Health", description: "Readiness probe (no data required)" },
+    { name: "Health Check", description: "Readiness probe (no data required)" },
   ],
   externalDocs: {
     description: "GitHub",
