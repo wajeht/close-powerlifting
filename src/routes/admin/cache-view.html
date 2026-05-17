@@ -23,7 +23,6 @@
       </span>
     </summary>
     <div class="absolute right-0 mt-1 w-56 rounded-lg border border-neutral-800 bg-neutral-900 p-1 shadow-lg">
-      <button type="button" class="open-modal block w-full rounded bg-transparent px-3 py-2 text-left text-sm text-neutral-300 outline-none hover:bg-neutral-800 hover:text-white" data-modal="refresh-all-modal">Refresh All Caches</button>
       <button type="button" class="open-modal block w-full rounded bg-transparent px-3 py-2 text-left text-sm text-red-400 outline-none hover:bg-neutral-800 hover:text-red-300" data-modal="clear-all-modal">Clear All Cache</button>
     </div>
   </details>
@@ -54,7 +53,6 @@
           <%~ include('../_components/actions-dropdown.html', {
             id: 'dropdown-cache-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'),
             items: [
-              { label: 'Refresh', modal: 'refresh-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-') },
               { label: 'Delete', modal: 'delete-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'), variant: 'danger' }
             ]
           }) %>
@@ -93,14 +91,6 @@
   confirmVariant: 'danger'
 }) %>
 
-<%~ include('../_components/modal.html', {
-  id: 'refresh-all-modal',
-  action: '/admin/cache/refresh-all',
-  title: 'Refresh All Caches',
-  description: 'Re-fetch every cache entry from OpenPowerlifting. This runs in the background and may take several minutes.',
-  confirmText: 'Refresh All'
-}) %>
-
 <% for (const entry of it.entries) { %>
 <% const escapedKey = entry.key.split('&').join('&amp;').split(String.fromCharCode(60)).join('&lt;').split(String.fromCharCode(62)).join('&gt;').split('"').join('&quot;'); %>
 <%~ include('../_components/modal.html', {
@@ -112,15 +102,6 @@
   hiddenValue: entry.key,
   confirmText: 'Delete',
   confirmVariant: 'danger'
-}) %>
-<%~ include('../_components/modal.html', {
-  id: 'refresh-modal-' + entry.key.replace(/[^a-zA-Z0-9]/g, '-'),
-  action: '/admin/cache/refresh',
-  title: 'Refresh Cache Entry',
-  description: 'Re-fetch cache entry <code class="rounded bg-neutral-800 px-1 text-white">' + escapedKey + '</code> from OpenPowerlifting?',
-  hiddenName: 'key',
-  hiddenValue: entry.key,
-  confirmText: 'Refresh'
 }) %>
 <% } %>
 

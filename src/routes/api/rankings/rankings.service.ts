@@ -11,8 +11,6 @@ import type {
 } from "./rankings.validation";
 
 const { defaultPerPage } = configuration.pagination;
-const REGEX_RANKINGS_CACHE_KEY =
-  /^(rankings(?:\/[^?\s]*)?)-(\d+)-(\d+)-(lbs|kg)(?:-([a-z][a-z0-9-]*))?$/;
 const KG_TO_LBS = 2.20462;
 
 const EQUIPMENT_MAP: Record<string, string[]> = {
@@ -346,48 +344,10 @@ export function createRankingService(knex: Knex) {
     return queryRankings({ federation }, currentPage, perPage, normalizeUnits(units));
   }
 
-  function parseRankingsCacheKey(key: string): {
-    filterPath: string;
-    currentPage: number;
-    perPage: number;
-    units: string;
-    federation?: string;
-  } | null {
-    if (!key.startsWith("rankings")) return null;
-
-    const match = key.match(REGEX_RANKINGS_CACHE_KEY);
-    if (!match) return null;
-
-    const prefix = match[1] ?? "rankings";
-    const pageStr = match[2] ?? "";
-    const perPageStr = match[3] ?? "";
-    const units = match[4] ?? "lbs";
-    const federation = match[5];
-
-    const currentPage = parseInt(pageStr, 10);
-    const perPage = parseInt(perPageStr, 10);
-
-    if (isNaN(currentPage) || isNaN(perPage)) return null;
-
-    const filterPath = prefix === "rankings" ? "" : prefix.slice("rankings".length);
-
-    return { filterPath, currentPage, perPage, units, federation };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseRankingsCacheKey(key);
-    if (!parsed) return false;
-    // Rankings now served from lifts table; legacy cache keys cannot be
-    // refreshed. Claim the key so the cron does not warn.
-    return true;
-  }
-
   return {
     getRankings,
     getRank,
     getFilteredRankings,
     fetchRankingsData,
-    parseRankingsCacheKey,
-    refreshCacheKey,
   };
 }

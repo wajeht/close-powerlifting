@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
-import { createContext } from "../../../context";
-import { createFederationService, buildFederationStats } from "./federations.service";
+import { buildFederationStats } from "./federations.service";
 import type { Meet } from "../../../types";
 
-const context = createContext();
-const federationService = createFederationService(context.knex);
 const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 const sampleMeets: Meet[] = [
@@ -68,76 +65,5 @@ describe.concurrent("federations service", () => {
     it("uses correct max per_page from config", () => {
       expect(maxPerPage).toBe(500);
     });
-  });
-
-  describe("parseFederationCacheKey", () => {
-    it("returns null for non-federation keys", () => {
-      expect(federationService.parseFederationCacheKey("status")).toBeNull();
-      expect(federationService.parseFederationCacheKey("user-johnhaack-lbs")).toBeNull();
-    });
-
-    it("parses federations-list", () => {
-      expect(federationService.parseFederationCacheKey("federations-list")).toEqual({
-        kind: "list",
-      });
-    });
-
-    it("parses base federation key", () => {
-      expect(federationService.parseFederationCacheKey("federation-ipf")).toEqual({
-        kind: "federation",
-        federation: "ipf",
-      });
-    });
-
-    it("parses federation key with year", () => {
-      expect(federationService.parseFederationCacheKey("federation-uspa-2024")).toEqual({
-        kind: "federation",
-        federation: "uspa",
-        year: 2024,
-      });
-    });
-
-    it("parses stats key", () => {
-      expect(federationService.parseFederationCacheKey("federation-ipf-stats")).toEqual({
-        kind: "stats",
-        federation: "ipf",
-      });
-    });
-
-    it("does not treat 3-digit suffix as a year", () => {
-      expect(federationService.parseFederationCacheKey("federation-365strong")).toEqual({
-        kind: "federation",
-        federation: "365strong",
-      });
-    });
-
-    it("handles hyphenated federation names", () => {
-      expect(federationService.parseFederationCacheKey("federation-usa-pl-2020")).toEqual({
-        kind: "federation",
-        federation: "usa-pl",
-        year: 2020,
-      });
-    });
-  });
-});
-
-describe("federations service refreshCacheKey", () => {
-  it("returns false for non-federation keys", async () => {
-    expect(await federationService.refreshCacheKey("status")).toBe(false);
-  });
-
-  it("returns true for federations-list", async () => {
-    const result = await federationService.refreshCacheKey("federations-list");
-    expect(result).toBe(true);
-  });
-
-  it("returns true for federation key with year", async () => {
-    const result = await federationService.refreshCacheKey("federation-uspa-2024");
-    expect(result).toBe(true);
-  });
-
-  it("returns true for stats key", async () => {
-    const result = await federationService.refreshCacheKey("federation-ipf-stats");
-    expect(result).toBe(true);
   });
 });

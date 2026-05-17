@@ -51,24 +51,6 @@ describe("records service", () => {
     });
   });
 
-  describe("parseRecordsCacheKey", () => {
-    it("returns null for non-records keys", () => {
-      expect(recordService.parseRecordsCacheKey("status")).toBeNull();
-      expect(recordService.parseRecordsCacheKey("user-johnhaack-lbs")).toBeNull();
-    });
-
-    it("parses base records key", () => {
-      expect(recordService.parseRecordsCacheKey("records")).toEqual({ filterPath: "" });
-    });
-
-    it("parses records key with filter path", () => {
-      expect(recordService.parseRecordsCacheKey("records/raw")).toEqual({ filterPath: "/raw" });
-      expect(recordService.parseRecordsCacheKey("records/raw/men")).toEqual({
-        filterPath: "/raw/men",
-      });
-    });
-  });
-
   describe("getRecords (DB-backed)", () => {
     it("returns the 7 standard categories", async () => {
       const result = await recordService.getRecords({});
@@ -88,21 +70,5 @@ describe("records service", () => {
         expect(Array.isArray(category.records)).toBe(true);
       }
     });
-  });
-});
-
-describe("records service refreshCacheKey", () => {
-  it("returns false for non-records keys", async () => {
-    expect(await recordService.refreshCacheKey("status")).toBe(false);
-  });
-
-  it("returns true for base records key", async () => {
-    const result = await recordService.refreshCacheKey("records");
-    expect(result).toBe(true);
-  });
-
-  it("returns true for filtered records key", async () => {
-    const result = await recordService.refreshCacheKey("records/raw/men/40-44");
-    expect(result).toBe(true);
   });
 });

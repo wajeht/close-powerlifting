@@ -16,7 +16,6 @@ import type {
 
 const { defaultPerPage } = configuration.pagination;
 const REGEX_YEAR_PREFIX = /^(\d{4})/;
-const REGEX_FEDERATION_YEAR_SUFFIX = /^(.+)-(\d{4})$/;
 
 type FederationMeet = Meet;
 
@@ -159,45 +158,9 @@ export function createFederationService(knex: Knex) {
     };
   }
 
-  function parseFederationCacheKey(key: string):
-    | { kind: "list" }
-    | { kind: "federation"; federation: string; year?: number }
-    | {
-        kind: "stats";
-        federation: string;
-      }
-    | null {
-    if (key === "federations-list") {
-      return { kind: "list" };
-    }
-
-    if (!key.startsWith("federation-")) return null;
-    const remainder = key.slice("federation-".length);
-
-    if (remainder.endsWith("-stats")) {
-      const federation = remainder.slice(0, -"-stats".length);
-      if (!federation) return null;
-      return { kind: "stats", federation };
-    }
-
-    const yearMatch = remainder.match(REGEX_FEDERATION_YEAR_SUFFIX);
-    if (yearMatch && yearMatch[1] && yearMatch[2]) {
-      return { kind: "federation", federation: yearMatch[1], year: parseInt(yearMatch[2], 10) };
-    }
-
-    if (!remainder) return null;
-    return { kind: "federation", federation: remainder };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    return parseFederationCacheKey(key) != null;
-  }
-
   return {
-    parseFederationCacheKey,
     getFederations,
     getFederation,
     getFederationStats,
-    refreshCacheKey,
   };
 }

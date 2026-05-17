@@ -34,15 +34,4 @@ describe("status service", () => {
       expect(result.data!.meets).toContain("Tracking");
     });
   });
-
-  describe("refreshCacheKey", () => {
-    it("returns false for non-status keys", async () => {
-      expect(await statusService.refreshCacheKey("federations-list")).toBe(false);
-      expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
-    });
-
-    it("returns true for status key", async () => {
-      expect(await statusService.refreshCacheKey("status")).toBe(true);
-    });
-  });
 });
