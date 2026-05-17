@@ -3,7 +3,7 @@
   <p class="mt-2 text-sm text-neutral-400 md:text-base">Welcome back, <%= it.user.name %>.</p>
 </header>
 
-<div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl flex w-full flex-col gap-5">
+<div class="fade-in animation-delay-2 mt-6 mb-6 max-w-2xl">
   <%~ include('../_components/flash-message.html') %>
 </div>
 
@@ -17,6 +17,56 @@
     <%~ include('../_components/stat-card.html', { value: it.stats.unverifiedUsers, label: 'Unverified Users', color: 'text-white' }) %>
     <%~ include('../_components/stat-card.html', { value: it.stats.adminUsers, label: 'Admin Users', color: 'text-white' }) %>
     <%~ include('../_components/stat-card.html', { value: it.stats.cacheEntries, label: 'Cache Entries', color: 'text-white' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.stats.totalApiCalls.toLocaleString(), label: 'Total API Calls', color: 'text-white' }) %>
   </div>
 </div>
 <% } %>
+
+<!-- Recent API Calls -->
+<div class="fade-in animation-delay-4 mb-8">
+  <h2 class="mb-4 text-base font-semibold text-white md:text-lg">Recent API Calls</h2>
+
+  <div class="mb-4 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 max-w-2xl">
+    <%~ include('../_components/stat-card.html', { value: it.callsLast24h, label: 'Last 24 Hours', color: 'text-white' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.callsLast30d, label: 'Last 30 Days', color: 'text-white' }) %>
+    <%~ include('../_components/stat-card.html', { value: it.totalCalls, label: 'Total API Calls', color: 'text-white' }) %>
+  </div>
+
+  <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+    <table class="w-full text-left">
+      <thead class="border-b border-neutral-800 text-neutral-400">
+        <tr>
+          <th class="p-4">Endpoint</th>
+          <th class="p-4">Status</th>
+          <th class="p-4">Time</th>
+          <th class="p-4">When</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-neutral-800">
+        <% for (const call of it.recentCalls) { %>
+        <tr class="hover:bg-neutral-800/50">
+          <td class="p-4 font-mono text-sm text-neutral-300 max-w-sm truncate" title="<%= call.endpoint %>">
+            <span class="text-neutral-500"><%= call.method %></span> <%= call.endpoint %>
+          </td>
+          <td class="p-4">
+            <% if (call.status_code < 300) { %>
+            <span class="text-green-400"><%= call.status_code %></span>
+            <% } else if (call.status_code < 400) { %>
+            <span class="text-yellow-400"><%= call.status_code %></span>
+            <% } else { %>
+            <span class="text-red-400"><%= call.status_code %></span>
+            <% } %>
+          </td>
+          <td class="p-4 text-sm text-neutral-400"><%= call.response_time_ms %>ms</td>
+          <td class="p-4 text-sm text-neutral-300"><%= new Date(call.created_at).toLocaleString() %></td>
+        </tr>
+        <% } %>
+        <% if (it.recentCalls.length === 0) { %>
+        <tr>
+          <td colspan="4" class="p-8 text-center text-neutral-400">No API calls yet — try hitting <code class="text-neutral-300">/api/status</code> with your key.</td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>

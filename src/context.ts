@@ -6,6 +6,7 @@ import { createDatabase, type DatabaseType } from "./db/db";
 import { createCache, type CacheType } from "./db/cache";
 import { createMail, type MailType } from "./mail";
 import { createUserRepository, type UserRepositoryType } from "./db/user";
+import { createApiCallLogRepository, type ApiCallLogRepositoryType } from "./db/api-call-log";
 import { createIngestService, type IngestServiceType } from "./utils/ingest";
 import { createCron, type CronType } from "./cron";
 import { createAuthService, type AuthServiceType } from "./routes/auth/auth.service";
@@ -18,6 +19,7 @@ export type {
   CacheType,
   MailType,
   UserRepositoryType,
+  ApiCallLogRepositoryType,
   IngestServiceType,
   CronType,
   AuthServiceType,
@@ -32,6 +34,7 @@ export interface AppContext {
   cache: CacheType;
   mail: MailType;
   userRepository: UserRepositoryType;
+  apiCallLogRepository: ApiCallLogRepositoryType;
   ingest: IngestServiceType;
   cron: CronType;
   authService: AuthServiceType;
@@ -52,6 +55,7 @@ export function createContext(): AppContext {
   const cache = createCache(knex, logger);
   const mail = createMail(logger);
   const userRepository = createUserRepository(knex);
+  const apiCallLogRepository = createApiCallLogRepository(knex);
   const ingest = createIngestService(knex, logger);
   const authService = createAuthService(userRepository, mail, logger);
   const cron = createCron(cache, userRepository, logger, ingest);
@@ -65,6 +69,7 @@ export function createContext(): AppContext {
     cache,
     mail,
     userRepository,
+    apiCallLogRepository,
     ingest,
     cron,
     authService,

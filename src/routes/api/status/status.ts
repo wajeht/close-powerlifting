@@ -48,6 +48,7 @@ export function createStatusRouter(context: AppContext) {
   const middleware = createMiddleware(
     context.cache,
     context.userRepository,
+    context.apiCallLogRepository,
     context.helpers,
     context.logger,
     context.knex,

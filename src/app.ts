@@ -28,6 +28,7 @@ export async function createApp(
   const middleware = createMiddleware(
     context.cache,
     context.userRepository,
+    context.apiCallLogRepository,
     context.helpers,
     context.logger,
     context.knex,
@@ -110,6 +111,7 @@ export async function createApp(
     .use(middleware.csrfMiddleware)
     .use(middleware.appLocalStateMiddleware)
     .use(middleware.rateLimitMiddleware)
+    .use("/api", middleware.apiAuditLogMiddleware)
     .use(createMainRouter(context));
 
   await createSwagger(app);

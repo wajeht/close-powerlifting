@@ -8,6 +8,7 @@ const context = createContext();
 const adminService = createAdminService(
   context.knex,
   context.userRepository,
+  context.apiCallLogRepository,
   context.cache,
   context.authService,
   context.logger,

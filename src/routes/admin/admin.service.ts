@@ -1,5 +1,6 @@
 import type { Knex } from "knex";
 
+import type { ApiCallLog, ApiCallLogRepositoryType } from "../../db/api-call-log";
 import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
 import type { AuthServiceType } from "../auth/auth.service";
@@ -32,6 +33,10 @@ export interface AdminServiceType {
     order?: "asc" | "desc";
   }) => Promise<{ users: User[]; pagination: Pagination }>;
   getUserById: (id: number) => Promise<User | undefined>;
+  getUserApiCallHistory: (
+    userId: number,
+    options?: { page?: number; limit?: number; search?: string },
+  ) => Promise<{ calls: ApiCallLog[]; pagination: Pagination }>;
   resendVerificationEmail: (userId: number, hostname: string) => Promise<boolean>;
   deleteUser: (userId: number) => Promise<boolean>;
   getCacheEntries: (options?: {
@@ -60,6 +65,7 @@ export interface DashboardStats {
 export function createAdminService(
   knex: Knex,
   userRepository: UserRepositoryType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
   cache: CacheType,
   authService: AuthServiceType,
   logger: LoggerType,
@@ -93,6 +99,24 @@ export function createAdminService(
 
   async function getUserById(id: number): Promise<User | undefined> {
     return userRepository.findById(id);
+  }
+
+  async function getUserApiCallHistory(
+    userId: number,
+    options: { page?: number; limit?: number; search?: string } = {},
+  ): Promise<{ calls: ApiCallLog[]; pagination: Pagination }> {
+    const limit = options.limit ?? 10;
+    const total = await apiCallLogRepository.countByUserId(userId, options.search);
+    const pagination = buildPagination(total, options.page ?? 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const calls = await apiCallLogRepository.findByUserId(userId, {
+      search: options.search,
+      limit,
+      offset,
+    });
+
+    return { calls, pagination };
   }
 
   async function resendVerificationEmail(userId: number, hostname: string): Promise<boolean> {
@@ -220,6 +244,7 @@ export function createAdminService(
   return {
     getAllUsers,
     getUserById,
+    getUserApiCallHistory,
     resendVerificationEmail,
     deleteUser,
     getCacheEntries,
