@@ -1,25 +1,20 @@
+// Slim middleware stack: request logging, hostname memoization, rate
+// limit, validation, error/not-found, cache-control headers, app-local
+// state. No auth, no sessions, no CSRF, no database.
+
 import crypto from "crypto";
-import { ConnectSessionKnexStore } from "connect-session-knex";
-import { csrfSync } from "csrf-sync";
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
-import session from "express-session";
-import type { Knex } from "knex";
 import { z, ZodError } from "zod";
 
 import { configuration } from "../configuration";
-import type { ApiCallLogRepositoryType } from "../db/api-call-log";
-import type { CacheType } from "../db/cache";
-import type { UserRepositoryType } from "../db/user";
-import type { AuthServiceType } from "./auth/auth.service";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
-import { AppError, UnauthorizedError } from "../error";
+import { AppError } from "../error";
 
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
-
-export const HOSTNAME_CACHE_KEY = "hostname";
+const SLOW_REQUEST_MS = 1000;
 
 type RequestValidators = {
   params?: z.ZodTypeAny;
@@ -30,7 +25,6 @@ type RequestValidators = {
 export interface MiddlewareType {
   requestLoggerMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   rateLimitMiddleware: ReturnType<typeof rateLimit>;
-  authRateLimitMiddleware: ReturnType<typeof rateLimit>;
   notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   errorMiddleware: (err: unknown, req: Request, res: Response, next: NextFunction) => void;
   validationMiddleware: (
@@ -39,43 +33,16 @@ export interface MiddlewareType {
   apiValidationMiddleware: (
     validators: RequestValidators,
   ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  apiAuditLogMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  sessionMiddleware: () => ReturnType<typeof session>;
-  csrfMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  csrfValidationMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  sessionAuthenticationMiddleware: (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => Promise<void>;
-  sessionAdminAuthenticationMiddleware: (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => Promise<void>;
-  appLocalStateMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  appLocalStateMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   cacheControlMiddleware: (
     maxAgeSeconds?: number,
   ) => (req: Request, res: Response, next: NextFunction) => void;
   apiCacheControlMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   noCacheMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  sameOriginMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  turnstileMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
-export function createMiddleware(
-  cache: CacheType,
-  userRepository: UserRepositoryType,
-  apiCallLogRepository: ApiCallLogRepositoryType,
-  helpers: HelpersType,
-  logger: LoggerType,
-  knex: Knex,
-  authService: AuthServiceType,
-): MiddlewareType {
-  const SLOW_REQUEST_MS = 1000;
-
+export function createMiddleware(helpers: HelpersType, logger: LoggerType): MiddlewareType {
   function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction): void {
     const requestId = crypto.randomUUID().slice(0, 8);
     const start = Date.now();
@@ -93,7 +60,6 @@ export function createMiddleware(
         query: hasQuery ? JSON.stringify(req.query) : undefined,
         status: res.statusCode,
         duration: `${duration}ms`,
-        userId: req.user?.id ?? "anon",
         ip: req.ip ?? req.socket.remoteAddress,
         slow: duration >= SLOW_REQUEST_MS ? "true" : undefined,
         ua: req.get("user-agent")?.slice(0, 50),
@@ -104,10 +70,8 @@ export function createMiddleware(
   }
 
   const rateLimitMiddleware = rateLimit({
-    // 100 req/min per IP. Generous enough that a developer paging through
-    // rankings or loading a profile page with parallel requests never trips
-    // it; tight enough to discourage scraping the full dataset (3.9M rows
-    // would take >10 hours at this pace).
+    // 100 req/min per IP. Generous enough for normal browsing; tight enough
+    // to discourage scraping a 3.9M-row dataset.
     windowMs: 60 * 1000,
     max: 100,
     standardHeaders: true,
@@ -119,7 +83,7 @@ export function createMiddleware(
         return res.json({
           status: "fail",
           request_url: req.originalUrl,
-          message: "Too many requests, please try again later?",
+          message: "Too many requests, please try again later.",
           errors: [],
           data: [],
         });
@@ -127,53 +91,27 @@ export function createMiddleware(
       return res.render("general/rate-limit.html", { title: "Rate Limited" });
     },
     skip: (req) => {
-      // Bypass in non-prod so dev / test traffic isn't throttled.
       if (configuration.app.env !== "production") return true;
-      // Health checks don't count.
       if (req.path === "/healthz" || req.path === "/health-check") return true;
-      // The /status self-pinger calls localhost; it would otherwise eat its
-      // own rate-limit bucket and report tail-end routes as Unavailable.
       const ip = req.ip ?? req.socket.remoteAddress ?? "";
       if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return true;
       return false;
     },
   });
 
-  const authRateLimitMiddleware = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 10, // Limit each IP to 10 auth requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: false },
-    handler: (req: Request, res: Response) => {
-      res.status(429);
-      if (req.get("Content-Type") === "application/json") {
-        return res.json({
-          status: "fail",
-          request_url: req.originalUrl,
-          message: "Too many authentication attempts, please try again later.",
-          errors: [],
-          data: [],
-        });
-      }
-      req.flash("error", "Too many authentication attempts. Please try again in 15 minutes.");
-      return res.redirect("/login");
-    },
-    skip: () => configuration.app.env !== "production",
-  });
-
-  function notFoundMiddleware(req: Request, res: Response, _next: NextFunction) {
+  function notFoundMiddleware(req: Request, res: Response, _next: NextFunction): void {
     const isApiPrefix = req.url.match(/\/api\//g);
     if (!isApiPrefix) {
-      return res.status(404).render("general/error.html", {
+      res.status(404).render("general/error.html", {
         title: "Not Found",
         statusCode: 404,
         heading: "Page not found",
         message: "The page you're looking for doesn't exist or has been moved.",
       });
+      return;
     }
 
-    return res.status(404).json({
+    res.status(404).json({
       status: "fail",
       request_url: req.originalUrl,
       message: "The resource does not exist!",
@@ -182,7 +120,12 @@ export function createMiddleware(
     });
   }
 
-  function errorMiddleware(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  function errorMiddleware(
+    err: unknown,
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+  ): void {
     let statusCode = 500;
     let message =
       "The server encountered an internal error and was unable to complete your request.";
@@ -203,20 +146,21 @@ export function createMiddleware(
     if (!isApiRoute && !isHealthcheck) {
       const showStack =
         configuration.app.env === "development" && statusCode >= 500 && err instanceof Error;
-      return res.status(statusCode).render("general/error.html", {
+      res.status(statusCode).render("general/error.html", {
         title: "Error",
         statusCode,
         heading: "Something went wrong",
         message: "The server encountered an error and was unable to complete your request.",
         error: showStack ? err.stack : null,
       });
+      return;
     }
 
     if (err instanceof Error) {
       logger.error(err);
     }
 
-    return res.status(statusCode).json({
+    res.status(statusCode).json({
       status: "fail",
       request_url: req.originalUrl,
       message,
@@ -226,7 +170,7 @@ export function createMiddleware(
   }
 
   function validationMiddleware(validators: RequestValidators) {
-    return async (req: Request, res: Response, next: NextFunction) => {
+    return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
       try {
         if (validators.params) {
           const parsed = await validators.params.parseAsync(req.params);
@@ -241,279 +185,35 @@ export function createMiddleware(
         }
         next();
       } catch (error) {
-        if (error instanceof ZodError) {
-          req.flash("error", error.issues.map((e) => e.message).join(" "));
-          return res.status(400).redirect(req.originalUrl);
-        }
         next(error);
       }
     };
   }
 
+  // Same shape as validationMiddleware. Kept as a separate symbol so API
+  // routes can opt into different error rendering later without rewiring.
   function apiValidationMiddleware(validators: RequestValidators) {
-    return async (req: Request, _res: Response, next: NextFunction) => {
-      try {
-        if (validators.params) {
-          const parsed = await validators.params.parseAsync(req.params);
-          req.params = parsed as typeof req.params;
-        }
-        if (validators.body) {
-          req.body = await validators.body.parseAsync(req.body);
-        }
-        if (validators.query) {
-          const parsed = await validators.query.parseAsync(req.query);
-          Object.assign(req.query, parsed);
-        }
-        next();
-      } catch (error) {
-        next(error);
-      }
-    };
+    return validationMiddleware(validators);
   }
 
-  async function apiAuthenticationMiddleware(req: Request, _res: Response, next: NextFunction) {
-    try {
-      let token: string = "";
-
-      if (!req.headers.authorization) {
-        throw new UnauthorizedError("Authorization header required!");
-      }
-      if (req.headers.authorization.split(" ").length !== 2) {
-        throw new UnauthorizedError("Must use bearer token authentication!");
-      }
-      if (!req.headers.authorization.startsWith("Bearer")) {
-        throw new UnauthorizedError("Must use bearer token authentication!");
-      }
-      const tokenValue = req.headers.authorization.split(" ")[1];
-      if (!tokenValue) {
-        throw new UnauthorizedError("Must use bearer token authentication!");
-      }
-      token = tokenValue;
-
-      const validatedUser = await authService.validateKey(token);
-      if (!validatedUser) {
-        throw new UnauthorizedError("Invalid or revoked API key!");
-      }
-      req.user = validatedUser;
-
-      next();
-    } catch (e) {
-      next(e);
-    }
-  }
-
-  // Append-only audit log of authenticated API calls — used to render the
-  // user's "recent activity" panel on /dashboard. Fire-and-forget INSERT on
-  // response finish; failures are logged but never break the response.
-  function apiAuditLogMiddleware(req: Request, res: Response, next: NextFunction): void {
-    const start = Date.now();
-    res.on("finish", () => {
-      if (req.user == null) return;
-      const userId = req.user.id;
-      const responseTimeMs = Date.now() - start;
-      const ipAddress = req.ip ?? req.socket.remoteAddress ?? null;
-      const userAgent = req.get("user-agent")?.slice(0, 512) ?? null;
-      void apiCallLogRepository
-        .create({
-          user_id: userId,
-          method: req.method,
-          endpoint: req.originalUrl.slice(0, 512),
-          status_code: res.statusCode,
-          response_time_ms: responseTimeMs,
-          ip_address: ipAddress,
-          user_agent: userAgent,
-        })
-        .catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          logger.error("Failed to record api call log", { error: message });
-        });
-    });
-    next();
-  }
-
-  async function hostNameMiddleware(req: Request, _res: Response, next: NextFunction) {
+  function hostNameMiddleware(req: Request, _res: Response, next: NextFunction): void {
+    // Memoize on app.locals — single-process, single connection identity.
+    // No DB, no cross-restart persistence needed.
     if (req.app.locals.hostname == null) {
-      const cached = await cache.get(HOSTNAME_CACHE_KEY);
-      if (cached == null) {
-        const resolved = helpers.getHostName(req);
-        await cache.set(HOSTNAME_CACHE_KEY, resolved);
-        req.app.locals.hostname = resolved;
-      } else {
-        req.app.locals.hostname = cached;
-      }
+      req.app.locals.hostname = helpers.getHostName(req);
     }
     next();
-  }
-
-  function sessionMiddleware() {
-    const store = new ConnectSessionKnexStore({
-      knex,
-      tableName: "sessions",
-      createTable: true,
-      cleanupInterval: 3600000, // 1 hour
-    });
-
-    return session({
-      name: configuration.session.name,
-      secret: configuration.session.secret,
-      resave: false,
-      saveUninitialized: false,
-      store,
-      proxy: configuration.app.env === "production",
-      cookie: {
-        path: "/",
-        domain:
-          configuration.app.env === "production" ? `.${configuration.session.domain}` : undefined,
-        httpOnly: true,
-        secure: configuration.app.env === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      },
-    });
-  }
-
-  const { csrfSynchronisedProtection, generateToken } = csrfSync({
-    getTokenFromRequest: (req: Request) => {
-      if (req.body && req.body._csrf) {
-        return req.body._csrf;
-      }
-      const csrfHeader = req.headers["x-csrf-token"];
-      if (typeof csrfHeader === "string") {
-        return csrfHeader;
-      }
-      return undefined;
-    },
-  });
-
-  function csrfMiddleware(req: Request, res: Response, next: NextFunction): void {
-    if (req.path.startsWith("/api/")) {
-      return next();
-    }
-
-    try {
-      res.locals.csrfToken = generateToken(req);
-      next();
-    } catch {
-      res.locals.csrfToken = "";
-      next();
-    }
-  }
-
-  function csrfValidationMiddleware(req: Request, res: Response, next: NextFunction): void {
-    if (req.path.startsWith("/api/")) {
-      return next();
-    }
-
-    if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
-      return next();
-    }
-
-    csrfSynchronisedProtection(req, res, (err: unknown) => {
-      if (err) {
-        if (err instanceof Error) {
-          logger.error(err);
-        }
-        req.flash("error", "Invalid form submission. Please refresh the page and try again.");
-        return res.redirect("back");
-      }
-      next();
-    });
-  }
-
-  async function sessionAuthenticationMiddleware(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      const sessionUser = req.session?.user;
-
-      if (!sessionUser) {
-        res.redirect("/login");
-        return;
-      }
-
-      const user = await userRepository.findById(sessionUser.id);
-
-      if (!user) {
-        req.session?.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      next();
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async function sessionAdminAuthenticationMiddleware(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      const sessionUser = req.session?.user;
-
-      if (!sessionUser || !sessionUser.admin) {
-        res.redirect("/login");
-        return;
-      }
-
-      const user = await userRepository.findById(sessionUser.id);
-
-      if (!user || !user.admin) {
-        req.session?.destroy(() => {
-          res.redirect("/login");
-        });
-        return;
-      }
-
-      // Attach user to res.locals for templates
-      res.locals.user = user;
-
-      next();
-    } catch (error) {
-      next(error);
-    }
   }
 
   const currentYear = new Date().getFullYear();
 
-  async function appLocalStateMiddleware(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      const sessionUser = req.session?.user;
-      let user = null;
-
-      if (sessionUser) {
-        user = (await userRepository.findById(sessionUser.id)) ?? null;
-      }
-
-      // Note: Do NOT call req.flash() here - it consumes the messages!
-      // Flash messages are passed explicitly by routes via messages: req.flash()
-      res.locals.state = {
-        domain: configuration.app.domain,
-        user,
-        currentYear,
-        env: configuration.app.env,
-        cloudflareTurnstileSiteKey: configuration.cloudflare.turnstileSiteKey,
-      };
-
-      next();
-    } catch {
-      res.locals.state = {
-        user: null,
-        currentYear,
-        env: configuration.app.env,
-        cloudflareTurnstileSiteKey: configuration.cloudflare.turnstileSiteKey,
-      };
-      next();
-    }
+  function appLocalStateMiddleware(_req: Request, res: Response, next: NextFunction): void {
+    res.locals.state = {
+      domain: configuration.app.domain,
+      currentYear,
+      env: configuration.app.env,
+    };
+    next();
   }
 
   function cacheControlMiddleware(maxAgeSeconds: number = ONE_DAY_SECONDS) {
@@ -524,7 +224,7 @@ export function createMiddleware(
   }
 
   function apiCacheControlMiddleware(_req: Request, res: Response, next: NextFunction): void {
-    res.set("Cache-Control", `private, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
+    res.set("Cache-Control", `public, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
     next();
   }
 
@@ -534,80 +234,17 @@ export function createMiddleware(
     next();
   }
 
-  function sameOriginMiddleware(req: Request, res: Response, next: NextFunction): void {
-    const fetchSite = req.headers["sec-fetch-site"];
-    if (fetchSite !== undefined && fetchSite !== "same-origin") {
-      res.status(403).json({
-        status: "fail",
-        request_url: req.originalUrl,
-        message: "Cross-origin requests are not allowed for this resource.",
-        errors: [],
-        data: [],
-      });
-      return;
-    }
-    next();
-  }
-
-  async function turnstileMiddleware(
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
-    try {
-      if (configuration.app.env !== "production") {
-        logger.info("Turnstile: skipping in non-production environment");
-        return next();
-      }
-
-      if (req.method === "GET") {
-        return next();
-      }
-
-      const redirectUrl = req.get("referer") || "/login";
-
-      const token = req.body["cf-turnstile-response"];
-      if (!token) {
-        req.flash("error", "Turnstile verification failed: Missing token");
-        return res.redirect(redirectUrl);
-      }
-
-      const cfIp = req.headers["cf-connecting-ip"];
-      const ip = (typeof cfIp === "string" ? cfIp : undefined) ?? req.ip;
-      await helpers.verifyTurnstileToken(token, ip);
-
-      next();
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error(error);
-      }
-      const redirectUrl = req.get("referer") || "/login";
-      req.flash("error", "Turnstile verification failed. Please try again.");
-      return res.redirect(redirectUrl);
-    }
-  }
-
   return {
     requestLoggerMiddleware,
     rateLimitMiddleware,
-    authRateLimitMiddleware,
     notFoundMiddleware,
     errorMiddleware,
     validationMiddleware,
     apiValidationMiddleware,
-    apiAuthenticationMiddleware,
-    apiAuditLogMiddleware,
     hostNameMiddleware,
-    sessionMiddleware,
-    csrfMiddleware,
-    csrfValidationMiddleware,
-    sessionAuthenticationMiddleware,
-    sessionAdminAuthenticationMiddleware,
     appLocalStateMiddleware,
     cacheControlMiddleware,
     apiCacheControlMiddleware,
     noCacheMiddleware,
-    sameOriginMiddleware,
-    turnstileMiddleware,
   };
 }
