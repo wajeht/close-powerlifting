@@ -166,6 +166,15 @@ export function warmRouteStatuses(baseUrl: string): void {
   });
 }
 
+// Sync readout of the cached health summary. Used by the nav dot so that
+// every page render can show "all healthy / degraded / unknown" without
+// triggering a probe sweep on the request path. Returns null until the
+// first probe completes.
+export function getCachedRouteHealth(): boolean | null {
+  if (routeCache == null) return null;
+  return routeCache.groups.every((g) => g.routes.every((r) => r.status));
+}
+
 export function createHealthCheckService(store: DataStoreType) {
   function getHealthCheck(): HealthCheckData {
     const ready = store.tryGet() != null;

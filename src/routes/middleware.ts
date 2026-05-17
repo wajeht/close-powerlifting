@@ -11,6 +11,7 @@ import { configuration } from "../configuration";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { AppError } from "../error";
+import { getCachedRouteHealth } from "./api/health-check/health-check.service";
 
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
@@ -207,6 +208,9 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
       domain: configuration.app.domain,
       currentYear,
       env: configuration.app.env,
+      // Cached snapshot of the route health for the nav status dot.
+      // Reads only — never triggers a probe on the request path.
+      routeHealth: getCachedRouteHealth(),
     };
     next();
   }
