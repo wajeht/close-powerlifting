@@ -8,6 +8,7 @@ import type { Knex } from "knex";
 import { z, ZodError } from "zod";
 
 import { configuration } from "../configuration";
+import type { ApiCallLogRepositoryType } from "../db/api-call-log";
 import type { CacheType } from "../db/cache";
 import type { UserRepositoryType } from "../db/user";
 import type { AuthServiceType } from "./auth/auth.service";
@@ -39,6 +40,7 @@ export interface MiddlewareType {
     validators: RequestValidators,
   ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
   apiAuthenticationMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  apiAuditLogMiddleware: (req: Request, res: Response, next: NextFunction) => void;
   hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   sessionMiddleware: () => ReturnType<typeof session>;
   csrfMiddleware: (req: Request, res: Response, next: NextFunction) => void;
@@ -66,6 +68,7 @@ export interface MiddlewareType {
 export function createMiddleware(
   cache: CacheType,
   userRepository: UserRepositoryType,
+  apiCallLogRepository: ApiCallLogRepositoryType,
   helpers: HelpersType,
   logger: LoggerType,
   knex: Knex,
@@ -297,6 +300,35 @@ export function createMiddleware(
     } catch (e) {
       next(e);
     }
+  }
+
+  // Append-only audit log of authenticated API calls — used to render the
+  // user's "recent activity" panel on /dashboard. Fire-and-forget INSERT on
+  // response finish; failures are logged but never break the response.
+  function apiAuditLogMiddleware(req: Request, res: Response, next: NextFunction): void {
+    const start = Date.now();
+    res.on("finish", () => {
+      if (req.user == null) return;
+      const userId = req.user.id;
+      const responseTimeMs = Date.now() - start;
+      const ipAddress = req.ip ?? req.socket.remoteAddress ?? null;
+      const userAgent = req.get("user-agent")?.slice(0, 512) ?? null;
+      void apiCallLogRepository
+        .create({
+          user_id: userId,
+          method: req.method,
+          endpoint: req.originalUrl.slice(0, 512),
+          status_code: res.statusCode,
+          response_time_ms: responseTimeMs,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+        })
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          logger.error("Failed to record api call log", { error: message });
+        });
+    });
+    next();
   }
 
   async function hostNameMiddleware(req: Request, _res: Response, next: NextFunction) {
@@ -564,6 +596,7 @@ export function createMiddleware(
     validationMiddleware,
     apiValidationMiddleware,
     apiAuthenticationMiddleware,
+    apiAuditLogMiddleware,
     hostNameMiddleware,
     sessionMiddleware,
     csrfMiddleware,

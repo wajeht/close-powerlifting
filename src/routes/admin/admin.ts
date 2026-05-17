@@ -9,12 +9,14 @@ import {
   cacheKeyValidation,
   cacheQueryValidation,
   ingestRunsQueryValidation,
+  userHistoryQueryValidation,
 } from "./admin.validation";
 
 export function createAdminRouter(context: AppContext) {
   const middleware = createMiddleware(
     context.cache,
     context.userRepository,
+    context.apiCallLogRepository,
     context.helpers,
     context.logger,
     context.knex,
@@ -24,6 +26,7 @@ export function createAdminRouter(context: AppContext) {
   const adminService = createAdminService(
     context.knex,
     context.userRepository,
+    context.apiCallLogRepository,
     context.cache,
     context.authService,
     context.logger,
@@ -112,9 +115,14 @@ export function createAdminRouter(context: AppContext) {
   router.get(
     "/admin/users/:id",
     middleware.sessionAdminAuthenticationMiddleware,
-    middleware.validationMiddleware({ params: userIdParamValidation }),
+    middleware.validationMiddleware({
+      params: userIdParamValidation,
+      query: userHistoryQueryValidation,
+    }),
     async (req: Request, res: Response) => {
       const id = req.params.id as unknown as number;
+      const page = req.query.page as number | undefined;
+      const search = req.query.search as string | undefined;
 
       const user = await adminService.getUserById(id);
       if (!user) {
@@ -122,10 +130,15 @@ export function createAdminRouter(context: AppContext) {
         return res.redirect("/admin/users");
       }
 
+      const { calls, pagination } = await adminService.getUserApiCallHistory(id, { page, search });
+
       return res.render("admin/user-details.html", {
         title: `User: ${user.name}`,
         path: "/admin/users",
         viewedUser: user,
+        calls,
+        pagination,
+        search: search || "",
         messages: req.flash(),
         layout: "_layouts/authenticated.html",
       });
