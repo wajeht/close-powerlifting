@@ -48,10 +48,10 @@ COPY --chown=node:node --from=build /usr/src/app/src/routes ./src/routes
 
 # Pre-built data snapshot — committed to the repo by the weekly
 # update-data.yml workflow. The loader reads this on boot; the container
-# never touches the network. Copied to dist/src/data/snapshot so the
-# loader's __dirname-relative resolution finds the JSON next to the
-# compiled JS.
-COPY --chown=node:node --from=build /usr/src/app/dist/src/data/snapshot ./dist/src/data/snapshot
+# never touches the network. tsgo doesn't move JSON, so copy from src/
+# straight into dist/ where the loader's __dirname-relative resolution
+# expects it.
+COPY --chown=node:node --from=build /usr/src/app/src/data/snapshot ./dist/src/data/snapshot
 
 USER node
 
