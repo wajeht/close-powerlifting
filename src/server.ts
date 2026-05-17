@@ -30,8 +30,11 @@ function handleUncaughtException(error: Error, origin: string): void {
 }
 
 function handleUnhandledRejection(reason: unknown): void {
+  // Log only — do NOT exit. A single rejected promise (e.g. a transient
+  // SQLite lock during the nightly ingest blocking a session write) should
+  // not bring the whole server down. The triggering request still fails
+  // for that one user; everyone else keeps serving.
   context.logger.error("Unhandled Rejection", reason);
-  process.exit(1);
 }
 
 async function main(): Promise<void> {
