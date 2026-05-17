@@ -1,8 +1,7 @@
-// Loads the pre-built snapshot files committed to the repo. Built by
+// Loads the pre-built snapshot committed to the repo. Built by
 // scripts/build-snapshot.ts and refreshed weekly by a GitHub Actions
-// workflow. The server picks this up at boot in preference to downloading
-// + parsing the OPL CSV — so a container with the snapshot baked in
-// reaches /healthz=200 in seconds instead of minutes.
+// workflow. The runtime never touches the network — if the snapshot
+// files aren't present, the loader fails fast.
 //
 // The snapshot lives as plain JSON files alongside this module:
 //
@@ -11,10 +10,6 @@
 //   entries.json   — column store (one array per field); rebuilt into
 //                    Entry[] when we materialise the runtime AppData
 //   meta.json      — sourceLastModified / builtAt / counts
-//
-// Returns null if the snapshot files aren't present (fresh clone before
-// the first build, or local dev). The runtime loader falls back to the
-// CSV download in that case.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -90,10 +85,10 @@ interface EntriesColumns {
   goodlift: (number | null)[];
 }
 
-// Returns the path on disk that holds the snapshot. Resolves to the source
-// tree in dev (src/data/snapshot) and the compiled tree in prod
-// (dist/src/data/snapshot) via __dirname — the JSON files are copied
-// alongside the compiled JS by the Dockerfile.
+// Resolves the snapshot files relative to __dirname so this works in both
+// the source tree (src/data/snapshot) and the compiled tree
+// (dist/src/data/snapshot) — the JSON is copied alongside the compiled
+// JS by the Dockerfile.
 export function snapshotExists(): boolean {
   return (
     fs.existsSync(LIFTERS_FILE) &&
@@ -104,8 +99,7 @@ export function snapshotExists(): boolean {
 }
 
 // Reads the snapshot files and builds the runtime AppData with all the
-// precomputed indexes. Throws if any file is missing or malformed — call
-// snapshotExists() first to fall back to the CSV path cleanly.
+// precomputed indexes. Throws if any file is missing or malformed.
 export function loadSnapshot(logger: LoggerType): AppData {
   const startedAt = Date.now();
 
@@ -156,7 +150,7 @@ export function loadSnapshot(logger: LoggerType): AppData {
 // V8 picks up the monomorphic shape after a few thousand rows so per-row
 // access stays fast on the read path.
 function fromColumns(cols: EntriesColumns): Entry[] {
-  const entries: Entry[] = new Array<Entry>(cols.count);
+  const entries: Entry[] = Array.from<Entry>({ length: cols.count });
   for (let i = 0; i < cols.count; i++) {
     entries[i] = {
       lifterId: cols.lifterId[i]!,

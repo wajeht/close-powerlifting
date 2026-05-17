@@ -57,14 +57,9 @@ USER node
 
 EXPOSE 80
 
-# Generous start_period: first boot downloads + parses the 3.9M-row CSV
-# (~90 s warm-up), during which /healthz returns 503 by design.
-HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
   CMD curl -fsS http://localhost:80/healthz || exit 1
 
 ENV APP_ENV=production
 
-# Live AppData is ~3.9 GB; peak during a rebuild ~9–10 GB. 12 GiB gives
-# V8 enough room without thrashing. The container's memory limit (in
-# docker-compose.yml) needs to be at least this big.
 CMD ["node", "--no-warnings", "--max-old-space-size=12288", "dist/src/server.js"]

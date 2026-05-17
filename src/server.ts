@@ -37,23 +37,21 @@ function handleUnhandledRejection(reason: unknown): void {
 async function main(): Promise<void> {
   process.title = "close-powerlifting";
 
-  // Bind signal/warning handlers before the slow CSV load so a Ctrl-C
-  // during boot still exits cleanly.
   process.on("warning", handleWarning);
   process.on("uncaughtException", handleUncaughtException);
   process.on("unhandledRejection", handleUnhandledRejection);
 
-  // Start the HTTP server first so /healthz can return 503 ("warming up")
-  // while we parse the CSV. The route handlers check store.tryGet() and
-  // respond appropriately if the store isn't ready yet.
+  // Start the HTTP server first so /healthz can return 503 while the
+  // snapshot is loading. Route handlers check store.tryGet() and respond
+  // 503 if the store isn't ready yet.
   const serverInfo = await createServer(context);
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));
   process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
   process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
 
-  // Fire-and-forget initial load. setAppData inside the loader flips
-  // /healthz from 503 → 200 once the snapshot is populated.
+  // Fire-and-forget initial load. The loader flips /healthz from 503 → 200
+  // once the snapshot is populated.
   context.loader
     .loadInitial()
     .then((result) => {
