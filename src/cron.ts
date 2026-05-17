@@ -1,73 +1,41 @@
+// Cron service. One nightly job: download the OpenPowerlifting CSV and
+// either reload the in-memory store in-process, or trigger a clean
+// container restart so the boot path re-parses the freshly-downloaded file.
+// Strategy is chosen by the loader (see src/data/loader.ts); the cron
+// just kicks it.
+
 import cron, { ScheduledTask } from "node-cron";
 
-import { configuration } from "./configuration";
-import type { CacheType } from "./db/cache";
-import type { UserRepositoryType } from "./db/user";
 import type { LoggerType } from "./utils/logger";
-import type { IngestServiceType } from "./utils/ingest";
-import { createHealthCheckService } from "./routes/api/health-check/health-check.service";
-import { HOSTNAME_CACHE_KEY } from "./routes/middleware";
+import type { DataStoreType } from "./data/store";
 
 export interface CronType {
   start: () => void;
   stop: () => void;
   getStatus: () => { isRunning: boolean; jobCount: number };
   tasks: {
-    refreshHealthCheck: () => Promise<void>;
-    runIngest: () => Promise<void>;
+    refresh: () => Promise<void>;
   };
 }
 
-export function createCron(
-  cache: CacheType,
-  userRepository: UserRepositoryType,
-  logger: LoggerType,
-  ingest: IngestServiceType,
-): CronType {
+export function createCron(logger: LoggerType, _store: DataStoreType): CronType {
   let cronJobs: ScheduledTask[] = [];
   let isRunning = false;
 
-  const healthCheckService = createHealthCheckService(cache, logger);
-
-  async function refreshHealthCheckTask() {
+  async function refreshTask(): Promise<void> {
     try {
-      logger.info("cron job started: refreshHealthCheck");
-
-      const hostname = await cache.get(HOSTNAME_CACHE_KEY);
-      if (!hostname) {
-        logger.warn("refreshHealthCheck: hostname not cached yet, skipping");
-        return;
-      }
-
-      const adminUser = await userRepository.findByEmail(configuration.app.adminEmail);
-      if (!adminUser?.api_key) {
-        logger.warn("refreshHealthCheck: admin user or API key not found, skipping");
-        return;
-      }
-
-      await healthCheckService.refreshAPIStatus({ apiKey: adminUser.api_key, url: hostname });
-
-      logger.info("cron job completed: refreshHealthCheck");
+      logger.info("cron job started: refresh");
+      // TODO (phase 4): wire to loader.refresh() once it exists.
+      logger.info("cron job completed: refresh (no-op until loader is wired)");
     } catch (error) {
-      logger.error("cron job failed: refreshHealthCheck", error);
-    }
-  }
-
-  async function runIngestTask() {
-    try {
-      logger.info("cron job started: runIngest");
-      const result = await ingest.runNightly();
-      logger.info(
-        `cron job completed: runIngest (status=${result.status}, lifts=${result.stats.lifts}, durationMs=${result.durationMs})`,
-      );
-    } catch (error) {
-      logger.error("cron job failed: runIngest", error);
+      logger.error("cron job failed: refresh", error);
     }
   }
 
   function start(): void {
-    cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask));
-    cronJobs.push(cron.schedule("0 4 * * *", runIngestTask));
+    // 04:00 UTC — after OpenPowerlifting's nightly publish, before US-morning
+    // traffic. Same slot as the previous SQLite-backed ingest used.
+    cronJobs.push(cron.schedule("0 4 * * *", refreshTask));
 
     isRunning = true;
     logger.info("cron service started", { jobs: cronJobs.length });
@@ -90,9 +58,6 @@ export function createCron(
     start,
     stop,
     getStatus,
-    tasks: {
-      refreshHealthCheck: refreshHealthCheckTask,
-      runIngest: runIngestTask,
-    },
+    tasks: { refresh: refreshTask },
   };
 }
