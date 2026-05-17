@@ -126,7 +126,7 @@ describe("federations service refreshCacheKey", () => {
     expect(await federationService.refreshCacheKey("status")).toBe(false);
   });
 
-  it("returns true for federations-list without re-scraping (lifts now)", async () => {
+  it("returns true for federations-list", async () => {
     const result = await federationService.refreshCacheKey("federations-list");
     expect(result).toBe(true);
   });

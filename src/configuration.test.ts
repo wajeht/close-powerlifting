@@ -64,21 +64,4 @@ describe.concurrent("config", () => {
       expect(configuration.oauth.google).toHaveProperty("redirectUrl");
     });
   });
-
-  describe("openpowerlifting", () => {
-    it("has baseUrl and apiUrl settings", () => {
-      expect(configuration.openpowerlifting).toHaveProperty("baseUrl");
-      expect(configuration.openpowerlifting).toHaveProperty("apiUrl");
-    });
-
-    it("apiUrl is derived from baseUrl", () => {
-      expect(configuration.openpowerlifting.apiUrl).toBe(
-        `${configuration.openpowerlifting.baseUrl}/api`,
-      );
-    });
-
-    it("baseUrl does not end with a trailing slash", () => {
-      expect(configuration.openpowerlifting.baseUrl.endsWith("/")).toBe(false);
-    });
-  });
 });

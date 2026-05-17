@@ -31,17 +31,3 @@ export class APICallsExceededError extends AppError {
     super(message, 429);
   }
 }
-
-export class ScraperError extends AppError {
-  constructor(
-    message: string,
-    statusCode: number,
-    public path: string,
-  ) {
-    super(message, statusCode);
-  }
-
-  isNotFound(): boolean {
-    return this.statusCode === 404;
-  }
-}

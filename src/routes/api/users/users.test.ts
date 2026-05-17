@@ -407,7 +407,7 @@ describe("GET /api/users/:username/rank", () => {
     expect(response.body.data).toHaveProperty("global_rank");
   });
 
-  it("global_rank is computed from the lifts table (positive integer)", async () => {
+  it("returns a positive integer global_rank", async () => {
     const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/rank");
     expect(response.body.data.global_rank).toBeGreaterThanOrEqual(1);
     expect(Number.isInteger(response.body.data.global_rank)).toBe(true);

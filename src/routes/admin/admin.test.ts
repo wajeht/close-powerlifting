@@ -512,7 +512,7 @@ describe("Admin Routes", () => {
         });
       });
 
-      it("should accept refresh requests for migrated cache keys (no-op after DB-backed migration)", async () => {
+      it("should redirect back to /admin/cache after refresh", async () => {
         const cachePage = await agent.get("/admin/cache");
         const csrfToken = extractCsrfToken(cachePage.text);
 

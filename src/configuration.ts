@@ -18,12 +18,6 @@ function requireEnv(name: string, defaultValue?: string): string {
   return value || defaultValue || "";
 }
 
-function normalizeUrl(url: string): string {
-  return url.endsWith("/") ? url.slice(0, -1) : url;
-}
-
-const openpowerliftingUrl = normalizeUrl(process.env.OPENPOWERLIFTING_URL || "");
-
 export const configuration = {
   app: {
     port: parseInt(process.env.APP_PORT || "80", 10),
@@ -62,11 +56,6 @@ export const configuration = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
       redirectUrl: process.env.GOOGLE_OAUTH_REDIRECT_URL || "",
     },
-  } as const,
-
-  openpowerlifting: {
-    baseUrl: openpowerliftingUrl,
-    apiUrl: `${openpowerliftingUrl}/api`,
   } as const,
 
   cloudflare: {
