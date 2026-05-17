@@ -18,4 +18,4 @@ EXPOSE 80
 
 CMD ["npm", "run", "dev"]
 
-HEALTHCHECK CMD curl -f http://localhost:80/api/health-check || exit 1
+HEALTHCHECK CMD curl -f http://localhost:80/healthz || exit 1
