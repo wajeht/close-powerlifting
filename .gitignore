@@ -17,6 +17,7 @@ opencode*
 .mcp.json
 .vite-hooks/
 tmp/
+src/data/snapshot/.tmp-*
 dcdb.sh
 docs/opl-data-ingest-plan.md
 docs/opl-data-ingest-plan-v3.md
