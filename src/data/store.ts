@@ -147,6 +147,8 @@ export interface DataStoreType {
   // Returns the snapshot or null. Used by /healthz to report "not ready"
   // without throwing.
   tryGet: () => AppData | null;
+  // Test-only: install an AppData directly without going through `load`.
+  set: (next: AppData) => void;
   // Test/teardown only.
   reset: () => void;
 }
@@ -219,11 +221,15 @@ export function createDataStore(logger: LoggerType): DataStoreType {
     return APP;
   }
 
+  function set(next: AppData): void {
+    APP = next;
+  }
+
   function reset(): void {
     APP = null;
   }
 
-  return { load, get, tryGet, reset };
+  return { load, get, tryGet, set, reset };
 }
 
 function snapshotExists(): boolean {
