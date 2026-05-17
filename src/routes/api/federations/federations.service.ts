@@ -190,11 +190,7 @@ export function createFederationService(knex: Knex) {
   }
 
   async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseFederationCacheKey(key);
-    if (!parsed) return false;
-    // Federations now served from lifts table; legacy cache keys are claimed
-    // without re-scraping.
-    return true;
+    return parseFederationCacheKey(key) != null;
   }
 
   return {

@@ -21,11 +21,7 @@ export function createGeneralRouter(context: AppContext) {
     context.authService,
   );
 
-  const healthCheckService = createHealthCheckService(
-    context.cache,
-    context.httpClient,
-    context.logger,
-  );
+  const healthCheckService = createHealthCheckService(context.cache, context.logger);
   const rankingService = createRankingService(context.knex);
 
   const router = express.Router();

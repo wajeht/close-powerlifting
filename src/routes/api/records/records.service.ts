@@ -240,11 +240,7 @@ export function createRecordService(knex: Knex) {
   }
 
   async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseRecordsCacheKey(key);
-    if (!parsed) return false;
-    // Records now served from lifts table; legacy cache keys are claimed
-    // without re-scraping.
-    return true;
+    return parseRecordsCacheKey(key) != null;
   }
 
   return {

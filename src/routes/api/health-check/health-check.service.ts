@@ -1,4 +1,6 @@
-import type { CacheType, HttpClientType, LoggerType } from "../../../context";
+import type { CacheType, LoggerType } from "../../../context";
+
+const FETCH_TIMEOUT_MS = 15000;
 
 interface RouteStatus {
   status: boolean;
@@ -82,11 +84,32 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
 
 export const HEALTH_CHECK_CACHE_KEY = "close-powerlifting-global-status-call-cache";
 
-export function createHealthCheckService(
-  cache: CacheType,
-  httpClient: HttpClientType,
-  logger: LoggerType,
-) {
+async function probeRoute(baseUrl: string, path: string, apiKey: string): Promise<RouteStatus> {
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      headers: { authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    const body = await response.text();
+    return {
+      status: response.ok,
+      method: "GET",
+      url: path,
+      date: response.headers.get("date") ?? new Date().toISOString(),
+      body: response.ok ? body : null,
+    };
+  } catch {
+    return {
+      status: false,
+      method: "GET",
+      url: path,
+      date: new Date().toISOString(),
+      body: null,
+    };
+  }
+}
+
+export function createHealthCheckService(cache: CacheType, logger: LoggerType) {
   async function getAPIStatus({
     apiKey,
     url,
@@ -110,16 +133,7 @@ export function createHealthCheckService(
     }
 
     for (const routeDefinition of ROUTE_DEFINITIONS) {
-      const result = await httpClient.fetchWithAuth(url, routeDefinition.path, apiKey);
-
-      const routeStatus: RouteStatus = {
-        status: Boolean(result?.ok),
-        method: "GET",
-        url: routeDefinition.path,
-        date: result?.date || new Date().toISOString(),
-        body: result?.ok ? (result.body ?? null) : null,
-      };
-
+      const routeStatus = await probeRoute(url, routeDefinition.path, apiKey);
       groupMap.get(routeDefinition.group)?.push(routeStatus);
     }
 

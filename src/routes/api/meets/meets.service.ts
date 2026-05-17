@@ -262,11 +262,7 @@ export function createMeetService(knex: Knex) {
   }
 
   async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseMeetCacheKey(key);
-    if (!parsed) return false;
-    // Meets now served from lifts table; legacy cache keys are claimed
-    // without re-scraping.
-    return true;
+    return parseMeetCacheKey(key) != null;
   }
 
   return {

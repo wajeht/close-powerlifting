@@ -4,7 +4,6 @@ import { knex } from "./tests/test-setup";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
 import type { LoggerType } from "./utils/logger";
-import type { HttpClientType } from "./utils/http-client";
 import type { IngestServiceType } from "./utils/ingest";
 
 function createTestCache(): CacheType {
@@ -58,23 +57,15 @@ function createTestLogger(): LoggerType {
   } as unknown as LoggerType;
 }
 
-function createTestHttpClient(): HttpClientType {
-  return {
-    fetchWithAuth: vi.fn().mockResolvedValue({ ok: true, url: "", date: null, body: null }),
-  } as unknown as HttpClientType;
-}
-
 describe("cron", () => {
   let cache: CacheType;
   let logger: LoggerType;
-  let httpClient: HttpClientType;
   let userRepository: UserRepositoryType;
   let ingest: IngestServiceType;
 
   beforeEach(() => {
     cache = createTestCache();
     logger = createTestLogger();
-    httpClient = createTestHttpClient();
     userRepository = {
       findByEmail: vi.fn().mockResolvedValue(null),
     } as unknown as UserRepositoryType;
@@ -96,7 +87,7 @@ describe("cron", () => {
 
   describe("createCron", () => {
     it("should create cron with correct interface", () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
 
       expect(cron).toHaveProperty("start");
       expect(cron).toHaveProperty("stop");
@@ -105,13 +96,13 @@ describe("cron", () => {
     });
 
     it("should return not running status initially", () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
 
       expect(cron.getStatus()).toEqual({ isRunning: false, jobCount: 0 });
     });
 
     it("should update status after start", () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       cron.start();
 
       const status = cron.getStatus();
@@ -122,7 +113,7 @@ describe("cron", () => {
     });
 
     it("should update status after stop", () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       cron.start();
       cron.stop();
 
@@ -130,7 +121,7 @@ describe("cron", () => {
     });
 
     it("should log when started and stopped", () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       cron.start();
 
       expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 3 });
@@ -153,13 +144,13 @@ describe("cron", () => {
 
     it("claims status key", async () => {
       await seedCache(cache, ["status"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should refresh federations list from cache", async () => {
       await seedCache(cache, ["federations-list"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("federations-list");
@@ -168,7 +159,7 @@ describe("cron", () => {
 
     it("should refresh records from cache", async () => {
       await seedCache(cache, ["records"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("records");
@@ -177,13 +168,13 @@ describe("cron", () => {
 
     it("claims rankings keys", async () => {
       await seedCache(cache, ["rankings-1-100-lbs", "rankings-2-100-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should refresh filtered rankings keys", async () => {
       await seedCache(cache, ["rankings/raw-1-100-lbs", "rankings/raw/men-1-100-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached1 = await cache.get("rankings/raw-1-100-lbs");
@@ -194,31 +185,31 @@ describe("cron", () => {
 
     it("claims federation keys", async () => {
       await seedCache(cache, ["federation-ipf", "federation-uspa-2024"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims meet keys", async () => {
       await seedCache(cache, ["meet-uspa/1969"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims user profile keys", async () => {
       await seedCache(cache, ["user-johnhaack-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims records keys", async () => {
       await seedCache(cache, ["records/raw", "records/raw/men"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should skip internal cache keys", async () => {
       await seedCache(cache, ["hostname", "close-powerlifting-global-status-call-cache", "status"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       // Only status should be refreshed
@@ -232,7 +223,7 @@ describe("cron", () => {
 
     it("should log completion with results summary", async () => {
       await seedCache(cache, ["status", "federations-list", "records"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -250,7 +241,7 @@ describe("cron", () => {
     it("should report cache-key counts in summary", async () => {
       await seedCache(cache, ["status", "records", "federation-ipf"]);
 
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -264,7 +255,7 @@ describe("cron", () => {
     });
 
     it("should do nothing when cache is empty", async () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -280,13 +271,13 @@ describe("cron", () => {
     // the lifts table; legacy fetchJson-based assertions no longer apply.
     it("claims deep filter path rankings keys", async () => {
       await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should warn on invalid rankings key format", async () => {
       await seedCache(cache, ["rankings-invalid"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -296,7 +287,7 @@ describe("cron", () => {
 
     it("should warn on rankings key with non-numeric page/perPage", async () => {
       await seedCache(cache, ["rankings-abc-def-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -310,32 +301,31 @@ describe("cron", () => {
         "records/raw/expanded-classes/men",
         "records/all-tested/women",
       ]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
-    // comes from the lifts table; we only verify the cron didn't scrape.
     it("claims federation-365strong", async () => {
       await seedCache(cache, ["federation-365strong"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims deep meet path keys", async () => {
       await seedCache(cache, ["meet-wrpf-ru/2301", "meet-gpc/aus-vic/2023"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims usernames-with-hyphens profile keys", async () => {
       await seedCache(cache, ["user-john-doe-lbs"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims user search keys", async () => {
       await seedCache(cache, ["users-search-john%20haack-2-5-kg"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
       expect(logger.warn).not.toHaveBeenCalledWith(
         "refreshCacheKey: unknown key type: users-search-john%20haack-2-5-kg",
@@ -344,7 +334,7 @@ describe("cron", () => {
 
     it("should warn on invalid user search cache keys", async () => {
       await seedCache(cache, ["users-search-haack-invalid"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -354,7 +344,7 @@ describe("cron", () => {
 
     it("should warn on unknown key types", async () => {
       await seedCache(cache, ["unknown-key-type"]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -373,7 +363,7 @@ describe("cron", () => {
         "user-johnhaack-lbs",
         "rankings-1-100-lbs",
       ]);
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -389,7 +379,7 @@ describe("cron", () => {
 
   describe("refreshHealthCheck task", () => {
     it("should skip when hostname is not cached", async () => {
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -400,7 +390,7 @@ describe("cron", () => {
     it("should skip when admin user is not found", async () => {
       await cache.set("hostname", "http://localhost");
 
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -414,7 +404,7 @@ describe("cron", () => {
         api_key: "test-key",
       } as never);
 
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.info).toHaveBeenCalledWith("cron job completed: refreshHealthCheck");
@@ -424,7 +414,7 @@ describe("cron", () => {
       await cache.set("hostname", "http://localhost");
       vi.mocked(userRepository.findByEmail).mockRejectedValueOnce(new Error("db error"));
 
-      const cron = createCron(cache, userRepository, logger, httpClient, ingest, knex);
+      const cron = createCron(cache, userRepository, logger, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.error).toHaveBeenCalledWith(

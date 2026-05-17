@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vite-plus/test";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vite-plus/test";
 
-import type { CacheType, HttpClientType, LoggerType } from "../../../context";
+import type { CacheType, LoggerType } from "../../../context";
 import { createHealthCheckService } from "./health-check.service";
 
 function createMockCache(): CacheType {
@@ -40,27 +40,27 @@ function createMockLogger(): LoggerType {
   };
 }
 
-function createMockHttpClient(
-  responses: { ok: boolean; date: string; body?: string | null }[],
-): HttpClientType {
-  let callIndex = 0;
-  return {
-    fetchWithAuth: vi.fn(() => {
-      const response = responses[callIndex] || { ok: true, date: new Date().toISOString() };
-      callIndex++;
-      return Promise.resolve({
-        ok: response.ok,
-        url: "",
-        date: response.date,
-        body: response.body !== undefined ? response.body : '{"status":"success"}',
-      });
-    }),
-  } as unknown as HttpClientType;
+function mockFetch(
+  options: { ok?: boolean; date?: string; body?: string | null } = {},
+): ReturnType<typeof vi.spyOn> {
+  const { ok = true, date = "2024-01-01T00:00:00Z", body = '{"status":"success"}' } = options;
+  return vi.spyOn(globalThis, "fetch").mockImplementation(() =>
+    Promise.resolve(
+      new Response(body ?? "", {
+        status: ok ? 200 : 500,
+        headers: { date },
+      }),
+    ),
+  );
 }
 
 describe("health-check service", () => {
   const EXPECTED_GROUPS = ["Rankings", "Federations", "Records", "Users", "Public"];
   const TOTAL_ROUTES = 47;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -68,33 +68,28 @@ describe("health-check service", () => {
     });
 
     it("falls back to refreshAPIStatus when cache is empty", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      const fetchSpy = mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
       expect(result.length).toBe(EXPECTED_GROUPS.length);
-      expect(httpClient.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
+      expect(fetchSpy).toHaveBeenCalledTimes(TOTAL_ROUTES);
     });
 
     it("returns cached data without fetching", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      const fetchSpy = mockFetch();
       const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      const service = createHealthCheckService(cache, createMockLogger());
 
       await service.refreshAPIStatus({ apiKey: "test-key", url: "http://localhost" });
-      vi.mocked(httpClient.fetchWithAuth).mockClear();
+      fetchSpy.mockClear();
 
       const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(EXPECTED_GROUPS.length);
-      expect(httpClient.fetchWithAuth).not.toHaveBeenCalled();
+      expect(fetchSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -104,11 +99,8 @@ describe("health-check service", () => {
     });
 
     it("returns grouped route statuses", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -120,27 +112,20 @@ describe("health-check service", () => {
     });
 
     it("returns groups in correct order", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const groupNames = result.map((g: { name: string }) => g.name);
-      expect(groupNames).toEqual(EXPECTED_GROUPS);
+      expect(result.map((g) => g.name)).toEqual(EXPECTED_GROUPS);
     });
 
     it("each group has name and routes properties", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -155,11 +140,8 @@ describe("health-check service", () => {
     });
 
     it("each route has required properties", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -181,132 +163,106 @@ describe("health-check service", () => {
     });
 
     it("Rankings group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
+      const rankingsGroup = result.find((g) => g.name === "Rankings");
       expect(rankingsGroup).toBeDefined();
       expect(rankingsGroup!.routes.length).toBe(22);
     });
 
     it("Federations group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
+      const federationsGroup = result.find((g) => g.name === "Federations");
       expect(federationsGroup).toBeDefined();
       expect(federationsGroup!.routes.length).toBe(5);
     });
 
     it("Records group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
+      const recordsGroup = result.find((g) => g.name === "Records");
       expect(recordsGroup).toBeDefined();
       expect(recordsGroup!.routes.length).toBe(8);
     });
 
     it("Users group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const usersGroup = result.find((g: { name: string }) => g.name === "Users");
+      const usersGroup = result.find((g) => g.name === "Users");
       expect(usersGroup).toBeDefined();
       expect(usersGroup!.routes.length).toBe(10);
     });
 
     it("Public group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const publicGroup = result.find((g: { name: string }) => g.name === "Public");
+      const publicGroup = result.find((g) => g.name === "Public");
       expect(publicGroup).toBeDefined();
       expect(publicGroup!.routes.length).toBe(2);
     });
 
     it("sets status to true when request succeeds", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch({ ok: true });
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const allStatuses = result.flatMap((g: { routes: { status: boolean }[] }) =>
-        g.routes.map((r) => r.status),
-      );
-      expect(allStatuses.every((s: boolean) => s === true)).toBe(true);
+      const allStatuses = result.flatMap((g) => g.routes.map((r) => r.status));
+      expect(allStatuses.every((s) => s === true)).toBe(true);
     });
 
     it("sets status to false when request fails", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: false, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch({ ok: false });
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const allStatuses = result.flatMap((g: { routes: { status: boolean }[] }) =>
-        g.routes.map((r) => r.status),
-      );
-      expect(allStatuses.every((s: boolean) => s === false)).toBe(true);
+      const allStatuses = result.flatMap((g) => g.routes.map((r) => r.status));
+      expect(allStatuses.every((s) => s === false)).toBe(true);
     });
 
     it("caches the result after fetch", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
+      mockFetch();
       const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      const service = createHealthCheckService(cache, logger);
 
       await service.refreshAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
@@ -315,68 +271,47 @@ describe("health-check service", () => {
     });
 
     it("includes response body on each successful route", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({
-        ok: true,
-        date: "2024-01-01T00:00:00Z",
-        body: '{"status":"success","data":[]}',
-      });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch({ ok: true, body: '{"status":"success","data":[]}' });
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const allBodies = result.flatMap((g: { routes: { body: string | null }[] }) =>
-        g.routes.map((r) => r.body),
-      );
+      const allBodies = result.flatMap((g) => g.routes.map((r) => r.body));
       expect(allBodies.every((b) => b === '{"status":"success","data":[]}')).toBe(true);
     });
 
     it("leaves body null for failed routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({
-        ok: false,
-        date: "2024-01-01T00:00:00Z",
-        body: '{"error":"oops"}',
-      });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch({ ok: false, body: '{"error":"oops"}' });
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const allBodies = result.flatMap((g: { routes: { body: string | null }[] }) =>
-        g.routes.map((r) => r.body),
-      );
+      const allBodies = result.flatMap((g) => g.routes.map((r) => r.body));
       expect(allBodies.every((b) => b === null)).toBe(true);
     });
 
     it("new feature routes are present in rankings group", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
-      const urls = rankingsGroup!.routes.map((r: { url: string }) => r.url);
-      expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("federation=uspa"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("federation=ipf"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("age_class=40-44"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("age_class=24-34"))).toBe(true);
+      const rankingsGroup = result.find((g) => g.name === "Rankings");
+      const urls = rankingsGroup!.routes.map((r) => r.url);
+      expect(urls.some((u) => u.includes("units=kg"))).toBe(true);
+      expect(urls.some((u) => u.includes("federation=uspa"))).toBe(true);
+      expect(urls.some((u) => u.includes("federation=ipf"))).toBe(true);
+      expect(urls.some((u) => u.includes("age_class=40-44"))).toBe(true);
+      expect(urls.some((u) => u.includes("age_class=24-34"))).toBe(true);
       for (const sort of [
         "by-dots",
         "by-wilks",
@@ -388,82 +323,63 @@ describe("health-check service", () => {
         "by-bench",
         "by-deadlift",
       ]) {
-        expect(urls.some((u: string) => u.includes(sort))).toBe(true);
+        expect(urls.some((u) => u.includes(sort))).toBe(true);
       }
     });
 
     it("new feature routes are present in users group", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const usersGroup = result.find((g: { name: string }) => g.name === "Users");
-      const urls = usersGroup!.routes.map((r: { url: string }) => r.url);
-      expect(urls.some((u: string) => u.includes("include_attempts=true"))).toBe(true);
-      expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
+      const usersGroup = result.find((g) => g.name === "Users");
+      const urls = usersGroup!.routes.map((r) => r.url);
+      expect(urls.some((u) => u.includes("include_attempts=true"))).toBe(true);
+      expect(urls.some((u) => u.includes("units=kg"))).toBe(true);
     });
 
     it("derived endpoints (progression, PBs, rank, compare, fed-stats) are tracked", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const allUrls = result.flatMap((g: { routes: { url: string }[] }) =>
-        g.routes.map((r) => r.url),
-      );
+      const allUrls = result.flatMap((g) => g.routes.map((r) => r.url));
 
       expect(allUrls).toContain("/api/users/johnhaack/progression");
       expect(allUrls).toContain("/api/users/johnhaack/personal-bests");
       expect(allUrls).toContain("/api/users/johnhaack/rank");
-      expect(allUrls.some((u: string) => u.startsWith("/api/users/compare?"))).toBe(true);
+      expect(allUrls.some((u) => u.startsWith("/api/users/compare?"))).toBe(true);
       expect(allUrls).toContain("/api/federations/ipf/stats");
     });
 
     it("routes in each group have correct URL patterns", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const httpClient = createMockHttpClient(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, httpClient, logger);
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
         url: "http://localhost",
       });
 
-      const rankingsGroup = result.find((g: { name: string }) => g.name === "Rankings");
-      expect(
-        rankingsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/rankings")),
-      ).toBe(true);
+      const rankingsGroup = result.find((g) => g.name === "Rankings");
+      expect(rankingsGroup!.routes.every((r) => r.url.includes("/api/rankings"))).toBe(true);
 
-      const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
-      expect(
-        federationsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/federations")),
-      ).toBe(true);
+      const federationsGroup = result.find((g) => g.name === "Federations");
+      expect(federationsGroup!.routes.every((r) => r.url.includes("/api/federations"))).toBe(true);
 
-      const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
-      expect(
-        recordsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/records")),
-      ).toBe(true);
+      const recordsGroup = result.find((g) => g.name === "Records");
+      expect(recordsGroup!.routes.every((r) => r.url.includes("/api/records"))).toBe(true);
 
-      const usersGroup = result.find((g: { name: string }) => g.name === "Users");
-      expect(usersGroup!.routes.every((r: { url: string }) => r.url.includes("/api/users"))).toBe(
-        true,
-      );
+      const usersGroup = result.find((g) => g.name === "Users");
+      expect(usersGroup!.routes.every((r) => r.url.includes("/api/users"))).toBe(true);
     });
   });
 });

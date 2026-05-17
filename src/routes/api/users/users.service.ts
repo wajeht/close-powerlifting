@@ -749,13 +749,10 @@ export function createUserService(knex: Knex) {
     }
 
     if (parsed.kind === "rank") {
-      // Rank is computed live from the lifts table; legacy cache key is a no-op.
       return true;
     }
 
     if (parsed.kind === "search") {
-      // Search now hits the lifts FTS index; legacy cache keys are claimed
-      // without re-scraping.
       return true;
     }
 
