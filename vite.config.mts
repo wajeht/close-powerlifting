@@ -46,6 +46,7 @@ export default defineConfig({
       "./public/js/*",
       "/public/js/*",
       "src/routes/**/*.html",
+      "src/data/snapshot/**",
     ],
   },
   lint: {
@@ -182,9 +183,8 @@ export default defineConfig({
       "dist/**/*",
       "coverage/**/*",
       "node_modules/**/*",
-      "**/db.sqlite*",
       "src/tests/**/*",
-      "**/fixtures/**/*",
+      "src/data/snapshot/**",
     ],
     options: {
       typeAware: true,
