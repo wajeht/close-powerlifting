@@ -2,12 +2,16 @@ import type { FC } from "hono/jsx";
 
 import { MainLayout, type AppState } from "../_layouts/main";
 
-interface ErrorPageProps {
+export interface ErrorPageProps {
   state: AppState;
   statusCode: number;
   heading: string;
   message: string;
   errorStack?: string | null;
+}
+
+export function renderErrorPage(props: ErrorPageProps) {
+  return <ErrorPage {...props} />;
 }
 
 export const ErrorPage: FC<ErrorPageProps> = ({

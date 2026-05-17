@@ -2,6 +2,10 @@ import type { FC } from "hono/jsx";
 
 import { MainLayout, type AppState } from "../_layouts/main";
 
+export function renderRateLimitPage(state: AppState) {
+  return <RateLimitPage state={state} />;
+}
+
 export const RateLimitPage: FC<{ state: AppState }> = ({ state }) => (
   <MainLayout state={state} path="" title="Rate Limited">
     <div class="mx-auto max-w-md px-4 text-center">
