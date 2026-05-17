@@ -11,7 +11,7 @@ import {
   buildFederations,
   buildRankByMetric,
   buildRecords,
-} from "../data/indexes";
+} from "../data/store";
 import type { AppData, Entry, Lifter, Meet } from "../data/types";
 
 // Five lifters competing at three meets across two federations. Enough
