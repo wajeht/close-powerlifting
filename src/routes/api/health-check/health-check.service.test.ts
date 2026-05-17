@@ -5,17 +5,16 @@ import { createHealthCheckService } from "./health-check.service";
 
 describe("health-check service", () => {
   it("reports ready when the store is populated", () => {
-    const { store, cron } = createTestContext();
-    const service = createHealthCheckService(store, cron);
+    const { store } = createTestContext();
+    const service = createHealthCheckService(store);
     expect(service.isReady()).toBe(true);
     expect(service.getHealthCheck().data).toBe("ready");
-    expect(service.getHealthCheck().crons).toBe("started");
   });
 
   it("reports loading when the store has not been populated", () => {
-    const { store, cron } = createTestContext();
+    const { store } = createTestContext();
     store.reset();
-    const service = createHealthCheckService(store, cron);
+    const service = createHealthCheckService(store);
     expect(service.isReady()).toBe(false);
     expect(service.getHealthCheck().data).toBe("loading");
   });

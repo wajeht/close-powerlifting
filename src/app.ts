@@ -111,8 +111,6 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
     context.logger.info("=".repeat(50));
     context.logger.info(`Server running at http://localhost:${port}`);
     context.logger.info("=".repeat(50));
-
-    context.cron.start();
   });
 
   server.on("error", (error: NodeJS.ErrnoException) => {
@@ -142,7 +140,6 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
 
 export async function closeServer({ server, context }: ServerInfo): Promise<void> {
   context.logger.info("Shutting down server gracefully");
-  context.cron.stop();
 
   await new Promise<void>((resolve, reject) => {
     const shutdownTimeout = setTimeout(() => {

@@ -4,16 +4,14 @@
 
 import { createLogger, type LoggerType } from "./utils/logger";
 import { createHelper, type HelpersType } from "./utils/helpers";
-import { createCron, type CronType } from "./cron";
 import { createDataStore, type DataStoreType } from "./data/store";
 
-export type { LoggerType, HelpersType, CronType, DataStoreType };
+export type { LoggerType, HelpersType, DataStoreType };
 
 export interface AppContext {
   logger: LoggerType;
   helpers: HelpersType;
   store: DataStoreType;
-  cron: CronType;
 }
 
 let _context: AppContext | null = null;
@@ -26,9 +24,8 @@ export function createContext(): AppContext {
   const logger = createLogger();
   const helpers = createHelper();
   const store = createDataStore(logger);
-  const cron = createCron(logger, store);
 
-  _context = { logger, helpers, store, cron };
+  _context = { logger, helpers, store };
   return _context;
 }
 

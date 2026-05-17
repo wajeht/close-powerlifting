@@ -4,7 +4,7 @@ import type { AppContext } from "../../../context";
 import { createHealthCheckService } from "./health-check.service";
 
 export function createHealthCheckRouter(context: AppContext) {
-  const healthCheckService = createHealthCheckService(context.store, context.cron);
+  const healthCheckService = createHealthCheckService(context.store);
   const router = express.Router();
 
   /**
