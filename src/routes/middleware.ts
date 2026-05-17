@@ -101,8 +101,12 @@ export function createMiddleware(
   }
 
   const rateLimitMiddleware = rateLimit({
-    windowMs: 60 * 60 * 1000, // 60 minutes
-    max: 50, // Limit each IP to 50 requests per `window`
+    // 100 req/min per IP. Generous enough that a developer paging through
+    // rankings or loading a profile page with parallel requests never trips
+    // it; tight enough to discourage scraping the full dataset (3.9M rows
+    // would take >10 hours at this pace).
+    windowMs: 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     validate: { trustProxy: false },
@@ -119,10 +123,17 @@ export function createMiddleware(
       }
       return res.render("general/rate-limit.html", { title: "Rate Limited" });
     },
-    skip: (req) =>
-      configuration.app.env !== "production" ||
-      req.path === "/healthz" ||
-      req.path === "/health-check",
+    skip: (req) => {
+      // Bypass in non-prod so dev / test traffic isn't throttled.
+      if (configuration.app.env !== "production") return true;
+      // Health checks don't count.
+      if (req.path === "/healthz" || req.path === "/health-check") return true;
+      // The /status self-pinger calls localhost; it would otherwise eat its
+      // own rate-limit bucket and report tail-end routes as Unavailable.
+      const ip = req.ip ?? req.socket.remoteAddress ?? "";
+      if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return true;
+      return false;
+    },
   });
 
   const authRateLimitMiddleware = rateLimit({
