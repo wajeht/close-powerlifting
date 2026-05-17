@@ -24,6 +24,7 @@ import {
   buildRankByMetric,
   buildRecords,
 } from "./indexes";
+import { loadSnapshot, snapshotExists } from "./snapshot/index";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
 
@@ -58,6 +59,26 @@ export interface LoaderType {
 export function createLoader(logger: LoggerType, store: DataStoreType): LoaderType {
   async function loadInitial(options: LoaderOptions = {}): Promise<LoaderResult> {
     const startedAt = Date.now();
+
+    // Fast path: pre-built snapshot baked into the image (built by
+    // scripts/build-snapshot.ts and refreshed by GH Actions). Loads in
+    // seconds, no network.
+    if (snapshotExists()) {
+      logger.info("loader: snapshot found, loading from disk");
+      const built = loadSnapshot(logger);
+      store.set(built);
+      return {
+        durationMs: Date.now() - startedAt,
+        sourceLastModified: built.sourceLastModified,
+        rowCount: built.rowCount,
+        rowsSkipped: 0,
+      };
+    }
+
+    // Fallback: parse the CSV from cache (or download fresh). Slow but
+    // self-sufficient — used in dev before the snapshot is built, and as
+    // a safety net if the snapshot files ever get corrupted.
+    logger.info("loader: no snapshot on disk, parsing CSV");
     const { zipPath, sourceLastModified } = await acquireZip(logger, options);
     const csvEntryName = await findCsvEntryName(zipPath);
 
