@@ -29,7 +29,7 @@ export interface Meet {
   path: string;
   federation: string;
   parentFederation: string | null;
-  date: string;                      // ISO 8601, YYYY-MM-DD
+  date: string; // ISO 8601, YYYY-MM-DD
   meetName: string;
   meetCountry: string | null;
   meetState: string | null;
@@ -110,16 +110,16 @@ export interface WeightClassRecord {
   sex: Sex;
   equipmentGroup: EquipmentGroup;
   weightClassKg: number;
-  rank: number;                      // 1..3
-  entryId: number;                   // index into AppData.entries
+  rank: number; // 1..3
+  entryId: number; // index into AppData.entries
   liftValue: number;
 }
 
 // /api/federations row shape. Materialised at load so the endpoint is a
 // straight array read instead of an aggregation over meets.
 export interface FederationSummary {
-  slug: string;                      // lowercased + alphanumeric-only ("wrpfuk")
-  code: string;                      // original casing ("WRPF-UK")
+  slug: string; // lowercased + alphanumeric-only ("wrpfuk")
+  code: string; // original casing ("WRPF-UK")
   parentSlug: string | null;
   meetCount: number;
 }
@@ -148,8 +148,8 @@ export interface AppData {
   // Lookup maps.
   lifterByUsername: Map<string, number>;
   meetByPath: Map<string, number>;
-  entriesByLifter: Map<number, number[]>;        // lifterId → [entryId, ...]
-  entriesByMeet: Map<number, number[]>;          // meetId → [entryId, ...]
+  entriesByLifter: Map<number, number[]>; // lifterId → [entryId, ...]
+  entriesByMeet: Map<number, number[]>; // meetId → [entryId, ...]
 
   // Per-lifter best entry per ranking metric. -1 = no eligible entry.
   bestEntryByLifter: MetricInt32Arrays;
@@ -161,10 +161,10 @@ export interface AppData {
 
   // Federations index for /api/federations.
   federations: FederationSummary[];
-  meetsByFederation: Map<string, number[]>;      // slug → [meetId, ...]
+  meetsByFederation: Map<string, number[]>; // slug → [meetId, ...]
 
   // Metadata about this snapshot.
   sourceLastModified: string | null;
-  ingestedAt: string;                            // ISO 8601
+  ingestedAt: string; // ISO 8601
   rowCount: number;
 }
