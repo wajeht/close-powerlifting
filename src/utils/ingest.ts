@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
-import { Readable } from "node:stream";
+import { Readable, Transform, Writable } from "node:stream";
 import type { Knex } from "knex";
 
 import { parse as parseCsv } from "csv-parse";
@@ -82,7 +82,7 @@ interface MeetDraft {
   sanctioned: 0 | 1;
 }
 
-interface PendingLift {
+interface NormalizedLift {
   lifter_slug: string;
   meet_key: string;
   event: string;
@@ -135,10 +135,12 @@ export interface IngestResult {
   error?: string;
 }
 
+export type CsvStreamFactory = () => Readable;
+
 export interface IngestServiceType {
   runNightly: (options?: { force?: boolean }) => Promise<IngestResult>;
   ingestFromStream: (
-    csvStream: Readable,
+    csvStreamFactory: CsvStreamFactory,
     options?: { sourceLastModified?: string | null; byteSize?: number | null },
   ) => Promise<IngestResult>;
 }
@@ -156,7 +158,7 @@ function meetKey(federationSlug: string, date: string, meetSlug: string): string
   return `${federationSlug}|${date}|${meetSlug}`;
 }
 
-function buildPending(record: Record<string, string>): PendingLift | null {
+function normalizeRow(record: Record<string, string>): NormalizedLift | null {
   const name = trimToNull(record.Name);
   const date = trimToNull(record.Date);
   const event = trimToNull(record.Event);
@@ -211,7 +213,7 @@ function buildPending(record: Record<string, string>): PendingLift | null {
 
 function harvestDimensions(
   record: Record<string, string>,
-  pending: PendingLift,
+  lift: NormalizedLift,
   federations: Map<string, FederationDraft>,
   lifters: Map<string, LifterDraft>,
   meets: Map<string, MeetDraft>,
@@ -227,18 +229,18 @@ function harvestDimensions(
     });
   }
 
-  if (!lifters.has(pending.lifter_slug)) {
-    lifters.set(pending.lifter_slug, {
+  if (!lifters.has(lift.lifter_slug)) {
+    lifters.set(lift.lifter_slug, {
       name: record.Name!.trim(),
-      name_slug: pending.lifter_slug,
+      name_slug: lift.lifter_slug,
       sex: trimToNull(record.Sex),
       country: trimToNull(record.Country),
       state: trimToNull(record.State),
     });
   }
 
-  if (!meets.has(pending.meet_key)) {
-    meets.set(pending.meet_key, {
+  if (!meets.has(lift.meet_key)) {
+    meets.set(lift.meet_key, {
       federation_slug: federationSlug,
       date: record.Date!.trim(),
       meet_name: record.MeetName!.trim(),
@@ -256,11 +258,11 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     releaseConnection: (conn: BetterSqliteDatabase) => Promise<void>;
   }
 
-  async function withDb<T>(fn: (db: BetterSqliteDatabase) => T): Promise<T> {
+  async function withDb<T>(fn: (db: BetterSqliteDatabase) => Promise<T> | T): Promise<T> {
     const client = knex.client as unknown as KnexClient;
     const db = await client.acquireConnection();
     try {
-      return fn(db);
+      return await fn(db);
     } finally {
       await client.releaseConnection(db);
     }
@@ -290,8 +292,12 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     });
   }
 
+  function csvParser(): Transform {
+    return parseCsv({ columns: true, skip_empty_lines: true, relax_column_count: true });
+  }
+
   async function ingestFromStream(
-    csvStream: Readable,
+    csvStreamFactory: CsvStreamFactory,
     options: { sourceLastModified?: string | null; byteSize?: number | null } = {},
   ): Promise<IngestResult> {
     const startedAt = new Date();
@@ -305,45 +311,53 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       skippedRows: 0,
     };
 
-    const federations = new Map<string, FederationDraft>();
-    const lifters = new Map<string, LifterDraft>();
-    const meets = new Map<string, MeetDraft>();
-    const pending: PendingLift[] = [];
-
     try {
-      const parser = csvStream.pipe(
-        parseCsv({ columns: true, skip_empty_lines: true, relax_column_count: true }),
-      );
+      // Pass 1 — stream the CSV once and harvest dimension dictionaries only.
+      // No lift rows are buffered; backpressure flows through pipeline().
+      const federations = new Map<string, FederationDraft>();
+      const lifters = new Map<string, LifterDraft>();
+      const meets = new Map<string, MeetDraft>();
 
-      // Pass 1: stream the CSV and accumulate dimensions + buffered lifts.
-      for await (const record of parser as AsyncIterable<Record<string, string>>) {
-        const lift = buildPending(record);
-        if (!lift) {
-          stats.skippedRows++;
-          continue;
-        }
-        harvestDimensions(record, lift, federations, lifters, meets);
-        pending.push(lift);
-      }
+      await pipeline(
+        csvStreamFactory(),
+        csvParser(),
+        new Writable({
+          objectMode: true,
+          highWaterMark: LIFTS_BATCH_SIZE,
+          write(record: Record<string, string>, _enc, callback) {
+            const lift = normalizeRow(record);
+            if (lift == null) {
+              stats.skippedRows++;
+            } else {
+              harvestDimensions(record, lift, federations, lifters, meets);
+            }
+            callback();
+          },
+        }),
+      );
 
       stats.federations = federations.size;
       stats.lifters = lifters.size;
       stats.meets = meets.size;
-      stats.lifts = pending.length;
 
       logger.info(
-        `ingest: parsed ${stats.lifts} lifts, ${stats.lifters} lifters, ${stats.meets} meets, ${stats.federations} federations (skipped ${stats.skippedRows})`,
+        `ingest: pass 1 done — ${stats.lifters} lifters, ${stats.meets} meets, ${stats.federations} federations (skipped ${stats.skippedRows})`,
       );
 
-      // Pass 2: bulk insert in one transaction using better-sqlite3 prepared statements.
-      await withDb((db) => {
-        const writeAll = db.transaction(() => {
+      // Pass 2 — re-open the CSV, resolve FKs in flight, write lifts in batches.
+      // Whole import runs inside a single manual transaction for atomicity.
+      await withDb(async (db) => {
+        db.exec("BEGIN");
+        try {
           db.exec("DELETE FROM lifts");
           db.exec("DELETE FROM meets");
           db.exec("DELETE FROM lifters");
           db.exec("DELETE FROM federations");
 
+          const lifterIds = new Map<string, number>();
+          const meetIds = new Map<string, number>();
           const federationIds = new Map<string, number>();
+
           const insertFederation = db.prepare(
             "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
           );
@@ -352,7 +366,6 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             federationIds.set(fed.slug, Number(result.lastInsertRowid));
           }
 
-          const lifterIds = new Map<string, number>();
           const insertLifter = db.prepare(
             "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
           );
@@ -367,14 +380,12 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             lifterIds.set(lifter.name_slug, Number(result.lastInsertRowid));
           }
 
-          const meetIds = new Map<string, number>();
           const insertMeet = db.prepare(
             "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
           );
           for (const meet of meets.values()) {
-            const federationId = federationIds.get(meet.federation_slug)!;
             const result = insertMeet.run(
-              federationId,
+              federationIds.get(meet.federation_slug)!,
               meet.date,
               meet.meet_name,
               meet.meet_slug,
@@ -389,72 +400,89 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
           }
 
           const insertLift = db.prepare(`
-          INSERT INTO lifts (
-            lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
-            bodyweight_kg, weight_class_kg,
-            squat1_kg, squat2_kg, squat3_kg, squat4_kg,
-            bench1_kg, bench2_kg, bench3_kg, bench4_kg,
-            deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
-            best3_squat_kg, best3_bench_kg, best3_deadlift_kg, total_kg,
-            place_rank, place_status, dots, wilks, glossbrenner, goodlift, tested
-          ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?
-          )
-        `);
+            INSERT INTO lifts (
+              lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
+              bodyweight_kg, weight_class_kg,
+              squat1_kg, squat2_kg, squat3_kg, squat4_kg,
+              bench1_kg, bench2_kg, bench3_kg, bench4_kg,
+              deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
+              best3_squat_kg, best3_bench_kg, best3_deadlift_kg, total_kg,
+              place_rank, place_status, dots, wilks, glossbrenner, goodlift, tested
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
 
-          for (let i = 0; i < pending.length; i += LIFTS_BATCH_SIZE) {
-            const slice = pending.slice(i, i + LIFTS_BATCH_SIZE);
-            for (const lift of slice) {
-              const lifterId = lifterIds.get(lift.lifter_slug)!;
-              const meetIdValue = meetIds.get(lift.meet_key)!;
-              insertLift.run(
-                lifterId,
-                meetIdValue,
-                lift.event,
-                lift.equipment,
-                lift.age,
-                lift.age_class,
-                lift.birth_year_class,
-                lift.division,
-                lift.bodyweight_kg,
-                lift.weight_class_kg,
-                lift.squat1_kg,
-                lift.squat2_kg,
-                lift.squat3_kg,
-                lift.squat4_kg,
-                lift.bench1_kg,
-                lift.bench2_kg,
-                lift.bench3_kg,
-                lift.bench4_kg,
-                lift.deadlift1_kg,
-                lift.deadlift2_kg,
-                lift.deadlift3_kg,
-                lift.deadlift4_kg,
-                lift.best3_squat_kg,
-                lift.best3_bench_kg,
-                lift.best3_deadlift_kg,
-                lift.total_kg,
-                lift.place_rank,
-                lift.place_status,
-                lift.dots,
-                lift.wilks,
-                lift.glossbrenner,
-                lift.goodlift,
-                lift.tested,
-              );
-            }
-          }
+          let liftCount = 0;
+
+          await pipeline(
+            csvStreamFactory(),
+            csvParser(),
+            new Transform({
+              objectMode: true,
+              highWaterMark: LIFTS_BATCH_SIZE,
+              transform(record: Record<string, string>, _enc, callback) {
+                const lift = normalizeRow(record);
+                if (lift == null) return callback();
+                const lifterId = lifterIds.get(lift.lifter_slug);
+                const meetId = meetIds.get(lift.meet_key);
+                if (lifterId == null || meetId == null) return callback();
+                callback(null, { lift, lifterId, meetId });
+              },
+            }),
+            new Writable({
+              objectMode: true,
+              highWaterMark: LIFTS_BATCH_SIZE,
+              write(payload: { lift: NormalizedLift; lifterId: number; meetId: number }, _enc, cb) {
+                const { lift, lifterId, meetId } = payload;
+                insertLift.run(
+                  lifterId,
+                  meetId,
+                  lift.event,
+                  lift.equipment,
+                  lift.age,
+                  lift.age_class,
+                  lift.birth_year_class,
+                  lift.division,
+                  lift.bodyweight_kg,
+                  lift.weight_class_kg,
+                  lift.squat1_kg,
+                  lift.squat2_kg,
+                  lift.squat3_kg,
+                  lift.squat4_kg,
+                  lift.bench1_kg,
+                  lift.bench2_kg,
+                  lift.bench3_kg,
+                  lift.bench4_kg,
+                  lift.deadlift1_kg,
+                  lift.deadlift2_kg,
+                  lift.deadlift3_kg,
+                  lift.deadlift4_kg,
+                  lift.best3_squat_kg,
+                  lift.best3_bench_kg,
+                  lift.best3_deadlift_kg,
+                  lift.total_kg,
+                  lift.place_rank,
+                  lift.place_status,
+                  lift.dots,
+                  lift.wilks,
+                  lift.glossbrenner,
+                  lift.goodlift,
+                  lift.tested,
+                );
+                liftCount++;
+                cb();
+              },
+            }),
+          );
+
+          stats.lifts = liftCount;
 
           db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
           db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
-        });
-        writeAll();
+          db.exec("COMMIT");
+        } catch (error) {
+          db.exec("ROLLBACK");
+          throw error;
+        }
       });
 
       const result: IngestResult = {
@@ -466,7 +494,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       };
       await recordRun(startedAt, result);
       logger.info(
-        `ingest: completed (${stats.lifts} lifts in ${result.durationMs}ms, last-modified=${sourceLastModified ?? "n/a"})`,
+        `ingest: completed — ${stats.lifts} lifts in ${result.durationMs}ms (last-modified=${sourceLastModified ?? "n/a"})`,
       );
       return result;
     } catch (error) {
@@ -502,24 +530,42 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     return { filePath, sourceLastModified, byteSize: stat.size };
   }
 
-  async function findCsvEntry(zipPath: string): Promise<{
-    stream: Readable;
-    cleanup: () => Promise<void>;
-  }> {
+  async function findCsvEntryName(zipPath: string): Promise<string> {
     const directory = await unzipper.Open.file(zipPath);
     const csvEntry = directory.files.find(
       (file) => file.path.endsWith(".csv") && file.type === "File",
     );
     if (!csvEntry) throw new Error("Zip archive contains no CSV file");
-    const stream = csvEntry.stream();
-    async function cleanup(): Promise<void> {
-      try {
-        await fs.promises.rm(path.dirname(zipPath), { recursive: true, force: true });
-      } catch {
-        // best effort
-      }
-    }
-    return { stream: stream as unknown as Readable, cleanup };
+    return csvEntry.path;
+  }
+
+  function csvStreamFactoryForZip(zipPath: string, csvEntryName: string): CsvStreamFactory {
+    return () => {
+      let stream: Readable | null = null;
+      const proxy = new Readable({
+        read() {},
+      });
+      void (async () => {
+        try {
+          const directory = await unzipper.Open.file(zipPath);
+          const entry = directory.files.find((file) => file.path === csvEntryName);
+          if (!entry) {
+            proxy.destroy(new Error(`Zip entry not found: ${csvEntryName}`));
+            return;
+          }
+          stream = entry.stream() as unknown as Readable;
+          stream.on("data", (chunk) => {
+            if (!proxy.push(chunk)) stream!.pause();
+          });
+          stream.on("end", () => proxy.push(null));
+          stream.on("error", (err) => proxy.destroy(err));
+          proxy.on("drain", () => stream?.resume());
+        } catch (err) {
+          proxy.destroy(err as Error);
+        }
+      })();
+      return proxy;
+    };
   }
 
   async function runNightly(options: { force?: boolean } = {}): Promise<IngestResult> {
@@ -555,14 +601,18 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
         }
       }
 
-      const { stream, cleanup } = await findCsvEntry(downloadInfo.filePath);
+      const csvEntryName = await findCsvEntryName(downloadInfo.filePath);
+      const factory = csvStreamFactoryForZip(downloadInfo.filePath, csvEntryName);
       try {
-        return await ingestFromStream(stream, {
+        return await ingestFromStream(factory, {
           sourceLastModified: lastModified,
           byteSize: downloadInfo.byteSize,
         });
       } finally {
-        await cleanup();
+        await fs.promises.rm(path.dirname(downloadInfo.filePath), {
+          recursive: true,
+          force: true,
+        });
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

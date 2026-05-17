@@ -129,7 +129,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "John Haack", Sex: "M", TotalKg: 1005 },
       { ...REQUIRED, Name: "Jane Doe", Sex: "F", TotalKg: 500 },
     ]);
-    const result = await ingest.ingestFromStream(streamFromString(csv));
+    const result = await ingest.ingestFromStream(() => streamFromString(csv));
 
     expect(result.status).toBe("completed");
     expect(result.stats.lifters).toBe(2);
@@ -156,7 +156,7 @@ describe("ingest", () => {
         Date: "2024-08-20",
       },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const lifters = await knex("lifters").count<{ c: number }[]>({ c: "*" });
     const meets = await knex("meets").count<{ c: number }[]>({ c: "*" });
@@ -172,7 +172,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "Bob", TotalKg: 1000 },
       { ...REQUIRED, Name: "Carol", TotalKg: 600 },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const meets = await knex("meets").count<{ c: number }[]>({ c: "*" });
     expect(Number(meets[0]?.c)).toBe(1);
@@ -182,7 +182,7 @@ describe("ingest", () => {
     const csv = buildCsv([
       { ...REQUIRED, Name: "John Smith #1", Federation: "WRPF-UK", MeetName: "U.K. Open" },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const lifter = await knex("lifters").first<{ name_slug: string }>();
     const fed = await knex("federations").first<{ slug: string; code: string }>();
@@ -195,7 +195,7 @@ describe("ingest", () => {
 
   it("normalizes diacritics in slugs but preserves the display name", async () => {
     const csv = buildCsv([{ ...REQUIRED, Name: "Māris Rāzmanis" }]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const lifter = await knex("lifters").first<{ name: string; name_slug: string }>();
     expect(lifter?.name).toBe("Māris Rāzmanis");
@@ -208,7 +208,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "DQ Lifter", Place: "DQ" },
       { ...REQUIRED, Name: "Guest", Place: "G" },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const rows = (await knex("lifts")
       .join("lifters", "lifters.id", "lifts.lifter_id")
@@ -236,7 +236,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "Tested Lifter", Tested: "Yes", Sanctioned: "Yes" },
       { ...REQUIRED, Name: "Untested Lifter", Tested: "", Sanctioned: "No", Date: "2024-09-01" },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const lifts = (await knex("lifts")
       .join("lifters", "lifters.id", "lifts.lifter_id")
@@ -266,7 +266,7 @@ describe("ingest", () => {
         Best3SquatKg: 270,
       },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const lift = await knex("lifts").first<{
       squat1_kg: number;
@@ -286,7 +286,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "Bad Date", Date: "not-a-date" },
       { ...REQUIRED, Name: "No Federation", Federation: "" },
     ]);
-    const result = await ingest.ingestFromStream(streamFromString(csv));
+    const result = await ingest.ingestFromStream(() => streamFromString(csv));
 
     expect(result.stats.lifts).toBe(1);
     expect(result.stats.skippedRows).toBe(3);
@@ -298,7 +298,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "Kristy Hawkins" },
       { ...REQUIRED, Name: "John Haack" },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const matches = (await knex.raw<Array<{ name: string }>>(
       "SELECT name FROM lifters_fts WHERE lifters_fts MATCH 'jon*'",
@@ -312,7 +312,7 @@ describe("ingest", () => {
       { ...REQUIRED, Name: "A", MeetName: "WRPF AMERICAN PRO" },
       { ...REQUIRED, Name: "B", MeetName: "USAPL Raw Nationals", Federation: "USAPL" },
     ]);
-    await ingest.ingestFromStream(streamFromString(csv));
+    await ingest.ingestFromStream(() => streamFromString(csv));
 
     const matches = (await knex.raw<Array<{ meet_name: string }>>(
       "SELECT meet_name FROM meets_fts WHERE meets_fts MATCH 'american*'",
@@ -322,12 +322,12 @@ describe("ingest", () => {
   });
 
   it("replaces all rows on re-ingest", async () => {
-    await ingest.ingestFromStream(
+    await ingest.ingestFromStream(() =>
       streamFromString(buildCsv([{ ...REQUIRED, Name: "Old Lifter" }])),
     );
     expect(Number((await knex("lifts").count<{ c: number }[]>({ c: "*" }))[0]?.c)).toBe(1);
 
-    await ingest.ingestFromStream(
+    await ingest.ingestFromStream(() =>
       streamFromString(
         buildCsv([
           { ...REQUIRED, Name: "New A" },
@@ -342,7 +342,7 @@ describe("ingest", () => {
 
   it("records ingest_runs row with per-table counts", async () => {
     const csv = buildCsv([{ ...REQUIRED, Name: "Tracker" }]);
-    await ingest.ingestFromStream(streamFromString(csv), {
+    await ingest.ingestFromStream(() => streamFromString(csv), {
       sourceLastModified: "Fri, 16 May 2026 00:00:00 GMT",
       byteSize: 1024,
     });
