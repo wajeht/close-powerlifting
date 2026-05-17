@@ -55,6 +55,15 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Federations", path: "/api/federations/ipf?year=2020" },
   { group: "Federations", path: "/api/federations/ipf/stats" },
 
+  // Meets
+  { group: "Meets", path: "/api/meets" },
+  { group: "Meets", path: "/api/meets?federation=usapl" },
+  { group: "Meets", path: "/api/meets?from=2024-01-01&to=2024-12-31" },
+  { group: "Meets", path: "/api/meets?country=USA" },
+  { group: "Meets", path: "/api/meets?search=nationals" },
+  { group: "Meets", path: "/api/meets?sort=by-lifters" },
+  { group: "Meets", path: "/api/meets?per_page=10&current_page=1" },
+
   // Records
   { group: "Records", path: "/api/records" },
   { group: "Records", path: "/api/records/raw" },
@@ -125,7 +134,7 @@ export function createHealthCheckService(cache: CacheType, logger: LoggerType) {
   }
 
   async function refreshAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
-    const groupOrder = ["Rankings", "Federations", "Records", "Users", "Public"];
+    const groupOrder = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
     const groupMap = new Map<string, RouteStatus[]>();
 
     for (const groupName of groupOrder) {

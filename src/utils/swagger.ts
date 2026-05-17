@@ -83,7 +83,18 @@ Endpoints returning lists support pagination via query parameters:
 ### Sort options (path parameter)
 Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-goodlift\`, \`by-mcculloch\`, \`by-total\`, \`by-squat\`, \`by-bench\`, \`by-deadlift\`
 
-### Meet results (\`/api/meets/{fed}/{code}\`)
+### Meet index (\`/api/meets\`)
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| \`federation\` | string | Filter to one federation slug (e.g., \`usapl\`, \`ipf\`) |
+| \`from\` | YYYY-MM-DD | Start of date range (inclusive) |
+| \`to\` | YYYY-MM-DD | End of date range (inclusive) |
+| \`country\` | string | Country code filter (e.g., \`USA\`, \`GBR\`) |
+| \`state\` | string | State / region code filter (e.g., \`TX\`, \`CA\`) |
+| \`search\` | string | Free-text match on meet name |
+| \`sort\` | string | \`date-desc\` (default), \`date-asc\`, \`by-lifters\` |
+
+### Meet results (\`/api/meets/{federation}/{date}/{slug}\`)
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | \`sort\` | string | Sort order: \`by-dots\`, \`by-wilks\`, \`by-wilks2020\`, \`by-glossbrenner\`, \`by-goodlift\`, \`by-ipf-points\`, \`by-mcculloch\`, \`by-total\`, \`by-ah\`, \`by-nasa\`, \`by-reshel\`, \`by-schwartz-malone\`, \`by-division\` |

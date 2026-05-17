@@ -192,3 +192,111 @@ describe("GET /api/meets/:federation/:date/:slug/highlights", () => {
     expect(response.status).toBe(404);
   });
 });
+
+describe("GET /api/meets", () => {
+  it("should return 401 without authentication", async () => {
+    const response = await createUnauthenticatedApiAgent().get("/api/meets");
+
+    expect(response.status).toBe(401);
+    expect(response.body.status).toBe("fail");
+  });
+
+  it("should return paginated meet list with success envelope", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets");
+
+    expect(response.status).toBe(200);
+    expect(response.body.status).toBe("success");
+    expect(response.body).toHaveProperty("data");
+    expect(response.body).toHaveProperty("pagination");
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
+
+  it("each entry exposes the documented shape", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets");
+    const entry = response.body.data[0];
+
+    expect(entry).toHaveProperty("federation");
+    expect(entry).toHaveProperty("date");
+    expect(entry).toHaveProperty("slug");
+    expect(entry).toHaveProperty("name");
+    expect(entry).toHaveProperty("country");
+    expect(entry).toHaveProperty("state");
+    expect(entry).toHaveProperty("sanctioned");
+    expect(entry).toHaveProperty("lifter_count");
+    expect(entry).toHaveProperty("url");
+    expect(typeof entry.sanctioned).toBe("boolean");
+    expect(typeof entry.lifter_count).toBe("number");
+    expect(entry.url).toBe(
+      `/api/meets/${entry.federation.toLowerCase()}/${entry.date}/${entry.slug}`,
+    );
+  });
+
+  it("filters by federation", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets?federation=wrpf");
+
+    expect(response.status).toBe(200);
+    for (const entry of response.body.data) {
+      expect(entry.federation.toLowerCase()).toBe("wrpf");
+    }
+  });
+
+  it("filters by date range", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/meets?from=2024-01-01&to=2024-12-31",
+    );
+
+    expect(response.status).toBe(200);
+    for (const entry of response.body.data) {
+      expect(entry.date >= "2024-01-01" && entry.date <= "2024-12-31").toBe(true);
+    }
+  });
+
+  it("filters by name search", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets?search=AMERICAN");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBeGreaterThan(0);
+    for (const entry of response.body.data) {
+      expect(entry.name.toLowerCase()).toContain("american");
+    }
+  });
+
+  it("orders newest first by default", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets");
+    const dates = response.body.data.map((entry: { date: string }) => entry.date);
+
+    for (let i = 1; i < dates.length; i++) {
+      expect(dates[i - 1] >= dates[i]).toBe(true);
+    }
+  });
+
+  it("orders by lifter count when sort=by-lifters", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets?sort=by-lifters");
+    const counts = response.body.data.map((entry: { lifter_count: number }) => entry.lifter_count);
+
+    for (let i = 1; i < counts.length; i++) {
+      expect(counts[i - 1] >= counts[i]).toBe(true);
+    }
+  });
+
+  it("respects per_page and current_page", async () => {
+    const response = await createAuthenticatedApiAgent().get(
+      "/api/meets?per_page=1&current_page=1",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.length).toBeLessThanOrEqual(1);
+    expect(response.body.pagination.per_page).toBe(1);
+    expect(response.body.pagination.current_page).toBe(1);
+  });
+
+  it("returns 400 for invalid date format", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets?from=not-a-date");
+    expect(response.status).toBe(400);
+  });
+
+  it("returns 400 for invalid sort", async () => {
+    const response = await createAuthenticatedApiAgent().get("/api/meets?sort=by-bench");
+    expect(response.status).toBe(400);
+  });
+});

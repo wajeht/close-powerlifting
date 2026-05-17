@@ -12,7 +12,7 @@ An intuitive REST API for the OpenPowerlifting database.
 | ------------------- | ----------------------------------------------------------------------- |
 | `/api/rankings`     | Global powerlifting rankings sorted by DOTS score                       |
 | `/api/federations`  | Powerlifting federation data and meet results                           |
-| `/api/meets`        | Individual competition/meet results with attempt data                   |
+| `/api/meets`        | Meet index + individual competition/meet results with attempt data      |
 | `/api/records`      | All-time powerlifting records by equipment, weight class, and age class |
 | `/api/users`        | Athlete profiles and competition history                                |
 | `/api/status`       | Data source status and statistics (no auth required)                    |

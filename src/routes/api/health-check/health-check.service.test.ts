@@ -55,8 +55,8 @@ function mockFetch(
 }
 
 describe("health-check service", () => {
-  const EXPECTED_GROUPS = ["Rankings", "Federations", "Records", "Users", "Public"];
-  const TOTAL_ROUTES = 47;
+  const EXPECTED_GROUPS = ["Rankings", "Federations", "Meets", "Records", "Users", "Public"];
+  const TOTAL_ROUTES = 54;
 
   afterEach(() => {
     vi.restoreAllMocks();

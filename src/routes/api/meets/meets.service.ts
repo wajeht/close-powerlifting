@@ -1,14 +1,35 @@
 import type { Knex } from "knex";
 
+import { configuration } from "../../../configuration";
 import type {
   MeetData,
   MeetResult,
   ApiResponse,
   MeetHighlights,
   MeetHighlightLifter,
+  Pagination,
 } from "../../../types";
+import { buildPagination } from "../../../utils/helpers";
 import { nameToSlug } from "../../../utils/ingest";
-import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
+import type {
+  GetMeetParamType,
+  GetMeetHighlightsParamType,
+  ListMeetsQueryType,
+} from "./meets.validation";
+
+const { defaultPerPage } = configuration.pagination;
+
+export interface MeetListEntry {
+  federation: string;
+  date: string;
+  slug: string;
+  name: string;
+  country: string;
+  state: string;
+  sanctioned: boolean;
+  lifter_count: number;
+  url: string;
+}
 
 const HIGHLIGHTS_TOP_N = 3;
 const KG_TO_LBS = 2.20462;
@@ -149,6 +170,99 @@ function parseMeetPath(meet: string): ParsedMeetPath | null {
 }
 
 export function createMeetService(knex: Knex) {
+  // Cross-federation meet index. Filterable by federation, date range, location
+  // and free-text on the meet name. `lifter_count` is the per-meet roll-up of
+  // distinct lifters at that meet — useful for ranking meets by size.
+  async function listMeets(
+    query: ListMeetsQueryType,
+  ): Promise<{ data: MeetListEntry[]; pagination: Pagination }> {
+    // Express 5's req.query is a fresh getter on every access, so the zod
+    // transform in apiValidationMiddleware does not always stick. Coerce
+    // here so downstream pagination output is consistently numeric.
+    const currentPage = Number(query.current_page ?? 1);
+    const perPage = Number(query.per_page ?? defaultPerPage);
+    const sort = query.sort ?? "date-desc";
+
+    function applyFilters(builder: Knex.QueryBuilder): Knex.QueryBuilder {
+      let filtered = builder;
+      if (query.federation != null) {
+        const slug = nameToSlug(query.federation);
+        filtered = filtered.where((qb) =>
+          qb.where("federations.slug", slug).orWhere("federations.parent_slug", slug),
+        );
+      }
+      if (query.from != null) filtered = filtered.where("meets.date", ">=", query.from);
+      if (query.to != null) filtered = filtered.where("meets.date", "<=", query.to);
+      if (query.country != null) filtered = filtered.where("meets.meet_country", query.country);
+      if (query.state != null) filtered = filtered.where("meets.meet_state", query.state);
+      if (query.search != null) {
+        filtered = filtered.where("meets.meet_name", "like", `%${query.search}%`);
+      }
+      return filtered;
+    }
+
+    const countRow = await applyFilters(
+      knex("meets").join("federations", "federations.id", "meets.federation_id"),
+    )
+      .count<{ total: number | string }[]>({ total: "meets.id" })
+      .first();
+    const total = Number(countRow?.total ?? 0);
+
+    const pagination = buildPagination(total, currentPage, perPage);
+    const offset = (pagination.current_page - 1) * perPage;
+
+    interface ListRow {
+      federation_code: string;
+      federation_slug: string;
+      date: string;
+      meet_slug: string;
+      meet_name: string;
+      meet_country: string | null;
+      meet_state: string | null;
+      sanctioned: number;
+      lifter_count: number | string;
+    }
+
+    const rows = (await applyFilters(
+      knex("meets")
+        .join("federations", "federations.id", "meets.federation_id")
+        .leftJoin("lifts", "lifts.meet_id", "meets.id")
+        .select<ListRow[]>(
+          knex.ref("federations.code").as("federation_code"),
+          knex.ref("federations.slug").as("federation_slug"),
+          "meets.date",
+          "meets.meet_slug",
+          "meets.meet_name",
+          "meets.meet_country",
+          "meets.meet_state",
+          "meets.sanctioned",
+        )
+        .countDistinct<ListRow[]>({ lifter_count: "lifts.lifter_id" })
+        .groupBy("meets.id"),
+    )
+      .modify((qb) => {
+        if (sort === "by-lifters") qb.orderBy("lifter_count", "desc").orderBy("meets.date", "desc");
+        else if (sort === "date-asc") qb.orderBy("meets.date", "asc");
+        else qb.orderBy("meets.date", "desc");
+      })
+      .limit(perPage)
+      .offset(offset)) as ListRow[];
+
+    const data: MeetListEntry[] = rows.map((row) => ({
+      federation: row.federation_code,
+      date: row.date,
+      slug: row.meet_slug,
+      name: row.meet_name,
+      country: row.meet_country ?? "",
+      state: row.meet_state ?? "",
+      sanctioned: Boolean(row.sanctioned),
+      lifter_count: Number(row.lifter_count),
+      url: `/api/meets/${row.federation_slug}/${row.date}/${row.meet_slug}`,
+    }));
+
+    return { data, pagination };
+  }
+
   async function fetchMeetData(
     meet: string,
     sort?: string,
@@ -229,6 +343,7 @@ export function createMeetService(knex: Knex) {
   }
 
   return {
+    listMeets,
     getMeet,
     getMeetHighlights,
   };
