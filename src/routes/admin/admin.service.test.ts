@@ -6,6 +6,7 @@ import { createAdminService } from "./admin.service";
 
 const context = createContext();
 const adminService = createAdminService(
+  context.knex,
   context.userRepository,
   context.cache,
   context.authService,
