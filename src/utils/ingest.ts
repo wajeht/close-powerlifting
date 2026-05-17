@@ -12,6 +12,25 @@ import type { LoggerType } from "./logger";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
 const REGEX_DIACRITICS = /\p{Mn}/gu;
+
+// PRAGMAs scoped to the ingest connection. Reverted to steady-state values
+// (matching src/db/knexfile.ts afterCreate) once the import finishes so the
+// pooled connection is safe to hand back to read traffic.
+const INGEST_PRAGMAS: ReadonlyArray<string> = [
+  "PRAGMA cache_size = -524288", // 512 MB page cache during ingest
+  "PRAGMA mmap_size = 268435456", // 256 MB mmap for index lookups
+  "PRAGMA wal_autocheckpoint = 0", // hold WAL until explicit checkpoint
+  "PRAGMA cache_spill = OFF", // keep dirty pages in-memory through the txn
+  "PRAGMA locking_mode = EXCLUSIVE", // skip per-statement filesystem locks
+];
+
+const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
+  "PRAGMA cache_size = -64000",
+  "PRAGMA mmap_size = 0",
+  "PRAGMA wal_autocheckpoint = 1000",
+  "PRAGMA cache_spill = ON",
+  "PRAGMA locking_mode = NORMAL",
+];
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_PLACE_NUMERIC = /^\d+$/;
@@ -55,30 +74,6 @@ function splitPlace(value: string | undefined): PlaceSplit {
     return { rank: parseInt(text, 10), status: null };
   }
   return { rank: null, status: text };
-}
-
-interface FederationDraft {
-  slug: string;
-  code: string;
-  parent_slug: string | null;
-}
-
-interface LifterDraft {
-  name: string;
-  name_slug: string;
-  sex: string | null;
-  country: string | null;
-  state: string | null;
-}
-
-interface MeetDraft {
-  federation_slug: string;
-  date: string;
-  meet_name: string;
-  meet_slug: string;
-  meet_country: string | null;
-  meet_state: string | null;
-  sanctioned: 0 | 1;
 }
 
 interface NormalizedLift {
@@ -157,19 +152,81 @@ function meetKey(federationSlug: string, date: string, meetSlug: string): string
   return `${federationSlug}|${date}|${meetSlug}`;
 }
 
-function normalizeRow(record: Record<string, string>): NormalizedLift | null {
-  const name = trimToNull(record.Name);
-  const date = trimToNull(record.Date);
-  const event = trimToNull(record.Event);
-  const equipment = trimToNull(record.Equipment);
-  const federation = trimToNull(record.Federation);
+// Names of every CSV column normalizeRow + the streaming loop touch. The
+// header row of each ingest is validated against this list so we fail fast
+// if OpenPowerlifting renames a column instead of silently writing nulls.
+const REQUIRED_COLUMNS = [
+  "Name",
+  "Sex",
+  "Event",
+  "Equipment",
+  "Age",
+  "AgeClass",
+  "BirthYearClass",
+  "Division",
+  "BodyweightKg",
+  "WeightClassKg",
+  "Squat1Kg",
+  "Squat2Kg",
+  "Squat3Kg",
+  "Squat4Kg",
+  "Bench1Kg",
+  "Bench2Kg",
+  "Bench3Kg",
+  "Bench4Kg",
+  "Deadlift1Kg",
+  "Deadlift2Kg",
+  "Deadlift3Kg",
+  "Deadlift4Kg",
+  "Best3SquatKg",
+  "Best3BenchKg",
+  "Best3DeadliftKg",
+  "TotalKg",
+  "Place",
+  "Dots",
+  "Wilks",
+  "Glossbrenner",
+  "Goodlift",
+  "Tested",
+  "Country",
+  "State",
+  "Federation",
+  "ParentFederation",
+  "Date",
+  "MeetCountry",
+  "MeetState",
+  "MeetName",
+  "Sanctioned",
+] as const;
+
+type ColumnName = (typeof REQUIRED_COLUMNS)[number];
+type ColumnIndex = Record<ColumnName, number>;
+
+function buildColumnIndex(header: string[]): ColumnIndex {
+  const lookup: Partial<ColumnIndex> = {};
+  for (const name of REQUIRED_COLUMNS) {
+    const idx = header.indexOf(name);
+    if (idx === -1) {
+      throw new Error(`CSV header missing required column: ${name}`);
+    }
+    lookup[name] = idx;
+  }
+  return lookup as ColumnIndex;
+}
+
+function normalizeRow(row: string[], col: ColumnIndex): NormalizedLift | null {
+  const name = trimToNull(row[col.Name]);
+  const date = trimToNull(row[col.Date]);
+  const event = trimToNull(row[col.Event]);
+  const equipment = trimToNull(row[col.Equipment]);
+  const federation = trimToNull(row[col.Federation]);
   if (!name || !date || !event || !equipment || !federation) return null;
   if (!REGEX_ISO_DATE.test(date)) return null;
 
-  const meetName = trimToNull(record.MeetName);
+  const meetName = trimToNull(row[col.MeetName]);
   if (!meetName) return null;
 
-  const place = splitPlace(record.Place);
+  const place = splitPlace(row[col.Place]);
   const federationSlug = nameToSlug(federation);
   const meetSlug = nameToSlug(meetName);
 
@@ -178,77 +235,36 @@ function normalizeRow(record: Record<string, string>): NormalizedLift | null {
     meet_key: meetKey(federationSlug, date, meetSlug),
     event,
     equipment,
-    age: toNumber(record.Age),
-    age_class: trimToNull(record.AgeClass),
-    birth_year_class: trimToNull(record.BirthYearClass),
-    division: trimToNull(record.Division),
-    bodyweight_kg: toNumber(record.BodyweightKg),
-    weight_class_kg: toNumber(record.WeightClassKg),
-    squat1_kg: toNumber(record.Squat1Kg),
-    squat2_kg: toNumber(record.Squat2Kg),
-    squat3_kg: toNumber(record.Squat3Kg),
-    squat4_kg: toNumber(record.Squat4Kg),
-    bench1_kg: toNumber(record.Bench1Kg),
-    bench2_kg: toNumber(record.Bench2Kg),
-    bench3_kg: toNumber(record.Bench3Kg),
-    bench4_kg: toNumber(record.Bench4Kg),
-    deadlift1_kg: toNumber(record.Deadlift1Kg),
-    deadlift2_kg: toNumber(record.Deadlift2Kg),
-    deadlift3_kg: toNumber(record.Deadlift3Kg),
-    deadlift4_kg: toNumber(record.Deadlift4Kg),
-    best3_squat_kg: toNumber(record.Best3SquatKg),
-    best3_bench_kg: toNumber(record.Best3BenchKg),
-    best3_deadlift_kg: toNumber(record.Best3DeadliftKg),
-    total_kg: toNumber(record.TotalKg),
+    age: toNumber(row[col.Age]),
+    age_class: trimToNull(row[col.AgeClass]),
+    birth_year_class: trimToNull(row[col.BirthYearClass]),
+    division: trimToNull(row[col.Division]),
+    bodyweight_kg: toNumber(row[col.BodyweightKg]),
+    weight_class_kg: toNumber(row[col.WeightClassKg]),
+    squat1_kg: toNumber(row[col.Squat1Kg]),
+    squat2_kg: toNumber(row[col.Squat2Kg]),
+    squat3_kg: toNumber(row[col.Squat3Kg]),
+    squat4_kg: toNumber(row[col.Squat4Kg]),
+    bench1_kg: toNumber(row[col.Bench1Kg]),
+    bench2_kg: toNumber(row[col.Bench2Kg]),
+    bench3_kg: toNumber(row[col.Bench3Kg]),
+    bench4_kg: toNumber(row[col.Bench4Kg]),
+    deadlift1_kg: toNumber(row[col.Deadlift1Kg]),
+    deadlift2_kg: toNumber(row[col.Deadlift2Kg]),
+    deadlift3_kg: toNumber(row[col.Deadlift3Kg]),
+    deadlift4_kg: toNumber(row[col.Deadlift4Kg]),
+    best3_squat_kg: toNumber(row[col.Best3SquatKg]),
+    best3_bench_kg: toNumber(row[col.Best3BenchKg]),
+    best3_deadlift_kg: toNumber(row[col.Best3DeadliftKg]),
+    total_kg: toNumber(row[col.TotalKg]),
     place_rank: place.rank,
     place_status: place.status,
-    dots: toNumber(record.Dots),
-    wilks: toNumber(record.Wilks),
-    glossbrenner: toNumber(record.Glossbrenner),
-    goodlift: toNumber(record.Goodlift),
-    tested: toBool(record.Tested),
+    dots: toNumber(row[col.Dots]),
+    wilks: toNumber(row[col.Wilks]),
+    glossbrenner: toNumber(row[col.Glossbrenner]),
+    goodlift: toNumber(row[col.Goodlift]),
+    tested: toBool(row[col.Tested]),
   };
-}
-
-function harvestDimensions(
-  record: Record<string, string>,
-  lift: NormalizedLift,
-  federations: Map<string, FederationDraft>,
-  lifters: Map<string, LifterDraft>,
-  meets: Map<string, MeetDraft>,
-): void {
-  const federation = record.Federation!.trim();
-  const federationSlug = nameToSlug(federation);
-  if (!federations.has(federationSlug)) {
-    const parent = trimToNull(record.ParentFederation);
-    federations.set(federationSlug, {
-      slug: federationSlug,
-      code: federation,
-      parent_slug: parent ? nameToSlug(parent) : null,
-    });
-  }
-
-  if (!lifters.has(lift.lifter_slug)) {
-    lifters.set(lift.lifter_slug, {
-      name: record.Name!.trim(),
-      name_slug: lift.lifter_slug,
-      sex: trimToNull(record.Sex),
-      country: trimToNull(record.Country),
-      state: trimToNull(record.State),
-    });
-  }
-
-  if (!meets.has(lift.meet_key)) {
-    meets.set(lift.meet_key, {
-      federation_slug: federationSlug,
-      date: record.Date!.trim(),
-      meet_name: record.MeetName!.trim(),
-      meet_slug: nameToSlug(record.MeetName!),
-      meet_country: trimToNull(record.MeetCountry),
-      meet_state: trimToNull(record.MeetState),
-      sanctioned: toBool(record.Sanctioned),
-    });
-  }
 }
 
 export function createIngestService(knex: Knex, logger: LoggerType): IngestServiceType {
@@ -292,7 +308,9 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
   }
 
   function csvParser(): Transform {
-    return parseCsv({ columns: true, skip_empty_lines: true, relax_column_count: true });
+    // columns: false returns string[] per row (no object allocation per row).
+    // Header parsing happens once at the start of the stream below.
+    return parseCsv({ columns: false, skip_empty_lines: true, relax_column_count: true });
   }
 
   async function ingestFromStream(
@@ -311,169 +329,180 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     };
 
     try {
-      // Pass 1 — stream the CSV once and harvest dimension dictionaries only.
-      // No lift rows are buffered; backpressure flows through pipeline().
-      const federations = new Map<string, FederationDraft>();
-      const lifters = new Map<string, LifterDraft>();
-      const meets = new Map<string, MeetDraft>();
-
-      await pipeline(
-        csvStreamFactory(),
-        csvParser(),
-        async function (source: AsyncIterable<Record<string, string>>) {
-          for await (const record of source) {
-            const lift = normalizeRow(record);
-            if (lift == null) {
-              stats.skippedRows++;
-              continue;
-            }
-            harvestDimensions(record, lift, federations, lifters, meets);
-          }
-        },
-      );
-
-      stats.federations = federations.size;
-      stats.lifters = lifters.size;
-      stats.meets = meets.size;
-
-      logger.info(
-        `ingest: pass 1 done — ${stats.lifters} lifters, ${stats.meets} meets, ${stats.federations} federations (skipped ${stats.skippedRows})`,
-      );
-
-      // Pass 2 — re-open the CSV, resolve FKs in flight, write lifts in batches.
-      // Whole import runs inside a single manual transaction for atomicity.
+      // Single pass — stream the CSV once, lazily inserting federation/lifter/meet
+      // dimensions the first time they're seen, then immediately inserting the
+      // lift row with the resolved foreign keys. Everything runs inside one
+      // transaction; ROLLBACK on any error leaves the prior DB state intact.
       await withDb(async (db) => {
-        db.exec("BEGIN");
+        for (const pragma of INGEST_PRAGMAS) db.exec(pragma);
         try {
-          db.exec("DELETE FROM lifts");
-          db.exec("DELETE FROM meets");
-          db.exec("DELETE FROM lifters");
-          db.exec("DELETE FROM federations");
+          db.exec("BEGIN");
+          db.exec("PRAGMA defer_foreign_keys = ON");
+          try {
+            db.exec("DELETE FROM lifts");
+            db.exec("DELETE FROM meets");
+            db.exec("DELETE FROM lifters");
+            db.exec("DELETE FROM federations");
 
-          const lifterIds = new Map<string, number>();
-          const meetIds = new Map<string, number>();
-          const federationIds = new Map<string, number>();
+            // Drop secondary indexes on lifts so each INSERT only touches the
+            // primary key. We CREATE INDEX once after the bulk load below, which
+            // is dramatically faster than maintaining four b-trees per row.
+            db.exec("DROP INDEX IF EXISTS idx_lifts_lifter");
+            db.exec("DROP INDEX IF EXISTS idx_lifts_meet");
+            db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_total");
+            db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_dots");
 
-          const insertFederation = db.prepare(
-            "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
-          );
-          for (const fed of federations.values()) {
-            const result = insertFederation.run(fed.slug, fed.code, fed.parent_slug);
-            federationIds.set(fed.slug, Number(result.lastInsertRowid));
-          }
+            const federationIds = new Map<string, number>();
+            const lifterIds = new Map<string, number>();
+            const meetIds = new Map<string, number>();
 
-          const insertLifter = db.prepare(
-            "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
-          );
-          for (const lifter of lifters.values()) {
-            const result = insertLifter.run(
-              lifter.name,
-              lifter.name_slug,
-              lifter.sex,
-              lifter.country,
-              lifter.state,
+            const insertFederation = db.prepare(
+              "INSERT INTO federations (slug, code, parent_slug) VALUES (?, ?, ?)",
             );
-            lifterIds.set(lifter.name_slug, Number(result.lastInsertRowid));
-          }
-
-          const insertMeet = db.prepare(
-            "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
-          );
-          for (const meet of meets.values()) {
-            const result = insertMeet.run(
-              federationIds.get(meet.federation_slug)!,
-              meet.date,
-              meet.meet_name,
-              meet.meet_slug,
-              meet.meet_country,
-              meet.meet_state,
-              meet.sanctioned,
+            const insertLifter = db.prepare(
+              "INSERT INTO lifters (name, name_slug, sex, country, state) VALUES (?, ?, ?, ?, ?)",
             );
-            meetIds.set(
-              meetKey(meet.federation_slug, meet.date, meet.meet_slug),
-              Number(result.lastInsertRowid),
+            const insertMeet = db.prepare(
+              "INSERT INTO meets (federation_id, date, meet_name, meet_slug, meet_country, meet_state, sanctioned) VALUES (?, ?, ?, ?, ?, ?, ?)",
             );
+            const insertLift = db.prepare(`
+              INSERT INTO lifts (
+                lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
+                bodyweight_kg, weight_class_kg,
+                squat1_kg, squat2_kg, squat3_kg, squat4_kg,
+                bench1_kg, bench2_kg, bench3_kg, bench4_kg,
+                deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
+                best3_squat_kg, best3_bench_kg, best3_deadlift_kg, total_kg,
+                place_rank, place_status, dots, wilks, glossbrenner, goodlift, tested
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            let col: ColumnIndex | null = null;
+
+            await pipeline(
+              csvStreamFactory(),
+              csvParser(),
+              async function (source: AsyncIterable<string[]>) {
+                for await (const row of source) {
+                  if (col == null) {
+                    col = buildColumnIndex(row);
+                    continue;
+                  }
+
+                  const lift = normalizeRow(row, col);
+                  if (lift == null) {
+                    stats.skippedRows++;
+                    continue;
+                  }
+
+                  const federationCode = row[col.Federation]!.trim();
+                  const federationSlug = nameToSlug(federationCode);
+                  let federationId = federationIds.get(federationSlug);
+                  if (federationId == null) {
+                    const parent = trimToNull(row[col.ParentFederation]);
+                    const result = insertFederation.run(
+                      federationSlug,
+                      federationCode,
+                      parent ? nameToSlug(parent) : null,
+                    );
+                    federationId = Number(result.lastInsertRowid);
+                    federationIds.set(federationSlug, federationId);
+                  }
+
+                  let lifterId = lifterIds.get(lift.lifter_slug);
+                  if (lifterId == null) {
+                    const result = insertLifter.run(
+                      row[col.Name]!.trim(),
+                      lift.lifter_slug,
+                      trimToNull(row[col.Sex]),
+                      trimToNull(row[col.Country]),
+                      trimToNull(row[col.State]),
+                    );
+                    lifterId = Number(result.lastInsertRowid);
+                    lifterIds.set(lift.lifter_slug, lifterId);
+                  }
+
+                  let meetId = meetIds.get(lift.meet_key);
+                  if (meetId == null) {
+                    const meetNameRaw = row[col.MeetName]!.trim();
+                    const result = insertMeet.run(
+                      federationId,
+                      row[col.Date]!.trim(),
+                      meetNameRaw,
+                      nameToSlug(meetNameRaw),
+                      trimToNull(row[col.MeetCountry]),
+                      trimToNull(row[col.MeetState]),
+                      toBool(row[col.Sanctioned]),
+                    );
+                    meetId = Number(result.lastInsertRowid);
+                    meetIds.set(lift.meet_key, meetId);
+                  }
+
+                  insertLift.run(
+                    lifterId,
+                    meetId,
+                    lift.event,
+                    lift.equipment,
+                    lift.age,
+                    lift.age_class,
+                    lift.birth_year_class,
+                    lift.division,
+                    lift.bodyweight_kg,
+                    lift.weight_class_kg,
+                    lift.squat1_kg,
+                    lift.squat2_kg,
+                    lift.squat3_kg,
+                    lift.squat4_kg,
+                    lift.bench1_kg,
+                    lift.bench2_kg,
+                    lift.bench3_kg,
+                    lift.bench4_kg,
+                    lift.deadlift1_kg,
+                    lift.deadlift2_kg,
+                    lift.deadlift3_kg,
+                    lift.deadlift4_kg,
+                    lift.best3_squat_kg,
+                    lift.best3_bench_kg,
+                    lift.best3_deadlift_kg,
+                    lift.total_kg,
+                    lift.place_rank,
+                    lift.place_status,
+                    lift.dots,
+                    lift.wilks,
+                    lift.glossbrenner,
+                    lift.goodlift,
+                    lift.tested,
+                  );
+                  stats.lifts++;
+                }
+              },
+            );
+
+            stats.federations = federationIds.size;
+            stats.lifters = lifterIds.size;
+            stats.meets = meetIds.size;
+
+            // Rebuild secondary indexes now that all rows are in. CREATE INDEX
+            // does a single sequential scan + sort, way faster than 3.9M
+            // incremental b-tree inserts.
+            db.exec("CREATE INDEX idx_lifts_lifter ON lifts(lifter_id)");
+            db.exec("CREATE INDEX idx_lifts_meet ON lifts(meet_id)");
+            db.exec(
+              "CREATE INDEX idx_lifts_rankings_total ON lifts(event, equipment, weight_class_kg, total_kg)",
+            );
+            db.exec("CREATE INDEX idx_lifts_rankings_dots ON lifts(event, equipment, dots)");
+
+            db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
+            db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
+            db.exec("COMMIT");
+          } catch (error) {
+            db.exec("ROLLBACK");
+            throw error;
           }
-
-          const insertLift = db.prepare(`
-            INSERT INTO lifts (
-              lifter_id, meet_id, event, equipment, age, age_class, birth_year_class, division,
-              bodyweight_kg, weight_class_kg,
-              squat1_kg, squat2_kg, squat3_kg, squat4_kg,
-              bench1_kg, bench2_kg, bench3_kg, bench4_kg,
-              deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
-              best3_squat_kg, best3_bench_kg, best3_deadlift_kg, total_kg,
-              place_rank, place_status, dots, wilks, glossbrenner, goodlift, tested
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-
-          let liftCount = 0;
-
-          await pipeline(
-            csvStreamFactory(),
-            csvParser(),
-            async function* (source: AsyncIterable<Record<string, string>>) {
-              for await (const record of source) {
-                const lift = normalizeRow(record);
-                if (lift == null) continue;
-                const lifterId = lifterIds.get(lift.lifter_slug);
-                const meetId = meetIds.get(lift.meet_key);
-                if (lifterId == null || meetId == null) continue;
-                yield { lift, lifterId, meetId };
-              }
-            },
-            async function (
-              source: AsyncIterable<{ lift: NormalizedLift; lifterId: number; meetId: number }>,
-            ) {
-              for await (const { lift, lifterId, meetId } of source) {
-                insertLift.run(
-                  lifterId,
-                  meetId,
-                  lift.event,
-                  lift.equipment,
-                  lift.age,
-                  lift.age_class,
-                  lift.birth_year_class,
-                  lift.division,
-                  lift.bodyweight_kg,
-                  lift.weight_class_kg,
-                  lift.squat1_kg,
-                  lift.squat2_kg,
-                  lift.squat3_kg,
-                  lift.squat4_kg,
-                  lift.bench1_kg,
-                  lift.bench2_kg,
-                  lift.bench3_kg,
-                  lift.bench4_kg,
-                  lift.deadlift1_kg,
-                  lift.deadlift2_kg,
-                  lift.deadlift3_kg,
-                  lift.deadlift4_kg,
-                  lift.best3_squat_kg,
-                  lift.best3_bench_kg,
-                  lift.best3_deadlift_kg,
-                  lift.total_kg,
-                  lift.place_rank,
-                  lift.place_status,
-                  lift.dots,
-                  lift.wilks,
-                  lift.glossbrenner,
-                  lift.goodlift,
-                  lift.tested,
-                );
-                liftCount++;
-              }
-            },
-          );
-
-          stats.lifts = liftCount;
-
-          db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
-          db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
-          db.exec("COMMIT");
-        } catch (error) {
-          db.exec("ROLLBACK");
-          throw error;
+          db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+          db.exec("PRAGMA optimize");
+        } finally {
+          for (const pragma of STEADY_STATE_PRAGMAS) db.exec(pragma);
         }
       });
 
