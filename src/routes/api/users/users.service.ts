@@ -20,40 +20,6 @@ import { liftRowToRankingRow, type LiftRow as RankingLiftRow } from "../rankings
 
 const { defaultPerPage } = configuration.pagination;
 
-const LIFT_PREFIXES = ["squat", "bench", "deadlift"] as const;
-const ATTEMPTS_PER_LIFT = 4;
-const REGEX_TRAILING_DIGIT = /\d$/;
-
-function isAttemptColumn(key: string): boolean {
-  for (const prefix of LIFT_PREFIXES) {
-    if (key !== prefix && key.startsWith(prefix) && REGEX_TRAILING_DIGIT.test(key)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function pickBestAttempt(row: Record<string, string>, prefix: string): string {
-  let best = "";
-  let bestValue = -Infinity;
-
-  for (let i = 1; i <= ATTEMPTS_PER_LIFT; i++) {
-    const value = row[`${prefix}${i}`] ?? "";
-    if (value === "") continue;
-
-    const numeric = parseFloat(value);
-    if (Number.isNaN(numeric)) continue;
-    if (numeric <= 0) continue;
-
-    if (numeric > bestValue) {
-      best = value;
-      bestValue = numeric;
-    }
-  }
-
-  return best;
-}
-
 function pickField(row: CompetitionResult, ...candidates: string[]): string {
   for (const candidate of candidates) {
     const lower = candidate.toLowerCase();
@@ -276,30 +242,6 @@ export function buildUserRank(profile: UserProfile, globalRank: number | null): 
     best_weight_class: bestWeightClass,
     global_rank: globalRank,
   };
-}
-
-export function transformCompetitionResults(
-  rows: ReadonlyArray<Record<string, string>>,
-): CompetitionResult[] {
-  const results: CompetitionResult[] = [];
-
-  for (const row of rows) {
-    const transformed: Record<string, string> = {};
-
-    for (const key of Object.keys(row)) {
-      if (!isAttemptColumn(key)) {
-        transformed[key] = row[key]!;
-      }
-    }
-
-    for (const prefix of LIFT_PREFIXES) {
-      transformed[prefix] = pickBestAttempt(row, prefix);
-    }
-
-    results.push(transformed as CompetitionResult);
-  }
-
-  return results;
 }
 
 interface LiftDbRow {
@@ -535,49 +477,6 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     return buildUserProfileFromLifts(rows, slug, includeAttempts, units);
   }
 
-  function parseUserProfileHtml(
-    doc: Document,
-    username: string,
-    includeAttempts: boolean = false,
-  ): UserProfile {
-    const mixedContent = scraper.getElementByClass(doc, "mixed-content");
-    if (!mixedContent) {
-      throw new Error(`User profile not found: ${username}`);
-    }
-
-    const h1 = mixedContent.querySelector("h1");
-    const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
-    const name = nameSpan?.textContent?.trim() || username;
-
-    const h1Text = h1?.textContent || "";
-    const sexMatch = h1Text.match(/\(([MF])\)/);
-    const sex = sexMatch?.[1] ?? "";
-
-    const igLink = h1?.querySelector("a.instagram");
-    const igHref = igLink?.getAttribute("href") || "";
-    const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
-    const instagram = igMatch?.[1] ?? "";
-
-    const tables = mixedContent.querySelectorAll("table");
-    const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
-    const rawCompetitionResults = tables[1]
-      ? scraper.tableToJson<Record<string, string>>(tables[1])
-      : [];
-    const competitionResults = includeAttempts
-      ? (rawCompetitionResults as CompetitionResult[])
-      : transformCompetitionResults(rawCompetitionResults);
-
-    return {
-      name,
-      username,
-      sex,
-      instagram,
-      instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
-      personal_best: personalBest,
-      competition_results: competitionResults,
-    };
-  }
-
   function normalizeUnits(units: string): "kg" | "lbs" {
     return units === "kg" ? "kg" : "lbs";
   }
@@ -635,16 +534,21 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     };
   }
 
-  async function fetchGlobalRank(username: string): Promise<number | null> {
-    try {
-      const result = await scraper.fetchJson<{ next_index: number }>(
-        `/search/rankings?q=${encodeURIComponent(username)}&start=0`,
-      );
-      if (!Number.isInteger(result.next_index) || result.next_index < 0) return null;
-      return result.next_index + 1;
-    } catch {
-      return null;
-    }
+  async function fetchGlobalRank(slug: string): Promise<number | null> {
+    const own = await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .where("lifters.name_slug", slug)
+      .whereNotNull("lifts.dots")
+      .max({ best: "lifts.dots" })
+      .first<{ best: number | null }>();
+    if (own?.best == null) return null;
+
+    const ahead = await knex("lifts")
+      .join("lifters", "lifters.id", "lifts.lifter_id")
+      .where("lifts.dots", ">", own.best)
+      .countDistinct({ count: "lifters.id" })
+      .first<{ count: number | string }>();
+    return Number(ahead?.count ?? 0) + 1;
   }
 
   async function getRank(
@@ -653,12 +557,8 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
   ): Promise<UserRank | null> {
     const profile = await getUserProfileCached(username, units);
     if (!profile) return null;
-
-    const cacheKey = `user-${username}-rank`;
-    const cached = await scraper.withCache<number | null>(cacheKey, () =>
-      fetchGlobalRank(username),
-    );
-    return buildUserRank(profile, cached.data ?? null);
+    const rank = await fetchGlobalRank(username);
+    return buildUserRank(profile, rank);
   }
 
   interface SearchPagination {
@@ -864,7 +764,6 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
   }
 
   return {
-    parseUserProfileHtml,
     parseUserCacheKey,
     fetchUserProfileFromDb,
     getUser,

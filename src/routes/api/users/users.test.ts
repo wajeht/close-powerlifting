@@ -407,9 +407,10 @@ describe("GET /api/users/:username/rank", () => {
     expect(response.body.data).toHaveProperty("global_rank");
   });
 
-  it("global_rank is positive (search/rankings stub returns next_index 0 → rank 1)", async () => {
+  it("global_rank is computed from the lifts table (positive integer)", async () => {
     const response = await createAuthenticatedApiAgent().get("/api/users/johnhaack/rank");
-    expect(response.body.data.global_rank).toBe(1);
+    expect(response.body.data.global_rank).toBeGreaterThanOrEqual(1);
+    expect(Number.isInteger(response.body.data.global_rank)).toBe(true);
   });
 
   it("should return 404 for non-existent username", async () => {
