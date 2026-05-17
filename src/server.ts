@@ -35,16 +35,39 @@ function handleUnhandledRejection(reason: unknown): void {
 }
 
 async function main(): Promise<void> {
-  const serverInfo = await createServer(context);
   process.title = "close-powerlifting";
+
+  // Bind signal/warning handlers before the slow CSV load so a Ctrl-C
+  // during boot still exits cleanly.
+  process.on("warning", handleWarning);
+  process.on("uncaughtException", handleUncaughtException);
+  process.on("unhandledRejection", handleUnhandledRejection);
+
+  // Start the HTTP server first so /healthz can return 503 ("warming up")
+  // while we parse the CSV. The route handlers check store.tryGet() and
+  // respond appropriately if the store isn't ready yet.
+  const serverInfo = await createServer(context);
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));
   process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
   process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
 
-  process.on("warning", handleWarning);
-  process.on("uncaughtException", handleUncaughtException);
-  process.on("unhandledRejection", handleUnhandledRejection);
+  // Fire-and-forget initial load. setAppData inside the loader flips
+  // /healthz from 503 → 200 once the snapshot is populated.
+  context.loader
+    .loadInitial()
+    .then((result) => {
+      context.logger.info(
+        `loader: initial load complete in ${result.durationMs}ms ` +
+          `(rows=${result.rowCount}, skipped=${result.rowsSkipped}, ` +
+          `last-modified=${result.sourceLastModified ?? "unknown"})`,
+      );
+    })
+    .catch((error: Error) => {
+      context.logger.error("loader: initial load failed", error);
+      // No data → no useful service. Exit so the orchestrator restarts us.
+      process.exit(1);
+    });
 }
 
 main().catch((error: Error) => {
