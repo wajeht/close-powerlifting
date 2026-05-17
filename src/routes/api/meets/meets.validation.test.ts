@@ -109,18 +109,22 @@ describe.concurrent("meets validation", () => {
 
   describe("getMeetHighlightsParamValidation", () => {
     it("accepts a string meet path", () => {
-      const result = getMeetHighlightsParamValidation.safeParse({ meet: "uspa/1969" });
+      const result = getMeetHighlightsParamValidation.safeParse({
+        meet: "wrpf/2024-05-12/wrpfamericanpro",
+      });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.meet).toBe("uspa/1969");
+        expect(result.data.meet).toBe("wrpf/2024-05-12/wrpfamericanpro");
       }
     });
 
     it("joins array meet path with slashes", () => {
-      const result = getMeetHighlightsParamValidation.safeParse({ meet: ["uspa", "1969"] });
+      const result = getMeetHighlightsParamValidation.safeParse({
+        meet: ["wrpf", "2024-05-12", "wrpfamericanpro"],
+      });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.meet).toBe("uspa/1969");
+        expect(result.data.meet).toBe("wrpf/2024-05-12/wrpfamericanpro");
       }
     });
   });

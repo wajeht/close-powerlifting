@@ -74,12 +74,14 @@ export function createMeetsRouter(context: AppContext) {
   const router = express.Router();
 
   /**
-   * GET /api/meets/{meet}
+   * GET /api/meets/{federation}/{date}/{slug}
    * @tags Meets
-   * @summary Get meet results by meet code
+   * @summary Get meet results
    * @description Returns detailed meet information including all lifter results with attempt data
    * @security BearerAuth
-   * @param {string} meet.path.required - Meet code (e.g., usapl/CA-2024-01, rps/2548, uspa/1969)
+   * @param {string} federation.path.required - Federation slug (e.g., wrpf, usapl, ipf)
+   * @param {string} date.path.required - Meet date in YYYY-MM-DD format (e.g., 2024-05-12)
+   * @param {string} slug.path.required - Meet name slug (e.g., wrpfamericanpro)
    * @param {string} sort.query - Sort order for results - enum:by-dots,by-wilks,by-wilks2020,by-glossbrenner,by-goodlift,by-ipf-points,by-mcculloch,by-total,by-ah,by-nasa,by-reshel,by-schwartz-malone,by-division
    * @param {string} units.query - Unit system for weight values (lbs or kg, default: lbs) - enum:lbs,kg
    * @return {MeetResponse} 200 - Meet data with results
@@ -89,14 +91,14 @@ export function createMeetsRouter(context: AppContext) {
    * @example response - 200 - Success response
    * {
    *   "status": "success",
-   *   "request_url": "/api/meets/uspa/1969",
+   *   "request_url": "/api/meets/wrpf/2024-05-12/wrpfamericanpro",
    *   "message": "The resource was returned successfully!",
-   *   "data": {"title": "2024 USPA Nationals", "results": []}
+   *   "data": {"title": "WRPF AMERICAN PRO", "results": []}
    * }
    * @example response - 401 - Unauthorized
    * {
    *   "status": "fail",
-   *   "request_url": "/api/meets/uspa/1969",
+   *   "request_url": "/api/meets/wrpf/2024-05-12/wrpfamericanpro",
    *   "message": "Authorization header required!",
    *   "errors": [],
    *   "data": []
@@ -104,7 +106,7 @@ export function createMeetsRouter(context: AppContext) {
    * @example response - 404 - Meet not found
    * {
    *   "status": "fail",
-   *   "request_url": "/api/meets/invalid/code",
+   *   "request_url": "/api/meets/invalid/2024-01-01/missing",
    *   "message": "The resource cannot be found!",
    *   "errors": [],
    *   "data": []
@@ -112,7 +114,7 @@ export function createMeetsRouter(context: AppContext) {
    * @example response - 429 - Rate limit exceeded
    * {
    *   "status": "fail",
-   *   "request_url": "/api/meets/uspa/1969",
+   *   "request_url": "/api/meets/wrpf/2024-05-12/wrpfamericanpro",
    *   "message": "Too many requests, please try again later?",
    *   "errors": [],
    *   "data": []
@@ -155,13 +157,14 @@ export function createMeetsRouter(context: AppContext) {
    */
 
   /**
-   * GET /api/meets/{federation}/{code}/highlights
+   * GET /api/meets/{federation}/{date}/{slug}/highlights
    * @tags Meets
    * @summary Get meet highlights
    * @description Returns a summary of a meet: total lifters, weight classes contested, and top 3 lifters by DOTS and by total.
    * @security BearerAuth
-   * @param {string} federation.path.required - Federation slug (e.g., uspa, usapl)
-   * @param {string} code.path.required - Meet code (e.g., 1969, ISR-2025-02)
+   * @param {string} federation.path.required - Federation slug (e.g., wrpf, usapl)
+   * @param {string} date.path.required - Meet date in YYYY-MM-DD format
+   * @param {string} slug.path.required - Meet name slug
    * @param {string} units.query - Unit system (lbs or kg, default lbs) - enum:lbs,kg
    * @return {MeetHighlightsResponse} 200 - Highlights data
    * @return {ErrorResponse} 401 - Unauthorized

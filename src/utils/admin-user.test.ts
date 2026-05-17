@@ -14,8 +14,6 @@ const mockMail = {
   sendVerificationEmail: vi.fn().mockResolvedValue({}),
   sendEmailChangeVerificationEmail: vi.fn().mockResolvedValue({}),
   sendContactEmail: vi.fn().mockResolvedValue({}),
-  sendApiLimitResetEmail: vi.fn().mockResolvedValue({}),
-  sendReachingApiLimitEmail: vi.fn().mockResolvedValue({}),
 };
 
 describe("AdminUser", () => {
