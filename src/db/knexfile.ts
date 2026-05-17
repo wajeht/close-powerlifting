@@ -28,14 +28,14 @@ let knexConfig: Knex.Config = {
       // See: https://sqlite.org/pragma.html
       conn.pragma("journal_mode = WAL"); // Write-Ahead Logging for better concurrency
       conn.pragma("synchronous = NORMAL"); // Good balance of speed and durability for WAL mode
-      conn.pragma("busy_timeout = 30000"); // Wait up to 30 seconds if database is locked
+      conn.pragma("busy_timeout = 300000"); // Wait up to 5 min — covers the nightly ingest transaction
       conn.pragma("cache_size = -64000"); // 64MB cache size (negative = KB)
       conn.pragma("temp_store = MEMORY"); // Store temp tables in memory
       conn.pragma("mmap_size = 0"); // Disable memory-mapped I/O to reduce memory usage
       conn.pragma("wal_autocheckpoint = 1000"); // Checkpoint every 1000 pages
       conn.pragma("foreign_keys = ON"); // Enforce foreign key constraints
       conn.pragma("page_size = 4096"); // 4KB page size
-      conn.pragma("lock_timeout = 30000"); // Lock timeout matches busy_timeout
+      conn.pragma("lock_timeout = 300000"); // Match busy_timeout
       conn.pragma("locking_mode = NORMAL"); // Allow concurrent access
       conn.pragma("optimize"); // Optimize query planner
       cb(null, conn);
