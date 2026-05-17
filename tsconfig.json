@@ -8,7 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "isolatedModules": true,
-    "removeComments": false, // we need jsdoc comments for the api docs
+    "removeComments": true,
 
     /* JSX for hono/jsx templates */
     "jsx": "react-jsx",
@@ -39,10 +39,9 @@
     "**/*.test.js",
     "**/*.spec.ts",
     "src/tests/**/*",
-    "postcss.config.js",
     "dist",
     "coverage",
     "public",
-    "vitest.config.mts"
+    "vite.config.mts"
   ]
 }

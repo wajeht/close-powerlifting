@@ -57,7 +57,7 @@ npm run dev
 Run only the API server (skip the Tailwind rebuild loop):
 
 ```bash
-npm run dev:only
+npm run dev:api
 ```
 
 Or with Docker:
