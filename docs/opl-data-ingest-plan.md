@@ -272,47 +272,104 @@ All responses keep their existing shape. The change is **inside** each service: 
 
 ## Phases
 
-### Phase 1 — Schema + ingest pipeline
+### Phase 1 — Schema + ingest pipeline ✅
 
-- Single migration creating all four tables, FTS, and `ingest_runs`.
-- New `createIngestService(knex, logger)` using `better-sqlite3` directly for inserts.
-- Wired into `context.cron` and `npm run ingest:run`.
-- Integration tests against a small fixture CSV cover: row counts on all four tables, FK integrity, FTS hit, Place split, slug computation, boolean coercion, atomic swap behavior.
+- ✅ Single migration (`20260518000000_create_powerlifting_tables`) creates all four tables, FTS5, and `ingest_runs`.
+- ✅ `createIngestService(knex, logger)` uses `better-sqlite3` prepared statements directly inside one transaction. Two-pass: aggregate dimensions in memory, then bulk insert with resolved FKs. Boolean coercion + Place split + slug computation happen at row-build time.
+- ✅ Wired into `context.cron` (nightly at 04:00 UTC) and `npm run ingest:run [-- --force]`.
+- ✅ 14 ingest tests cover normalization, dedup across tables, slug computation, Place split, Tested/Sanctioned booleans, malformed-row skipping, FTS rebuild, atomic re-ingest, per-table row counts in `ingest_runs`.
 
-### Phase 2 — Endpoint migration
+### Phase 2 — Endpoint migration ✅
 
-One commit per endpoint, in this order (smallest blast radius first):
+All endpoints serve from the normalized SQLite. API contract preserved.
 
-1. `/api/users/{slug}` (and progression / personal-bests / compare / rank)
-2. `/api/users?search=` (FTS5)
-3. `/api/meets/{fed}/{date}/{slug}`
-4. `/api/federations`
-5. `/api/rankings`
-6. `/api/records`
+| Endpoint                           | Status | Note                                             |
+| ---------------------------------- | ------ | ------------------------------------------------ |
+| `/api/users/{slug}`                | ✅     | `lifters` keyed lookup + `lifts` join            |
+| `/api/users?search=q`              | ✅     | `lifters_fts` (~989k docs, 1–90 ms typical)      |
+| `/api/users/{slug}/progression`    | ✅     | profile + derive in JS                           |
+| `/api/users/{slug}/personal-bests` | ✅     | profile + derive in JS                           |
+| `/api/users/{slug}/rank`           | ✅     | `COUNT DISTINCT lifters` whose best dots > this  |
+| `/api/users/compare`               | ✅     | two profile lookups + derive in JS               |
+| `/api/rankings[...]`               | ✅     | `lifts JOIN lifters JOIN meets JOIN federations` |
+| `/api/meets/{fed}/{date}/{slug}`   | ✅     | 3-column indexed lookup on `meets` + join lifts  |
+| `/api/federations`                 | ✅     | `meets` joined to `federations`                  |
+| `/api/federations/{slug}`          | ✅     | indexed slug match                               |
+| `/api/federations/{slug}/stats`    | ✅     | aggregate yearly counts in JS                    |
+| `/api/records[...]`                | ✅     | window function per category × weight class      |
+| `/api/status`                      | ✅     | local counts + last `ingest_runs.finished_at`    |
 
-Each commit:
+### Phase 3 — Cleanup ✅
 
-- Swap the service implementation.
-- Keep API request/response shape stable.
-- Update integration tests to seed the four tables in `test-setup` rather than mocking the scraper.
-- Delete the scraper code paths that are no longer reachable.
+- ✅ `parseUserProfileHtml` and supporting HTML helpers deleted from users.service.
+- ✅ `fetchGlobalRank` rewritten to compute rank from `lifts` instead of scraping `/search/rankings`.
+- ✅ `scraper.ts` pruned to a single method (`fetchWithAuth`) used only by the health-check.
+- ✅ `lifts_fts` and the legacy denormalized lifts schema migrations removed.
+- ✅ `linkedom` + `@types/jsdom` removed from dependencies (no HTML parsing anywhere).
+- ⚠️ The legacy `cache` table is still in place — it now serves a few internal keys (hostname, monthly API-call-count reset, global status cache). Not a candidate for removal unless those consumers also move.
+- ⚠️ Swagger needs an update to reflect the new `/api/meets/{fed}/{date}/{slug}` URL convention. Tracked separately.
 
-### Phase 3 — Cleanup
+## Real numbers (live ingest against the full 3.9M-row CSV)
 
-- Drop the legacy `cache` table (if no consumers left).
-- Delete dead scraper code (`createScraper.fetchHtml`, `parseHtml`, `tableToJson` — keep `fetchJson` only if `/api/status` still needs it).
-- Update Swagger / docs to reflect the new `meet_code` URL convention.
+| Metric                                | Value      |
+| ------------------------------------- | ---------- |
+| Federations                           | 465        |
+| Lifters                               | 978,199    |
+| Meets                                 | 61,808     |
+| Lifts                                 | 3,925,887  |
+| DB size on disk (incl. both FTS)      | **992 MB** |
+| Ingest end-to-end (download + insert) | ~3 min     |
+| Ingest insert-only (one transaction)  | **58 s**   |
+
+### Endpoint latencies (cold, against the real 992 MB DB)
+
+| Endpoint                                              | Latency  |
+| ----------------------------------------------------- | -------- |
+| `/api/users/johnhaack`                                | 1 ms     |
+| `/api/users?search=haack`                             | 2 ms     |
+| `/api/users?search=tay`                               | 38 ms    |
+| `/api/meets/wrpf/2024-04-06/theghostclash3` (150 row) | 1 ms     |
+| `/api/federations/usapl`                              | 4 ms     |
+| `/api/federations` (full list, 62k distinct meets)    | 41 ms    |
+| `/api/rankings/raw/men/100/2024/full-power/by-dots`   | 165 ms   |
+| `/api/rankings` (unfiltered page 1)                   | 8.5 s ⚠️ |
+| `/api/records/raw/men`                                | 13 s ⚠️  |
+
+## Known follow-up: materialize best-per-lifter
+
+Unfiltered `/api/rankings` and `/api/records` are the two slow outliers. Both spend their time inside a `ROW_NUMBER() OVER (PARTITION BY lifters.id ORDER BY dots DESC)` that runs over millions of rows. The per-lifter "best result by sort metric" is stable between nightly ingests, so a materialized table is the right fix:
+
+```sql
+CREATE TABLE lifter_bests (
+  lifter_id        INTEGER NOT NULL REFERENCES lifters(id),
+  event            TEXT NOT NULL,
+  equipment        TEXT NOT NULL,
+  best_lift_id     INTEGER NOT NULL REFERENCES lifts(id),
+  -- denormalized best values for the index:
+  dots             REAL,
+  wilks            REAL,
+  total_kg         REAL,
+  best3_squat_kg   REAL,
+  best3_bench_kg   REAL,
+  best3_deadlift_kg REAL,
+  PRIMARY KEY (lifter_id, event, equipment)
+);
+```
+
+Rebuild during nightly ingest after the lifts insert. Unfiltered rankings becomes a sort over ~1M rows instead of dedup-over-3.9M. Records becomes an indexed scan per category.
+
+Not yet implemented — the rest of the work landed first.
 
 ## Open questions
 
-- **Deploy disk:** target SQLite size is ~1.5–2 GB. Production volume needs to handle that plus WAL during ingest (transient ~3 GB peak). Need to confirm.
-- **First production deploy:** the first ingest takes 3-5 minutes. Either deploy with the migration disabled and trigger ingest manually, or block startup until the first ingest completes.
-- **Backups:** SQLite snapshot strategy needs to be defined separately. Recommend nightly `VACUUM INTO` to a separate file before each ingest.
-- **OPL CSV schema changes:** they could add/remove columns. Ingest needs to be defensive — log unknown columns, default-NULL missing ones, alert if expected columns disappear.
+- **Deploy disk:** target SQLite size is ~1 GB plus transient WAL during ingest. Production volume needs to handle that.
+- **First production deploy:** first ingest takes ~3 min. Either deploy with the cron disabled and run `npm run ingest:run -- --force` manually, or block first-startup until the first ingest completes.
+- **Backups:** SQLite snapshot strategy still TBD. Recommend `VACUUM INTO` to a separate file before each ingest as the simplest snapshot.
+- **OPL CSV schema changes:** ingest is defensive (skip rows with missing required fields), but should also log unknown columns and alert if expected columns disappear. Not yet wired.
 
 ## Out of scope
 
 - Editing user-provided data (read-only API mirroring OPL).
-- Computing scoring formulae (already in CSV).
+- Computing scoring formulae (already in the CSV).
 - Sub-day data freshness (nightly matches upstream cadence).
 - Backporting older CSV snapshots (only the latest is ingested).
