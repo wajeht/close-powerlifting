@@ -111,6 +111,7 @@ db-clean:
 push:
 	@$(MAKE) test
 	@$(MAKE) lint
+	@$(MAKE) build
 	@$(MAKE) format
 	@git add -A
 	@curl -s http://commit.jaw.dev/ | sh -s -- --no-verify
