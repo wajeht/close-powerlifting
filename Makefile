@@ -3,7 +3,7 @@ EXEC := $(DC) exec close-powerlifting
 
 .PHONY: help up up-d down restart log shell test test-watch test-coverage \
 	lint format typecheck check snapshot snapshot-build snapshot-commit \
-	push clean
+	snapshot-push push clean
 
 help:
 	@echo "Usage: make [target]"
@@ -28,9 +28,10 @@ help:
 	@echo "  check            Run lint + format + typecheck"
 	@echo ""
 	@echo "Snapshot:"
-	@echo "  snapshot         Rebuild + commit the OPL snapshot"
+	@echo "  snapshot         Rebuild + commit + push the OPL snapshot"
 	@echo "  snapshot-build   Rebuild the JSON snapshot from the OPL CSV"
 	@echo "  snapshot-commit  Stage + commit the snapshot files (requires git-lfs)"
+	@echo "  snapshot-push    Push the current branch + LFS blobs to origin"
 	@echo ""
 	@echo "Deployment:"
 	@echo "  push             Test + lint + format + commit + push"
@@ -85,7 +86,7 @@ check:
 
 # === Snapshot ===
 
-snapshot: snapshot-build snapshot-commit
+snapshot: snapshot-build snapshot-commit snapshot-push
 
 snapshot-build:
 	@npx tsx scripts/build-snapshot.ts
@@ -107,6 +108,21 @@ snapshot-commit:
 	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
 	git add src/data/snapshot/ && \
 	git commit -m "chore(data): refresh OPL snapshot ($$BUILT)"
+
+snapshot-push:
+	@command -v git-lfs >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "git-lfs is not installed."; \
+		echo "  brew install git-lfs"; \
+		echo "  git lfs install"; \
+		echo ""; \
+		exit 1; \
+	}
+	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
+	echo "Pushing $$BRANCH to origin..."; \
+	git push origin "$$BRANCH"; \
+	echo "Re-pushing LFS objects (defensive — some IDEs skip the pre-push hook)..."; \
+	git lfs push --all origin "$$BRANCH"
 
 # === Deployment ===
 
