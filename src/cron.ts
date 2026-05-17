@@ -16,10 +16,7 @@ import { createStatusService } from "./routes/api/status/status.service";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
-export const INTERNAL_CACHE_KEYS = [
-  "hostname",
-  "close-powerlifting-global-status-call-cache",
-];
+export const INTERNAL_CACHE_KEYS = ["hostname", "close-powerlifting-global-status-call-cache"];
 
 export interface CronType {
   start: () => void;
@@ -108,9 +105,7 @@ export function createCron(
         return;
       }
 
-      const adminUser = await userRepository.findByEmail(
-        process.env.APP_ADMIN_EMAIL || "",
-      );
+      const adminUser = await userRepository.findByEmail(process.env.APP_ADMIN_EMAIL || "");
       if (!adminUser?.api_key) {
         logger.warn("refreshHealthCheck: admin user or API key not found, skipping");
         return;

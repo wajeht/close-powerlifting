@@ -65,7 +65,6 @@ export function createFederationsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const federationService = createFederationService(context.knex);
 
@@ -111,7 +110,6 @@ export function createFederationsRouter(context: AppContext) {
     "/api/federations",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getFederationsValidation }),
     async (req: Request<{}, {}, GetFederationsType>, res: Response) => {
@@ -171,7 +169,6 @@ export function createFederationsRouter(context: AppContext) {
     "/api/federations/:federation/stats",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFederationsParamValidation,
@@ -241,7 +238,6 @@ export function createFederationsRouter(context: AppContext) {
     "/api/federations/:federation",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFederationsParamValidation,

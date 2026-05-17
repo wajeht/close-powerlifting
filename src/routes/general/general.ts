@@ -20,7 +20,6 @@ export function createGeneralRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
 
   const healthCheckService = createHealthCheckService(

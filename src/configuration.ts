@@ -26,8 +26,6 @@ export const configuration = {
     domain: process.env.APP_DOMAIN || "localhost",
     jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
     adminEmail: process.env.APP_ADMIN_EMAIL || "",
-    defaultApiCallLimit: 750,
-    apiCallLogRetentionDays: parseInt(process.env.API_CALL_LOG_RETENTION_DAYS || "90", 10),
   } as const,
 
   pagination: {

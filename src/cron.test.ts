@@ -3,8 +3,6 @@ import { createCron } from "./cron";
 import { knex } from "./tests/test-setup";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
-import type { ApiCallLogRepositoryType } from "./db/api-call-log";
-import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
 import type { IngestServiceType } from "./utils/ingest";
@@ -71,8 +69,6 @@ describe("cron", () => {
   let logger: LoggerType;
   let scraper: ScraperType;
   let userRepository: UserRepositoryType;
-  let mail: MailType;
-  let apiCallLogRepository: ApiCallLogRepositoryType;
   let ingest: IngestServiceType;
 
   beforeEach(() => {
@@ -80,18 +76,8 @@ describe("cron", () => {
     logger = createTestLogger();
     scraper = createTestScraper();
     userRepository = {
-      findVerifiedWithUsage: vi.fn().mockResolvedValue([]),
-      resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
-      findByApiCallCount: vi.fn().mockResolvedValue([]),
       findByEmail: vi.fn().mockResolvedValue(null),
     } as unknown as UserRepositoryType;
-    mail = {
-      sendApiLimitResetEmail: vi.fn().mockResolvedValue(undefined),
-      sendReachingApiLimitEmail: vi.fn().mockResolvedValue(undefined),
-    } as unknown as MailType;
-    apiCallLogRepository = {
-      deleteOlderThan: vi.fn().mockResolvedValue(0),
-    } as unknown as ApiCallLogRepositoryType;
     ingest = {
       runNightly: vi.fn().mockResolvedValue({
         status: "completed",
@@ -110,16 +96,7 @@ describe("cron", () => {
 
   describe("createCron", () => {
     it("should create cron with correct interface", () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
 
       expect(cron).toHaveProperty("start");
       expect(cron).toHaveProperty("stop");
@@ -128,31 +105,13 @@ describe("cron", () => {
     });
 
     it("should return not running status initially", () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
 
       expect(cron.getStatus()).toEqual({ isRunning: false, jobCount: 0 });
     });
 
     it("should update status after start", () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       cron.start();
 
       const status = cron.getStatus();
@@ -163,16 +122,7 @@ describe("cron", () => {
     });
 
     it("should update status after stop", () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       cron.start();
       cron.stop();
 
@@ -180,16 +130,7 @@ describe("cron", () => {
     });
 
     it("should log when started and stopped", () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       cron.start();
 
       expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 6 });
@@ -212,31 +153,13 @@ describe("cron", () => {
 
     it("claims status key", async () => {
       await seedCache(cache, ["status"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should refresh federations list from cache", async () => {
       await seedCache(cache, ["federations-list"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("federations-list");
@@ -245,16 +168,7 @@ describe("cron", () => {
 
     it("should refresh records from cache", async () => {
       await seedCache(cache, ["records"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached = await cache.get("records");
@@ -263,31 +177,13 @@ describe("cron", () => {
 
     it("claims rankings keys", async () => {
       await seedCache(cache, ["rankings-1-100-lbs", "rankings-2-100-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should refresh filtered rankings keys", async () => {
       await seedCache(cache, ["rankings/raw-1-100-lbs", "rankings/raw/men-1-100-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       const cached1 = await cache.get("rankings/raw-1-100-lbs");
@@ -298,76 +194,31 @@ describe("cron", () => {
 
     it("claims federation keys", async () => {
       await seedCache(cache, ["federation-ipf", "federation-uspa-2024"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims meet keys", async () => {
       await seedCache(cache, ["meet-uspa/1969"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims user profile keys", async () => {
       await seedCache(cache, ["user-johnhaack-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims records keys", async () => {
       await seedCache(cache, ["records/raw", "records/raw/men"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should skip internal cache keys", async () => {
       await seedCache(cache, ["hostname", "close-powerlifting-global-status-call-cache", "status"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       // Only status should be refreshed
@@ -381,16 +232,7 @@ describe("cron", () => {
 
     it("should log completion with results summary", async () => {
       await seedCache(cache, ["status", "federations-list", "records"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -408,16 +250,7 @@ describe("cron", () => {
     it("should report cache-key counts in summary", async () => {
       await seedCache(cache, ["status", "records", "federation-ipf"]);
 
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -431,16 +264,7 @@ describe("cron", () => {
     });
 
     it("should do nothing when cache is empty", async () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -456,31 +280,13 @@ describe("cron", () => {
     // the lifts table; legacy fetchJson-based assertions no longer apply.
     it("claims deep filter path rankings keys", async () => {
       await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("should warn on invalid rankings key format", async () => {
       await seedCache(cache, ["rankings-invalid"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -490,16 +296,7 @@ describe("cron", () => {
 
     it("should warn on rankings key with non-numeric page/perPage", async () => {
       await seedCache(cache, ["rankings-abc-def-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -513,77 +310,32 @@ describe("cron", () => {
         "records/raw/expanded-classes/men",
         "records/all-tested/women",
       ]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     // comes from the lifts table; we only verify the cron didn't scrape.
     it("claims federation-365strong", async () => {
       await seedCache(cache, ["federation-365strong"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims deep meet path keys", async () => {
       await seedCache(cache, ["meet-wrpf-ru/2301", "meet-gpc/aus-vic/2023"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims usernames-with-hyphens profile keys", async () => {
       await seedCache(cache, ["user-john-doe-lbs"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
     });
 
     it("claims user search keys", async () => {
       await seedCache(cache, ["users-search-john%20haack-2-5-kg"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
       expect(logger.warn).not.toHaveBeenCalledWith(
         "refreshCacheKey: unknown key type: users-search-john%20haack-2-5-kg",
@@ -592,16 +344,7 @@ describe("cron", () => {
 
     it("should warn on invalid user search cache keys", async () => {
       await seedCache(cache, ["users-search-haack-invalid"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -611,16 +354,7 @@ describe("cron", () => {
 
     it("should warn on unknown key types", async () => {
       await seedCache(cache, ["unknown-key-type"]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -639,16 +373,7 @@ describe("cron", () => {
         "user-johnhaack-lbs",
         "rankings-1-100-lbs",
       ]);
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshCache();
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -664,16 +389,7 @@ describe("cron", () => {
 
   describe("refreshHealthCheck task", () => {
     it("should skip when hostname is not cached", async () => {
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -684,16 +400,7 @@ describe("cron", () => {
     it("should skip when admin user is not found", async () => {
       await cache.set("hostname", "http://localhost");
 
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.warn).toHaveBeenCalledWith(
@@ -707,16 +414,7 @@ describe("cron", () => {
         api_key: "test-key",
       } as never);
 
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.info).toHaveBeenCalledWith("cron job completed: refreshHealthCheck");
@@ -726,524 +424,11 @@ describe("cron", () => {
       await cache.set("hostname", "http://localhost");
       vi.mocked(userRepository.findByEmail).mockRejectedValueOnce(new Error("db error"));
 
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
+      const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       await cron.tasks.refreshHealthCheck();
 
       expect(logger.error).toHaveBeenCalledWith(
         "cron job failed: refreshHealthCheck",
-        expect.any(Error),
-      );
-    });
-  });
-
-  describe("resetApiCallCount task", () => {
-    const RESET_MARKER_KEY = "api-call-count-last-reset-month";
-
-    it("should reset and set marker when no previous reset is recorded", async () => {
-      vi.setSystemTime(new Date("2024-04-15T00:05:00Z"));
-
-      const mockUsers = [{ email: "test@test.com", name: "Test", api_call_count: 42 }];
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
-      expect(mail.sendApiLimitResetEmail).toHaveBeenCalledWith({
-        email: "test@test.com",
-        name: "Test",
-      });
-    });
-
-    it("should skip when already reset this month", async () => {
-      vi.setSystemTime(new Date("2024-04-15T00:05:00Z"));
-      await cache.set(RESET_MARKER_KEY, "2024-04");
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).not.toHaveBeenCalled();
-      expect(mail.sendApiLimitResetEmail).not.toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalledWith(
-        "cron job skipped: resetApiCallCount (already reset this month)",
-        { currentMonth: "2024-04" },
-      );
-    });
-
-    it("should reset when marker is from a previous month", async () => {
-      vi.setSystemTime(new Date("2024-05-01T00:05:00Z"));
-      await cache.set(RESET_MARKER_KEY, "2024-04");
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-05");
-    });
-
-    // Regression: the old implementation only reset when getDate() === 1.
-    // If the cron's day-1 firing was missed (server down/deploy), the entire
-    // month was skipped. The marker-based check must self-heal on day 2+.
-    it("should self-heal: reset on day 2+ if first-day window was missed", async () => {
-      vi.setSystemTime(new Date("2024-05-15T00:05:00Z"));
-      await cache.set(RESET_MARKER_KEY, "2024-04");
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-05");
-    });
-
-    it("should be idempotent across multiple firings within the same month", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-      await cron.tasks.resetApiCallCount();
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalledTimes(1);
-    });
-
-    it("should pad single-digit months in the marker (UTC YYYY-MM)", async () => {
-      vi.setSystemTime(new Date("2024-01-01T00:05:00Z"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-01");
-    });
-
-    it("should send emails to all verified users", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-
-      const mockUsers = [
-        { email: "user1@test.com", name: "User 1", api_call_count: 1 },
-        { email: "user2@test.com", name: "User 2", api_call_count: 50 },
-        { email: "user3@test.com", name: "User 3", api_call_count: 100 },
-      ];
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
-    });
-
-    it("should send no emails when no verified user has usage (DB returns empty)", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      // findVerifiedWithUsage filters at the SQL layer, so a DB with all-zero
-      // users surfaces here as an empty list — we still reset and set the
-      // marker so the cron doesn't retry later in the month.
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([]);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(userRepository.resetAllApiCallCounts).toHaveBeenCalled();
-      expect(mail.sendApiLimitResetEmail).not.toHaveBeenCalled();
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
-    });
-
-    it("should handle findVerifiedWithUsage error", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerifiedWithUsage).mockRejectedValue(new Error("DB error"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "cron job failed: resetApiCallCount",
-        expect.any(Error),
-      );
-      // Marker must NOT be set when reset never happened, so next firing retries.
-      expect(await cache.get(RESET_MARKER_KEY)).toBeNull();
-    });
-
-    it("should handle resetAllApiCallCounts error and not set marker", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([
-        { email: "a@b.com", name: "A", api_call_count: 5 },
-      ] as never);
-      vi.mocked(userRepository.resetAllApiCallCounts).mockRejectedValue(new Error("DB error"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "cron job failed: resetApiCallCount",
-        expect.any(Error),
-      );
-      expect(await cache.get(RESET_MARKER_KEY)).toBeNull();
-    });
-
-    it("should log completion on success", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue([]);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
-    });
-
-    it("should continue sending emails when one fails", async () => {
-      vi.setSystemTime(new Date("2024-04-01T00:05:00Z"));
-
-      const mockUsers = [
-        { email: "user1@test.com", name: "User 1", api_call_count: 10 },
-        { email: "user2@test.com", name: "User 2", api_call_count: 20 },
-        { email: "user3@test.com", name: "User 3", api_call_count: 30 },
-      ];
-      vi.mocked(userRepository.findVerifiedWithUsage).mockResolvedValue(mockUsers as never);
-      vi.mocked(mail.sendApiLimitResetEmail)
-        .mockResolvedValueOnce(undefined)
-        .mockRejectedValueOnce(new Error("SMTP error"))
-        .mockResolvedValueOnce(undefined);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.resetApiCallCount();
-
-      expect(mail.sendApiLimitResetEmail).toHaveBeenCalledTimes(3);
-      expect(logger.warn).toHaveBeenCalledWith("resetApiCallCount: 1/3 emails failed to send");
-      expect(logger.info).toHaveBeenCalledWith("cron job completed: resetApiCallCount");
-      // Marker is set even when some emails fail (reset itself succeeded).
-      expect(await cache.get(RESET_MARKER_KEY)).toBe("2024-04");
-    });
-  });
-
-  describe("sendReachingApiLimitEmail task", () => {
-    it("should send emails to users at 70% limit", async () => {
-      const mockUsers = [{ email: "user@test.com", name: "User" }];
-      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledWith({
-        email: "user@test.com",
-        name: "User",
-        percent: 70,
-      });
-    });
-
-    it("should not send emails if no users at limit", async () => {
-      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue([]);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(mail.sendReachingApiLimitEmail).not.toHaveBeenCalled();
-    });
-
-    it("should send emails to all users at limit", async () => {
-      const mockUsers = [
-        { email: "user1@test.com", name: "User 1" },
-        { email: "user2@test.com", name: "User 2" },
-      ];
-      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledTimes(2);
-    });
-
-    it("should handle findByApiCallCount error", async () => {
-      vi.mocked(userRepository.findByApiCallCount).mockRejectedValue(new Error("DB error"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "cron job failed: sendReachingApiLimitEmail",
-        expect.any(Error),
-      );
-    });
-
-    it("should log completion on success", async () => {
-      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue([]);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
-    });
-
-    it("should continue sending emails when one fails", async () => {
-      const mockUsers = [
-        { email: "user1@test.com", name: "User 1" },
-        { email: "user2@test.com", name: "User 2" },
-      ];
-      vi.mocked(userRepository.findByApiCallCount).mockResolvedValue(mockUsers as never);
-      vi.mocked(mail.sendReachingApiLimitEmail)
-        .mockRejectedValueOnce(new Error("SMTP error"))
-        .mockResolvedValueOnce(undefined);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.sendReachingApiLimitEmail();
-
-      expect(mail.sendReachingApiLimitEmail).toHaveBeenCalledTimes(2);
-      expect(logger.warn).toHaveBeenCalledWith(
-        "sendReachingApiLimitEmail: 1/2 emails failed to send",
-      );
-      expect(logger.info).toHaveBeenCalledWith("cron job completed: sendReachingApiLimitEmail");
-    });
-  });
-
-  describe("cleanupOldApiCallLogs task", () => {
-    it("should call deleteOlderThan with correct cutoff date", async () => {
-      const mockDate = new Date("2024-03-15T12:00:00Z");
-      vi.setSystemTime(mockDate);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.cleanupOldApiCallLogs();
-
-      expect(apiCallLogRepository.deleteOlderThan).toHaveBeenCalledWith(expect.any(Date));
-      const callArg = vi.mocked(apiCallLogRepository.deleteOlderThan).mock.calls[0][0];
-      const daysDiff = Math.round((mockDate.getTime() - callArg.getTime()) / (1000 * 60 * 60 * 24));
-      expect(daysDiff).toBe(90);
-    });
-
-    it("should log completion with deleted count when logs deleted", async () => {
-      vi.mocked(apiCallLogRepository.deleteOlderThan).mockResolvedValue(42);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.cleanupOldApiCallLogs();
-
-      expect(logger.info).toHaveBeenCalledWith(
-        "cron job completed: cleanupOldApiCallLogs - deleted 42 logs",
-      );
-    });
-
-    it("should log completion when no logs to delete", async () => {
-      vi.mocked(apiCallLogRepository.deleteOlderThan).mockResolvedValue(0);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.cleanupOldApiCallLogs();
-
-      expect(logger.info).toHaveBeenCalledWith(
-        "cron job completed: cleanupOldApiCallLogs - no logs to delete",
-      );
-    });
-
-    it("should handle deleteOlderThan error", async () => {
-      vi.mocked(apiCallLogRepository.deleteOlderThan).mockRejectedValue(new Error("DB error"));
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.cleanupOldApiCallLogs();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "cron job failed: cleanupOldApiCallLogs",
         expect.any(Error),
       );
     });

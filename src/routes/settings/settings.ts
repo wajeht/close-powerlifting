@@ -22,7 +22,6 @@ export function createSettingsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
 
   const router = express.Router();

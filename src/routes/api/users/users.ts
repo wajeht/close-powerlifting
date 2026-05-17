@@ -109,7 +109,6 @@ export function createUsersRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const userService = createUserService(context.knex);
 
@@ -167,7 +166,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getUsersValidation }),
     async (req: Request<GetUsersType, {}, {}>, res: Response) => {
@@ -243,7 +241,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users/:username/progression",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getUserValidation,
@@ -312,7 +309,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users/:username/personal-bests",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getUserValidation,
@@ -361,7 +357,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users/:username/rank",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getUserValidation,
@@ -441,7 +436,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users/compare",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getCompareValidation }),
     async (req: Request<{}, {}, {}, GetCompareType>, res: Response) => {
@@ -510,7 +504,6 @@ export function createUsersRouter(context: AppContext) {
     "/api/users/:username",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getUserValidation,

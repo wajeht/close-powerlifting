@@ -21,7 +21,6 @@ export function createHealthCheckRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
 
   const router = express.Router();

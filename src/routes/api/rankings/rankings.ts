@@ -73,7 +73,6 @@ export function createRankingsRouter(context: AppContext) {
     context.logger,
     context.knex,
     context.authService,
-    context.apiCallLogRepository,
   );
   const rankingService = createRankingService(context.knex);
 
@@ -122,7 +121,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ query: getRankingsValidation }),
     async (req: Request<{}, {}, GetRankingsType>, res: Response) => {
@@ -192,7 +190,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true }),
@@ -274,7 +271,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment/:sex",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({ equipment: true, sex: true }),
@@ -357,7 +353,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment/:sex/:weight_class",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
@@ -445,7 +440,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment/:sex/:weight_class/:year",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
@@ -535,7 +529,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment/:sex/:weight_class/:year/:event",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation.pick({
@@ -627,7 +620,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/filter/:equipment/:sex/:weight_class/:year/:event/:sort",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({
       params: getFilteredRankingsParamValidation,
@@ -698,7 +690,6 @@ export function createRankingsRouter(context: AppContext) {
     "/api/rankings/:rank",
     middleware.rateLimitMiddleware,
     middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
     middleware.apiCacheControlMiddleware,
     middleware.apiValidationMiddleware({ params: getRankValidation }),
     async (req: Request<GetRankType, {}, {}>, res: Response) => {

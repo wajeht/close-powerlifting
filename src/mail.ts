@@ -25,12 +25,6 @@ export interface MailType {
   }) => Promise<void>;
   sendWelcomeEmail: (params: { email: string; name: string; key: string }) => Promise<void>;
   sendContactEmail: (params: { name: string; email: string; message: string }) => Promise<void>;
-  sendApiLimitResetEmail: (params: { email: string; name: string }) => Promise<void>;
-  sendReachingApiLimitEmail: (params: {
-    email: string;
-    name: string;
-    percent: number;
-  }) => Promise<void>;
 }
 
 export function createMail(logger: LoggerType): MailType {
@@ -205,55 +199,6 @@ ${message}`,
     );
   }
 
-  async function sendApiLimitResetEmail({
-    email,
-    name,
-  }: {
-    email: string;
-    name: string;
-  }): Promise<void> {
-    await send(
-      email,
-      "API Call Limit Reset",
-      `Hi ${name},
-
-Good news! Your API limit has been reset and you're back to full capacity.
-
-Thanks for using Close Powerlifting. Happy lifting!
-
-Cheers,
-The Close Powerlifting Team`,
-    );
-  }
-
-  async function sendReachingApiLimitEmail({
-    email,
-    name,
-    percent,
-  }: {
-    email: string;
-    name: string;
-    percent: number;
-  }): Promise<void> {
-    await send(
-      email,
-      "Reaching API Limit",
-      `Hi ${name},
-
-Heads up! You've used ${percent}% of your monthly API calls.
-
-A few tips to reduce usage:
-- Cache responses when possible
-- Use pagination to fetch smaller datasets
-- Batch your requests during off-peak hours
-
-Your limit resets at the start of each month. Need a higher limit? Reply to this email and let us know.
-
-Cheers,
-The Close Powerlifting Team`,
-    );
-  }
-
   return {
     verifyConnection,
     sendVerificationEmail,
@@ -261,7 +206,5 @@ The Close Powerlifting Team`,
     sendMagicLinkEmail,
     sendWelcomeEmail,
     sendContactEmail,
-    sendApiLimitResetEmail,
-    sendReachingApiLimitEmail,
   };
 }
