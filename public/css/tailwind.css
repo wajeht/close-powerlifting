@@ -1,6 +1,6 @@
 @import "tailwindcss" important;
 
-@source "../../src/routes/**/*.html";
+@source "../../src/**/*.{ts,tsx}";
 
 @theme {
   --breakpoint-xs: 475px;
