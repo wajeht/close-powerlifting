@@ -1,7 +1,7 @@
 FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl sqlite3 python3 make g++ && \
+    apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -10,7 +10,7 @@ WORKDIR /usr/src/app
 COPY package.json package-lock.json .npmrc ./
 
 RUN npm install && \
-    npm rebuild better-sqlite3 sharp --ignore-scripts=false
+    npm rebuild sharp --ignore-scripts=false
 
 COPY ./ ./
 
