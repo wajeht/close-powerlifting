@@ -2,15 +2,16 @@ import crypto from "node:crypto";
 
 import { getConnInfo } from "@hono/node-server/conninfo";
 import type { Context, MiddlewareHandler, NotFoundHandler, ErrorHandler } from "hono";
+import { HTTPException } from "hono/http-exception";
 import { ZodError } from "zod";
 
 import { configuration } from "../configuration";
-import { AppError } from "../error";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { getCachedRouteHealth } from "./api/health-check/health-check.service";
 import { renderErrorPage } from "./general/ErrorPage";
 import { renderRateLimitPage } from "./general/RateLimitPage";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
@@ -127,7 +128,7 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
           429,
         );
       }
-      return c.html(renderRateLimitPage(c.get("state")), 429);
+      return renderRateLimitPage(c);
     }
 
     return next();
@@ -170,15 +171,11 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
   const notFoundHandler: NotFoundHandler = (c) => {
     const isApiRoute = c.req.path.includes("/api/");
     if (!isApiRoute) {
-      return c.html(
-        renderErrorPage({
-          state: c.get("state"),
-          statusCode: 404,
-          heading: "Page not found",
-          message: "The page you're looking for doesn't exist or has been moved.",
-        }),
-        404,
-      );
+      return renderErrorPage(c, {
+        statusCode: 404,
+        heading: "Page not found",
+        message: "The page you're looking for doesn't exist or has been moved.",
+      });
     }
     return c.json(
       {
@@ -200,8 +197,8 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     if (err instanceof ZodError) {
       statusCode = 400;
       message = err.message;
-    } else if (err instanceof AppError) {
-      statusCode = err.statusCode;
+    } else if (err instanceof HTTPException) {
+      statusCode = err.status;
       message = err.message;
     } else if (err instanceof Error) {
       message = configuration.app.env === "development" ? err.stack || err.message : message;
@@ -217,16 +214,12 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     if (!isApiRoute && !isHealthcheck) {
       const showStack =
         configuration.app.env === "development" && statusCode >= 500 && err instanceof Error;
-      return c.html(
-        renderErrorPage({
-          state: c.get("state"),
-          statusCode,
-          heading: "Something went wrong",
-          message: "The server encountered an error and was unable to complete your request.",
-          errorStack: showStack ? ((err as Error).stack ?? null) : null,
-        }),
-        statusCode as 400 | 404 | 500,
-      );
+      return renderErrorPage(c, {
+        statusCode,
+        heading: "Something went wrong",
+        message: "The server encountered an error and was unable to complete your request.",
+        errorStack: showStack ? ((err as Error).stack ?? null) : null,
+      });
     }
 
     return c.json(
@@ -237,7 +230,7 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
         errors: err instanceof ZodError ? err.issues : [],
         data: [],
       },
-      statusCode as 400 | 404 | 500,
+      statusCode as ContentfulStatusCode,
     );
   };
 

@@ -2,7 +2,6 @@ import type { FC } from "hono/jsx";
 
 import { EndpointCard } from "../_components/EndpointCard";
 import { StatCounter } from "../_components/StatCounter";
-import { MainLayout, type AppState } from "../_layouts/main";
 
 interface HomeRanking {
   rank: number;
@@ -14,14 +13,13 @@ interface HomeRanking {
 }
 
 interface HomePageProps {
-  state: AppState;
   rankings: HomeRanking[] | null;
 }
 
 const COUNTER_SCRIPT = `(function(){var counters=document.querySelectorAll('.counter');var animated=false;function animateCounter(c){var target=parseFloat(c.dataset.target);var start=parseFloat(c.dataset.start)||0;var decimals=parseInt(c.dataset.decimals)||0;var suffix=c.dataset.suffix||'';var duration=2000;var steps=60;var stepDuration=duration/steps;var current=start;var increment=(target-start)/steps;function update(){current+=increment;if(current>=target){c.textContent=(decimals>0?target.toFixed(decimals):target)+suffix}else{var d=decimals>0?current.toFixed(decimals):Math.floor(current);c.textContent=d+suffix;requestAnimationFrame(function(){setTimeout(update,stepDuration)})}}update()}function handle(entries){entries.forEach(function(e){if(e.isIntersecting&&!animated){animated=true;counters.forEach(function(c,i){setTimeout(function(){animateCounter(c)},i*150)})}})}var obs=new IntersectionObserver(handle,{threshold:0.5});var g=document.getElementById('stats-grid');if(g){obs.observe(g)}})();`;
 
-export const HomePage: FC<HomePageProps> = ({ state, rankings }) => (
-  <MainLayout state={state} path="/">
+export const HomePage: FC<HomePageProps> = ({ rankings }) => (
+  <>
     <section class="relative">
       <div class="mx-auto max-w-5xl px-4 text-center">
         <div class="max-w-8xl pointer-events-none absolute -top-40 left-1/2 -z-10 h-[900px] w-full -translate-x-1/2 opacity-10">
@@ -219,5 +217,5 @@ export const HomePage: FC<HomePageProps> = ({ state, rankings }) => (
     </section>
 
     <script>{COUNTER_SCRIPT}</script>
-  </MainLayout>
+  </>
 );

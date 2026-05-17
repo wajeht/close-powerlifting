@@ -1,7 +1,8 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
+import { HTTPException } from "hono/http-exception";
+
 import type { AppContext } from "../../../context";
-import { NotFoundError } from "../../../error";
 import { errorContent, jsonContent, paginatedResponse, successResponse } from "../api.schemas";
 import { createMeetsService } from "./meets.service";
 import {
@@ -84,9 +85,9 @@ export function createMeetsRouter(context: AppContext) {
     const query = c.req.valid("query");
     const result = service.getMeetHighlights(params, query);
     if (result == null) {
-      throw new NotFoundError(
-        `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
-      );
+      throw new HTTPException(404, {
+        message: `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
+      });
     }
     return c.json(
       {
@@ -104,9 +105,9 @@ export function createMeetsRouter(context: AppContext) {
     const query = c.req.valid("query");
     const result = service.getMeet(params, query);
     if (result == null) {
-      throw new NotFoundError(
-        `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
-      );
+      throw new HTTPException(404, {
+        message: `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
+      });
     }
     return c.json(
       {

@@ -2,11 +2,9 @@ import type { FC } from "hono/jsx";
 
 import { InfoCard } from "../_components/InfoCard";
 import { StatusBanner } from "../_components/StatusBanner";
-import { MainLayout, type AppState } from "../_layouts/main";
 import type { RouteGroup } from "../api/health-check/health-check.service";
 
 interface StatusPageProps {
-  state: AppState;
   ready: boolean;
   rowCount: number;
   sourceLastModified: string | null;
@@ -18,7 +16,6 @@ interface StatusPageProps {
 const STATUS_TOGGLE_SCRIPT = `(function(){document.querySelectorAll('.status-route').forEach(function(a){var t=a.querySelector('.status-route-toggle');var p=a.querySelector('.status-route-pre');var c=a.querySelector('.status-route-chevron');if(!p)return;if(p.textContent){try{p.textContent=JSON.stringify(JSON.parse(p.textContent),null,2)}catch(e){}}t.addEventListener('click',function(){var x=p.classList.toggle('hidden')===false;t.setAttribute('aria-expanded',String(x));if(c){c.classList.toggle('rotate-180',x)}})})})();`;
 
 export const StatusPage: FC<StatusPageProps> = ({
-  state,
   ready,
   rowCount,
   sourceLastModified,
@@ -26,7 +23,7 @@ export const StatusPage: FC<StatusPageProps> = ({
   routeGroups,
   allGood,
 }) => (
-  <MainLayout state={state} path="/status" title="Status">
+  <>
     <div class="mx-auto max-w-5xl px-4">
       <header class="fade-in-heading mb-6">
         <h1 class="text-2xl font-bold text-white">API Status</h1>
@@ -119,5 +116,5 @@ export const StatusPage: FC<StatusPageProps> = ({
       </section>
     </div>
     <script>{STATUS_TOGGLE_SCRIPT}</script>
-  </MainLayout>
+  </>
 );
