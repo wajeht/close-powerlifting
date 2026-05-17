@@ -121,7 +121,7 @@ Rate limits protect the service and ensure fair usage for all developers.
 
 | Limit | Threshold | Scope |
 |-------|-----------|-------|
-| **Per-IP limit** | 50 requests/hour | Per IP address |
+| **Per-IP limit** | 100 requests/minute | Per IP address |
 | **Auth endpoints** | 10 requests/15 min | Per IP address |
 
 **Tips to stay within limits:**
