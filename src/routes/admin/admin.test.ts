@@ -94,23 +94,6 @@ describe("Admin Routes", () => {
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
     });
-
-    it("should redirect POST /admin/cache/refresh to login", async () => {
-      const response = await request(app)
-        .post("/admin/cache/refresh")
-        .type("form")
-        .send({ key: "test-key" });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/cache/refresh-all to login", async () => {
-      const response = await request(app).post("/admin/cache/refresh-all");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
   });
 
   describe("Protected routes with non-admin user", () => {
@@ -204,23 +187,6 @@ describe("Admin Routes", () => {
       expect(cacheEntry).toBeDefined();
 
       await knex("cache").where({ key: "non-admin-delete-test" }).delete();
-    });
-
-    it("should redirect POST /admin/cache/refresh to login for non-admin user", async () => {
-      const response = await nonAdminAgent
-        .post("/admin/cache/refresh")
-        .type("form")
-        .send({ key: "meet-uspa/1969" });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/cache/refresh-all to login for non-admin user", async () => {
-      const response = await nonAdminAgent.post("/admin/cache/refresh-all");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
     });
   });
 
@@ -433,61 +399,6 @@ describe("Admin Routes", () => {
 
         const remaining = await knex("cache").select("key");
         expect(remaining.length).toBe(2);
-      });
-    });
-
-    describe("POST /admin/cache/refresh", () => {
-      beforeEach(async () => {
-        await knex("cache").del();
-        await knex("cache").insert({
-          key: "status",
-          value: '{"data":{"stale":true}}',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      });
-
-      it("should redirect back to /admin/cache after refresh", async () => {
-        const cachePage = await agent.get("/admin/cache");
-        const csrfToken = extractCsrfToken(cachePage.text);
-
-        const response = await agent
-          .post("/admin/cache/refresh")
-          .type("form")
-          .send({ key: "status", _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/cache");
-
-        const refreshed = await knex("cache").where({ key: "status" }).first();
-        expect(refreshed).toBeDefined();
-      });
-
-      it("should reject empty key", async () => {
-        const cachePage = await agent.get("/admin/cache");
-        const csrfToken = extractCsrfToken(cachePage.text);
-
-        const response = await agent
-          .post("/admin/cache/refresh")
-          .type("form")
-          .send({ key: "", _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-      });
-    });
-
-    describe("POST /admin/cache/refresh-all", () => {
-      it("should redirect immediately and trigger a background refresh", async () => {
-        const cachePage = await agent.get("/admin/cache");
-        const csrfToken = extractCsrfToken(cachePage.text);
-
-        const response = await agent
-          .post("/admin/cache/refresh-all")
-          .type("form")
-          .send({ _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/cache");
       });
     });
   });

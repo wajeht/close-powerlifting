@@ -81,43 +81,6 @@ describe("meets service", () => {
     });
   });
 
-  describe("parseMeetCacheKey", () => {
-    it("returns null for non-meet keys", () => {
-      expect(meetService.parseMeetCacheKey("status")).toBeNull();
-      expect(meetService.parseMeetCacheKey("user-johnhaack-lbs")).toBeNull();
-    });
-
-    it("parses base meet key", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969")).toEqual({
-        path: "uspa/1969",
-        isHighlights: false,
-      });
-    });
-
-    it("parses meet key with units", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-kg")).toEqual({
-        path: "uspa/1969",
-        units: "kg",
-        isHighlights: false,
-      });
-    });
-
-    it("parses meet key with sort", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-by-wilks")).toEqual({
-        path: "uspa/1969",
-        sort: "by-wilks",
-        isHighlights: false,
-      });
-    });
-
-    it("parses meet highlights key", () => {
-      expect(meetService.parseMeetCacheKey("meet-uspa/1969-highlights")).toEqual({
-        path: "uspa/1969",
-        isHighlights: true,
-      });
-    });
-  });
-
   describe("getMeet (DB-backed)", () => {
     it("returns null for paths that do not parse", async () => {
       const result = await meetService.getMeet({ meet: "garbage" });
@@ -128,21 +91,5 @@ describe("meets service", () => {
       const result = await meetService.getMeet({ meet: "fake/2024-01-01/missing-meet" });
       expect(result.data).toBeNull();
     });
-  });
-});
-
-describe("meets service refreshCacheKey", () => {
-  it("returns false for non-meet keys", async () => {
-    expect(await meetService.refreshCacheKey("status")).toBe(false);
-  });
-
-  it("returns true for meet keys", async () => {
-    const result = await meetService.refreshCacheKey("meet-uspa/1969");
-    expect(result).toBe(true);
-  });
-
-  it("returns true for highlights keys", async () => {
-    const result = await meetService.refreshCacheKey("meet-uspa/1969-highlights");
-    expect(result).toBe(true);
   });
 });

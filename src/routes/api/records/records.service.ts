@@ -234,20 +234,9 @@ export function createRecordService(knex: Knex) {
     return { data };
   }
 
-  function parseRecordsCacheKey(key: string): { filterPath: string } | null {
-    if (key !== "records" && !key.startsWith("records/")) return null;
-    return { filterPath: key === "records" ? "" : key.slice("records".length) };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    return parseRecordsCacheKey(key) != null;
-  }
-
   return {
-    parseRecordsCacheKey,
     getRecords,
     getFilteredRecords,
     parseSexOrWeightClass,
-    refreshCacheKey,
   };
 }

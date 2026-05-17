@@ -4,8 +4,6 @@ import { configuration } from "../../../configuration";
 import type { StatusData, Federation, ApiResponse } from "../../../types";
 import type { GetStatusType } from "./status.validation";
 
-const CACHE_KEY = "status";
-
 export function createStatusService(knex: Knex) {
   async function fetchStatus(): Promise<StatusData> {
     const meetCountResult = await knex("meets")
@@ -50,14 +48,7 @@ export function createStatusService(knex: Knex) {
     return { data };
   }
 
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    if (key !== CACHE_KEY) return false;
-    // Status now derives from our own tables; nothing to refresh.
-    return true;
-  }
-
   return {
     getStatus,
-    refreshCacheKey,
   };
 }

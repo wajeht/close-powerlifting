@@ -11,7 +11,6 @@ import { nameToSlug } from "../../../utils/ingest";
 import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
 
 const HIGHLIGHTS_TOP_N = 3;
-const REGEX_MEET_SORT_SUFFIX = /-(by-[a-z0-9-]+)$/;
 const KG_TO_LBS = 2.20462;
 
 const SORT_COLUMN: Record<string, "dots" | "wilks" | "glossbrenner" | "goodlift" | "total_kg"> = {
@@ -229,46 +228,8 @@ export function createMeetService(knex: Knex) {
     return { data: buildMeetHighlights(data) };
   }
 
-  function parseMeetCacheKey(
-    key: string,
-  ): { path: string; sort?: string; units?: string; isHighlights: boolean } | null {
-    if (!key.startsWith("meet-")) return null;
-    let remainder = key.slice("meet-".length);
-
-    let units: string | undefined;
-    if (remainder.endsWith("-kg")) {
-      units = "kg";
-      remainder = remainder.slice(0, -"-kg".length);
-    } else if (remainder.endsWith("-lbs")) {
-      units = "lbs";
-      remainder = remainder.slice(0, -"-lbs".length);
-    }
-
-    let isHighlights = false;
-    if (remainder.endsWith("-highlights")) {
-      isHighlights = true;
-      remainder = remainder.slice(0, -"-highlights".length);
-    }
-
-    let sort: string | undefined;
-    const sortMatch = remainder.match(REGEX_MEET_SORT_SUFFIX);
-    if (sortMatch) {
-      sort = sortMatch[1];
-      remainder = remainder.slice(0, -sortMatch[0].length);
-    }
-
-    if (!remainder) return null;
-    return { path: remainder, sort, units, isHighlights };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    return parseMeetCacheKey(key) != null;
-  }
-
   return {
-    parseMeetCacheKey,
     getMeet,
     getMeetHighlights,
-    refreshCacheKey,
   };
 }
