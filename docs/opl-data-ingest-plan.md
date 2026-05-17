@@ -306,8 +306,10 @@ All endpoints serve from the normalized SQLite. API contract preserved.
 - ✅ `scraper.ts` pruned to a single method (`fetchWithAuth`) used only by the health-check.
 - ✅ `lifts_fts` and the legacy denormalized lifts schema migrations removed.
 - ✅ `linkedom` + `@types/jsdom` removed from dependencies (no HTML parsing anywhere).
-- ⚠️ The legacy `cache` table is still in place — it now serves a few internal keys (hostname, monthly API-call-count reset, global status cache). Not a candidate for removal unless those consumers also move.
-- ⚠️ Swagger needs an update to reflect the new `/api/meets/{fed}/{date}/{slug}` URL convention. Tracked separately.
+- ✅ API-call tracking and the monthly quota reset job removed entirely.
+- ✅ Swagger description updated to drop the monthly quota / indefinite server cache / OPL-update-cadence claims.
+- ⚠️ The legacy `cache` table is still in place — it now serves a few internal keys (hostname, global status cache). Not a candidate for removal unless those consumers also move.
+- ⚠️ Health-check route list still needs the new `/api/meets/{fed}/{date}/{slug}` URL convention; for now the Meets group is omitted from the self-pinger. Tracked separately.
 
 ## Real numbers (live ingest against the full 3.9M-row CSV)
 
