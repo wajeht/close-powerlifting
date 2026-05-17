@@ -9,9 +9,11 @@ import {
   getMeetQueryValidation,
   getMeetHighlightsParamValidation,
   getMeetHighlightsQueryValidation,
+  listMeetsQueryValidation,
   GetMeetParamType,
   GetMeetQueryType,
   GetMeetHighlightsQueryType,
+  ListMeetsQueryType,
 } from "./meets.validation";
 
 /**
@@ -72,6 +74,92 @@ export function createMeetsRouter(context: AppContext) {
   const meetService = createMeetService(context.knex);
 
   const router = express.Router();
+
+  /**
+   * Meet list entry
+   * @typedef {object} MeetListEntry
+   * @property {string} federation - Federation code (e.g., USAPL, WRPF)
+   * @property {string} date - Meet date in YYYY-MM-DD
+   * @property {string} slug - Meet name slug
+   * @property {string} name - Meet display name
+   * @property {string} country - Country code
+   * @property {string} state - State / region code
+   * @property {boolean} sanctioned - Whether the meet was sanctioned by its federation
+   * @property {number} lifter_count - Number of distinct lifters at this meet
+   * @property {string} url - Canonical URL for full meet results
+   */
+
+  /**
+   * Meet list response
+   * @typedef {object} MeetListResponse
+   * @property {string} status - Response status
+   * @property {string} request_url - Request URL
+   * @property {string} message - Response message
+   * @property {MeetListEntry[]} data - Meet list page
+   * @property {object} pagination - Pagination metadata
+   */
+
+  /**
+   * GET /api/meets
+   * @tags Meets
+   * @summary List meets across federations
+   * @description Paginated index of meets in the dataset. Filter by federation, date range, location, or meet-name search.
+   * @security BearerAuth
+   * @param {string} federation.query - Federation slug filter (e.g., usapl, ipf, wrpf)
+   * @param {string} from.query - Start of date range (YYYY-MM-DD, inclusive)
+   * @param {string} to.query - End of date range (YYYY-MM-DD, inclusive)
+   * @param {string} country.query - Country filter (e.g., USA, GBR)
+   * @param {string} state.query - State / region filter (e.g., TX, CA)
+   * @param {string} search.query - Free-text match on meet name
+   * @param {string} sort.query - Order results - enum:date-desc,date-asc,by-lifters
+   * @param {number} current_page.query - Page number (default 1)
+   * @param {number} per_page.query - Page size (default 100, max 500)
+   * @return {MeetListResponse} 200 - Meet list with pagination
+   * @return {ErrorResponse} 401 - Unauthorized
+   * @return {ErrorResponse} 429 - Rate limit exceeded
+   * @example response - 200 - Success response
+   * {
+   *   "status": "success",
+   *   "request_url": "/api/meets?federation=usapl&from=2024-01-01&to=2024-12-31",
+   *   "message": "The resource was returned successfully!",
+   *   "data": [
+   *     {
+   *       "federation": "USAPL",
+   *       "date": "2024-10-15",
+   *       "slug": "usaplrawnationals",
+   *       "name": "USAPL Raw Nationals",
+   *       "country": "USA",
+   *       "state": "TX",
+   *       "sanctioned": true,
+   *       "lifter_count": 412,
+   *       "url": "/api/meets/usapl/2024-10-15/usaplrawnationals"
+   *     }
+   *   ],
+   *   "pagination": { "items": 1, "pages": 1, "per_page": 100, "current_page": 1 }
+   * }
+   */
+  router.get(
+    "/api/meets",
+    middleware.rateLimitMiddleware,
+    middleware.apiAuthenticationMiddleware,
+    middleware.apiCacheControlMiddleware,
+    middleware.apiValidationMiddleware({
+      query: listMeetsQueryValidation,
+    }),
+    async (req: Request<{}, {}, {}, ListMeetsQueryType>, res: Response) => {
+      const result = await meetService.listMeets(req.query);
+
+      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
+
+      res.status(200).json({
+        status: "success",
+        request_url: req.originalUrl,
+        message: "The resource was returned successfully!",
+        data: result.data,
+        pagination: result.pagination,
+      });
+    },
+  );
 
   /**
    * GET /api/meets/{federation}/{date}/{slug}
