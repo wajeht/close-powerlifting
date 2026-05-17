@@ -1,5 +1,7 @@
 import type { FC } from "hono/jsx";
 
+import { EndpointCard } from "../_components/EndpointCard";
+import { StatCounter } from "../_components/StatCounter";
 import { MainLayout, type AppState } from "../_layouts/main";
 
 interface HomeRanking {
@@ -17,31 +19,6 @@ interface HomePageProps {
 }
 
 const COUNTER_SCRIPT = `(function(){var counters=document.querySelectorAll('.counter');var animated=false;function animateCounter(c){var target=parseFloat(c.dataset.target);var start=parseFloat(c.dataset.start)||0;var decimals=parseInt(c.dataset.decimals)||0;var suffix=c.dataset.suffix||'';var duration=2000;var steps=60;var stepDuration=duration/steps;var current=start;var increment=(target-start)/steps;function update(){current+=increment;if(current>=target){c.textContent=(decimals>0?target.toFixed(decimals):target)+suffix}else{var d=decimals>0?current.toFixed(decimals):Math.floor(current);c.textContent=d+suffix;requestAnimationFrame(function(){setTimeout(update,stepDuration)})}}update()}function handle(entries){entries.forEach(function(e){if(e.isIntersecting&&!animated){animated=true;counters.forEach(function(c,i){setTimeout(function(){animateCounter(c)},i*150)})}})}var obs=new IntersectionObserver(handle,{threshold:0.5});var g=document.getElementById('stats-grid');if(g){obs.observe(g)}})();`;
-
-const EndpointCard: FC<{ name: string; tagline: string; description: string; icon: string }> = ({
-  name,
-  tagline,
-  description,
-  icon,
-}) => (
-  <div class="group relative overflow-hidden rounded-lg border border-neutral-800 bg-black p-6 transition-all hover:border-power/50">
-    <svg
-      class="pointer-events-none absolute -bottom-6 -right-6 h-32 w-32 text-neutral-800/40"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" d={icon} />
-    </svg>
-    <div class="relative">
-      <h3 class="mb-1 font-mono text-lg font-semibold text-power">{name}</h3>
-      <p class="mb-3 text-neutral-300">{tagline}</p>
-      <p class="text-neutral-500">{description}</p>
-    </div>
-  </div>
-);
 
 export const HomePage: FC<HomePageProps> = ({ state, rankings }) => (
   <MainLayout state={state} path="/">
@@ -243,29 +220,4 @@ export const HomePage: FC<HomePageProps> = ({ state, rankings }) => (
 
     <script>{COUNTER_SCRIPT}</script>
   </MainLayout>
-);
-
-const StatCounter: FC<{
-  target: string;
-  start?: string;
-  decimals?: string;
-  suffix: string;
-  label: string;
-  description: string;
-}> = ({ target, start, decimals, suffix, label, description }) => (
-  <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-6 transition-all hover:border-power/50">
-    <div class="text-3xl font-bold text-power">
-      <span
-        class="counter"
-        data-target={target}
-        data-start={start}
-        data-decimals={decimals}
-        data-suffix={suffix}
-      >
-        0
-      </span>
-    </div>
-    <div class="mt-1 text-neutral-400">{label}</div>
-    <div class="mt-2 text-xs text-neutral-600">{description}</div>
-  </div>
 );
