@@ -5,9 +5,7 @@ EXEC := $(DC) exec close-powerlifting
 	lint format typecheck check snapshot-build snapshot-download \
 	snapshot-publish push clean
 
-REPO ?= wajeht/close-powerlifting
 SNAPSHOT_TAG ?= snapshot-latest
-SNAPSHOT_BASE := https://github.com/$(REPO)/releases/download/$(SNAPSHOT_TAG)
 
 help:
 	@echo "Usage: make [target]"
@@ -93,13 +91,7 @@ snapshot-build:
 	@npx tsx scripts/build-snapshot.ts
 
 snapshot-download:
-	@mkdir -p src/data/snapshot
-	@echo "Downloading snapshot from $(SNAPSHOT_BASE)..."
-	@curl -fsSL --retry 3 -o src/data/snapshot/lifters.json  "$(SNAPSHOT_BASE)/lifters.json"
-	@curl -fsSL --retry 3 -o src/data/snapshot/meets.json    "$(SNAPSHOT_BASE)/meets.json"
-	@curl -fsSL --retry 3 -o src/data/snapshot/entries.json  "$(SNAPSHOT_BASE)/entries.json"
-	@curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$(SNAPSHOT_BASE)/meta.json"
-	@ls -lh src/data/snapshot/
+	@npm run snapshot:download
 
 snapshot-publish:
 	@command -v gh >/dev/null 2>&1 || { \

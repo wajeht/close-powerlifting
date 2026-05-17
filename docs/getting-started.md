@@ -31,7 +31,7 @@ npm install
 Fetch the latest pre-built snapshot from the GitHub Release (~30 s, ~770 MB):
 
 ```bash
-make snapshot-download
+npm run snapshot:download
 ```
 
 This drops `lifters.json`, `meets.json`, `entries.json`, and `meta.json` into `src/data/snapshot/`. The server reads these at boot — without them, `npm run dev` will refuse to start.
@@ -74,11 +74,11 @@ The HTTP server starts immediately but `GET /healthz` returns 503 for the first 
 
 The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a GitHub Release (`snapshot-latest`). The Dockerfile downloads the release assets at image-build time, so production containers ship with the data baked in.
 
-| Task                          | Command                  | Notes                                                                           |
-| ----------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
-| Pull the published snapshot   | `make snapshot-download` | ~30 s. Use this for local dev.                                                  |
-| Rebuild locally from upstream | `make snapshot-build`    | ~6 min. Downloads the latest OPL bulk CSV, normalises, writes the JSON files.   |
-| Publish a fresh release       | `make snapshot-publish`  | Builds + uploads to GitHub Releases via the `gh` CLI. Requires `gh auth login`. |
+| Task                          | Command                     | Notes                                                                            |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| Pull the published snapshot   | `npm run snapshot:download` | ~30 s. Use this for local dev. `make snapshot-download` works too (same script). |
+| Rebuild locally from upstream | `make snapshot-build`       | ~6 min. Downloads the latest OPL bulk CSV, normalises, writes the JSON files.    |
+| Publish a fresh release       | `make snapshot-publish`     | Builds + uploads to GitHub Releases via the `gh` CLI. Requires `gh auth login`.  |
 
 ## Testing
 
@@ -137,5 +137,5 @@ npm run start
 
 - **Port 80 permission denied**: change `APP_PORT` in `.env` to a higher port (e.g. 3000), or run with `sudo`.
 - **Node version mismatch**: `fnm use 26` or `nvm use 26`.
-- **Boot fails with "data snapshot not found"**: run `make snapshot-download` (or `make snapshot-build`).
+- **Boot fails with "data snapshot not found"**: run `npm run snapshot:download` (or `make snapshot-build` to rebuild from the upstream CSV).
 - **`/healthz` returns 503**: snapshot is still loading. Wait ~20 s; check the logs for `data store ready`.
