@@ -14,8 +14,7 @@ import type { MailType } from "../mail";
 import type { AuthServiceType } from "./auth/auth.service";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
-import type { ApiCallLogRepositoryType } from "../db/api-call-log";
-import { APICallsExceededError, AppError, UnauthorizedError } from "../error";
+import { AppError, UnauthorizedError } from "../error";
 
 // View pages (static content): 24 hours - content rarely changes
 const ONE_DAY_SECONDS = 86400;

@@ -1,11 +1,8 @@
 import cron, { ScheduledTask } from "node-cron";
 import type { Knex } from "knex";
 
-import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
-import type { ApiCallLogRepositoryType } from "./db/api-call-log";
-import type { MailType } from "./mail";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
 import type { IngestServiceType } from "./utils/ingest";
@@ -19,12 +16,9 @@ import { createStatusService } from "./routes/api/status/status.service";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
-const API_CALL_RESET_MONTH_KEY = "api-call-count-last-reset-month";
-
 export const INTERNAL_CACHE_KEYS = [
   "hostname",
   "close-powerlifting-global-status-call-cache",
-  API_CALL_RESET_MONTH_KEY,
 ];
 
 export interface CronType {
@@ -35,9 +29,6 @@ export interface CronType {
     refreshCache: () => Promise<void>;
     refreshCacheKey: (key: string) => Promise<void>;
     refreshHealthCheck: () => Promise<void>;
-    resetApiCallCount: () => Promise<void>;
-    sendReachingApiLimitEmail: () => Promise<void>;
-    cleanupOldApiCallLogs: () => Promise<void>;
     runIngest: () => Promise<void>;
   };
 }
@@ -52,10 +43,8 @@ interface RefreshResult {
 export function createCron(
   cache: CacheType,
   userRepository: UserRepositoryType,
-  mail: MailType,
   logger: LoggerType,
   scraper: ScraperType,
-  apiCallLogRepository: ApiCallLogRepositoryType,
   ingest: IngestServiceType,
   knex: Knex,
 ): CronType {
@@ -119,7 +108,9 @@ export function createCron(
         return;
       }
 
-      const adminUser = await userRepository.findByEmail(configuration.app.adminEmail);
+      const adminUser = await userRepository.findByEmail(
+        process.env.APP_ADMIN_EMAIL || "",
+      );
       if (!adminUser?.api_key) {
         logger.warn("refreshHealthCheck: admin user or API key not found, skipping");
         return;
@@ -150,7 +141,6 @@ export function createCron(
         await delay(REFRESH_DELAY_MS);
       }
 
-      // Summary
       const successful = results.filter((r) => r.success).length;
       const failed = results.filter((r) => !r.success);
       const totalDurationMs = Date.now() - startTime;
@@ -167,70 +157,6 @@ export function createCron(
     }
   }
 
-  async function resetApiCallCountTask() {
-    try {
-      logger.info("cron job started: resetApiCallCount");
-
-      const now = new Date();
-      const currentMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-
-      const lastResetMonth = await cache.get(API_CALL_RESET_MONTH_KEY);
-      if (lastResetMonth === currentMonth) {
-        logger.info("cron job skipped: resetApiCallCount (already reset this month)", {
-          currentMonth,
-        });
-        return;
-      }
-
-      const users = await userRepository.findVerifiedWithUsage();
-      await userRepository.resetAllApiCallCounts();
-      await cache.set(API_CALL_RESET_MONTH_KEY, currentMonth);
-
-      const results = await Promise.allSettled(
-        users.map((user) => mail.sendApiLimitResetEmail({ email: user.email, name: user.name })),
-      );
-
-      const failed = results.filter((r) => r.status === "rejected");
-      if (failed.length > 0) {
-        logger.warn(`resetApiCallCount: ${failed.length}/${users.length} emails failed to send`);
-      }
-
-      logger.info("cron job completed: resetApiCallCount");
-    } catch (error) {
-      logger.error("cron job failed: resetApiCallCount", error);
-    }
-  }
-
-  async function sendReachingApiLimitEmailTask() {
-    try {
-      logger.info("cron job started: sendReachingApiLimitEmail");
-
-      const targetCount = Math.floor(configuration.app.defaultApiCallLimit * 0.7);
-      const users = await userRepository.findByApiCallCount(targetCount);
-
-      const results = await Promise.allSettled(
-        users.map((user) =>
-          mail.sendReachingApiLimitEmail({
-            email: user.email,
-            name: user.name,
-            percent: 70,
-          }),
-        ),
-      );
-
-      const failed = results.filter((r) => r.status === "rejected");
-      if (failed.length > 0) {
-        logger.warn(
-          `sendReachingApiLimitEmail: ${failed.length}/${users.length} emails failed to send`,
-        );
-      }
-
-      logger.info("cron job completed: sendReachingApiLimitEmail");
-    } catch (error) {
-      logger.error("cron job failed: sendReachingApiLimitEmail", error);
-    }
-  }
-
   async function runIngestTask() {
     try {
       logger.info("cron job started: runIngest");
@@ -243,33 +169,10 @@ export function createCron(
     }
   }
 
-  async function cleanupOldApiCallLogsTask() {
-    try {
-      logger.info("cron job started: cleanupOldApiCallLogs");
-
-      const retentionDays = configuration.app.apiCallLogRetentionDays;
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
-      const deletedCount = await apiCallLogRepository.deleteOlderThan(cutoffDate);
-
-      if (deletedCount > 0) {
-        logger.info(`cron job completed: cleanupOldApiCallLogs - deleted ${deletedCount} logs`);
-      } else {
-        logger.info("cron job completed: cleanupOldApiCallLogs - no logs to delete");
-      }
-    } catch (error) {
-      logger.error("cron job failed: cleanupOldApiCallLogs", error);
-    }
-  }
-
   function start(): void {
-    cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask)); // Weekly cache refresh: Sundays at 4:00 AM UTC
-    cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask)); // Daily health check refresh: every day at 5:00 AM UTC
-    cronJobs.push(cron.schedule("0 0 * * *", sendReachingApiLimitEmailTask)); // Daily email notification: every day at 12:00 AM UTC
-    cronJobs.push(cron.schedule("5 0 * * *", resetApiCallCountTask)); // Daily 12:05 AM check (server local time); resets once per UTC month — see API_CALL_RESET_MONTH_KEY guard. Self-heals if a firing is missed.
-    cronJobs.push(cron.schedule("0 3 * * *", cleanupOldApiCallLogsTask)); // Daily API call log cleanup: every day at 3:00 AM UTC
-    cronJobs.push(cron.schedule("0 4 * * *", runIngestTask)); // Daily OpenPowerlifting CSV ingest: every day at 4:00 AM UTC
+    cronJobs.push(cron.schedule("0 4 * * 0", refreshCacheTask));
+    cronJobs.push(cron.schedule("0 5 * * *", refreshHealthCheckTask));
+    cronJobs.push(cron.schedule("0 4 * * *", runIngestTask));
 
     isRunning = true;
     logger.info("cron service started", { jobs: cronJobs.length });
@@ -296,9 +199,6 @@ export function createCron(
       refreshCache: refreshCacheTask,
       refreshCacheKey,
       refreshHealthCheck: refreshHealthCheckTask,
-      resetApiCallCount: resetApiCallCountTask,
-      sendReachingApiLimitEmail: sendReachingApiLimitEmailTask,
-      cleanupOldApiCallLogs: cleanupOldApiCallLogsTask,
       runIngest: runIngestTask,
     },
   };
