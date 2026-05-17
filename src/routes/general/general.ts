@@ -1,50 +1,22 @@
 import express, { Request, Response } from "express";
 
-import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
-import { createHealthCheckService } from "../api/health-check/health-check.service";
-import { createRankingService } from "../api/rankings/rankings.service";
 import { createMiddleware } from "../middleware";
 
-const RANKINGS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
-let rankingsCache: { data: unknown; timestamp: number } | null = null;
 
 export function createGeneralRouter(context: AppContext) {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.apiCallLogRepository,
-    context.helpers,
-    context.logger,
-    context.knex,
-    context.authService,
-  );
-
-  const healthCheckService = createHealthCheckService(context.cache, context.logger);
-  const rankingService = createRankingService(context.knex);
-
+  const middleware = createMiddleware(context.helpers, context.logger);
   const router = express.Router();
 
   router.get(
     "/",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
-    async (_req: Request, res: Response) => {
-      const now = Date.now();
-
-      if (!rankingsCache || now - rankingsCache.timestamp > RANKINGS_CACHE_TTL) {
-        const rankings = await rankingService.getRankings({
-          current_page: 1,
-          per_page: 9,
-        });
-        rankingsCache = { data: rankings, timestamp: now };
-      }
-
-      return res.status(200).render("general/home.html", {
-        path: "/",
-        rankings: rankingsCache.data,
-      });
+    (_req: Request, res: Response) => {
+      const data = context.store.tryGet();
+      const rankings = data == null ? null : buildHomeRankings(data);
+      res.status(200).render("general/home.html", { path: "/", rankings });
     },
   );
 
@@ -52,25 +24,19 @@ export function createGeneralRouter(context: AppContext) {
     "/about",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
     (_req: Request, res: Response) => {
-      return res.status(200).render("general/about.html", {
-        path: "/about",
-        title: "About",
-      });
+      res.status(200).render("general/about.html", { path: "/about", title: "About" });
     },
   );
 
   router.get("/contact", (_req: Request, res: Response) => {
-    return res.redirect(301, "https://github.com/wajeht/close-powerlifting/issues/new/choose");
+    res.redirect(301, "https://github.com/wajeht/close-powerlifting/issues/new/choose");
   });
 
   router.get(
     "/terms",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
     (_req: Request, res: Response) => {
-      return res.status(200).render("general/terms.html", {
-        path: "/terms",
-        title: "Terms of Service",
-      });
+      res.status(200).render("general/terms.html", { path: "/terms", title: "Terms of Service" });
     },
   );
 
@@ -78,7 +44,7 @@ export function createGeneralRouter(context: AppContext) {
     "/privacy",
     middleware.cacheControlMiddleware(ONE_DAY_SECONDS),
     (_req: Request, res: Response) => {
-      return res.status(200).render("general/privacy.html", {
+      res.status(200).render("general/privacy.html", {
         path: "/privacy",
         title: "Privacy Policy",
       });
@@ -88,50 +54,53 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/status",
     middleware.cacheControlMiddleware(ONE_HOUR_SECONDS),
-    async (req: Request, res: Response) => {
-      const hostname = context.helpers.getHostName(req);
-      const adminUser = await context.userRepository.findByEmail(configuration.app.adminEmail);
-      const routeGroups = await healthCheckService.getAPIStatus({
-        apiKey: adminUser?.api_key || "",
-        url: hostname,
-      });
-
-      const allGood = routeGroups.every((group: { routes: { status: boolean }[] }) =>
-        group.routes.every((route) => route.status),
-      );
-
-      return res.status(200).render("general/status.html", {
+    (_req: Request, res: Response) => {
+      const data = context.store.tryGet();
+      res.status(200).render("general/status.html", {
         path: "/status",
         title: "Status",
-        routeGroups,
-        allGood,
+        ready: data != null,
+        rowCount: data?.rowCount ?? 0,
+        sourceLastModified: data?.sourceLastModified ?? null,
+        ingestedAt: data?.ingestedAt ?? null,
       });
     },
   );
 
   router.get("/health-check", handleHealthCheck);
   router.get("/healthz", handleHealthCheck);
-  async function handleHealthCheck(_req: Request, res: Response) {
-    let dbStatus: "connected" | "disconnected" = "disconnected";
-    let statusCode = 503;
-
-    try {
-      await context.knex.raw("SELECT 1");
-      dbStatus = "connected";
-      statusCode = 200;
-    } catch {
-      // DB is unreachable
-    }
-
-    res.status(statusCode).json({
-      status: statusCode === 200 ? "ok" : "error",
+  function handleHealthCheck(_req: Request, res: Response): void {
+    const ready = context.store.tryGet() != null;
+    res.status(ready ? 200 : 503).json({
+      status: ready ? "ok" : "warming up",
       uptime: process.uptime(),
       timestamp: Date.now(),
-      database: dbStatus,
-      cache: context.cache.isReady() ? "connected" : "disconnected",
+      data: ready ? "ready" : "loading",
       crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
   }
 
   return router;
+}
+
+// Top-9 lifters by dots for the marketing home page. Cheap — slice of a
+// pre-sorted index array. Returns null if the store has no eligible rows.
+function buildHomeRankings(data: ReturnType<AppContext["store"]["tryGet"]>) {
+  if (data == null) return null;
+  const top = data.rankByMetric.dots.subarray(0, 9);
+  return Array.from(top, (lifterId, idx) => {
+    const entryId = data.bestEntryByLifter.dots[lifterId];
+    if (entryId == null || entryId < 0) return null;
+    const lifter = data.lifters[lifterId];
+    const entry = data.entries[entryId];
+    if (lifter == null || entry == null) return null;
+    return {
+      rank: idx + 1,
+      name: lifter.name,
+      username: lifter.username,
+      dots: entry.dots ?? 0,
+      total: entry.totalKg ?? 0,
+      equipment: entry.equipment,
+    };
+  }).filter((x) => x != null);
 }
