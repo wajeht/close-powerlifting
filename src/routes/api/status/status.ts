@@ -5,6 +5,13 @@ import type { AppContext } from "../../../context";
 export function createStatusRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/status
+   * @summary Snapshot metadata + entity counts
+   * @tags Status
+   * @return {object} 200 - Counts plus the source CSV's Last-Modified header
+   * @return {object} 503 - Data is still warming up after boot
+   */
   router.get("/api/status", (_req: Request, res: Response) => {
     const data = context.store.tryGet();
     if (data == null) {

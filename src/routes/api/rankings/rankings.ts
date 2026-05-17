@@ -18,6 +18,16 @@ const METRIC_BY_QUERY: Record<string, RankMetric> = {
 export function createRankingsRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/rankings
+   * @summary Top lifters by metric, deduplicated to each lifter's best entry
+   * @tags Rankings
+   * @param {string} metric.query - Sort key. One of: dots (default), wilks, glossbrenner, goodlift, total, squat, bench, deadlift
+   * @param {integer} limit.query - Page size, default 50, max 500
+   * @param {integer} offset.query - Page offset, default 0
+   * @return {object} 200 - { metric, total, limit, offset, rankings[] }
+   * @return {object} 503 - Data is still warming up
+   */
   router.get("/api/rankings", (req: Request, res: Response) => {
     const data = context.store.get();
     const metric = parseMetric(req.query.metric);

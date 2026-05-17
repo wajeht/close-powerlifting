@@ -3,140 +3,55 @@ import type { Options } from "express-jsdoc-swagger";
 
 import { configuration } from "../configuration";
 
-let link = `http://localhost:${configuration.app.port}`;
-
-if (configuration.app.env === "production") {
-  link = configuration.app.domain;
-}
+const link =
+  configuration.app.env === "production"
+    ? configuration.app.domain
+    : `http://localhost:${configuration.app.port}`;
 
 const swaggerConfig = {
   info: {
     title: "Close Powerlifting API",
     description: `
 ## Overview
-REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org) and refreshed nightly from the public CSV dump.
 
-## Getting Started
-1. Register at [closepowerlifting.com](https://closepowerlifting.com/login)
-2. Copy your API key from the dashboard
-3. Include the key in your requests as a Bearer token
+A public, read-only REST API mirroring the [OpenPowerlifting](https://openpowerlifting.org) dataset. The entire 3.9 M-row CSV is loaded into memory at startup, so every endpoint serves from RAM — no databases, no caches, no surprises.
 
-## Authentication
-All API endpoints (except \`/api/health-check\`) require authentication via API key.
+## No auth, no rate limits per key
 
-Include your API key as a Bearer token:
-\`\`\`
-Authorization: Bearer YOUR_API_KEY
-\`\`\`
+The API is open. Use it from anywhere. There's a per-IP rate limit (100 req/min) to keep abuse manageable; that's the only knob.
 
-Example using JavaScript fetch:
-\`\`\`javascript
-const response = await fetch('https://closepowerlifting.com/api/rankings', {
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY'
-  }
-});
+## Response envelope
 
-if (!response.ok) {
-  throw new Error('API error: ' + response.status);
-}
+All endpoints return:
 
-const data = await response.json();
-\`\`\`
-
-## Response Format
-All responses follow this structure:
 \`\`\`json
 {
   "status": "success",
-  "request_url": "/api/rankings",
-  "message": "The resource was returned successfully!",
-  "data": [...],
-  "pagination": {...}
+  "data": { ... }
 }
 \`\`\`
 
-## Error Responses
-Errors return \`status: "fail"\` with appropriate HTTP codes:
-| Code | Description |
-|------|-------------|
-| 401 | Unauthorized - Invalid or missing API key |
-| 403 | Forbidden - Access denied |
-| 404 | Not Found - Resource doesn't exist |
-| 400 | Validation Error - Invalid parameters |
-| 429 | Rate Limited - IP rate limit exceeded |
+Errors return \`status: "fail"\` with an HTTP code that matches the failure type:
+
+| Code | Meaning                       |
+| ---- | ----------------------------- |
+| 400  | Validation error (bad params) |
+| 404  | No such lifter / meet / rank  |
+| 429  | Rate limit exceeded (per IP)  |
+| 503  | Data is still warming up      |
+
+## Data refresh
+
+The full dataset is re-downloaded and re-parsed nightly at 04:00 UTC. When upstream has a new CSV, the server exits and the orchestrator restarts it — boot re-parses the fresh file. A ~60 s window of \`503 warming up\` is the only impact.
 
 ## Pagination
-Endpoints returning lists support pagination via query parameters:
-- \`per_page\`: Results per page (default: 100, max: 500)
-- \`current_page\`: Page number (default: 1)
 
-## Query Parameters
-
-### Rankings endpoints (\`/api/rankings\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
-| \`federation\` | string | Filter by federation code (e.g., \`uspa\`, \`ipf\`, \`wrpf\`) |
-| \`age_class\` | string | Filter by age class (e.g., \`24-34\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`) |
-
-### Sort options (path parameter)
-Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-goodlift\`, \`by-mcculloch\`, \`by-total\`, \`by-squat\`, \`by-bench\`, \`by-deadlift\`
-
-### Meet index (\`/api/meets\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`federation\` | string | Filter to one federation slug (e.g., \`usapl\`, \`ipf\`) |
-| \`from\` | YYYY-MM-DD | Start of date range (inclusive) |
-| \`to\` | YYYY-MM-DD | End of date range (inclusive) |
-| \`country\` | string | Country code filter (e.g., \`USA\`, \`GBR\`) |
-| \`state\` | string | State / region code filter (e.g., \`TX\`, \`CA\`) |
-| \`search\` | string | Free-text match on meet name |
-| \`sort\` | string | \`date-desc\` (default), \`date-asc\`, \`by-lifters\` |
-
-### Meet results (\`/api/meets/{federation}/{date}/{slug}\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`sort\` | string | Sort order: \`by-dots\`, \`by-wilks\`, \`by-wilks2020\`, \`by-glossbrenner\`, \`by-goodlift\`, \`by-ipf-points\`, \`by-mcculloch\`, \`by-total\`, \`by-ah\`, \`by-nasa\`, \`by-reshel\`, \`by-schwartz-malone\`, \`by-division\` |
-| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
-
-### User search (\`/api/users\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
-
-### User profile (\`/api/users/:username\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`include_attempts\` | \`true\` \\| \`false\` | Include individual attempt data in competition results (default: \`false\`) |
-| \`units\` | \`lbs\` \\| \`kg\` | Unit system for weight values (default: \`lbs\`) |
-
-### Records endpoints (\`/api/records\`)
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| \`age_class\` | string | Filter by age class (e.g., \`5-12\`, \`13-15\`, \`16-17\`, \`18-19\`, \`20-23\`, \`24-34\`, \`35-39\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`, \`80-84\`, \`85-89\`, \`40-49\`, \`50-59\`, \`60-69\`, \`70-79\`, \`over80\`) |
-
-## Rate Limits
-Rate limits protect the service and ensure fair usage for all developers.
-
-| Limit | Threshold | Scope |
-|-------|-----------|-------|
-| **Per-IP limit** | 100 requests/minute | Per IP address |
-| **Auth endpoints** | 10 requests/15 min | Per IP address |
-
-**Tips to stay within limits:**
-- Use \`per_page\` to fetch larger pages in fewer requests
-- Leverage the 1-hour browser cache (\`Cache-Control: private, max-age=3600\`)
-
-## Caching
-- **API browser cache**: \`private, max-age=3600\` (1 hour)
-- **View pages browser cache**: \`public, max-age=86400\` (24 hours)
+List endpoints (\`/api/rankings\`, \`/api/meets\`) accept \`?limit=\` (default 50, max 500) and \`?offset=\` (default 0). \`/api/users?search=\` accepts \`?limit=\` (default 50, max 200).
     `,
     termsOfService: `${link}/terms`,
     contact: {
-      name: "API Support",
-      url: `${link}/contact`,
-      email: configuration.email.from,
+      name: "Issues",
+      url: "https://github.com/wajeht/close-powerlifting/issues",
     },
     license: {
       name: "MIT",
@@ -151,45 +66,17 @@ Rate limits protect the service and ensure fair usage for all developers.
         configuration.app.env === "production" ? "Production server" : "Development server",
     },
   ],
-  security: {
-    BearerAuth: {
-      type: "http",
-      scheme: "bearer",
-      description: "Enter your API key obtained from registration",
-    },
-  },
   tags: [
-    {
-      name: "Rankings",
-      description: "Global powerlifting rankings sorted by DOTS score",
-    },
-    {
-      name: "Federations",
-      description: "Powerlifting federation data and meet results by federation",
-    },
-    {
-      name: "Meets",
-      description: "Individual competition/meet results with full attempt data",
-    },
-    {
-      name: "Records",
-      description: "All-time powerlifting records by equipment and weight class",
-    },
-    {
-      name: "Users",
-      description: "Athlete profiles and competition history",
-    },
-    {
-      name: "Status",
-      description: "Data source status and statistics",
-    },
-    {
-      name: "Health Check",
-      description: "API health monitoring endpoint (no auth required)",
-    },
+    { name: "Rankings", description: "Global leaderboards sorted by metric (Dots default)" },
+    { name: "Records", description: "Top-N per (category, sex, equipment, weight class)" },
+    { name: "Users", description: "Lifter profiles + competition history" },
+    { name: "Meets", description: "Per-meet results" },
+    { name: "Federations", description: "Federation index + meets per federation" },
+    { name: "Status", description: "Snapshot metadata + counts" },
+    { name: "Health", description: "Readiness probe (no data required)" },
   ],
   externalDocs: {
-    description: "GitHub Repository",
+    description: "GitHub",
     url: "https://github.com/wajeht/close-powerlifting",
   },
   baseDir: configuration.app.env === "production" ? "./dist/src" : "./src",
@@ -202,11 +89,8 @@ Rate limits protect the service and ensure fair usage for all developers.
   notRequiredAsNullable: false,
   swaggerUiOptions: {
     swaggerOptions: {
-      persistAuthorization: true,
       displayRequestDuration: true,
       filter: true,
-      showExtensions: true,
-      showCommonExtensions: true,
       docExpansion: "list",
       defaultModelsExpandDepth: 2,
       defaultModelExpandDepth: 2,
@@ -217,23 +101,6 @@ Rate limits protect the service and ensure fair usage for all developers.
       .swagger-ui .info .title { font-size: 2rem }
     `,
     customSiteTitle: "Close Powerlifting API Docs",
-    customJsStr: `
-      fetch('/settings/api-key', { credentials: 'same-origin' })
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (!data || !data.api_key) return;
-          let attempts = 0;
-          const interval = setInterval(() => {
-            if (window.ui) {
-              window.ui.preauthorizeApiKey('BearerAuth', data.api_key);
-              clearInterval(interval);
-            } else if (++attempts > 100) {
-              clearInterval(interval);
-            }
-          }, 100);
-        })
-        .catch(() => {});
-    `,
   },
 } as unknown as Options;
 
