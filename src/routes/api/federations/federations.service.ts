@@ -1,6 +1,5 @@
 import type { Knex } from "knex";
 
-import type { ScraperType } from "../../../context";
 import { configuration } from "../../../configuration";
 import type {
   Meet,
@@ -75,7 +74,7 @@ export function buildFederationStats(
   };
 }
 
-export function createFederationService(knex: Knex, _scraper: ScraperType) {
+export function createFederationService(knex: Knex) {
   async function queryDistinctMeets(filter?: {
     federation?: string;
     year?: number;

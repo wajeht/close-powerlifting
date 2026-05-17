@@ -67,7 +67,7 @@ export function createFederationsRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const federationService = createFederationService(context.knex, context.scraper);
+  const federationService = createFederationService(context.knex);
 
   const router = express.Router();
 

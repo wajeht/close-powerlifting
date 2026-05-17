@@ -1,6 +1,5 @@
 import type { Knex } from "knex";
 
-import type { ScraperType } from "../../../context";
 import { configuration } from "../../../configuration";
 import type { RankingRow, ApiResponse, Pagination } from "../../../types";
 import { nameToSlug } from "../../../utils/ingest";
@@ -220,7 +219,7 @@ function normalizeUnits(units: string | undefined): "kg" | "lbs" {
   return units === "kg" ? "kg" : "lbs";
 }
 
-export function createRankingService(knex: Knex, _scraper: ScraperType) {
+export function createRankingService(knex: Knex) {
   async function queryRankings(
     filters: RankingsFilters,
     currentPage: number,

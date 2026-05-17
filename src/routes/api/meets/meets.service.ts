@@ -1,6 +1,5 @@
 import type { Knex } from "knex";
 
-import type { ScraperType } from "../../../context";
 import type {
   MeetData,
   MeetResult,
@@ -150,7 +149,7 @@ function parseMeetPath(meet: string): ParsedMeetPath | null {
   return { federation, date, slug: slugParts.join("/") };
 }
 
-export function createMeetService(knex: Knex, _scraper: ScraperType) {
+export function createMeetService(knex: Knex) {
   async function fetchMeetData(
     meet: string,
     sort?: string,

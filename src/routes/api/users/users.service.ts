@@ -1,6 +1,5 @@
 import type { Knex } from "knex";
 
-import type { ScraperType } from "../../../context";
 import { configuration } from "../../../configuration";
 import type {
   UserProfile,
@@ -425,7 +424,7 @@ export function buildUserProfileFromLifts(
   };
 }
 
-export function createUserService(knex: Knex, scraper: ScraperType) {
+export function createUserService(knex: Knex) {
   async function fetchUserProfileFromDb(
     slug: string,
     includeAttempts: boolean = false,
@@ -750,7 +749,7 @@ export function createUserService(knex: Knex, scraper: ScraperType) {
     }
 
     if (parsed.kind === "rank") {
-      await scraper.refreshCache<number | null>(key, () => fetchGlobalRank(parsed.username!));
+      // Rank is computed live from the lifts table; legacy cache key is a no-op.
       return true;
     }
 
