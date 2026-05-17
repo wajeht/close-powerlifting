@@ -2,8 +2,12 @@ DC := docker compose -f docker-compose.dev.yml
 EXEC := $(DC) exec close-powerlifting
 
 .PHONY: help up up-d down restart log shell test test-watch test-coverage \
-	lint format typecheck check snapshot snapshot-build snapshot-commit \
-	snapshot-push push clean
+	lint format typecheck check snapshot-build snapshot-download \
+	snapshot-publish push clean
+
+REPO ?= wajeht/close-powerlifting
+SNAPSHOT_TAG ?= snapshot-latest
+SNAPSHOT_BASE := https://github.com/$(REPO)/releases/download/$(SNAPSHOT_TAG)
 
 help:
 	@echo "Usage: make [target]"
@@ -27,11 +31,10 @@ help:
 	@echo "  typecheck        Run TypeScript type checking"
 	@echo "  check            Run lint + format + typecheck"
 	@echo ""
-	@echo "Snapshot:"
-	@echo "  snapshot         Rebuild + commit + push the OPL snapshot"
-	@echo "  snapshot-build   Rebuild the JSON snapshot from the OPL CSV"
-	@echo "  snapshot-commit  Stage + commit the snapshot files (requires git-lfs)"
-	@echo "  snapshot-push    Push the current branch + LFS blobs to origin"
+	@echo "Snapshot (data lives in the snapshot-latest GitHub Release, not git):"
+	@echo "  snapshot-download  Fetch the latest snapshot assets from the release"
+	@echo "  snapshot-build     Rebuild the JSON snapshot locally from OPL's CSV"
+	@echo "  snapshot-publish   Build + upload as snapshot-latest release assets (gh CLI)"
 	@echo ""
 	@echo "Deployment:"
 	@echo "  push             Test + lint + format + commit + push"

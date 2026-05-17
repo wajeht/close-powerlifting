@@ -1,9 +1,10 @@
 name: Update OPL Snapshot
 
-# Re-parses OpenPowerlifting's nightly bulk CSV into our in-repo snapshot
-# (src/data/snapshot/*.json) and opens an auto-merged PR with the result.
-# Once merged, the next image build bakes the new data in — no in-container
-# cron, no download at boot.
+# Re-parses OpenPowerlifting's nightly bulk CSV into our snapshot JSON
+# and publishes it as assets on the `snapshot-latest` GitHub Release.
+# The Dockerfile fetches these assets at image-build time, so the
+# snapshot lives entirely outside the git history — no LFS, no quota
+# pressure, no 700 MB blobs in the repo.
 
 on:
   schedule:
@@ -13,18 +14,14 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  update-snapshot:
-    name: Rebuild OPL snapshot from upstream CSV
+  publish-snapshot:
+    name: Rebuild + publish OPL snapshot to GitHub Releases
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          lfs: true
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
@@ -40,29 +37,23 @@ jobs:
       - name: Show snapshot size
         run: ls -lh src/data/snapshot/
 
-      - name: Create Pull Request
-        id: cpr
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          commit-message: "data: refresh OPL snapshot"
-          title: "data: refresh OPL snapshot"
-          body: |
-            Automated weekly refresh of the OpenPowerlifting in-memory snapshot.
-
-            Built by `scripts/build-snapshot.ts` from the upstream
-            `openpowerlifting-latest.zip`. Counts and source `Last-Modified`
-            land in `src/data/snapshot/meta.json`.
-          branch: bot/update-opl-snapshot
-          delete-branch: true
-          add-paths: |
-            src/data/snapshot/lifters.json
-            src/data/snapshot/meets.json
-            src/data/snapshot/entries.json
-            src/data/snapshot/meta.json
-
-      - name: Enable auto-merge
-        if: steps.cpr.outputs.pull-request-number
+      - name: Publish snapshot-latest release
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: gh pr merge --auto --squash "${{ steps.cpr.outputs.pull-request-number }}"
+        run: |
+          set -euo pipefail
+          BUILT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)")
+
+          # Replace the release atomically: delete the previous one (if
+          # any) along with its tag, then recreate. Asset URLs stay stable
+          # (always /releases/download/snapshot-latest/<file>) because the
+          # tag name doesn't change.
+          gh release delete snapshot-latest --yes --cleanup-tag 2>/dev/null || true
+
+          gh release create snapshot-latest \
+            --title "OPL snapshot ($BUILT)" \
+            --notes "Automated rebuild from the OpenPowerlifting bulk CSV. See meta.json for counts." \
+            src/data/snapshot/lifters.json \
+            src/data/snapshot/meets.json \
+            src/data/snapshot/entries.json \
+            src/data/snapshot/meta.json
