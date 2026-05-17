@@ -139,3 +139,4 @@ dcdb.sh
 tmp/
 docs/opl-data-ingest-plan.md
 docs/opl-data-ingest-plan-v3.md
+docs/in-memory-store-plan.md
