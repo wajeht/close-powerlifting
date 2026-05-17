@@ -1,5 +1,7 @@
 import type { FC } from "hono/jsx";
 
+import { InfoCard } from "../_components/InfoCard";
+import { StatusBanner } from "../_components/StatusBanner";
 import { MainLayout, type AppState } from "../_layouts/main";
 import type { RouteGroup } from "../api/health-check/health-check.service";
 
@@ -14,86 +16,6 @@ interface StatusPageProps {
 }
 
 const STATUS_TOGGLE_SCRIPT = `(function(){document.querySelectorAll('.status-route').forEach(function(a){var t=a.querySelector('.status-route-toggle');var p=a.querySelector('.status-route-pre');var c=a.querySelector('.status-route-chevron');if(!p)return;if(p.textContent){try{p.textContent=JSON.stringify(JSON.parse(p.textContent),null,2)}catch(e){}}t.addEventListener('click',function(){var x=p.classList.toggle('hidden')===false;t.setAttribute('aria-expanded',String(x));if(c){c.classList.toggle('rotate-180',x)}})})})();`;
-
-const StatusBanner: FC<{ ready: boolean; allGood: boolean; rowCount: number }> = ({
-  ready,
-  allGood,
-  rowCount,
-}) => {
-  if (!ready) {
-    return (
-      <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-power/30 bg-power/10 p-4">
-        <svg
-          class="mt-0.5 h-5 w-5 flex-shrink-0 text-power"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-        <div class="flex flex-col gap-1">
-          <span class="font-medium text-power">Warming Up</span>
-          <p class="text-sm text-neutral-300">
-            Snapshot is still loading. API endpoints return 503 until ready.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  if (allGood) {
-    return (
-      <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
-        <svg
-          class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-        <div class="flex flex-col gap-1">
-          <span class="font-medium text-green-400">All Systems Operational</span>
-          <p class="text-sm text-neutral-300">
-            {rowCount.toLocaleString()} entries loaded in memory; all endpoints are serving
-            responses.
-          </p>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-power/30 bg-power/10 p-4">
-      <svg
-        class="mt-0.5 h-5 w-5 flex-shrink-0 text-power"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="2"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-      <div class="flex flex-col gap-1">
-        <span class="font-medium text-power">Service Degraded</span>
-        <p class="text-sm text-neutral-300">
-          Some endpoints are experiencing issues. Open the cards below for details.
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const InfoCard: FC<{ label: string; value: string }> = ({ label, value }) => (
-  <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
-    <div class="text-sm text-neutral-400">{label}</div>
-    <div class="mt-1 text-xl font-semibold text-white">{value || "—"}</div>
-  </article>
-);
 
 export const StatusPage: FC<StatusPageProps> = ({
   state,
