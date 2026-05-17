@@ -10,7 +10,6 @@ import { z, ZodError } from "zod";
 import { configuration } from "../configuration";
 import type { CacheType } from "../db/cache";
 import type { UserRepositoryType } from "../db/user";
-import type { MailType } from "../mail";
 import type { AuthServiceType } from "./auth/auth.service";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
@@ -69,7 +68,6 @@ export interface MiddlewareType {
 export function createMiddleware(
   cache: CacheType,
   userRepository: UserRepositoryType,
-  mail: MailType,
   helpers: HelpersType,
   logger: LoggerType,
   knex: Knex,

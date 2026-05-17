@@ -22,8 +22,6 @@ vi.spyOn(context.mail, "sendMagicLinkEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendEmailChangeVerificationEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendWelcomeEmail").mockResolvedValue();
 vi.spyOn(context.mail, "sendContactEmail").mockResolvedValue();
-vi.spyOn(context.mail, "sendApiLimitResetEmail").mockResolvedValue();
-vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockResolvedValue();
 vi.spyOn(context.mail, "verifyConnection").mockResolvedValue(true);
 
 export const { app } = await createApp(context);
@@ -84,8 +82,6 @@ beforeAll(async () => {
         name: "Test User",
         email: "test@example.com",
         api_key_version: 1,
-        api_call_count: 0,
-        api_call_limit: 750,
         admin: false,
       })
       .returning("*");
