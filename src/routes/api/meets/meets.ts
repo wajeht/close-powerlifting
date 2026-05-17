@@ -41,7 +41,7 @@ export function createMeetsRouter(context: AppContext) {
 
   router.get("/api/meets/:path(*)", (req: Request, res: Response) => {
     const data = context.store.get();
-    const path = req.params.path;
+    const path = String(req.params.path ?? "");
     const meetId = data.meetByPath.get(path);
     if (meetId == null) {
       throw new NotFoundError(`Meet "${path}" not found`);

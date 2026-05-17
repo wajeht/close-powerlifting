@@ -33,10 +33,11 @@ export function createUsersRouter(context: AppContext) {
 
   router.get("/api/users/:username", (req: Request, res: Response) => {
     const data = context.store.get();
-    const username = req.params.username.toLowerCase();
+    const rawUsername = String(req.params.username ?? "");
+    const username = rawUsername.toLowerCase();
     const lifterId = data.lifterByUsername.get(username);
     if (lifterId == null) {
-      throw new NotFoundError(`Lifter "${req.params.username}" not found`);
+      throw new NotFoundError(`Lifter "${rawUsername}" not found`);
     }
 
     const lifter = data.lifters[lifterId]!;
@@ -51,7 +52,8 @@ export function createUsersRouter(context: AppContext) {
         username: lifter.username,
         name: lifter.name,
         total_entries: entries.length,
-        first_meet: entries.length > 0 ? meetDateOf(data, entries[entries.length - 1]!.meetId) : null,
+        first_meet:
+          entries.length > 0 ? meetDateOf(data, entries[entries.length - 1]!.meetId) : null,
         last_meet: entries.length > 0 ? meetDateOf(data, entries[0]!.meetId) : null,
         personal_best: bestPerMetric(entries),
         competition_results: entries.map((e) => formatCompetitionRow(data, e)),
