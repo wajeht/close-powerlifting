@@ -8,6 +8,7 @@ import {
   usersQueryValidation,
   cacheKeyValidation,
   cacheQueryValidation,
+  ingestRunsQueryValidation,
 } from "./admin.validation";
 
 export function createAdminRouter(context: AppContext) {
@@ -21,6 +22,7 @@ export function createAdminRouter(context: AppContext) {
   );
 
   const adminService = createAdminService(
+    context.knex,
     context.userRepository,
     context.cache,
     context.authService,
@@ -179,6 +181,62 @@ export function createAdminRouter(context: AppContext) {
 
       req.flash("success", `Deleted cache entry "${key}"`);
       return res.redirect("/admin/cache");
+    },
+  );
+
+  router.get(
+    "/admin/ingest-runs",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.validationMiddleware({ query: ingestRunsQueryValidation }),
+    async (req: Request, res: Response) => {
+      const page = req.query.page as number | undefined;
+
+      const { runs, pagination } = await adminService.getIngestRuns({ page });
+
+      return res.render("admin/ingest-runs.html", {
+        title: "Ingest Runs",
+        path: "/admin/ingest-runs",
+        runs,
+        pagination,
+        messages: req.flash(),
+        layout: "_layouts/authenticated.html",
+      });
+    },
+  );
+
+  router.post(
+    "/admin/ingest-runs/run",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    async (req: Request, res: Response) => {
+      // Fire-and-forget — the ingest takes ~2 min, can't block the request.
+      // If the source CSV hasn't changed since the last successful run the
+      // ingest service will record a "skipped" row and exit fast.
+      void context.ingest.runNightly().catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        context.logger.error("Admin-triggered ingest failed", { error: message });
+      });
+
+      req.flash("success", "Ingest started — refresh in a couple minutes to see the result");
+      return res.redirect("/admin/ingest-runs");
+    },
+  );
+
+  router.post(
+    "/admin/ingest-runs/run-force",
+    middleware.sessionAdminAuthenticationMiddleware,
+    middleware.csrfValidationMiddleware,
+    async (req: Request, res: Response) => {
+      // Force=true bypasses the Last-Modified dedup so the ingest runs even
+      // if the upstream CSV hasn't changed. Useful for recovery after a
+      // failed run or to validate the pipeline after code changes.
+      void context.ingest.runNightly({ force: true }).catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        context.logger.error("Admin-triggered forced ingest failed", { error: message });
+      });
+
+      req.flash("success", "Forced ingest started — refresh in a couple minutes to see the result");
+      return res.redirect("/admin/ingest-runs");
     },
   );
 

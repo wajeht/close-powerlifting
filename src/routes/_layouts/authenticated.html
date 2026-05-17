@@ -14,6 +14,7 @@
           <% if (it.user && it.user.admin) { %>
           <a href="/admin/users" class="rounded-md px-3 py-2 text-sm <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
           <a href="/admin/cache" class="rounded-md px-3 py-2 text-sm <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
+          <a href="/admin/ingest-runs" class="rounded-md px-3 py-2 text-sm <%= it.path === '/admin/ingest-runs' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Ingest</a>
           <% } %>
           <form action="/logout" method="post" class="contents">
             <%~ include('../_components/csrf-input.html') %>
@@ -29,6 +30,7 @@
               <% if (it.user && it.user.admin) { %>
               <a href="/admin/users" class="rounded-md px-3 py-2 <%= it.path === '/admin/users' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Users</a>
               <a href="/admin/cache" class="rounded-md px-3 py-2 <%= it.path === '/admin/cache' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Cache</a>
+              <a href="/admin/ingest-runs" class="rounded-md px-3 py-2 <%= it.path === '/admin/ingest-runs' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Ingest</a>
               <% } %>
               <a href="/settings" class="rounded-md px-3 py-2 <%= it.path === '/settings' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white' %>">Settings</a>
             </nav>

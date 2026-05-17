@@ -24,7 +24,15 @@ export const cacheQueryValidation = z.object({
   search: z.string().optional(),
 });
 
+export const ingestRunsQueryValidation = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((value) => (value ? Math.max(1, parseInt(value, 10)) : 1)),
+});
+
 export type UserIdParamType = z.infer<typeof userIdParamValidation>;
 export type UsersQueryType = z.infer<typeof usersQueryValidation>;
 export type CacheKeyType = z.infer<typeof cacheKeyValidation>;
 export type CacheQueryType = z.infer<typeof cacheQueryValidation>;
+export type IngestRunsQueryType = z.infer<typeof ingestRunsQueryValidation>;

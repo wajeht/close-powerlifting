@@ -1,3 +1,5 @@
+import type { Knex } from "knex";
+
 import type { CacheType, CacheEntry } from "../../db/cache";
 import type { UserRepositoryType } from "../../db/user";
 import type { AuthServiceType } from "../auth/auth.service";
@@ -7,6 +9,20 @@ import type { HelpersType } from "../../utils/helpers";
 import { buildPagination } from "../../utils/helpers";
 
 const VERIFICATION_TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export interface IngestRunRow {
+  id: number;
+  started_at: string;
+  finished_at: string | null;
+  lifter_count: number | null;
+  meet_count: number | null;
+  federation_count: number | null;
+  lift_count: number | null;
+  byte_size: number | null;
+  source_last_modified: string | null;
+  status: "completed" | "skipped" | "failed";
+  error: string | null;
+}
 
 export interface AdminServiceType {
   getAllUsers: (options?: {
@@ -26,6 +42,10 @@ export interface AdminServiceType {
   }) => Promise<{ entries: CacheEntry[]; pagination: Pagination }>;
   clearAllCache: () => Promise<void>;
   deleteCacheEntry: (key: string) => Promise<void>;
+  getIngestRuns: (options?: {
+    page?: number;
+    limit?: number;
+  }) => Promise<{ runs: IngestRunRow[]; pagination: Pagination }>;
   getDashboardStats: () => Promise<DashboardStats>;
 }
 
@@ -38,6 +58,7 @@ export interface DashboardStats {
 }
 
 export function createAdminService(
+  knex: Knex,
   userRepository: UserRepositoryType,
   cache: CacheType,
   authService: AuthServiceType,
@@ -159,6 +180,27 @@ export function createAdminService(
     logger.info(`Admin deleted cache entry: ${key}`);
   }
 
+  async function getIngestRuns(
+    options: { page?: number; limit?: number } = {},
+  ): Promise<{ runs: IngestRunRow[]; pagination: Pagination }> {
+    const limit = options.limit ?? 25;
+    const countRow = await knex("ingest_runs")
+      .count<{ total: number | string }[]>({ total: "id" })
+      .first();
+    const total = Number(countRow?.total ?? 0);
+
+    const pagination = buildPagination(total, options.page ?? 1, limit);
+    const offset = (pagination.current_page - 1) * limit;
+
+    const runs = (await knex("ingest_runs")
+      .select<IngestRunRow[]>("*")
+      .orderBy("id", "desc")
+      .limit(limit)
+      .offset(offset)) as IngestRunRow[];
+
+    return { runs, pagination };
+  }
+
   async function getDashboardStats(): Promise<DashboardStats> {
     const allUsers = await userRepository.findAll();
     const cacheStats = await cache.getStatistics();
@@ -183,6 +225,7 @@ export function createAdminService(
     getCacheEntries,
     clearAllCache,
     deleteCacheEntry,
+    getIngestRuns,
     getDashboardStats,
   };
 }
