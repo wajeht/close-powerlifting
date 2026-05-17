@@ -1,12 +1,11 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
 import { createRankingService } from "./rankings.service";
 
 const context = createContext();
-const scraper = context.scraper;
-const rankingService = createRankingService(context.knex, scraper);
+const rankingService = createRankingService(context.knex);
 import {
   rankingsDefault,
   rankingsRawMen,
@@ -199,68 +198,9 @@ describe.concurrent("rankings service", () => {
       expect(maxPerPage).toBe(500);
     });
 
-    it("calculatePagination returns correct structure for rankings data", () => {
-      const totalItems = rankingsDefault.total_length;
-      const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
-
-      expect(pagination).toHaveProperty("items");
-      expect(pagination).toHaveProperty("pages");
-      expect(pagination).toHaveProperty("per_page");
-      expect(pagination).toHaveProperty("current_page");
-      expect(pagination).toHaveProperty("last_page");
-      expect(pagination).toHaveProperty("first_page");
-      expect(pagination).toHaveProperty("from");
-      expect(pagination).toHaveProperty("to");
-    });
-
-    it("calculatePagination calculates correct values", () => {
-      const totalItems = rankingsDefault.total_length;
-      const pagination = scraper.calculatePagination(totalItems, 1, defaultPerPage);
-
-      expect(pagination.items).toBe(totalItems);
-      expect(pagination.per_page).toBe(defaultPerPage);
-      expect(pagination.current_page).toBe(1);
-      expect(pagination.first_page).toBe(1);
-      expect(pagination.from).toBe(1);
-      expect(pagination.to).toBe(Math.min(defaultPerPage, totalItems));
-      expect(pagination.pages).toBe(Math.ceil(totalItems / defaultPerPage));
-      expect(pagination.last_page).toBe(pagination.pages);
-    });
-
     it("row count matches requested page size", () => {
       // Fixture should have exactly 100 rows (default per_page)
       expect(rankingsDefault.rows.length).toBeLessThanOrEqual(defaultPerPage);
-    });
-  });
-
-  describe("buildPaginationQuery with units", () => {
-    it("defaults to lbs units", () => {
-      const query = scraper.buildPaginationQuery(1, 100);
-      expect(query).toContain("units=lbs");
-    });
-
-    it("uses kg units when specified", () => {
-      const query = scraper.buildPaginationQuery(1, 100, "kg");
-      expect(query).toContain("units=kg");
-    });
-
-    it("uses lbs units when explicitly specified", () => {
-      const query = scraper.buildPaginationQuery(1, 100, "lbs");
-      expect(query).toContain("units=lbs");
-    });
-
-    it("includes start, end, and lang parameters", () => {
-      const query = scraper.buildPaginationQuery(1, 50, "kg");
-      expect(query).toContain("start=0");
-      expect(query).toContain("end=50");
-      expect(query).toContain("lang=en");
-      expect(query).toContain("units=kg");
-    });
-
-    it("calculates correct start for page 2", () => {
-      const query = scraper.buildPaginationQuery(2, 100, "kg");
-      expect(query).toContain("start=100");
-      expect(query).toContain("end=200");
     });
   });
 
@@ -338,20 +278,12 @@ describe("rankings service refreshCacheKey", () => {
   });
 
   it("returns true for unfiltered rankings without re-scraping (data now served from lifts)", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
-
     const result = await rankingService.refreshCacheKey("rankings-1-100-lbs");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 
   it("returns true for filtered rankings without re-scraping", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
-
     const result = await rankingService.refreshCacheKey("rankings/raw/men-1-100-lbs");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 });

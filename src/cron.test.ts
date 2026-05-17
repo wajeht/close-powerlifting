@@ -60,35 +60,9 @@ function createTestLogger(): LoggerType {
   } as unknown as LoggerType;
 }
 
-function createTestScraper(cache?: CacheType): ScraperType {
-  const mockDoc = {
-    querySelectorAll: () => [],
-    querySelector: () => null,
-    getElementsByClassName: () => [],
-  } as unknown as Document;
-
-  const mockElement = {
-    querySelectorAll: () => [],
-    querySelector: () => null,
-  } as unknown as Element;
-
+function createTestScraper(): ScraperType {
   return {
-    fetchHtml: vi.fn().mockResolvedValue("<html></html>"),
-    fetchJson: vi.fn().mockResolvedValue({ rows: [], total_length: 0 }),
-    parseHtml: vi.fn().mockReturnValue(mockDoc),
-    tableToJson: vi.fn().mockReturnValue([]),
-    getElementByClass: vi.fn().mockReturnValue(mockElement),
-    buildPaginationQuery: vi.fn().mockReturnValue("start=0&end=100&lang=en&units=lbs"),
-    stripHtml: vi.fn(),
-    getElementText: vi.fn(),
-    withCache: vi.fn(),
-    refreshCache: vi.fn(async (key: string, fetcher: () => Promise<unknown>) => {
-      const data = await fetcher();
-      if (cache) await cache.set(key, JSON.stringify(data));
-      return { data };
-    }),
-    calculatePagination: vi.fn(),
-    fetchWithAuth: vi.fn(),
+    fetchWithAuth: vi.fn().mockResolvedValue({ ok: true, url: "", date: null, body: null }),
   } as unknown as ScraperType;
 }
 
@@ -104,7 +78,7 @@ describe("cron", () => {
   beforeEach(() => {
     cache = createTestCache();
     logger = createTestLogger();
-    scraper = createTestScraper(cache);
+    scraper = createTestScraper();
     userRepository = {
       findVerifiedWithUsage: vi.fn().mockResolvedValue([]),
       resetAllApiCallCounts: vi.fn().mockResolvedValue(undefined),
@@ -249,8 +223,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/status");
     });
 
     it("should refresh federations list from cache", async () => {
@@ -302,8 +274,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchJson).not.toHaveBeenCalled();
     });
 
     it("should refresh filtered rankings keys", async () => {
@@ -339,9 +309,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/mlist/ipf");
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/mlist/uspa/2024");
     });
 
     it("should claim meet keys without re-scraping (data served from lifts)", async () => {
@@ -357,8 +324,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     it("should claim user profile keys without re-scraping (data served from lifts)", async () => {
@@ -374,8 +339,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/johnhaack", "lbs");
     });
 
     it("should claim records keys without re-scraping (data served from lifts)", async () => {
@@ -391,9 +354,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/records/raw");
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/records/raw/men");
     });
 
     it("should skip internal cache keys", async () => {
@@ -509,8 +469,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchJson).not.toHaveBeenCalled();
     });
 
     it("should warn on invalid rankings key format", async () => {
@@ -569,8 +527,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Federation cache-key parsing edges — refresh is now a no-op since data
@@ -588,8 +544,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Meet keys claim without re-scraping now.
@@ -606,8 +560,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalled();
     });
 
     // Profile keys are now served from the lifts table and no longer re-scrape.
@@ -624,8 +576,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/u/john-doe", "lbs");
     });
 
     it("should claim user search keys without re-scraping (FTS now)", async () => {
@@ -641,8 +591,6 @@ describe("cron", () => {
         knex,
       );
       await cron.tasks.refreshCache();
-
-      expect(scraper.fetchJson).not.toHaveBeenCalled();
       expect(logger.warn).not.toHaveBeenCalledWith(
         "refreshCacheKey: unknown key type: users-search-john%20haack-2-5-kg",
       );
