@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
-import { Readable, Transform, Writable } from "node:stream";
+import { Readable, type Transform } from "node:stream";
 import type { Knex } from "knex";
 
 import { parse as parseCsv } from "csv-parse";
@@ -11,7 +11,6 @@ import unzipper from "unzipper";
 import type { LoggerType } from "./logger";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
-const LIFTS_BATCH_SIZE = 5000;
 const REGEX_DIACRITICS = /\p{Mn}/gu;
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -321,19 +320,16 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       await pipeline(
         csvStreamFactory(),
         csvParser(),
-        new Writable({
-          objectMode: true,
-          highWaterMark: LIFTS_BATCH_SIZE,
-          write(record: Record<string, string>, _enc, callback) {
+        async function (source: AsyncIterable<Record<string, string>>) {
+          for await (const record of source) {
             const lift = normalizeRow(record);
             if (lift == null) {
               stats.skippedRows++;
-            } else {
-              harvestDimensions(record, lift, federations, lifters, meets);
+              continue;
             }
-            callback();
-          },
-        }),
+            harvestDimensions(record, lift, federations, lifters, meets);
+          }
+        },
       );
 
       stats.federations = federations.size;
@@ -416,23 +412,20 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
           await pipeline(
             csvStreamFactory(),
             csvParser(),
-            new Transform({
-              objectMode: true,
-              highWaterMark: LIFTS_BATCH_SIZE,
-              transform(record: Record<string, string>, _enc, callback) {
+            async function* (source: AsyncIterable<Record<string, string>>) {
+              for await (const record of source) {
                 const lift = normalizeRow(record);
-                if (lift == null) return callback();
+                if (lift == null) continue;
                 const lifterId = lifterIds.get(lift.lifter_slug);
                 const meetId = meetIds.get(lift.meet_key);
-                if (lifterId == null || meetId == null) return callback();
-                callback(null, { lift, lifterId, meetId });
-              },
-            }),
-            new Writable({
-              objectMode: true,
-              highWaterMark: LIFTS_BATCH_SIZE,
-              write(payload: { lift: NormalizedLift; lifterId: number; meetId: number }, _enc, cb) {
-                const { lift, lifterId, meetId } = payload;
+                if (lifterId == null || meetId == null) continue;
+                yield { lift, lifterId, meetId };
+              }
+            },
+            async function (
+              source: AsyncIterable<{ lift: NormalizedLift; lifterId: number; meetId: number }>,
+            ) {
+              for await (const { lift, lifterId, meetId } of source) {
                 insertLift.run(
                   lifterId,
                   meetId,
@@ -469,9 +462,8 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
                   lift.tested,
                 );
                 liftCount++;
-                cb();
-              },
-            }),
+              }
+            },
           );
 
           stats.lifts = liftCount;
