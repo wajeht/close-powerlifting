@@ -23,7 +23,7 @@ RUN npm run build:prod && \
     find dist -name "*.map" -delete && \
     find src/routes -name "*.ts" -delete && \
     find src/routes -name "*.js" -delete && \
-    rm -rf dist/scripts && \
+    find dist/scripts -mindepth 1 ! -name "ingest.js" -delete && \
     rm -rf vitest.config.* && \
     rm -rf src/routes/**/fixtures
 
