@@ -59,8 +59,7 @@ async function main(): Promise<void> {
     .then((result) => {
       context.logger.info(
         `loader: initial load complete in ${result.durationMs}ms ` +
-          `(rows=${result.rowCount}, skipped=${result.rowsSkipped}, ` +
-          `last-modified=${result.sourceLastModified ?? "unknown"})`,
+          `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
       );
     })
     .catch((error: Error) => {
