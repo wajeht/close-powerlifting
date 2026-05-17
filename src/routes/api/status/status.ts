@@ -55,7 +55,7 @@ export function createStatusRouter(context: AppContext) {
     context.authService,
     context.apiCallLogRepository,
   );
-  const statusService = createStatusService(context.scraper);
+  const statusService = createStatusService(context.knex);
 
   const router = express.Router();
 

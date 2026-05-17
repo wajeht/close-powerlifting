@@ -1,83 +1,48 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
-import { createContext } from "../../../context";
+import { knex } from "../../../tests/test-setup";
 import { createStatusService } from "./status.service";
-import { statusHtml } from "./fixtures";
 
-const context = createContext();
-const scraper = context.scraper;
-const statusService = createStatusService(scraper);
+const statusService = createStatusService(knex);
 
-const statusDoc = scraper.parseHtml(statusHtml);
-const statusData = statusService.parseStatusHtml(statusDoc);
-
-describe.concurrent("status service", () => {
-  describe("parseStatusHtml", () => {
-    it("parses status HTML correctly", () => {
-      expect(statusData).toBeDefined();
+describe("status service", () => {
+  describe("getStatus", () => {
+    it("returns StatusData shape", async () => {
+      const result = await statusService.getStatus({});
+      expect(result.data).toHaveProperty("server_version");
+      expect(result.data).toHaveProperty("meets");
+      expect(result.data).toHaveProperty("federations");
     });
 
-    it("returns StatusData structure", () => {
-      expect(statusData).toHaveProperty("server_version");
-      expect(statusData).toHaveProperty("meets");
-      expect(statusData).toHaveProperty("federations");
+    it("federations array includes seeded codes", async () => {
+      const result = await statusService.getStatus({});
+      const codes = result.data!.federations.map((f) => f.name);
+      expect(codes).toContain("WRPF");
+      expect(codes).toContain("USAPL");
     });
 
-    it("extracts server version commit hash", () => {
-      expect(statusData.server_version).toBeDefined();
-      expect(statusData.server_version.length).toBeGreaterThan(0);
-      expect(statusData.server_version).toMatch(/^[a-f0-9]+$/);
+    it("federation entries carry the expected fields", async () => {
+      const result = await statusService.getStatus({});
+      const first = result.data!.federations[0]!;
+      expect(first).toHaveProperty("name");
+      expect(first).toHaveProperty("status");
+      expect(first).toHaveProperty("meetsentered");
     });
 
-    it("extracts meets info string", () => {
-      expect(statusData.meets).toBeDefined();
-      expect(statusData.meets.length).toBeGreaterThan(0);
-      expect(statusData.meets).toContain("Tracking");
-    });
-
-    it("extracts federations array", () => {
-      expect(Array.isArray(statusData.federations)).toBe(true);
-      expect(statusData.federations.length).toBeGreaterThan(0);
-    });
-
-    it("federations have Name column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasName = keys.some((k) => k.toLowerCase().includes("name"));
-        expect(hasName).toBe(true);
-      }
-    });
-
-    it("federations have Status column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasStatus = keys.some((k) => k.toLowerCase().includes("status"));
-        expect(hasStatus).toBe(true);
-      }
-    });
-
-    it("federations have Meets column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasMeets = keys.some((k) => k.toLowerCase().includes("meets"));
-        expect(hasMeets).toBe(true);
-      }
+    it("meets blurb mentions Tracking when meets exist", async () => {
+      const result = await statusService.getStatus({});
+      expect(result.data!.meets).toContain("Tracking");
     });
   });
-});
 
-describe("status service refreshCacheKey", () => {
-  it("returns false for non-status keys", async () => {
-    expect(await statusService.refreshCacheKey("federations-list")).toBe(false);
-    expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
-  });
+  describe("refreshCacheKey", () => {
+    it("returns false for non-status keys", async () => {
+      expect(await statusService.refreshCacheKey("federations-list")).toBe(false);
+      expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
+    });
 
-  it("returns true for status key and triggers refresh", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
-
-    const result = await statusService.refreshCacheKey("status");
-    expect(result).toBe(true);
-    expect(refreshSpy).toHaveBeenCalledWith("status", expect.any(Function));
-    refreshSpy.mockRestore();
+    it("returns true for status key (no-op now that data comes from lifts)", async () => {
+      expect(await statusService.refreshCacheKey("status")).toBe(true);
+    });
   });
 });
