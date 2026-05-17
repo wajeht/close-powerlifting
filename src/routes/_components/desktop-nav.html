@@ -9,9 +9,29 @@
       >
     </li>
 
+    <!-- status -->
+    <li>
+      <a
+        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
+        href="/status"
+        >Status</a
+      >
+    </li>
+
     <!-- docs -->
     <li>
       <a class="text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank">Docs</a>
+    </li>
+
+    <!-- github (red CTA) -->
+    <li>
+      <a
+        class="rounded-md border border-neutral-700 px-4 py-2 text-neutral-300 transition-all hover:border-power hover:text-white"
+        href="https://github.com/wajeht/close-powerlifting"
+        target="_blank"
+        rel="noopener"
+        >GitHub</a
+      >
     </li>
   </ul>
 </nav>
