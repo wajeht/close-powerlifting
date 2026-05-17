@@ -1,6 +1,8 @@
 import express, { Request, Response } from "express";
 
+import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
+import { getRouteStatuses } from "../api/health-check/health-check.service";
 import { createMiddleware } from "../middleware";
 
 const ONE_DAY_SECONDS = 86400;
@@ -54,8 +56,12 @@ export function createGeneralRouter(context: AppContext) {
   router.get(
     "/status",
     middleware.cacheControlMiddleware(ONE_HOUR_SECONDS),
-    (_req: Request, res: Response) => {
+    async (_req: Request, res: Response) => {
       const data = context.store.tryGet();
+      const routeGroups =
+        data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
+      const allGood =
+        routeGroups.length > 0 && routeGroups.every((g) => g.routes.every((r) => r.status));
       res.status(200).render("general/status.html", {
         path: "/status",
         title: "Status",
@@ -63,6 +69,8 @@ export function createGeneralRouter(context: AppContext) {
         rowCount: data?.rowCount ?? 0,
         sourceLastModified: data?.sourceLastModified ?? null,
         ingestedAt: data?.ingestedAt ?? null,
+        routeGroups,
+        allGood,
       });
     },
   );
