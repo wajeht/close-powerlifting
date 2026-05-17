@@ -1,9 +1,10 @@
-import dotenv from "dotenv";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 import packageJson from "../package.json";
 
-dotenv.config({ path: path.resolve(__dirname, "..", ".env"), quiet: true });
+const envPath = path.resolve(__dirname, "..", ".env");
+if (fs.existsSync(envPath)) process.loadEnvFile(envPath);
 
 export type Env = "production" | "development" | "testing" | "local";
 
