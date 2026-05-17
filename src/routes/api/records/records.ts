@@ -48,6 +48,15 @@ const CATEGORY_ORDER: RecordCategory[] = [
 export function createRecordsRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/records
+   * @summary Top-3 per (category, weight class) for a given sex + equipment group
+   * @tags Records
+   * @param {string} sex.query - M, F, men, or women (default: M)
+   * @param {string} equipment.query - raw (default), wraps, single, multi, unlimited, all-tested
+   * @param {number} weight_class.query - Optional: limit to a single weight class
+   * @return {object} 200 - { sex, equipment_group, categories[] }
+   */
   router.get("/api/records", (req: Request, res: Response) => {
     const data = context.store.get();
     const sex = parseSex(req.query.sex);

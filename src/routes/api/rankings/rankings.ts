@@ -51,6 +51,15 @@ export function createRankingsRouter(context: AppContext) {
     });
   });
 
+  /**
+   * GET /api/rankings/{rank}
+   * @summary Lifter at a specific rank on a metric
+   * @tags Rankings
+   * @param {integer} rank.path.required - 1-based rank position
+   * @param {string} metric.query - Sort key (see /api/rankings)
+   * @return {object} 200 - The ranking row at that position
+   * @return {object} 404 - Rank out of range for the chosen metric
+   */
   router.get("/api/rankings/:rank", (req: Request, res: Response) => {
     const data = context.store.get();
     const metric = parseMetric(req.query.metric);
