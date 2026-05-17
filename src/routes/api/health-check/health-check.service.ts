@@ -80,7 +80,7 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Public", path: "/api/health-check" },
 ];
 
-const CACHE_KEY = "close-powerlifting-global-status-call-cache";
+export const HEALTH_CHECK_CACHE_KEY = "close-powerlifting-global-status-call-cache";
 
 export function createHealthCheckService(
   cache: CacheType,
@@ -94,7 +94,7 @@ export function createHealthCheckService(
     apiKey: string;
     url: string;
   }): Promise<RouteGroup[]> {
-    const cachedData = await cache.get(CACHE_KEY);
+    const cachedData = await cache.get(HEALTH_CHECK_CACHE_KEY);
     if (cachedData) {
       return JSON.parse(cachedData);
     }
@@ -131,7 +131,7 @@ export function createHealthCheckService(
       }
     }
 
-    await cache.set(CACHE_KEY, JSON.stringify(groups));
+    await cache.set(HEALTH_CHECK_CACHE_KEY, JSON.stringify(groups));
     logger.info("Global status cache was updated!");
 
     return groups;

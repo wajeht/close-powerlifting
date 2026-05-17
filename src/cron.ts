@@ -1,22 +1,27 @@
 import cron, { ScheduledTask } from "node-cron";
 import type { Knex } from "knex";
 
+import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
 import type { LoggerType } from "./utils/logger";
 import type { ScraperType } from "./utils/scraper";
 import type { IngestServiceType } from "./utils/ingest";
-import { createHealthCheckService } from "./routes/api/health-check/health-check.service";
+import {
+  createHealthCheckService,
+  HEALTH_CHECK_CACHE_KEY,
+} from "./routes/api/health-check/health-check.service";
 import { createMeetService } from "./routes/api/meets/meets.service";
 import { createUserService } from "./routes/api/users/users.service";
 import { createFederationService } from "./routes/api/federations/federations.service";
 import { createRankingService } from "./routes/api/rankings/rankings.service";
 import { createRecordService } from "./routes/api/records/records.service";
 import { createStatusService } from "./routes/api/status/status.service";
+import { HOSTNAME_CACHE_KEY } from "./routes/middleware";
 
 const REFRESH_DELAY_MS = process.env.NODE_ENV === "testing" ? 0 : 2000;
 
-export const INTERNAL_CACHE_KEYS = ["hostname", "close-powerlifting-global-status-call-cache"];
+export const INTERNAL_CACHE_KEYS = [HOSTNAME_CACHE_KEY, HEALTH_CHECK_CACHE_KEY];
 
 export interface CronType {
   start: () => void;
@@ -99,13 +104,13 @@ export function createCron(
     try {
       logger.info("cron job started: refreshHealthCheck");
 
-      const hostname = await cache.get("hostname");
+      const hostname = await cache.get(HOSTNAME_CACHE_KEY);
       if (!hostname) {
         logger.warn("refreshHealthCheck: hostname not cached yet, skipping");
         return;
       }
 
-      const adminUser = await userRepository.findByEmail(process.env.APP_ADMIN_EMAIL || "");
+      const adminUser = await userRepository.findByEmail(configuration.app.adminEmail);
       if (!adminUser?.api_key) {
         logger.warn("refreshHealthCheck: admin user or API key not found, skipping");
         return;
