@@ -5,7 +5,6 @@ import { configuration } from "./configuration";
 import type { CacheType } from "./db/cache";
 import type { UserRepositoryType } from "./db/user";
 import type { LoggerType } from "./utils/logger";
-import type { HttpClientType } from "./utils/http-client";
 import type { IngestServiceType } from "./utils/ingest";
 import {
   createHealthCheckService,
@@ -46,7 +45,6 @@ export function createCron(
   cache: CacheType,
   userRepository: UserRepositoryType,
   logger: LoggerType,
-  httpClient: HttpClientType,
   ingest: IngestServiceType,
   knex: Knex,
 ): CronType {
@@ -82,7 +80,7 @@ export function createCron(
   const rankingService = createRankingService(knex);
   const recordService = createRecordService(knex);
   const statusService = createStatusService(knex);
-  const healthCheckService = createHealthCheckService(cache, httpClient, logger);
+  const healthCheckService = createHealthCheckService(cache, logger);
 
   const refreshers = [
     statusService.refreshCacheKey,
