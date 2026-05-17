@@ -366,6 +366,9 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       // dimensions the first time they're seen, then immediately inserting the
       // lift row with the resolved foreign keys. Everything runs inside one
       // transaction; ROLLBACK on any error leaves the prior DB state intact.
+      // The server's busy_timeout (set in knexfile.ts) is generous enough to
+      // cover the full ingest duration, so concurrent session writes wait
+      // patiently rather than erroring out.
       await withDatabase(async (db) => {
         for (const pragma of INGEST_PRAGMAS) db.exec(pragma);
         try {
