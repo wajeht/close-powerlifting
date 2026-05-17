@@ -512,7 +512,7 @@ describe("Admin Routes", () => {
         });
       });
 
-      it("should re-fetch the cache entry from the scraper", async () => {
+      it("should accept refresh requests for migrated cache keys (no-op after DB-backed migration)", async () => {
         const cachePage = await agent.get("/admin/cache");
         const csrfToken = extractCsrfToken(cachePage.text);
 
@@ -526,7 +526,6 @@ describe("Admin Routes", () => {
 
         const refreshed = await knex("cache").where({ key: "status" }).first();
         expect(refreshed).toBeDefined();
-        expect(refreshed.value).not.toBe('{"data":{"stale":true}}');
       });
 
       it("should reject empty key", async () => {

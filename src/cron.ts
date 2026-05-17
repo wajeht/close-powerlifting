@@ -90,7 +90,7 @@ export function createCron(
   const federationService = createFederationService(knex, scraper);
   const rankingService = createRankingService(knex, scraper);
   const recordService = createRecordService(knex, scraper);
-  const statusService = createStatusService(scraper);
+  const statusService = createStatusService(knex);
   const healthCheckService = createHealthCheckService(cache, scraper, logger);
 
   const refreshers = [

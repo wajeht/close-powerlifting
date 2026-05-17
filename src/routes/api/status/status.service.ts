@@ -1,76 +1,62 @@
-import type { ScraperType } from "../../../context";
+import type { Knex } from "knex";
+
+import { configuration } from "../../../configuration";
 import type { StatusData, Federation, ApiResponse } from "../../../types";
 import type { GetStatusType } from "./status.validation";
 
 const CACHE_KEY = "status";
 
-export function createStatusService(scraper: ScraperType) {
-  function parseStatusHtml(doc: Document): StatusData {
-    const textContent = scraper.getElementByClass(doc, "text-content");
-    if (!textContent) {
-      throw new Error("Could not find text-content element on status page");
-    }
+export function createStatusService(knex: Knex) {
+  async function fetchStatus(): Promise<StatusData> {
+    const meetCountResult = await knex("meets")
+      .count<{ count: number | string }[]>({ count: "*" })
+      .first();
+    const meetCount = Number(meetCountResult?.count ?? 0);
 
-    let serverVersion = "";
-    const h2s = textContent.querySelectorAll("h2");
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Server Version")) {
-        const p = h2.nextElementSibling;
-        const link = p?.querySelector("a");
-        const href = link?.getAttribute("href") || "";
-        const match = href.match(/commits\/([a-f0-9]+)/);
-        serverVersion = match?.[1] ?? "";
-        break;
-      }
-    }
+    const lastIngest = await knex("ingest_runs")
+      .where({ status: "completed" })
+      .orderBy("finished_at", "desc")
+      .first<{ finished_at: string | null; source_last_modified: string | null }>();
 
-    let meetsInfo = "";
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Meets")) {
-        let sibling = h2.nextSibling;
-        while (sibling) {
-          if (sibling.nodeType === 3) {
-            const text = sibling.textContent?.trim() || "";
-            if (text.includes("Tracking")) {
-              meetsInfo = text;
-              break;
-            }
-          }
-          if (sibling.nodeType === 1) break;
-          sibling = sibling.nextSibling;
-        }
-        break;
-      }
-    }
+    const federationRows = (await knex("federations")
+      .select<Array<{ code: string; parent_slug: string | null }>>("code", "parent_slug")
+      .orderBy("code", "asc")) as Array<{ code: string; parent_slug: string | null }>;
 
-    const table = textContent.querySelector("table");
-    const federations = scraper.tableToJson(table) as Federation[];
+    const federations: Federation[] = federationRows.map((row) => ({
+      name: row.code,
+      meetsentered: "—",
+      status: row.parent_slug ? `sanctioned by ${row.parent_slug}` : "tracked",
+      newmeetdetection: "—",
+      resultsformat: "—",
+      easeofimport: "—",
+      maintainers: "—",
+    }));
+
+    const meetsBlurb =
+      meetCount > 0
+        ? `Tracking ${meetCount.toLocaleString()} meets across ${federationRows.length} federations` +
+          (lastIngest?.finished_at ? ` (refreshed ${lastIngest.finished_at})` : "")
+        : "No meets ingested yet";
 
     return {
-      server_version: serverVersion,
-      meets: meetsInfo,
+      server_version: configuration.app.version,
+      meets: meetsBlurb,
       federations,
     };
   }
 
-  async function fetchStatus(): Promise<StatusData> {
-    const html = await scraper.fetchHtml("/status");
-    const doc = scraper.parseHtml(html);
-    return parseStatusHtml(doc);
-  }
-
   async function getStatus(_options: GetStatusType): Promise<ApiResponse<StatusData>> {
-    return scraper.withCache<StatusData>(CACHE_KEY, fetchStatus);
+    const data = await fetchStatus();
+    return { data };
   }
 
   async function refreshCacheKey(key: string): Promise<boolean> {
     if (key !== CACHE_KEY) return false;
-    await scraper.refreshCache<StatusData>(key, fetchStatus);
+    // Status now derives from our own tables; nothing to refresh.
     return true;
   }
 
   return {
-    parseStatusHtml,
     getStatus,
     refreshCacheKey,
   };

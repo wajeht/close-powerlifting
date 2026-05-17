@@ -236,7 +236,7 @@ describe("cron", () => {
       }
     }
 
-    it("should refresh status data from cache", async () => {
+    it("should claim status key without re-scraping (data now from lifts table)", async () => {
       await seedCache(cache, ["status"]);
       const cron = createCron(
         cache,
@@ -250,7 +250,7 @@ describe("cron", () => {
       );
       await cron.tasks.refreshCache();
 
-      expect(scraper.fetchHtml).toHaveBeenCalledWith("/status");
+      expect(scraper.fetchHtml).not.toHaveBeenCalledWith("/status");
     });
 
     it("should refresh federations list from cache", async () => {
@@ -443,62 +443,11 @@ describe("cron", () => {
       );
     });
 
-    it("should handle fetchHtml errors and continue", async () => {
-      await seedCache(cache, ["status", "federations-list"]);
-      vi.mocked(scraper.fetchHtml)
-        .mockRejectedValueOnce(new Error("Network error"))
-        .mockResolvedValue("<html></html>");
+    // status refresh is now a no-op (data comes from lifts), so the legacy
+    // fetchHtml/getElementByClass error paths can no longer fire.
 
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh status",
-        expect.any(Object),
-      );
-      // Should continue with other endpoints
-      const fedCached = await cache.get("federations-list");
-      expect(fedCached).not.toBeNull();
-    });
-
-    // Rankings refresh is a no-op now (data served from lifts), so fetchJson
-    // is never called and can't fail. The legacy error-path test is obsolete.
-
-    it("should handle missing text-content element", async () => {
-      await seedCache(cache, ["status"]);
-      vi.mocked(scraper.getElementByClass).mockReturnValueOnce(null);
-
-      const cron = createCron(
-        cache,
-        userRepository,
-        mail,
-        logger,
-        scraper,
-        apiCallLogRepository,
-        ingest,
-        knex,
-      );
-      await cron.tasks.refreshCache();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        "refreshCache: failed to refresh status",
-        expect.objectContaining({ error: "Could not find text-content element on status page" }),
-      );
-    });
-
-    it("should report partial failures in summary", async () => {
-      // "status" still hits the scraper; "records" + "federation-x" are no-ops.
+    it("should report cache-key counts in summary (all keys now claim no-op)", async () => {
       await seedCache(cache, ["status", "records", "federation-ipf"]);
-      vi.mocked(scraper.fetchHtml).mockRejectedValueOnce(new Error("Error 1"));
 
       const cron = createCron(
         cache,
@@ -516,8 +465,8 @@ describe("cron", () => {
         "cron job completed: refreshCache",
         expect.objectContaining({
           total: 3,
-          successful: 2,
-          failed: 1,
+          successful: 3,
+          failed: 0,
         }),
       );
     });
