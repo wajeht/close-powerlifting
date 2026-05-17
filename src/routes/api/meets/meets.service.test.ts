@@ -136,7 +136,7 @@ describe("meets service refreshCacheKey", () => {
     expect(await meetService.refreshCacheKey("status")).toBe(false);
   });
 
-  it("returns true for meet keys without re-scraping (lifts now)", async () => {
+  it("returns true for meet keys", async () => {
     const result = await meetService.refreshCacheKey("meet-uspa/1969");
     expect(result).toBe(true);
   });

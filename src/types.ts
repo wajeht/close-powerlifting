@@ -160,11 +160,6 @@ export interface RankingRow {
   dots: number;
 }
 
-export interface RankingsApiResponse {
-  rows: (string | number)[][];
-  total_length: number;
-}
-
 export interface PersonalBest {
   [key: string]: string;
 }

@@ -1,5 +1,3 @@
-import type { LoggerType } from "./logger";
-
 const FETCH_TIMEOUT_MS = 15000;
 
 export interface ScraperType {
@@ -10,7 +8,7 @@ export interface ScraperType {
   ) => Promise<{ ok: boolean; url: string; date: string | null; body: string | null }>;
 }
 
-export function createScraper(_logger: LoggerType): ScraperType {
+export function createScraper(): ScraperType {
   async function fetchWithAuth(
     baseUrl: string,
     path: string,

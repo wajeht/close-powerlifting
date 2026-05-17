@@ -41,7 +41,7 @@ describe("status service", () => {
       expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
     });
 
-    it("returns true for status key (no-op now that data comes from lifts)", async () => {
+    it("returns true for status key", async () => {
       expect(await statusService.refreshCacheKey("status")).toBe(true);
     });
   });

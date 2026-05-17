@@ -210,7 +210,7 @@ describe("cron", () => {
       }
     }
 
-    it("should claim status key without re-scraping (data now from lifts table)", async () => {
+    it("claims status key", async () => {
       await seedCache(cache, ["status"]);
       const cron = createCron(
         cache,
@@ -261,7 +261,7 @@ describe("cron", () => {
       expect(cached).not.toBeNull();
     });
 
-    it("should claim rankings keys without re-scraping (data served from lifts)", async () => {
+    it("claims rankings keys", async () => {
       await seedCache(cache, ["rankings-1-100-lbs", "rankings-2-100-lbs"]);
       const cron = createCron(
         cache,
@@ -296,7 +296,7 @@ describe("cron", () => {
       expect(cached2).not.toBeNull();
     });
 
-    it("should claim federation keys without re-scraping (data served from lifts)", async () => {
+    it("claims federation keys", async () => {
       await seedCache(cache, ["federation-ipf", "federation-uspa-2024"]);
       const cron = createCron(
         cache,
@@ -311,7 +311,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    it("should claim meet keys without re-scraping (data served from lifts)", async () => {
+    it("claims meet keys", async () => {
       await seedCache(cache, ["meet-uspa/1969"]);
       const cron = createCron(
         cache,
@@ -326,7 +326,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    it("should claim user profile keys without re-scraping (data served from lifts)", async () => {
+    it("claims user profile keys", async () => {
       await seedCache(cache, ["user-johnhaack-lbs"]);
       const cron = createCron(
         cache,
@@ -341,7 +341,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    it("should claim records keys without re-scraping (data served from lifts)", async () => {
+    it("claims records keys", async () => {
       await seedCache(cache, ["records/raw", "records/raw/men"]);
       const cron = createCron(
         cache,
@@ -403,10 +403,9 @@ describe("cron", () => {
       );
     });
 
-    // status refresh is now a no-op (data comes from lifts), so the legacy
     // fetchHtml/getElementByClass error paths can no longer fire.
 
-    it("should report cache-key counts in summary (all keys now claim no-op)", async () => {
+    it("should report cache-key counts in summary", async () => {
       await seedCache(cache, ["status", "records", "federation-ipf"]);
 
       const cron = createCron(
@@ -454,9 +453,8 @@ describe("cron", () => {
       );
     });
 
-    // Rankings keys are claimed without re-scraping now that data comes from
     // the lifts table; legacy fetchJson-based assertions no longer apply.
-    it("should claim deep filter path rankings keys without re-scraping", async () => {
+    it("claims deep filter path rankings keys", async () => {
       await seedCache(cache, ["rankings/raw/men/100/2024/full-power/by-dots-1-100-lbs"]);
       const cron = createCron(
         cache,
@@ -509,8 +507,7 @@ describe("cron", () => {
       );
     });
 
-    // Records keys claim without re-scraping now.
-    it("should claim deep records filter paths without re-scraping", async () => {
+    it("claims deep records filter paths", async () => {
       await seedCache(cache, [
         "records/unlimited/para-classes/women",
         "records/raw/expanded-classes/men",
@@ -529,9 +526,8 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    // Federation cache-key parsing edges — refresh is now a no-op since data
     // comes from the lifts table; we only verify the cron didn't scrape.
-    it("should claim federation-365strong without re-scraping", async () => {
+    it("claims federation-365strong", async () => {
       await seedCache(cache, ["federation-365strong"]);
       const cron = createCron(
         cache,
@@ -546,8 +542,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    // Meet keys claim without re-scraping now.
-    it("should claim deep meet path keys without re-scraping", async () => {
+    it("claims deep meet path keys", async () => {
       await seedCache(cache, ["meet-wrpf-ru/2301", "meet-gpc/aus-vic/2023"]);
       const cron = createCron(
         cache,
@@ -562,8 +557,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    // Profile keys are now served from the lifts table and no longer re-scrape.
-    it("should claim usernames-with-hyphens profile keys without re-scraping", async () => {
+    it("claims usernames-with-hyphens profile keys", async () => {
       await seedCache(cache, ["user-john-doe-lbs"]);
       const cron = createCron(
         cache,
@@ -578,7 +572,7 @@ describe("cron", () => {
       await cron.tasks.refreshCache();
     });
 
-    it("should claim user search keys without re-scraping (FTS now)", async () => {
+    it("claims user search keys", async () => {
       await seedCache(cache, ["users-search-john%20haack-2-5-kg"]);
       const cron = createCron(
         cache,
@@ -615,7 +609,6 @@ describe("cron", () => {
       );
     });
 
-    // Unknown key type
     it("should warn on unknown key types", async () => {
       await seedCache(cache, ["unknown-key-type"]);
       const cron = createCron(

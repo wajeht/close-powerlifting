@@ -96,12 +96,12 @@ describe("records service refreshCacheKey", () => {
     expect(await recordService.refreshCacheKey("status")).toBe(false);
   });
 
-  it("returns true for base records key without re-scraping (lifts now)", async () => {
+  it("returns true for base records key", async () => {
     const result = await recordService.refreshCacheKey("records");
     expect(result).toBe(true);
   });
 
-  it("returns true for filtered records key without re-scraping", async () => {
+  it("returns true for filtered records key", async () => {
     const result = await recordService.refreshCacheKey("records/raw/men/40-44");
     expect(result).toBe(true);
   });
