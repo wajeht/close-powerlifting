@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import { configuration } from "../../../configuration";
 import { createContext } from "../../../context";
@@ -6,8 +6,7 @@ import { createFederationService, buildFederationStats } from "./federations.ser
 import type { Meet } from "../../../types";
 
 const context = createContext();
-const scraper = context.scraper;
-const federationService = createFederationService(context.knex, scraper);
+const federationService = createFederationService(context.knex);
 const { defaultPerPage, maxPerPage } = configuration.pagination;
 
 const sampleMeets: Meet[] = [
@@ -128,26 +127,17 @@ describe("federations service refreshCacheKey", () => {
   });
 
   it("returns true for federations-list without re-scraping (lifts now)", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await federationService.refreshCacheKey("federations-list");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 
   it("returns true for federation key with year", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await federationService.refreshCacheKey("federation-uspa-2024");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 
   it("returns true for stats key", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await federationService.refreshCacheKey("federation-ipf-stats");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 });

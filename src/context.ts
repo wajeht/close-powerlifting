@@ -59,7 +59,7 @@ export function createContext(): AppContext {
   const mail = createMail(logger);
   const userRepository = createUserRepository(knex);
   const apiCallLogRepository = createApiCallLogRepository(knex);
-  const scraper = createScraper(cache, logger);
+  const scraper = createScraper(logger);
   const ingest = createIngestService(knex, logger);
   const authService = createAuthService(userRepository, mail, logger);
   const cron = createCron(

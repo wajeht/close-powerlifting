@@ -1,12 +1,11 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createMeetService, buildMeetHighlights } from "./meets.service";
 import type { MeetData } from "../../../types";
 
 const context = createContext();
-const scraper = context.scraper;
-const meetService = createMeetService(context.knex, scraper);
+const meetService = createMeetService(context.knex);
 
 const sampleMeet: MeetData = {
   title: "Test Pro",
@@ -138,18 +137,12 @@ describe("meets service refreshCacheKey", () => {
   });
 
   it("returns true for meet keys without re-scraping (lifts now)", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await meetService.refreshCacheKey("meet-uspa/1969");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 
   it("returns true for highlights keys", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await meetService.refreshCacheKey("meet-uspa/1969-highlights");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 });

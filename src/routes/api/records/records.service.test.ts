@@ -1,11 +1,10 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { describe, expect, it } from "vite-plus/test";
 
 import { createContext } from "../../../context";
 import { createRecordService } from "./records.service";
 
 const context = createContext();
-const scraper = context.scraper;
-const recordService = createRecordService(context.knex, scraper);
+const recordService = createRecordService(context.knex);
 
 describe("records service", () => {
   describe("parseSexOrWeightClass", () => {
@@ -98,18 +97,12 @@ describe("records service refreshCacheKey", () => {
   });
 
   it("returns true for base records key without re-scraping (lifts now)", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await recordService.refreshCacheKey("records");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 
   it("returns true for filtered records key without re-scraping", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache");
     const result = await recordService.refreshCacheKey("records/raw/men/40-44");
     expect(result).toBe(true);
-    expect(refreshSpy).not.toHaveBeenCalled();
-    refreshSpy.mockRestore();
   });
 });
