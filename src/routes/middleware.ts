@@ -1,123 +1,188 @@
-import crypto from "crypto";
-import { NextFunction, Request, Response } from "express";
-import rateLimit from "express-rate-limit";
-import { z, ZodError } from "zod";
+import crypto from "node:crypto";
+
+import { getConnInfo } from "@hono/node-server/conninfo";
+import type { Context, MiddlewareHandler, NotFoundHandler, ErrorHandler } from "hono";
+import { ZodError } from "zod";
 
 import { configuration } from "../configuration";
+import { AppError } from "../error";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
-import { AppError } from "../error";
 import { getCachedRouteHealth } from "./api/health-check/health-check.service";
 
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
 const SLOW_REQUEST_MS = 1000;
 
-type RequestValidators = {
-  params?: z.ZodTypeAny;
-  body?: z.ZodTypeAny;
-  query?: z.ZodTypeAny;
-};
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 100;
+
+export interface AppLocalState {
+  domain: string;
+  currentYear: number;
+  env: string;
+  routeHealth: boolean | null;
+}
+
+declare module "hono" {
+  interface ContextVariableMap {
+    hostname: string;
+    state: AppLocalState;
+  }
+}
 
 export interface MiddlewareType {
-  requestLoggerMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  rateLimitMiddleware: ReturnType<typeof rateLimit>;
-  notFoundMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  errorMiddleware: (err: unknown, req: Request, res: Response, next: NextFunction) => void;
-  validationMiddleware: (
-    validators: RequestValidators,
-  ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  apiValidationMiddleware: (
-    validators: RequestValidators,
-  ) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  hostNameMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  appLocalStateMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  cacheControlMiddleware: (
-    maxAgeSeconds?: number,
-  ) => (req: Request, res: Response, next: NextFunction) => void;
-  apiCacheControlMiddleware: (req: Request, res: Response, next: NextFunction) => void;
-  noCacheMiddleware: (req: Request, res: Response, next: NextFunction) => void;
+  requestLoggerMiddleware: MiddlewareHandler;
+  rateLimitMiddleware: MiddlewareHandler;
+  hostNameMiddleware: MiddlewareHandler;
+  appLocalStateMiddleware: MiddlewareHandler;
+  cacheControlMiddleware: (maxAgeSeconds?: number) => MiddlewareHandler;
+  apiCacheControlMiddleware: MiddlewareHandler;
+  noCacheMiddleware: MiddlewareHandler;
+  notFoundHandler: NotFoundHandler;
+  errorHandler: ErrorHandler;
+}
+
+interface RateBucket {
+  count: number;
+  resetAt: number;
+}
+
+function getClientIp(c: Context): string {
+  const forwarded = c.req.header("x-forwarded-for");
+  if (forwarded != null) return forwarded.split(",")[0]!.trim();
+  const real = c.req.header("x-real-ip");
+  if (real != null) return real.trim();
+  try {
+    return getConnInfo(c).remote.address ?? "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 export function createMiddleware(helpers: HelpersType, logger: LoggerType): MiddlewareType {
-  function requestLoggerMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const requestLoggerMiddleware: MiddlewareHandler = async (c, next) => {
     const requestId = crypto.randomUUID().slice(0, 8);
     const start = Date.now();
+    c.header("X-Request-Id", requestId);
 
-    res.set("X-Request-Id", requestId);
+    await next();
 
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      const hasQuery = req.query && Object.keys(req.query).length > 0;
+    const duration = Date.now() - start;
+    const query = c.req.query();
+    const hasQuery = Object.keys(query).length > 0;
 
-      logger.info("request", {
-        id: requestId,
-        method: req.method,
-        path: req.path,
-        query: hasQuery ? JSON.stringify(req.query) : undefined,
-        status: res.statusCode,
-        duration: `${duration}ms`,
-        ip: req.ip ?? req.socket.remoteAddress,
-        slow: duration >= SLOW_REQUEST_MS ? "true" : undefined,
-        ua: req.get("user-agent")?.slice(0, 50),
-      });
+    logger.info("request", {
+      id: requestId,
+      method: c.req.method,
+      path: c.req.path,
+      query: hasQuery ? JSON.stringify(query) : undefined,
+      status: c.res.status,
+      duration: `${duration}ms`,
+      ip: getClientIp(c),
+      slow: duration >= SLOW_REQUEST_MS ? "true" : undefined,
+      ua: c.req.header("user-agent")?.slice(0, 50),
     });
+  };
 
-    next();
-  }
+  const rateBuckets = new Map<string, RateBucket>();
 
-  const rateLimitMiddleware = rateLimit({
-    // 100 req/min per IP. Generous enough for normal browsing; tight enough
-    // to discourage scraping a 3.9M-row dataset.
-    windowMs: 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-    validate: { trustProxy: false },
-    handler: (req: Request, res: Response) => {
-      res.status(429);
-      if (req.get("Content-Type") === "application/json") {
-        return res.json({
-          status: "fail",
-          request_url: req.originalUrl,
-          message: "Too many requests, please try again later.",
-          errors: [],
-          data: [],
-        });
-      }
-      return res.render("general/rate-limit.html", { title: "Rate Limited" });
-    },
-    skip: (req) => {
-      if (configuration.app.env !== "production") return true;
-      if (req.path === "/healthz" || req.path === "/health-check") return true;
-      const ip = req.ip ?? req.socket.remoteAddress ?? "";
-      if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return true;
-      return false;
-    },
-  });
+  const rateLimitMiddleware: MiddlewareHandler = async (c, next) => {
+    if (configuration.app.env !== "production") return next();
+    if (c.req.path === "/healthz" || c.req.path === "/health-check") return next();
 
-  function notFoundMiddleware(req: Request, res: Response, _next: NextFunction): void {
-    const isApiPrefix = req.url.match(/\/api\//g);
-    if (!isApiPrefix) {
-      res.status(404).render("general/error.html", {
-        title: "Not Found",
-        statusCode: 404,
-        heading: "Page not found",
-        message: "The page you're looking for doesn't exist or has been moved.",
-      });
-      return;
+    const ip = getClientIp(c);
+    if (ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1") return next();
+
+    const now = Date.now();
+    const bucket = rateBuckets.get(ip);
+    if (bucket == null || bucket.resetAt <= now) {
+      rateBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+      c.header("RateLimit-Limit", String(RATE_MAX));
+      c.header("RateLimit-Remaining", String(RATE_MAX - 1));
+      c.header("RateLimit-Reset", String(Math.ceil(RATE_WINDOW_MS / 1000)));
+      return next();
     }
 
-    res.status(404).json({
-      status: "fail",
-      request_url: req.originalUrl,
-      message: "The resource does not exist!",
-      errors: [],
-      data: [],
+    bucket.count++;
+    const remaining = Math.max(0, RATE_MAX - bucket.count);
+    c.header("RateLimit-Limit", String(RATE_MAX));
+    c.header("RateLimit-Remaining", String(remaining));
+    c.header("RateLimit-Reset", String(Math.ceil((bucket.resetAt - now) / 1000)));
+
+    if (bucket.count > RATE_MAX) {
+      const acceptsJson = c.req.header("accept")?.includes("application/json");
+      const isJsonRequest = c.req.header("content-type")?.includes("application/json");
+      if (acceptsJson || isJsonRequest || c.req.path.startsWith("/api/")) {
+        return c.json(
+          {
+            status: "fail" as const,
+            request_url: c.req.url,
+            message: "Too many requests, please try again later.",
+            errors: [],
+            data: [],
+          },
+          429,
+        );
+      }
+      return c.text("Too many requests, please try again later.", 429);
+    }
+
+    return next();
+  };
+
+  const hostNameMiddleware: MiddlewareHandler = async (c, next) => {
+    c.set("hostname", helpers.getHostName(c));
+    await next();
+  };
+
+  const currentYear = new Date().getFullYear();
+  const appLocalStateMiddleware: MiddlewareHandler = async (c, next) => {
+    c.set("state", {
+      domain: configuration.app.domain,
+      currentYear,
+      env: configuration.app.env,
+      routeHealth: getCachedRouteHealth(),
     });
+    await next();
+  };
+
+  function cacheControlMiddleware(maxAgeSeconds: number = ONE_DAY_SECONDS): MiddlewareHandler {
+    return async (c, next) => {
+      c.header("Cache-Control", `public, max-age=${maxAgeSeconds}, stale-while-revalidate=60`);
+      await next();
+    };
   }
 
-  function errorMiddleware(err: unknown, req: Request, res: Response, _next: NextFunction): void {
+  const apiCacheControlMiddleware: MiddlewareHandler = async (c, next) => {
+    c.header("Cache-Control", `public, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
+    await next();
+  };
+
+  const noCacheMiddleware: MiddlewareHandler = async (c, next) => {
+    c.header("Cache-Control", "no-store, private");
+    c.header("Pragma", "no-cache");
+    await next();
+  };
+
+  const notFoundHandler: NotFoundHandler = (c) => {
+    const isApiRoute = c.req.path.includes("/api/");
+    if (!isApiRoute) {
+      return c.html(renderNotFoundPage(c.get("state")), 404);
+    }
+    return c.json(
+      {
+        status: "fail" as const,
+        request_url: c.req.url,
+        message: "The resource does not exist!",
+        errors: [],
+        data: [],
+      },
+      404,
+    );
+  };
+
+  const errorHandler: ErrorHandler = (err, c) => {
     let statusCode = 500;
     let message =
       "The server encountered an internal error and was unable to complete your request.";
@@ -132,108 +197,70 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
       message = configuration.app.env === "development" ? err.stack || err.message : message;
     }
 
-    const isApiRoute = req.url.includes("/api/");
-    const isHealthcheck = req.originalUrl === "/health-check";
+    const isApiRoute = c.req.path.includes("/api/");
+    const isHealthcheck = c.req.path === "/health-check" || c.req.path === "/healthz";
+
+    if (err instanceof Error && (isApiRoute || statusCode >= 500)) {
+      logger.error(err);
+    }
 
     if (!isApiRoute && !isHealthcheck) {
       const showStack =
         configuration.app.env === "development" && statusCode >= 500 && err instanceof Error;
-      res.status(statusCode).render("general/error.html", {
-        title: "Error",
-        statusCode,
-        heading: "Something went wrong",
-        message: "The server encountered an error and was unable to complete your request.",
-        error: showStack ? err.stack : null,
-      });
-      return;
+      return c.html(
+        renderErrorPage(
+          c.get("state"),
+          statusCode,
+          showStack ? ((err as Error).stack ?? null) : null,
+        ),
+        statusCode as 400 | 404 | 500,
+      );
     }
 
-    if (err instanceof Error) {
-      logger.error(err);
-    }
-
-    res.status(statusCode).json({
-      status: "fail",
-      request_url: req.originalUrl,
-      message,
-      errors: err instanceof ZodError ? err.issues : [],
-      data: [],
-    });
-  }
-
-  function validationMiddleware(validators: RequestValidators) {
-    return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
-      try {
-        if (validators.params) {
-          const parsed = await validators.params.parseAsync(req.params);
-          req.params = parsed as typeof req.params;
-        }
-        if (validators.body) {
-          req.body = await validators.body.parseAsync(req.body);
-        }
-        if (validators.query) {
-          const parsed = await validators.query.parseAsync(req.query);
-          Object.assign(req.query, parsed);
-        }
-        next();
-      } catch (error) {
-        next(error);
-      }
-    };
-  }
-
-  function apiValidationMiddleware(validators: RequestValidators) {
-    return validationMiddleware(validators);
-  }
-
-  function hostNameMiddleware(req: Request, _res: Response, next: NextFunction): void {
-    if (req.app.locals.hostname == null) {
-      req.app.locals.hostname = helpers.getHostName(req);
-    }
-    next();
-  }
-
-  const currentYear = new Date().getFullYear();
-
-  function appLocalStateMiddleware(_req: Request, res: Response, next: NextFunction): void {
-    res.locals.state = {
-      domain: configuration.app.domain,
-      currentYear,
-      env: configuration.app.env,
-      routeHealth: getCachedRouteHealth(),
-    };
-    next();
-  }
-
-  function cacheControlMiddleware(maxAgeSeconds: number = ONE_DAY_SECONDS) {
-    return (_req: Request, res: Response, next: NextFunction): void => {
-      res.set("Cache-Control", `public, max-age=${maxAgeSeconds}, stale-while-revalidate=60`);
-      next();
-    };
-  }
-
-  function apiCacheControlMiddleware(_req: Request, res: Response, next: NextFunction): void {
-    res.set("Cache-Control", `public, max-age=${ONE_HOUR_SECONDS}, stale-while-revalidate=60`);
-    next();
-  }
-
-  function noCacheMiddleware(_req: Request, res: Response, next: NextFunction): void {
-    res.set("Cache-Control", "no-store, private");
-    res.set("Pragma", "no-cache");
-    next();
-  }
+    return c.json(
+      {
+        status: "fail" as const,
+        request_url: c.req.url,
+        message,
+        errors: err instanceof ZodError ? err.issues : [],
+        data: [],
+      },
+      statusCode as 400 | 404 | 500,
+    );
+  };
 
   return {
     requestLoggerMiddleware,
     rateLimitMiddleware,
-    notFoundMiddleware,
-    errorMiddleware,
-    validationMiddleware,
-    apiValidationMiddleware,
     hostNameMiddleware,
     appLocalStateMiddleware,
     cacheControlMiddleware,
     apiCacheControlMiddleware,
     noCacheMiddleware,
+    notFoundHandler,
+    errorHandler,
   };
+}
+
+// Stub renderers — proper JSX components live in src/routes/general/.
+// Wired by re-export in routes/general/general.ts once those exist; until
+// then keep a minimal text fallback so notFound/error work in isolation.
+function renderNotFoundPage(_state: AppLocalState | undefined): string {
+  return "<!doctype html><html><body><h1>404 — Page not found</h1></body></html>";
+}
+
+function renderErrorPage(
+  _state: AppLocalState | undefined,
+  statusCode: number,
+  stack: string | null,
+): string {
+  const stackHtml = stack ? `<pre>${escapeHtml(stack)}</pre>` : "";
+  return `<!doctype html><html><body><h1>${statusCode} — Something went wrong</h1>${stackHtml}</body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
 }
