@@ -24,7 +24,7 @@
     "rootDir": "./",
     "sourceMap": true,
 
-    /* DOM types needed for linkedom (W3C-compatible DOM used in scraper) */
+    /* DOM types provide typed fetch/Response shapes used by the HTTP layer */
     "lib": ["es2022", "DOM"]
   },
   "exclude": [
