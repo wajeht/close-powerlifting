@@ -20,7 +20,3 @@ tmp/
 src/data/snapshot/*.json
 src/data/snapshot/.tmp-*
 src/data/snapshot/.DS_Store
-dcdb.sh
-docs/opl-data-ingest-plan.md
-docs/opl-data-ingest-plan-v3.md
-docs/in-memory-store-plan.md
