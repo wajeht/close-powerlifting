@@ -89,43 +89,38 @@ check:
 
 # === Snapshot ===
 
-snapshot: snapshot-build snapshot-commit snapshot-push
-
 snapshot-build:
 	@npx tsx scripts/build-snapshot.ts
 
-snapshot-commit:
-	@command -v git-lfs >/dev/null 2>&1 || { \
-		echo ""; \
-		echo "git-lfs is not installed."; \
-		echo "  brew install git-lfs"; \
-		echo "  git lfs install"; \
-		echo ""; \
-		exit 1; \
-	}
-	@if git diff --quiet HEAD -- src/data/snapshot/ 2>/dev/null && \
-	   [ -z "$$(git ls-files --others --exclude-standard src/data/snapshot/)" ]; then \
-		echo "No snapshot changes to commit."; \
-		exit 0; \
-	fi
-	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
-	git add src/data/snapshot/ && \
-	git commit -m "chore(data): refresh OPL snapshot ($$BUILT)"
+snapshot-download:
+	@mkdir -p src/data/snapshot
+	@echo "Downloading snapshot from $(SNAPSHOT_BASE)..."
+	@curl -fsSL --retry 3 -o src/data/snapshot/lifters.json  "$(SNAPSHOT_BASE)/lifters.json"
+	@curl -fsSL --retry 3 -o src/data/snapshot/meets.json    "$(SNAPSHOT_BASE)/meets.json"
+	@curl -fsSL --retry 3 -o src/data/snapshot/entries.json  "$(SNAPSHOT_BASE)/entries.json"
+	@curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$(SNAPSHOT_BASE)/meta.json"
+	@ls -lh src/data/snapshot/
 
-snapshot-push:
-	@command -v git-lfs >/dev/null 2>&1 || { \
+snapshot-publish:
+	@command -v gh >/dev/null 2>&1 || { \
 		echo ""; \
-		echo "git-lfs is not installed."; \
-		echo "  brew install git-lfs"; \
-		echo "  git lfs install"; \
+		echo "gh CLI is not installed."; \
+		echo "  brew install gh"; \
+		echo "  gh auth login"; \
 		echo ""; \
 		exit 1; \
 	}
-	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
-	echo "Pushing $$BRANCH to origin..."; \
-	git push origin "$$BRANCH"; \
-	echo "Re-pushing LFS objects (defensive — some IDEs skip the pre-push hook)..."; \
-	git lfs push --all origin "$$BRANCH"
+	@$(MAKE) snapshot-build
+	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
+	echo "Publishing snapshot-latest release..."; \
+	gh release delete $(SNAPSHOT_TAG) --yes --cleanup-tag 2>/dev/null || true; \
+	gh release create $(SNAPSHOT_TAG) \
+		--title "OPL snapshot ($$BUILT)" \
+		--notes "Manual publish via Makefile. See meta.json for counts." \
+		src/data/snapshot/lifters.json \
+		src/data/snapshot/meets.json \
+		src/data/snapshot/entries.json \
+		src/data/snapshot/meta.json
 
 # === Deployment ===
 
