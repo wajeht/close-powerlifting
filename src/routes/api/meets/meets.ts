@@ -39,9 +39,13 @@ export function createMeetsRouter(context: AppContext) {
     });
   });
 
-  router.get("/api/meets/:path(*)", (req: Request, res: Response) => {
+  // Express 5 / path-to-regexp v8: catch-all uses `*name`, and the matched
+  // segments come back as a string[]. We join them back into the slash-
+  // separated meet path that the loader stored.
+  router.get("/api/meets/*meetPath", (req: Request, res: Response) => {
     const data = context.store.get();
-    const path = String(req.params.path ?? "");
+    const raw = req.params.meetPath;
+    const path = Array.isArray(raw) ? raw.join("/") : String(raw ?? "");
     const meetId = data.meetByPath.get(path);
     if (meetId == null) {
       throw new NotFoundError(`Meet "${path}" not found`);
