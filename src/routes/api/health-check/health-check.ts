@@ -16,7 +16,6 @@ export function createHealthCheckRouter(context: AppContext) {
   const middleware = createMiddleware(
     context.cache,
     context.userRepository,
-    context.mail,
     context.helpers,
     context.logger,
     context.knex,

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { ZodError } from "zod";
 
 import { configuration } from "../configuration";
@@ -9,18 +9,15 @@ import {
   createAuthenticatedApiAgent,
 } from "../tests/test-setup";
 import { createMiddleware } from "./middleware";
-import { APICallsExceededError } from "../error";
 
 const context = createContext();
 const middleware = createMiddleware(
   context.cache,
   context.userRepository,
-  context.mail,
   context.helpers,
   context.logger,
   knex,
   context.authService,
-  context.apiCallLogRepository,
 );
 
 describe("requestLoggerMiddleware", () => {
@@ -712,8 +709,6 @@ describe("appLocalStateMiddleware", () => {
           email: testEmail,
           verification_token: testToken,
           api_key: "test-api-key-for-nav",
-          api_call_count: 0,
-          api_call_limit: 100,
           admin: false,
           verified: true,
         })
@@ -746,8 +741,6 @@ describe("appLocalStateMiddleware", () => {
           email: testEmail,
           verification_token: testToken,
           api_key: null,
-          api_call_count: 0,
-          api_call_limit: 100,
           admin: false,
           verified: true,
         })
@@ -819,8 +812,6 @@ describe("appLocalStateMiddleware", () => {
           email: testEmail,
           verification_token: "state-test-token",
           api_key: "state-test-key",
-          api_call_count: 0,
-          api_call_limit: 100,
           admin: false,
           verified: true,
         })
@@ -866,349 +857,6 @@ describe("appLocalStateMiddleware", () => {
       expect(res.locals.state.currentYear).toBe(new Date().getFullYear());
       expect(next).toHaveBeenCalled();
     });
-  });
-});
-
-describe("trackAPICallsMiddleware", () => {
-  let testUser: any;
-
-  async function createTestUser(overrides: Record<string, unknown> = {}) {
-    const [user] = await knex("users")
-      .insert({
-        name: "Track API Test User",
-        email: `track-api-${Date.now()}@example.com`,
-        api_key: `track-api-key-${Date.now()}`,
-        api_call_count: 0,
-        api_call_limit: 750,
-        admin: false,
-        verified: true,
-        ...overrides,
-      })
-      .returning("*");
-    return user;
-  }
-
-  afterEach(async () => {
-    if (testUser) {
-      await knex("users").where({ id: testUser.id }).delete();
-      testUser = null;
-    }
-  });
-
-  it("should call next when user has not reached the limit", async () => {
-    testUser = await createTestUser({ api_call_count: 0 });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it("should throw APICallsExceededError when non-admin reaches limit", async () => {
-    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith(expect.any(APICallsExceededError));
-  });
-
-  it("should NOT throw when admin reaches limit", async () => {
-    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: true });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    // next should be called without an error
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it("should NOT throw when admin exceeds limit", async () => {
-    testUser = await createTestUser({ api_call_count: 800, api_call_limit: 750, admin: true });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it("should send 100% limit email when non-admin hits exact limit", async () => {
-    testUser = await createTestUser({ api_call_count: 749, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(context.mail.sendReachingApiLimitEmail).toHaveBeenCalledWith({
-      email: testUser.email,
-      name: testUser.name,
-      percent: 100,
-    });
-  });
-
-  it("should NOT send 100% email when non-admin already past limit", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockClear();
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(context.mail.sendReachingApiLimitEmail).not.toHaveBeenCalledWith(
-      expect.objectContaining({ percent: 100 }),
-    );
-  });
-
-  it("should send 50% warning email for non-admin at half limit", async () => {
-    testUser = await createTestUser({ api_call_count: 374, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(context.mail.sendReachingApiLimitEmail).toHaveBeenCalledWith({
-      email: testUser.email,
-      name: testUser.name,
-      percent: 50,
-    });
-  });
-
-  it("should NOT send 50% warning email for admin at half limit", async () => {
-    testUser = await createTestUser({ api_call_count: 374, api_call_limit: 750, admin: true });
-
-    vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockClear();
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(context.mail.sendReachingApiLimitEmail).not.toHaveBeenCalled();
-  });
-
-  it("should call next when req.user is undefined", async () => {
-    const req: any = {
-      user: undefined,
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it("should increment api_call_count in the database", async () => {
-    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    const updatedUser = await knex("users").where({ id: testUser.id }).first();
-    expect(updatedUser.api_call_count).toBe(11);
-  });
-
-  it("should NOT increment count when non-admin is already at limit", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith(expect.any(APICallsExceededError));
-    const updatedUser = await knex("users").where({ id: testUser.id }).first();
-    expect(updatedUser.api_call_count).toBe(750);
-  });
-
-  it("should NOT inflate count after multiple over-limit requests", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    for (let i = 0; i < 3; i++) {
-      const req: any = {
-        user: { id: testUser.id },
-        method: "GET",
-        originalUrl: "/api/rankings",
-        headers: {},
-      };
-      const res: any = { on: vi.fn(), set: vi.fn() };
-      const next = vi.fn();
-
-      await middleware.trackAPICallsMiddleware(req, res, next);
-    }
-
-    const updatedUser = await knex("users").where({ id: testUser.id }).first();
-    expect(updatedUser.api_call_count).toBe(750);
-  });
-
-  it("should register finish listener for over-limit requests (logging)", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(res.on).toHaveBeenCalledWith("finish", expect.any(Function));
-  });
-
-  it("should still increment count for admin users", async () => {
-    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 750, admin: true });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    const updatedUser = await knex("users").where({ id: testUser.id }).first();
-    expect(updatedUser.api_call_count).toBe(11);
-  });
-
-  it("should increment count for admin even past limit", async () => {
-    testUser = await createTestUser({ api_call_count: 800, api_call_limit: 750, admin: true });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(next).toHaveBeenCalledWith();
-    const updatedUser = await knex("users").where({ id: testUser.id }).first();
-    expect(updatedUser.api_call_count).toBe(801);
-  });
-
-  it("should set rate limit headers with remaining=0 for over-limit requests", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Limit", "750");
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Reset", expect.any(String));
-  });
-
-  it("should NOT send 100% email on subsequent over-limit calls (count frozen)", async () => {
-    testUser = await createTestUser({ api_call_count: 750, api_call_limit: 750, admin: false });
-
-    vi.spyOn(context.mail, "sendReachingApiLimitEmail").mockClear();
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    // Count is frozen at 750, so the 100% email condition (count === limit after increment) is never hit
-    expect(context.mail.sendReachingApiLimitEmail).not.toHaveBeenCalled();
   });
 });
 
@@ -1297,104 +945,5 @@ describe("notFoundMiddleware - consistent error response", () => {
     expect(response).toHaveProperty("errors");
     expect(response).toHaveProperty("data");
     expect(response.errors).toEqual([]);
-  });
-});
-
-describe("trackAPICallsMiddleware - X-RateLimit headers", () => {
-  let testUser: any;
-
-  async function createTestUser(overrides: Record<string, unknown> = {}) {
-    const [user] = await knex("users")
-      .insert({
-        name: "RateLimit Header Test User",
-        email: `ratelimit-${Date.now()}@example.com`,
-        api_key: `ratelimit-key-${Date.now()}`,
-        api_call_count: 0,
-        api_call_limit: 750,
-        admin: false,
-        verified: true,
-        ...overrides,
-      })
-      .returning("*");
-    return user;
-  }
-
-  afterEach(async () => {
-    if (testUser) {
-      await knex("users").where({ id: testUser.id }).delete();
-      testUser = null;
-    }
-  });
-
-  it("should set X-RateLimit-Limit header", async () => {
-    testUser = await createTestUser({ api_call_count: 10, api_call_limit: 750 });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Limit", "750");
-  });
-
-  it("should set X-RateLimit-Remaining header with correct count", async () => {
-    testUser = await createTestUser({ api_call_count: 100, api_call_limit: 750 });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    // After increment, count is 101, so remaining is 750 - 101 = 649
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Remaining", "649");
-  });
-
-  it("should set X-RateLimit-Reset header as unix timestamp", async () => {
-    testUser = await createTestUser({ api_call_count: 0, api_call_limit: 750 });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    const resetCall = res.set.mock.calls.find((call: any[]) => call[0] === "X-RateLimit-Reset");
-    expect(resetCall).toBeDefined();
-    const resetTimestamp = Number(resetCall[1]);
-    expect(resetTimestamp).toBeGreaterThan(Math.floor(Date.now() / 1000));
-  });
-
-  it("should clamp remaining to 0 when limit is exceeded", async () => {
-    testUser = await createTestUser({ api_call_count: 800, api_call_limit: 750, admin: true });
-
-    const req: any = {
-      user: { id: testUser.id },
-      method: "GET",
-      originalUrl: "/api/rankings",
-      headers: {},
-    };
-    const res: any = { on: vi.fn(), set: vi.fn() };
-    const next = vi.fn();
-
-    await middleware.trackAPICallsMiddleware(req, res, next);
-
-    expect(res.set).toHaveBeenCalledWith("X-RateLimit-Remaining", "0");
   });
 });

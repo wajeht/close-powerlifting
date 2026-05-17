@@ -30,10 +30,6 @@ describe.concurrent("config", () => {
     it("port is a number", () => {
       expect(typeof configuration.app.port).toBe("number");
     });
-
-    it("defaultApiCallLimit is 750", () => {
-      expect(configuration.app.defaultApiCallLimit).toBe(750);
-    });
   });
 
   describe("session", () => {

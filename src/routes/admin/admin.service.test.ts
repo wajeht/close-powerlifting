@@ -10,7 +10,6 @@ const adminService = createAdminService(
   context.cache,
   context.authService,
   context.logger,
-  context.apiCallLogRepository,
   context.helpers,
 );
 
