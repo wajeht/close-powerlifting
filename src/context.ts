@@ -6,7 +6,6 @@ import { createDatabase, type DatabaseType } from "./db/db";
 import { createCache, type CacheType } from "./db/cache";
 import { createMail, type MailType } from "./mail";
 import { createUserRepository, type UserRepositoryType } from "./db/user";
-import { createApiCallLogRepository, type ApiCallLogRepositoryType } from "./db/api-call-log";
 import { createScraper, type ScraperType } from "./utils/scraper";
 import { createIngestService, type IngestServiceType } from "./utils/ingest";
 import { createCron, type CronType } from "./cron";
@@ -20,7 +19,6 @@ export type {
   CacheType,
   MailType,
   UserRepositoryType,
-  ApiCallLogRepositoryType,
   ScraperType,
   IngestServiceType,
   CronType,
@@ -36,7 +34,6 @@ export interface AppContext {
   cache: CacheType;
   mail: MailType;
   userRepository: UserRepositoryType;
-  apiCallLogRepository: ApiCallLogRepositoryType;
   scraper: ScraperType;
   ingest: IngestServiceType;
   cron: CronType;
@@ -58,20 +55,10 @@ export function createContext(): AppContext {
   const cache = createCache(knex, logger);
   const mail = createMail(logger);
   const userRepository = createUserRepository(knex);
-  const apiCallLogRepository = createApiCallLogRepository(knex);
   const scraper = createScraper();
   const ingest = createIngestService(knex, logger);
   const authService = createAuthService(userRepository, mail, logger);
-  const cron = createCron(
-    cache,
-    userRepository,
-    mail,
-    logger,
-    scraper,
-    apiCallLogRepository,
-    ingest,
-    knex,
-  );
+  const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
   const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
 
   _context = {
@@ -82,7 +69,6 @@ export function createContext(): AppContext {
     cache,
     mail,
     userRepository,
-    apiCallLogRepository,
     scraper,
     ingest,
     cron,

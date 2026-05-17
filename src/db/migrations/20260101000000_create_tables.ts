@@ -6,9 +6,7 @@ export async function up(knex: Knex): Promise<void> {
       table.increments("id").primary();
       table.string("name").notNullable();
       table.string("email").unique().notNullable();
-      table.integer("api_call_count").defaultTo(0);
       table.integer("api_key_version").defaultTo(1);
-      table.integer("api_call_limit").defaultTo(750);
       table.string("api_key").nullable();
       table.boolean("admin").defaultTo(false);
       table.string("verification_token").unique().nullable();
