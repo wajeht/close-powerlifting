@@ -1,5 +1,7 @@
+import { configuration } from "./configuration";
 import { createContext } from "./context";
 import { createServer, closeServer, ServerInfo } from "./app";
+import { warmRouteStatuses } from "./routes/api/health-check/health-check.service";
 
 const context = createContext();
 
@@ -59,6 +61,9 @@ async function main(): Promise<void> {
         `store: initial load complete in ${result.durationMs}ms ` +
           `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
       );
+      // Warm the route status cache so the first /status page hit doesn't
+      // pay the ~200 ms probe sweep on the request path.
+      warmRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     })
     .catch((error: Error) => {
       context.logger.error("store: initial load failed", error);
