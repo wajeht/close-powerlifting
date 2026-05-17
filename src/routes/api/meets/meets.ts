@@ -56,9 +56,6 @@ export function createMeetsRouter(context: AppContext) {
    * @return {object} 200 - Meet details + entry rows sorted by place
    * @return {object} 404 - No such meet path
    */
-  // Express 5 / path-to-regexp v8: catch-all uses `*name`, and the matched
-  // segments come back as a string[]. We join them back into the slash-
-  // separated meet path that the loader stored.
   router.get("/api/meets/*meetPath", (req: Request, res: Response) => {
     const data = context.store.get();
     const raw = req.params.meetPath;
