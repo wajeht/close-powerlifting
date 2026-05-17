@@ -25,7 +25,7 @@ describe("mail", () => {
     } as unknown as ReturnType<typeof nodemailer.createTransport>);
   });
 
-  describe("sendVerificationEmail URL encoding (regression)", () => {
+  describe("sendVerificationEmail URL encoding", () => {
     it("should percent-encode + in the email query parameter", async () => {
       const mail = createMail(createMockLogger());
 
@@ -60,7 +60,7 @@ describe("mail", () => {
     });
   });
 
-  describe("sendMagicLinkEmail URL encoding (regression)", () => {
+  describe("sendMagicLinkEmail URL encoding", () => {
     it("should percent-encode + in the email query parameter", async () => {
       const mail = createMail(createMockLogger());
 
