@@ -336,7 +336,7 @@ describe("Auth Routes", () => {
     });
   });
 
-  describe("GET /verify-email with + in email (regression)", () => {
+  describe("GET /verify-email with + in email", () => {
     let plusUserId: number;
     const plusEmail = "zombyard+nonadmin@example.com";
     const plusToken = "plus-email-token";
