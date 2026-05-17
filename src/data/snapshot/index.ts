@@ -5,11 +5,11 @@
 //
 // The snapshot lives as plain JSON files alongside this module:
 //
-//   lifters.json   — array of { username, name }
-//   meets.json     — array of Meet objects
-//   entries.json   — column store (one array per field); rebuilt into
-//                    Entry[] when we materialise the runtime AppData
-//   meta.json      — sourceLastModified / builtAt / counts
+//   lifters.json     — array of { username, name }
+//   meets.json       — array of Meet objects
+//   entries/*.json   — column store (one file per Entry field); rebuilt
+//                       into Entry[] when we materialise AppData
+//   meta.json        — sourceLastModified / builtAt / counts
 
 import fs from "node:fs";
 import path from "node:path";
@@ -35,10 +35,48 @@ import {
 } from "../indexes";
 
 const SNAPSHOT_DIR = __dirname;
+const ENTRIES_DIR = path.join(SNAPSHOT_DIR, "entries");
 const LIFTERS_FILE = path.join(SNAPSHOT_DIR, "lifters.json");
 const MEETS_FILE = path.join(SNAPSHOT_DIR, "meets.json");
-const ENTRIES_FILE = path.join(SNAPSHOT_DIR, "entries.json");
 const META_FILE = path.join(SNAPSHOT_DIR, "meta.json");
+
+const ENTRY_COLUMN_NAMES = [
+  "lifterId",
+  "meetId",
+  "sex",
+  "age",
+  "ageClass",
+  "division",
+  "lifterCountry",
+  "lifterState",
+  "event",
+  "equipment",
+  "tested",
+  "bodyweightKg",
+  "weightClassKg",
+  "squat1Kg",
+  "squat2Kg",
+  "squat3Kg",
+  "squat4Kg",
+  "bench1Kg",
+  "bench2Kg",
+  "bench3Kg",
+  "bench4Kg",
+  "deadlift1Kg",
+  "deadlift2Kg",
+  "deadlift3Kg",
+  "deadlift4Kg",
+  "best3SquatKg",
+  "best3BenchKg",
+  "best3DeadliftKg",
+  "totalKg",
+  "placeRank",
+  "placeStatus",
+  "dots",
+  "wilks",
+  "glossbrenner",
+  "goodlift",
+] as const;
 
 interface SnapshotMeta {
   sourceLastModified: string | null;
@@ -90,12 +128,14 @@ interface EntriesColumns {
 // (dist/src/data/snapshot) — the JSON is copied alongside the compiled
 // JS by the Dockerfile.
 export function snapshotExists(): boolean {
-  return (
-    fs.existsSync(LIFTERS_FILE) &&
-    fs.existsSync(MEETS_FILE) &&
-    fs.existsSync(ENTRIES_FILE) &&
-    fs.existsSync(META_FILE)
-  );
+  if (!fs.existsSync(LIFTERS_FILE)) return false;
+  if (!fs.existsSync(MEETS_FILE)) return false;
+  if (!fs.existsSync(META_FILE)) return false;
+  if (!fs.existsSync(ENTRIES_DIR)) return false;
+  for (const name of ENTRY_COLUMN_NAMES) {
+    if (!fs.existsSync(path.join(ENTRIES_DIR, `${name}.json`))) return false;
+  }
+  return true;
 }
 
 // Reads the snapshot files and builds the runtime AppData with all the
@@ -105,8 +145,8 @@ export function loadSnapshot(logger: LoggerType): AppData {
 
   const lifters = JSON.parse(fs.readFileSync(LIFTERS_FILE, "utf8")) as Lifter[];
   const meets = JSON.parse(fs.readFileSync(MEETS_FILE, "utf8")) as Meet[];
-  const cols = JSON.parse(fs.readFileSync(ENTRIES_FILE, "utf8")) as EntriesColumns;
   const meta = JSON.parse(fs.readFileSync(META_FILE, "utf8")) as SnapshotMeta;
+  const cols = readEntryColumns(meta.counts.entries);
 
   const entries = fromColumns(cols);
 
@@ -144,6 +184,15 @@ export function loadSnapshot(logger: LoggerType): AppData {
     ingestedAt: meta.builtAt,
     rowCount: entries.length,
   };
+}
+
+function readEntryColumns(count: number): EntriesColumns {
+  const cols = { count } as EntriesColumns;
+  for (const name of ENTRY_COLUMN_NAMES) {
+    const raw = fs.readFileSync(path.join(ENTRIES_DIR, `${name}.json`), "utf8");
+    (cols as unknown as Record<string, unknown>)[name] = JSON.parse(raw);
+  }
+  return cols;
 }
 
 // Reconstructs Entry[] from the column-store JSON. Plain object literals;
