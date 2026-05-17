@@ -4,7 +4,10 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { compress } from "hono/compress";
 import { cors } from "hono/cors";
 import { etag } from "hono/etag";
+import { prettyJSON } from "hono/pretty-json";
+import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
+import { trimTrailingSlash } from "hono/trailing-slash";
 
 import { configuration } from "./configuration";
 import type { AppContext } from "./context";
@@ -14,11 +17,17 @@ import { createMainRouter } from "./routes/routes";
 
 export type HonoApp = OpenAPIHono;
 
+const STATIC_CACHE_CONTROL = "public, max-age=2592000, immutable"; // 30 days
+
 export function createApp(context: AppContext): HonoApp {
   const middleware = createMiddleware(context.helpers, context.logger);
 
   const app = new OpenAPIHono();
 
+  // Normalize `/foo/` -> `/foo` before anything else looks at the path.
+  app.use(trimTrailingSlash());
+
+  app.use("*", requestId());
   app.use("*", middleware.hostNameMiddleware);
   app.use("*", middleware.requestLoggerMiddleware);
   app.use(
@@ -31,8 +40,21 @@ export function createApp(context: AppContext): HonoApp {
       },
     }),
   );
+  // Static assets — 30d browser cache. Container images rebuild from scratch
+  // every deploy so cache-busting comes from new image revisions, not query
+  // string fingerprints. Mounted BEFORE compress/etag/prettyJSON so binary
+  // files (images, fonts) skip body-buffering middlewares.
+  const onStaticFound = (_path: string, c: import("hono").Context) =>
+    c.header("Cache-Control", STATIC_CACHE_CONTROL);
+  app.use("/css/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/js/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/img/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/fonts/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
+
   app.use("*", compress());
   app.use("*", etag());
+  app.use("*", prettyJSON());
   app.use(
     "*",
     secureHeaders({
@@ -56,12 +78,6 @@ export function createApp(context: AppContext): HonoApp {
       },
     }),
   );
-
-  app.use("/css/*", serveStatic({ root: "./public" }));
-  app.use("/js/*", serveStatic({ root: "./public" }));
-  app.use("/img/*", serveStatic({ root: "./public" }));
-  app.use("/fonts/*", serveStatic({ root: "./public" }));
-  app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
 
   app.use("*", middleware.appLocalStateMiddleware);
   app.use("*", layoutRenderer);
