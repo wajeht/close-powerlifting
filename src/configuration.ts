@@ -8,15 +8,6 @@ dotenv.config({ path: path.resolve(__dirname, "..", ".env"), quiet: true });
 export type Env = "production" | "development" | "testing" | "local";
 
 const env = (process.env.APP_ENV || process.env.NODE_ENV || "development") as Env;
-const isProduction = env === "production";
-
-function requireEnv(name: string, defaultValue?: string): string {
-  const value = process.env[name] || defaultValue;
-  if (!value && isProduction) {
-    throw new Error(`Missing required environment variable: ${name}`);
-  }
-  return value || defaultValue || "";
-}
 
 export const configuration = {
   app: {
@@ -24,40 +15,10 @@ export const configuration = {
     env,
     version: packageJson.version,
     domain: process.env.APP_DOMAIN || "localhost",
-    jwtSecret: requireEnv("APP_JWT_SECRET", isProduction ? undefined : "dev-secret-change-me"),
-    adminEmail: process.env.APP_ADMIN_EMAIL || "",
   } as const,
 
   pagination: {
     defaultPerPage: 100,
     maxPerPage: 500,
-  } as const,
-
-  session: {
-    name: process.env.SESSION_NAME || "close-powerlifting",
-    secret: requireEnv("SESSION_SECRET", isProduction ? undefined : "dev-session-secret-change-me"),
-    domain: process.env.SESSION_DOMAIN || "localhost",
-  } as const,
-
-  email: {
-    host: process.env.EMAIL_HOST || "localhost",
-    port: parseInt(process.env.EMAIL_PORT || "1025", 10),
-    secure: process.env.EMAIL_SECURE === "true",
-    user: process.env.EMAIL_USER || "",
-    password: process.env.EMAIL_PASSWORD || "",
-    from: process.env.EMAIL_FROM || "noreply@jaw.dev",
-  } as const,
-
-  oauth: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      redirectUrl: process.env.GOOGLE_OAUTH_REDIRECT_URL || "",
-    },
-  } as const,
-
-  cloudflare: {
-    turnstileSiteKey: process.env.CLOUDFLARE_TURNSTILE_SITE_KEY || "",
-    turnstileSecretKey: process.env.CLOUDFLARE_TURNSTILE_SECRET_KEY || "",
   } as const,
 } as const;
