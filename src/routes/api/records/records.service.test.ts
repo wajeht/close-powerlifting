@@ -51,7 +51,7 @@ describe("records service", () => {
     });
   });
 
-  describe("getRecords (DB-backed)", () => {
+  describe("getRecords", () => {
     it("returns the 7 standard categories", async () => {
       const result = await recordService.getRecords({});
       expect(result.data).toHaveLength(7);
