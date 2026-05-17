@@ -1,7 +1,3 @@
-// Integration tests for every /api/* endpoint. Each test boots a fresh
-// Express app with the fixture AppData preloaded, hits the route via
-// supertest, and asserts the response shape.
-
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 import request from "supertest";
 import type { Express } from "express";
