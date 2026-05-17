@@ -469,6 +469,9 @@
   .top-1\/2 {
     top: 50% !important;
   }
+  .top-3 {
+    top: calc(var(--spacing) * 3) !important;
+  }
   .top-\[72px\] {
     top: 72px !important;
   }
