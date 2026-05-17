@@ -76,7 +76,6 @@ export function createGeneralRouter(context: AppContext) {
       uptime: process.uptime(),
       timestamp: Date.now(),
       data: ready ? "ready" : "loading",
-      crons: context.cron.getStatus().isRunning ? "started" : "stopped",
     });
   }
 
