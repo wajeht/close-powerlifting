@@ -149,11 +149,11 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
       if (cachedStatus == null) {
         const existingHostname = await context.cache.get(HOSTNAME_CACHE_KEY);
         if (existingHostname == null) {
-          const seedHostname =
-            configuration.app.env === "development"
-              ? `http://localhost:${port}`
-              : configuration.app.domain;
-          await context.cache.set(HOSTNAME_CACHE_KEY, seedHostname);
+          // The /status self-pinger calls this hostname, so always point at
+          // ourselves on loopback. That stays correct in dev, prod, and any
+          // temp PR deploy — the public domain is irrelevant for hitting our
+          // own routes from inside the container.
+          await context.cache.set(HOSTNAME_CACHE_KEY, `http://localhost:${port}`);
         }
 
         void context.cron.tasks.refreshHealthCheck().catch((error) => {
