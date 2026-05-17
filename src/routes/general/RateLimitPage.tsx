@@ -1,0 +1,17 @@
+import type { FC } from "hono/jsx";
+
+import { MainLayout, type AppState } from "../_layouts/main";
+
+export const RateLimitPage: FC<{ state: AppState }> = ({ state }) => (
+  <MainLayout state={state} path="" title="Rate Limited">
+    <div class="mx-auto max-w-md px-4 text-center">
+      <div class="flex flex-col gap-4">
+        <h1 class="fade-in-heading text-6xl font-bold text-power">429</h1>
+        <p class="fade-in animation-delay-2 text-xl text-white">Too Many Requests</p>
+        <p class="fade-in animation-delay-3 text-neutral-500">
+          You've exceeded the rate limit. Please wait a moment and try again.
+        </p>
+      </div>
+    </div>
+  </MainLayout>
+);

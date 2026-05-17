@@ -9,6 +9,8 @@ import { AppError } from "../error";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
 import { getCachedRouteHealth } from "./api/health-check/health-check.service";
+import { ErrorPage } from "./general/ErrorPage";
+import { RateLimitPage } from "./general/RateLimitPage";
 
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
@@ -125,7 +127,7 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
           429,
         );
       }
-      return c.text("Too many requests, please try again later.", 429);
+      return c.html(<RateLimitPage state={c.get("state")} />, 429);
     }
 
     return next();
@@ -168,7 +170,15 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
   const notFoundHandler: NotFoundHandler = (c) => {
     const isApiRoute = c.req.path.includes("/api/");
     if (!isApiRoute) {
-      return c.html(renderNotFoundPage(c.get("state")), 404);
+      return c.html(
+        <ErrorPage
+          state={c.get("state")}
+          statusCode={404}
+          heading="Page not found"
+          message="The page you're looking for doesn't exist or has been moved."
+        />,
+        404,
+      );
     }
     return c.json(
       {
@@ -208,11 +218,13 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
       const showStack =
         configuration.app.env === "development" && statusCode >= 500 && err instanceof Error;
       return c.html(
-        renderErrorPage(
-          c.get("state"),
-          statusCode,
-          showStack ? ((err as Error).stack ?? null) : null,
-        ),
+        <ErrorPage
+          state={c.get("state")}
+          statusCode={statusCode}
+          heading="Something went wrong"
+          message="The server encountered an error and was unable to complete your request."
+          errorStack={showStack ? ((err as Error).stack ?? null) : null}
+        />,
         statusCode as 400 | 404 | 500,
       );
     }
@@ -240,27 +252,4 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     notFoundHandler,
     errorHandler,
   };
-}
-
-// Stub renderers — proper JSX components live in src/routes/general/.
-// Wired by re-export in routes/general/general.ts once those exist; until
-// then keep a minimal text fallback so notFound/error work in isolation.
-function renderNotFoundPage(_state: AppLocalState | undefined): string {
-  return "<!doctype html><html><body><h1>404 — Page not found</h1></body></html>";
-}
-
-function renderErrorPage(
-  _state: AppLocalState | undefined,
-  statusCode: number,
-  stack: string | null,
-): string {
-  const stackHtml = stack ? `<pre>${escapeHtml(stack)}</pre>` : "";
-  return `<!doctype html><html><body><h1>${statusCode} — Something went wrong</h1>${stackHtml}</body></html>`;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
-  );
 }
