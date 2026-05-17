@@ -7,6 +7,14 @@ import type { AppData, Entry } from "../../../data/types";
 export function createUsersRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/users
+   * @summary Search for lifters by name or username substring
+   * @tags Users
+   * @param {string} search.query - Case-insensitive substring matched against name + username
+   * @param {integer} limit.query - Max matches to return, default 50, max 200
+   * @return {object} 200 - Either { total_lifters, message } (no query) or matches[]
+   */
   router.get("/api/users", (req: Request, res: Response) => {
     const data = context.store.get();
     const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
@@ -31,6 +39,14 @@ export function createUsersRouter(context: AppContext) {
     });
   });
 
+  /**
+   * GET /api/users/{username}
+   * @summary Lifter profile + chronological competition history
+   * @tags Users
+   * @param {string} username.path.required - Deterministic ASCII slug (e.g. "edcoan")
+   * @return {object} 200 - Profile with personal bests + every entry sorted by date desc
+   * @return {object} 404 - No lifter with that username
+   */
   router.get("/api/users/:username", (req: Request, res: Response) => {
     const data = context.store.get();
     const rawUsername = String(req.params.username ?? "");

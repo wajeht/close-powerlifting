@@ -6,6 +6,12 @@ import { NotFoundError } from "../../../error";
 export function createFederationsRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/federations
+   * @summary Federation index sorted by meet count
+   * @tags Federations
+   * @return {object} 200 - Array of { slug, code, parent_slug, meet_count }
+   */
   router.get("/api/federations", (_req: Request, res: Response) => {
     const data = context.store.get();
     res.json({
@@ -19,6 +25,14 @@ export function createFederationsRouter(context: AppContext) {
     });
   });
 
+  /**
+   * GET /api/federations/{slug}
+   * @summary Single federation + its meets, sorted by date desc
+   * @tags Federations
+   * @param {string} slug.path.required - Federation slug (lowercased + alphanumeric-only, e.g. "wrpfuk")
+   * @return {object} 200 - Federation summary plus the full list of meets
+   * @return {object} 404 - No federation with that slug
+   */
   router.get("/api/federations/:slug", (req: Request, res: Response) => {
     const data = context.store.get();
     const rawSlug = String(req.params.slug ?? "");

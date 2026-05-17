@@ -7,6 +7,15 @@ import type { AppData, Entry } from "../../../data/types";
 export function createMeetsRouter(context: AppContext) {
   const router = express.Router();
 
+  /**
+   * GET /api/meets
+   * @summary Meet index, sorted by date descending
+   * @tags Meets
+   * @param {string} federation.query - Filter to one federation slug (e.g. "wrpf")
+   * @param {integer} limit.query - Page size, default 50, max 200
+   * @param {integer} offset.query - Page offset, default 0
+   * @return {object} 200 - { total, limit, offset, meets[] }
+   */
   router.get("/api/meets", (req: Request, res: Response) => {
     const data = context.store.get();
     const limit = clampInt(req.query.limit, 50, 1, 200);
@@ -39,6 +48,14 @@ export function createMeetsRouter(context: AppContext) {
     });
   });
 
+  /**
+   * GET /api/meets/{federation}/{date}/{slug}
+   * @summary Single meet with all results
+   * @tags Meets
+   * @param {string} meetPath.path.required - Slash-separated meet path (e.g. "wrpf/2024-05-12/wrpfamericanpro")
+   * @return {object} 200 - Meet details + entry rows sorted by place
+   * @return {object} 404 - No such meet path
+   */
   // Express 5 / path-to-regexp v8: catch-all uses `*name`, and the matched
   // segments come back as a string[]. We join them back into the slash-
   // separated meet path that the loader stored.
