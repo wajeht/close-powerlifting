@@ -23,6 +23,7 @@
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
     "rebuild:native": "npm rebuild sharp --ignore-scripts=false",
+    "snapshot:download": "tsx ./scripts/download-snapshot.ts",
     "test:watch": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test watch",
     "test": "APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 vp test",
     "test:coverage": "APP_ENV=testing NODE_ENV=testing vp test --coverage",
