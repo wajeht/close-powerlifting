@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 
 import {
   currentPageValidation,
@@ -23,3 +23,7 @@ export const getFederationMeetsQueryValidation = z.object({
 export type GetFederationsType = z.infer<typeof getFederationsValidation>;
 export type GetFederationsParamType = z.infer<typeof getFederationsParamValidation>;
 export type GetFederationMeetsQueryType = z.infer<typeof getFederationMeetsQueryValidation>;
+
+export const FederationRow = z.unknown().openapi("FederationRow");
+export const FederationDetail = z.unknown().openapi("FederationDetail");
+export const FederationStats = z.unknown().openapi("FederationStats");

@@ -4,7 +4,7 @@ import {
   getFederationMeetsQueryValidation,
   getFederationsParamValidation,
   getFederationsValidation,
-} from "./federations.validation";
+} from "./federations.schema";
 
 describe("getFederationsValidation", () => {
   it("accepts an empty query", () => {

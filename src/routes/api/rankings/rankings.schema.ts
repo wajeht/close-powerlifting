@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 
 import {
   currentPageValidation,
@@ -52,6 +52,7 @@ const baseQuery = z.object({
 });
 
 export const getRankingsValidation = baseQuery;
+
 export const getFilteredRankingsQueryValidation = baseQuery.extend({
   age_class: ageClassEnum.optional(),
 });
@@ -73,3 +74,5 @@ export type GetRankingsType = z.infer<typeof getRankingsValidation>;
 export type GetFilteredRankingsQueryType = z.infer<typeof getFilteredRankingsQueryValidation>;
 export type GetFilteredRankingsParamType = z.infer<typeof getFilteredRankingsParamValidation>;
 export type GetRankType = z.infer<typeof getRankValidation>;
+
+export const RankingEntry = z.unknown().openapi("RankingEntry");

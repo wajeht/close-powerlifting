@@ -5,7 +5,7 @@ import {
   getMeetParamValidation,
   getMeetQueryValidation,
   listMeetsQueryValidation,
-} from "./meets.validation";
+} from "./meets.schema";
 
 describe("listMeetsQueryValidation", () => {
   it("accepts an empty query", () => {

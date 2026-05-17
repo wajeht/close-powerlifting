@@ -7,7 +7,7 @@ import type {
   GetMeetParamType,
   GetMeetQueryType,
   ListMeetsQueryType,
-} from "./meets.validation";
+} from "./meets.schema";
 
 const { defaultPerPage } = configuration.pagination;
 

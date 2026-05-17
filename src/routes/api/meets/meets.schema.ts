@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 
 import {
   currentPageValidation,
@@ -42,3 +42,7 @@ export type ListMeetsQueryType = z.infer<typeof listMeetsQueryValidation>;
 export type GetMeetParamType = z.infer<typeof getMeetParamValidation>;
 export type GetMeetQueryType = z.infer<typeof getMeetQueryValidation>;
 export type GetMeetHighlightsQueryType = z.infer<typeof getMeetHighlightsQueryValidation>;
+
+export const MeetSummary = z.unknown().openapi("MeetSummary");
+export const MeetDetail = z.unknown().openapi("MeetDetail");
+export const MeetHighlights = z.unknown().openapi("MeetHighlights");

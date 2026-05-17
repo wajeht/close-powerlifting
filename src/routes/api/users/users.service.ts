@@ -2,7 +2,7 @@ import type { DataStoreType } from "../../../data/store";
 import type { AppData, Entry, RankMetric } from "../../../data/types";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
-import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.validation";
+import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.schema";
 
 const { defaultPerPage } = configuration.pagination;
 
