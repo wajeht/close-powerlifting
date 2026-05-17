@@ -49,7 +49,10 @@ export function createMeetsService(store: DataStoreType) {
     return { data: page.map(toMeetSummary), pagination };
   }
 
-  function getMeet(params: GetMeetParamType, query: GetMeetQueryType): unknown | null {
+  function getMeet(
+    params: GetMeetParamType,
+    query: GetMeetQueryType,
+  ): Record<string, unknown> | null {
     const data = store.get();
     const meetId = lookupMeetId(params);
     if (meetId == null) return null;
@@ -82,7 +85,7 @@ export function createMeetsService(store: DataStoreType) {
   function getMeetHighlights(
     params: GetMeetParamType,
     query: GetMeetHighlightsQueryType,
-  ): unknown | null {
+  ): Record<string, unknown> | null {
     const data = store.get();
     const meetId = lookupMeetId(params);
     if (meetId == null) return null;
