@@ -1,6 +1,6 @@
-// In-memory data store. Reads the pre-built snapshot from disk at boot,
-// materialises AppData (with all precomputed indexes), and exposes it
-// through a sync getter that route handlers can call without thinking
+// In-memory data store. Stream-reads the pre-built snapshot from disk at
+// boot, materialises AppData (with all precomputed indexes), and exposes
+// it through a sync getter that route handlers can call without thinking
 // about lifecycle.
 //
 // The snapshot is produced by `scripts/build-snapshot.ts` (locally or via
@@ -9,13 +9,19 @@
 //
 // Snapshot layout (alongside this module at src/data/snapshot/):
 //
-//   lifters.json     — array of { username, name }
-//   meets.json       — array of Meet objects
-//   entries/*.json   — column store, one file per Entry field
-//   meta.json        — sourceLastModified / builtAt / counts
+//   lifters.json   — JSON array, one Lifter per line
+//   meets.json     — JSON array, one Meet per line
+//   entries.json   — JSON object, one column per line (column store)
+//   meta.json      — sourceLastModified / builtAt / counts
+//
+// Each line of lifters/meets/entries is independently JSON.parse-able
+// after stripping the trailing comma, so we read via readline without
+// ever holding the full payload in a single string. Entries.json is
+// ~700 MB which would otherwise blow past V8's per-string max.
 
 import fs from "node:fs";
 import path from "node:path";
+import readline from "node:readline";
 
 import {
   buildBestEntryByLifter,
@@ -38,9 +44,9 @@ import type {
 import type { LoggerType } from "../utils/logger";
 
 const SNAPSHOT_DIR = path.join(__dirname, "snapshot");
-const ENTRIES_DIR = path.join(SNAPSHOT_DIR, "entries");
 const LIFTERS_FILE = path.join(SNAPSHOT_DIR, "lifters.json");
 const MEETS_FILE = path.join(SNAPSHOT_DIR, "meets.json");
+const ENTRIES_FILE = path.join(SNAPSHOT_DIR, "entries.json");
 const META_FILE = path.join(SNAPSHOT_DIR, "meta.json");
 
 const ENTRY_COLUMN_NAMES = [
@@ -133,8 +139,8 @@ export interface LoadResult {
 }
 
 export interface DataStoreType {
-  // Reads the on-disk snapshot, builds the indexes, and installs the
-  // AppData. Resolves once /healthz can flip to 200.
+  // Stream-reads the on-disk snapshot, builds the indexes, and installs
+  // the AppData. Resolves once /healthz can flip to 200.
   load: () => Promise<LoadResult>;
   // Returns the current snapshot. Throws if `load` hasn't completed.
   get: () => AppData;
@@ -158,10 +164,10 @@ export function createDataStore(logger: LoggerType): DataStoreType {
       );
     }
 
-    const lifters = JSON.parse(fs.readFileSync(LIFTERS_FILE, "utf8")) as Lifter[];
-    const meets = JSON.parse(fs.readFileSync(MEETS_FILE, "utf8")) as Meet[];
     const meta = JSON.parse(fs.readFileSync(META_FILE, "utf8")) as SnapshotMeta;
-    const cols = readEntryColumns(meta.counts.entries);
+    const lifters = await streamReadArray<Lifter>(LIFTERS_FILE);
+    const meets = await streamReadArray<Meet>(MEETS_FILE);
+    const cols = await streamReadEntries(ENTRIES_FILE);
     const entries = fromColumns(cols);
 
     const lifterByUsername = new Map<string, number>();
@@ -221,23 +227,55 @@ export function createDataStore(logger: LoggerType): DataStoreType {
 }
 
 function snapshotExists(): boolean {
-  if (!fs.existsSync(LIFTERS_FILE)) return false;
-  if (!fs.existsSync(MEETS_FILE)) return false;
-  if (!fs.existsSync(META_FILE)) return false;
-  if (!fs.existsSync(ENTRIES_DIR)) return false;
-  for (const name of ENTRY_COLUMN_NAMES) {
-    if (!fs.existsSync(path.join(ENTRIES_DIR, `${name}.json`))) return false;
-  }
-  return true;
+  return (
+    fs.existsSync(LIFTERS_FILE) &&
+    fs.existsSync(MEETS_FILE) &&
+    fs.existsSync(ENTRIES_FILE) &&
+    fs.existsSync(META_FILE)
+  );
 }
 
-function readEntryColumns(count: number): EntriesColumns {
-  const cols = { count } as EntriesColumns;
-  for (const name of ENTRY_COLUMN_NAMES) {
-    const raw = fs.readFileSync(path.join(ENTRIES_DIR, `${name}.json`), "utf8");
-    (cols as unknown as Record<string, unknown>)[name] = JSON.parse(raw);
+async function streamReadArray<T>(file: string): Promise<T[]> {
+  const items: T[] = [];
+  const reader = readline.createInterface({
+    input: fs.createReadStream(file, { encoding: "utf8" }),
+    crlfDelay: Infinity,
+  });
+  for await (const raw of reader) {
+    const line = raw.endsWith(",") ? raw.slice(0, -1) : raw;
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed === "[" || trimmed === "]") continue;
+    items.push(JSON.parse(trimmed) as T);
   }
-  return cols;
+  return items;
+}
+
+async function streamReadEntries(file: string): Promise<EntriesColumns> {
+  const cols = {} as Record<string, unknown>;
+  const reader = readline.createInterface({
+    input: fs.createReadStream(file, { encoding: "utf8" }),
+    crlfDelay: Infinity,
+  });
+  for await (const raw of reader) {
+    const line = raw.endsWith(",") ? raw.slice(0, -1) : raw;
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed === "{" || trimmed === "}") continue;
+    const sepIdx = trimmed.indexOf(":");
+    if (sepIdx === -1) {
+      throw new Error(`entries.json: malformed line (no colon): ${trimmed.slice(0, 60)}`);
+    }
+    const name = JSON.parse(trimmed.slice(0, sepIdx)) as string;
+    cols[name] = JSON.parse(trimmed.slice(sepIdx + 1));
+  }
+  if (typeof cols.count !== "number") {
+    throw new Error("entries.json: missing or invalid `count` field");
+  }
+  for (const name of ENTRY_COLUMN_NAMES) {
+    if (!Array.isArray(cols[name])) {
+      throw new Error(`entries.json: missing or invalid column \`${name}\``);
+    }
+  }
+  return cols as unknown as EntriesColumns;
 }
 
 // Reconstructs Entry[] from the column store. Plain object literals; V8

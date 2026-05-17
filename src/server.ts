@@ -50,18 +50,18 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
   process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
 
-  // Fire-and-forget initial load. The loader flips /healthz from 503 → 200
-  // once the snapshot is populated.
-  context.loader
-    .loadInitial()
+  // Fire-and-forget initial load. /healthz returns 503 until the store
+  // is populated, then flips to 200.
+  context.store
+    .load()
     .then((result) => {
       context.logger.info(
-        `loader: initial load complete in ${result.durationMs}ms ` +
+        `store: initial load complete in ${result.durationMs}ms ` +
           `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
       );
     })
     .catch((error: Error) => {
-      context.logger.error("loader: initial load failed", error);
+      context.logger.error("store: initial load failed", error);
       // No data → no useful service. Exit so the orchestrator restarts us.
       process.exit(1);
     });
