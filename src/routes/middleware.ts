@@ -120,12 +120,7 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     });
   }
 
-  function errorMiddleware(
-    err: unknown,
-    req: Request,
-    res: Response,
-    _next: NextFunction,
-  ): void {
+  function errorMiddleware(err: unknown, req: Request, res: Response, _next: NextFunction): void {
     let statusCode = 500;
     let message =
       "The server encountered an internal error and was unable to complete your request.";
