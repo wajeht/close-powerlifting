@@ -52,6 +52,84 @@ const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
   "PRAGMA wal_autocheckpoint = 1000",
   "PRAGMA cache_spill = ON",
 ];
+
+// Records categories mirror the /api/records output shape: 7 logical
+// categories × 2 sexes = 14 INSERTs into weight_class_records at ingest
+// time. Each category names the metric column and the event mask it covers
+// (e.g. "squat_full_power" only counts SBD totals; "squat_all_events"
+// counts S/SB/SD/SBD). Equipment groups (raw/wraps/single/multi/unlimited/
+// all-tested) are fanned out via UNION ALL inside each INSERT.
+interface RecordsCategoryConfig {
+  category: string;
+  liftColumn: "best3_squat_kg" | "best3_bench_kg" | "best3_deadlift_kg" | "total_kg";
+  events: ReadonlyArray<string>;
+}
+
+const RECORDS_CATEGORIES: ReadonlyArray<RecordsCategoryConfig> = [
+  { category: "squat_full_power", liftColumn: "best3_squat_kg", events: ["SBD"] },
+  { category: "squat_all_events", liftColumn: "best3_squat_kg", events: ["SBD", "S", "SB", "SD"] },
+  { category: "bench_full_power", liftColumn: "best3_bench_kg", events: ["SBD"] },
+  { category: "bench_all_events", liftColumn: "best3_bench_kg", events: ["SBD", "B", "SB", "BD"] },
+  { category: "deadlift_full_power", liftColumn: "best3_deadlift_kg", events: ["SBD"] },
+  {
+    category: "deadlift_all_events",
+    liftColumn: "best3_deadlift_kg",
+    events: ["SBD", "D", "SD", "BD"],
+  },
+  { category: "total", liftColumn: "total_kg", events: ["SBD"] },
+];
+
+interface RecordsEquipmentGroup {
+  name: string;
+  predicate: string;
+}
+
+// Equipment-group predicates applied per UNION-ALL leg. "all-tested" is a
+// tested-flag filter, not an equipment filter, so a tested Raw lift appears
+// in both the "raw" and "all-tested" partitions and can win records in both.
+const RECORDS_EQUIPMENT_GROUPS: ReadonlyArray<RecordsEquipmentGroup> = [
+  { name: "raw", predicate: "lifts.equipment = 'Raw'" },
+  { name: "wraps", predicate: "lifts.equipment = 'Wraps'" },
+  { name: "single", predicate: "lifts.equipment = 'Single-ply'" },
+  { name: "multi", predicate: "lifts.equipment = 'Multi-ply'" },
+  { name: "unlimited", predicate: "lifts.equipment = 'Unlimited'" },
+  { name: "all-tested", predicate: "lifts.tested = 1" },
+];
+
+const RECORDS_TOP_N_PER_CLASS = 3;
+
+function buildRecordsInsertSql(category: RecordsCategoryConfig, sex: "M" | "F"): string {
+  const eventList = category.events.map((e) => `'${e}'`).join(",");
+  const unionLegs = RECORDS_EQUIPMENT_GROUPS.map(
+    (group) => `
+        SELECT
+          '${group.name}' AS eg,
+          lifts.weight_class_kg,
+          lifts.id AS lift_id,
+          lifts.${category.liftColumn} AS lift_value
+        FROM lifts
+        JOIN lifters ON lifters.id = lifts.lifter_id
+        WHERE lifts.event IN (${eventList})
+          AND lifts.${category.liftColumn} IS NOT NULL
+          AND lifts.weight_class_kg IS NOT NULL
+          AND ${group.predicate}
+          AND lifters.sex = '${sex}'`,
+  ).join("\n        UNION ALL");
+
+  return `
+    INSERT INTO weight_class_records
+      (category, sex, equipment_group, weight_class_kg, rank, lift_id, lift_value)
+    SELECT '${category.category}', '${sex}', eg, weight_class_kg, rn, lift_id, lift_value
+    FROM (
+      SELECT
+        eg, weight_class_kg, lift_id, lift_value,
+        ROW_NUMBER() OVER (PARTITION BY eg, weight_class_kg ORDER BY lift_value DESC) AS rn
+      FROM (${unionLegs}
+      )
+    )
+    WHERE rn <= ${RECORDS_TOP_N_PER_CLASS}
+  `;
+}
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_PLACE_NUMERIC = /^\d+$/;
@@ -401,6 +479,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             // Order matters: child tables before parents (FK constraints).
             // Wiping inside the txn means readers still see the previous data
             // until COMMIT swaps it in.
+            db.exec("DELETE FROM weight_class_records");
             db.exec("DELETE FROM lifter_bests");
             db.exec("DELETE FROM lifts");
             db.exec("DELETE FROM meets");
@@ -622,6 +701,20 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             db.exec("CREATE INDEX idx_lifter_bests_bench ON lifter_bests(best3_bench_kg DESC)");
             db.exec(
               "CREATE INDEX idx_lifter_bests_deadlift ON lifter_bests(best3_deadlift_kg DESC)",
+            );
+
+            // Materialize top-N per (category, sex, equipment_group,
+            // weight_class) for /api/records. Drop the lookup index first so
+            // the 14 INSERTs aren't maintaining it per row; recreate once at
+            // the end. Same drop/recreate pattern we use everywhere else.
+            db.exec("DROP INDEX IF EXISTS idx_records_lookup");
+            for (const category of RECORDS_CATEGORIES) {
+              db.exec(buildRecordsInsertSql(category, "M"));
+              db.exec(buildRecordsInsertSql(category, "F"));
+            }
+            db.exec(
+              "CREATE INDEX idx_records_lookup ON weight_class_records " +
+                "(sex, equipment_group, category, weight_class_kg, rank)",
             );
 
             db.exec("COMMIT");

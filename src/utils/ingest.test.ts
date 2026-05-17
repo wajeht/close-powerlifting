@@ -115,7 +115,8 @@ describe("ingest", () => {
   const ingest = createIngestService(knex, logger);
 
   beforeEach(async () => {
-    // lifter_bests has FKs on lifters + lifts; wipe it first.
+    // Derived tables first — both reference lifts/lifters via FK.
+    await knex("weight_class_records").delete();
     await knex("lifter_bests").delete();
     await knex("lifts").delete();
     await knex("meets").delete();

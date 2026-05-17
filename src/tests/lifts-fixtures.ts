@@ -212,7 +212,8 @@ const lifts: LiftSeed[] = [
 ];
 
 export async function seedLifts(knex: Knex): Promise<void> {
-  // lifter_bests has FKs on lifters + lifts; wipe it first.
+  // Derived tables first — both reference lifts/lifters via FK.
+  await knex("weight_class_records").delete();
   await knex("lifter_bests").delete();
   await knex("lifts").delete();
   await knex("meets").delete();
@@ -319,4 +320,52 @@ export async function seedLifts(knex: Knex): Promise<void> {
     WHERE dots IS NOT NULL
     GROUP BY lifter_id, event, equipment
   `);
+
+  // Mirror the ingest's weight_class_records population so the records fast
+  // path has data. 14 INSERTs (7 categories × 2 sexes) each fanning out 6
+  // equipment-group UNION-ALL legs into one ROW_NUMBER window.
+  const eg = [
+    { name: "raw", predicate: "lifts.equipment = 'Raw'" },
+    { name: "wraps", predicate: "lifts.equipment = 'Wraps'" },
+    { name: "single", predicate: "lifts.equipment = 'Single-ply'" },
+    { name: "multi", predicate: "lifts.equipment = 'Multi-ply'" },
+    { name: "unlimited", predicate: "lifts.equipment = 'Unlimited'" },
+    { name: "all-tested", predicate: "lifts.tested = 1" },
+  ];
+  const categories = [
+    { key: "squat_full_power", column: "best3_squat_kg", events: ["SBD"] },
+    { key: "squat_all_events", column: "best3_squat_kg", events: ["SBD", "S", "SB", "SD"] },
+    { key: "bench_full_power", column: "best3_bench_kg", events: ["SBD"] },
+    { key: "bench_all_events", column: "best3_bench_kg", events: ["SBD", "B", "SB", "BD"] },
+    { key: "deadlift_full_power", column: "best3_deadlift_kg", events: ["SBD"] },
+    { key: "deadlift_all_events", column: "best3_deadlift_kg", events: ["SBD", "D", "SD", "BD"] },
+    { key: "total", column: "total_kg", events: ["SBD"] },
+  ];
+  for (const cat of categories) {
+    for (const sex of ["M", "F"] as const) {
+      const events = cat.events.map((e) => `'${e}'`).join(",");
+      const legs = eg
+        .map(
+          (g) => `
+            SELECT '${g.name}' AS eg, lifts.weight_class_kg, lifts.id AS lift_id,
+              lifts.${cat.column} AS lift_value
+            FROM lifts JOIN lifters ON lifters.id = lifts.lifter_id
+            WHERE lifts.event IN (${events}) AND lifts.${cat.column} IS NOT NULL
+              AND lifts.weight_class_kg IS NOT NULL AND ${g.predicate}
+              AND lifters.sex = '${sex}'`,
+        )
+        .join("\n          UNION ALL");
+      await knex.raw(`
+        INSERT INTO weight_class_records
+          (category, sex, equipment_group, weight_class_kg, rank, lift_id, lift_value)
+        SELECT '${cat.key}', '${sex}', eg, weight_class_kg, rn, lift_id, lift_value
+        FROM (
+          SELECT eg, weight_class_kg, lift_id, lift_value,
+            ROW_NUMBER() OVER (PARTITION BY eg, weight_class_kg ORDER BY lift_value DESC) AS rn
+          FROM (${legs})
+        )
+        WHERE rn <= 3
+      `);
+    }
+  }
 }
