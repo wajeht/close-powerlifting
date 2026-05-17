@@ -102,10 +102,6 @@ export function createHealthCheckService(
   }
 
   async function refreshAPIStatus({ apiKey, url }: { apiKey: string; url: string }) {
-    const promises = await Promise.allSettled(
-      ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
-    );
-
     const groupOrder = ["Rankings", "Federations", "Records", "Users", "Public"];
     const groupMap = new Map<string, RouteStatus[]>();
 
@@ -113,12 +109,8 @@ export function createHealthCheckService(
       groupMap.set(groupName, []);
     }
 
-    for (let i = 0; i < ROUTE_DEFINITIONS.length; i++) {
-      const routeDefinition = ROUTE_DEFINITIONS[i];
-      if (!routeDefinition) continue;
-
-      const promise = promises[i];
-      const result = promise != null && promise.status === "fulfilled" ? promise.value : null;
+    for (const routeDefinition of ROUTE_DEFINITIONS) {
+      const result = await scraper.fetchWithAuth(url, routeDefinition.path, apiKey);
 
       const routeStatus: RouteStatus = {
         status: Boolean(result?.ok),
