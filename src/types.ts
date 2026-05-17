@@ -1,70 +1,6 @@
-import "express-session";
-
-export interface SessionUser {
-  id: number;
-  email: string;
-  name: string;
-  admin: boolean;
-}
-
-declare module "express-session" {
-  interface SessionData {
-    user?: SessionUser;
-    oauthState?: string;
-  }
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user: Pick<User, "id" | "name" | "email">;
-    }
-  }
-}
-
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  api_key_version: number;
-  api_key: string | null;
-  admin: boolean;
-  verification_token: string | null;
-  magic_link_expires_at: string | null;
-  verified: boolean;
-  verified_at: string | null;
-  created_at: string;
-  updated_at: string;
-  pending_email: string | null;
-  pending_email_token: string | null;
-  pending_email_expires_at: string | null;
-}
-
-export type CreateUserInput = Pick<User, "name" | "email"> &
-  Partial<Omit<User, "id" | "name" | "email" | "created_at" | "updated_at">>;
-
-export type UpdateUserInput = Partial<Omit<User, "id" | "created_at">>;
-
-export type UserParams = {
-  userId: string;
-  name: string;
-  email: string;
-  apiKeyVersion: number;
-};
-
-export interface ApiCallLog {
-  id: number;
-  user_id: number;
-  method: string;
-  endpoint: string;
-  status_code: number;
-  response_time_ms: number;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-}
-
-export type CreateApiCallLogInput = Omit<ApiCallLog, "id" | "created_at">;
+// Shared API response shapes. Per-endpoint request/response types live next
+// to their routes. Data-model shapes for the in-memory store live in
+// src/data/types.ts.
 
 export interface ApiResponse<T> {
   data: T | null;
@@ -82,60 +18,12 @@ export interface Pagination {
   to: number;
 }
 
-export interface Federation extends Record<string, string> {
-  name: string;
-  meetsentered: string;
-  status: string;
-  newmeetdetection: string;
-  resultsformat: string;
-  easeofimport: string;
-  maintainers: string;
-}
-
-export interface StatusData {
-  server_version: string;
-  meets: string;
-  federations: Federation[];
-}
-
-export interface Meet extends Record<string, string> {
-  federation: string;
-  date: string;
-  meetname: string;
-  location: string;
-}
-
-export interface MeetResult extends Record<string, string> {
-  rank: string;
-  lifter: string;
-  sex: string;
-  age: string;
-  equip: string;
-  class: string;
-  weight: string;
-  squat: string;
-  bench: string;
-  deadlift: string;
-  total: string;
-  dots: string;
-}
-
-export interface MeetData {
-  title: string;
-  date: string;
-  location: string;
-  results: MeetResult[];
-}
-
 export interface RankingRow {
   id: number;
   rank: number;
   full_name: string;
   username: string;
   user_profile: string;
-  instagram: string;
-  instagram_url: string;
-  username_color: string;
   country: string;
   location: string;
   fed: string;
@@ -158,27 +46,25 @@ export interface RankingRow {
   dots: number;
 }
 
-export interface PersonalBest {
-  [key: string]: string;
-}
-
-export interface CompetitionResult {
-  [key: string]: string;
-}
-
-export interface UserProfile {
-  name: string;
-  username: string;
-  sex: string;
-  instagram: string;
-  instagram_url: string;
-  personal_best: PersonalBest[];
-  competition_results: CompetitionResult[];
-}
-
 export interface RecordCategory {
   title: string;
   records: Record<string, string>[];
+}
+
+export interface PersonalBestEntry {
+  value: string;
+  meet: string;
+  date: string;
+  federation: string;
+}
+
+export interface PersonalBestsByEquipment {
+  equipment: string;
+  squat: PersonalBestEntry;
+  bench: PersonalBestEntry;
+  deadlift: PersonalBestEntry;
+  total: PersonalBestEntry;
+  dots: PersonalBestEntry;
 }
 
 export interface ProgressionPoint {
@@ -196,20 +82,12 @@ export interface ProgressionPoint {
   place: string;
 }
 
-export interface PersonalBestEntry {
-  value: string;
-  meet: string;
-  date: string;
-  federation: string;
-}
-
-export interface PersonalBestsByEquipment {
-  equipment: string;
-  squat: PersonalBestEntry;
-  bench: PersonalBestEntry;
-  deadlift: PersonalBestEntry;
-  total: PersonalBestEntry;
-  dots: PersonalBestEntry;
+export interface UserProfile {
+  name: string;
+  username: string;
+  sex: string;
+  personal_best: Record<string, string>[];
+  competition_results: Record<string, string>[];
 }
 
 export interface UserComparisonSummary {
@@ -291,11 +169,24 @@ export interface FederationStats {
   meets_by_year: FederationYearStat[];
 }
 
-export interface TurnstileVerifyResponse {
-  success: boolean;
-  "error-codes"?: string[];
-  challenge_ts?: string;
-  hostname?: string;
-  action?: string;
-  cdata?: string;
+export interface MeetResult extends Record<string, string> {
+  rank: string;
+  lifter: string;
+  sex: string;
+  age: string;
+  equip: string;
+  class: string;
+  weight: string;
+  squat: string;
+  bench: string;
+  deadlift: string;
+  total: string;
+  dots: string;
+}
+
+export interface MeetData {
+  title: string;
+  date: string;
+  location: string;
+  results: MeetResult[];
 }

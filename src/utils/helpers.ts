@@ -1,8 +1,7 @@
-import crypto from "crypto";
 import { Request } from "express";
 
 import { configuration } from "../configuration";
-import type { Pagination, TurnstileVerifyResponse } from "../types";
+import type { Pagination } from "../types";
 
 export function buildPagination(total: number, page: number, limit: number): Pagination {
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -21,12 +20,26 @@ export function buildPagination(total: number, page: number, limit: number): Pag
   };
 }
 
+// Stable URL-safe identifier — strip diacritics, lowercase, keep only
+// alphanumerics. Mirrors OpenPowerlifting's Username::from_name in
+// crates/opltypes/src/username.rs.
+//
+// Quirk: names with no ASCII transliteration (CJK / Cyrillic-only) collapse
+// to empty here. OPL falls back to a numeric ID in that case; we'll do the
+// same when we wire the loader (phase 2).
+const REGEX_DIACRITICS = /\p{Mn}/gu;
+const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
+
+export function nameToSlug(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(REGEX_DIACRITICS, "")
+    .toLowerCase()
+    .replace(REGEX_SLUG_STRIP, "");
+}
+
 export interface HelpersType {
   getHostName: (req: Request) => string;
-  generateToken: () => string;
-  timingSafeEqual: (a: string, b: string) => boolean;
-  extractNameFromEmail: (email: string) => string;
-  verifyTurnstileToken: (token: string, remoteip?: string) => Promise<TurnstileVerifyResponse>;
 }
 
 export function createHelper(): HelpersType {
@@ -39,67 +52,5 @@ export function createHelper(): HelpersType {
     return configuration.app.domain;
   }
 
-  function generateToken(): string {
-    return crypto.randomUUID();
-  }
-
-  function timingSafeEqual(a: string, b: string): boolean {
-    const aHash = crypto.createHash("sha256").update(a).digest();
-    const bHash = crypto.createHash("sha256").update(b).digest();
-    return crypto.timingSafeEqual(aHash, bHash);
-  }
-
-  function extractNameFromEmail(email: string): string {
-    const username = email.split("@")[0] ?? email;
-    return username
-      .replace(/[._-]/g, " ")
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  }
-
-  async function verifyTurnstileToken(
-    token: string,
-    remoteip?: string,
-  ): Promise<TurnstileVerifyResponse> {
-    const formData = new URLSearchParams();
-    formData.append("secret", configuration.cloudflare.turnstileSecretKey);
-    formData.append("response", token);
-    if (remoteip) {
-      formData.append("remoteip", remoteip);
-    }
-
-    try {
-      const result = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!result.ok) {
-        throw new Error(`Turnstile API returned ${result.status}: ${result.statusText}`);
-      }
-
-      const outcome = (await result.json()) as TurnstileVerifyResponse;
-
-      if (!outcome.success) {
-        const errors = outcome["error-codes"]?.join(", ") || "Unknown error";
-        throw new Error(`Turnstile validation failed: ${errors}`);
-      }
-
-      return outcome;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to verify Turnstile token: ${error.message}`);
-      }
-      throw new Error("Failed to verify Turnstile token: Unknown error");
-    }
-  }
-
-  return {
-    getHostName,
-    generateToken,
-    timingSafeEqual,
-    extractNameFromEmail,
-    verifyTurnstileToken,
-  };
+  return { getHostName };
 }
