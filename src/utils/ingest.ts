@@ -78,7 +78,7 @@ function toNumber(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-function toBool(value: string | undefined): 0 | 1 {
+function toBoolean(value: string | undefined): 0 | 1 {
   if (value == null) return 0;
   return value.trim().toLowerCase() === "yes" ? 1 : 0;
 }
@@ -244,20 +244,20 @@ function buildColumnIndex(header: string[]): ColumnIndex {
 // Converts one CSV row into the shape we want to write. Returns null for
 // unusable rows (missing required fields, bad date format, etc.); the caller
 // counts those as `skippedRows` rather than aborting the whole import.
-// `row` is a positional string[] (not an object) — see csvParser() for why.
-function normalizeRow(row: string[], col: ColumnIndex): NormalizedLift | null {
-  const name = trimToNull(row[col.Name]);
-  const date = trimToNull(row[col.Date]);
-  const event = trimToNull(row[col.Event]);
-  const equipment = trimToNull(row[col.Equipment]);
-  const federation = trimToNull(row[col.Federation]);
+// `row` is a positional string[] (not an object) — see createCsvParser() for why.
+function normalizeRow(row: string[], columnIndex: ColumnIndex): NormalizedLift | null {
+  const name = trimToNull(row[columnIndex.Name]);
+  const date = trimToNull(row[columnIndex.Date]);
+  const event = trimToNull(row[columnIndex.Event]);
+  const equipment = trimToNull(row[columnIndex.Equipment]);
+  const federation = trimToNull(row[columnIndex.Federation]);
   if (!name || !date || !event || !equipment || !federation) return null;
   if (!REGEX_ISO_DATE.test(date)) return null;
 
-  const meetName = trimToNull(row[col.MeetName]);
+  const meetName = trimToNull(row[columnIndex.MeetName]);
   if (!meetName) return null;
 
-  const place = splitPlace(row[col.Place]);
+  const place = splitPlace(row[columnIndex.Place]);
   const federationSlug = nameToSlug(federation);
   const meetSlug = nameToSlug(meetName);
 
@@ -266,35 +266,35 @@ function normalizeRow(row: string[], col: ColumnIndex): NormalizedLift | null {
     meet_key: meetKey(federationSlug, date, meetSlug),
     event,
     equipment,
-    age: toNumber(row[col.Age]),
-    age_class: trimToNull(row[col.AgeClass]),
-    birth_year_class: trimToNull(row[col.BirthYearClass]),
-    division: trimToNull(row[col.Division]),
-    bodyweight_kg: toNumber(row[col.BodyweightKg]),
-    weight_class_kg: toNumber(row[col.WeightClassKg]),
-    squat1_kg: toNumber(row[col.Squat1Kg]),
-    squat2_kg: toNumber(row[col.Squat2Kg]),
-    squat3_kg: toNumber(row[col.Squat3Kg]),
-    squat4_kg: toNumber(row[col.Squat4Kg]),
-    bench1_kg: toNumber(row[col.Bench1Kg]),
-    bench2_kg: toNumber(row[col.Bench2Kg]),
-    bench3_kg: toNumber(row[col.Bench3Kg]),
-    bench4_kg: toNumber(row[col.Bench4Kg]),
-    deadlift1_kg: toNumber(row[col.Deadlift1Kg]),
-    deadlift2_kg: toNumber(row[col.Deadlift2Kg]),
-    deadlift3_kg: toNumber(row[col.Deadlift3Kg]),
-    deadlift4_kg: toNumber(row[col.Deadlift4Kg]),
-    best3_squat_kg: toNumber(row[col.Best3SquatKg]),
-    best3_bench_kg: toNumber(row[col.Best3BenchKg]),
-    best3_deadlift_kg: toNumber(row[col.Best3DeadliftKg]),
-    total_kg: toNumber(row[col.TotalKg]),
+    age: toNumber(row[columnIndex.Age]),
+    age_class: trimToNull(row[columnIndex.AgeClass]),
+    birth_year_class: trimToNull(row[columnIndex.BirthYearClass]),
+    division: trimToNull(row[columnIndex.Division]),
+    bodyweight_kg: toNumber(row[columnIndex.BodyweightKg]),
+    weight_class_kg: toNumber(row[columnIndex.WeightClassKg]),
+    squat1_kg: toNumber(row[columnIndex.Squat1Kg]),
+    squat2_kg: toNumber(row[columnIndex.Squat2Kg]),
+    squat3_kg: toNumber(row[columnIndex.Squat3Kg]),
+    squat4_kg: toNumber(row[columnIndex.Squat4Kg]),
+    bench1_kg: toNumber(row[columnIndex.Bench1Kg]),
+    bench2_kg: toNumber(row[columnIndex.Bench2Kg]),
+    bench3_kg: toNumber(row[columnIndex.Bench3Kg]),
+    bench4_kg: toNumber(row[columnIndex.Bench4Kg]),
+    deadlift1_kg: toNumber(row[columnIndex.Deadlift1Kg]),
+    deadlift2_kg: toNumber(row[columnIndex.Deadlift2Kg]),
+    deadlift3_kg: toNumber(row[columnIndex.Deadlift3Kg]),
+    deadlift4_kg: toNumber(row[columnIndex.Deadlift4Kg]),
+    best3_squat_kg: toNumber(row[columnIndex.Best3SquatKg]),
+    best3_bench_kg: toNumber(row[columnIndex.Best3BenchKg]),
+    best3_deadlift_kg: toNumber(row[columnIndex.Best3DeadliftKg]),
+    total_kg: toNumber(row[columnIndex.TotalKg]),
     place_rank: place.rank,
     place_status: place.status,
-    dots: toNumber(row[col.Dots]),
-    wilks: toNumber(row[col.Wilks]),
-    glossbrenner: toNumber(row[col.Glossbrenner]),
-    goodlift: toNumber(row[col.Goodlift]),
-    tested: toBool(row[col.Tested]),
+    dots: toNumber(row[columnIndex.Dots]),
+    wilks: toNumber(row[columnIndex.Wilks]),
+    glossbrenner: toNumber(row[columnIndex.Glossbrenner]),
+    goodlift: toNumber(row[columnIndex.Goodlift]),
+    tested: toBoolean(row[columnIndex.Tested]),
   };
 }
 
@@ -308,7 +308,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
   // builder) so we can use prepared statements and a manual BEGIN/COMMIT.
   // Acquiring + releasing a pooled connection via the knex client API keeps
   // the rest of the app's connection lifecycle intact.
-  async function withDb<T>(fn: (db: BetterSqliteDatabase) => Promise<T> | T): Promise<T> {
+  async function withDatabase<T>(fn: (db: BetterSqliteDatabase) => Promise<T> | T): Promise<T> {
     const client = knex.client as unknown as KnexClient;
     const db = await client.acquireConnection();
     try {
@@ -346,7 +346,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
   // {Name, Date, ...} object each row — drops a ton of GC pressure on a long
   // ingest. The header is consumed as the first row of the stream and used to
   // build a `ColumnIndex` (see buildColumnIndex) so we keep access by name.
-  function csvParser(): Transform {
+  function createCsvParser(): Transform {
     return parseCsv({ columns: false, skip_empty_lines: true, relax_column_count: true });
   }
 
@@ -370,7 +370,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       // dimensions the first time they're seen, then immediately inserting the
       // lift row with the resolved foreign keys. Everything runs inside one
       // transaction; ROLLBACK on any error leaves the prior DB state intact.
-      await withDb(async (db) => {
+      await withDatabase(async (db) => {
         for (const pragma of INGEST_PRAGMAS) db.exec(pragma);
         try {
           // Manual BEGIN/COMMIT (instead of better-sqlite3's `db.transaction()`)
@@ -425,7 +425,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
-            let col: ColumnIndex | null = null;
+            let columnIndex: ColumnIndex | null = null;
 
             // pipeline() propagates backpressure end-to-end: when the SQLite
             // write side falls behind, the CSV parser pauses, and ultimately
@@ -433,15 +433,15 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             // function — same backpressure as a Writable, no callback noise.
             await pipeline(
               csvStreamFactory(),
-              csvParser(),
+              createCsvParser(),
               async function (source: AsyncIterable<string[]>) {
                 for await (const row of source) {
-                  if (col == null) {
-                    col = buildColumnIndex(row);
+                  if (columnIndex == null) {
+                    columnIndex = buildColumnIndex(row);
                     continue;
                   }
 
-                  const lift = normalizeRow(row, col);
+                  const lift = normalizeRow(row, columnIndex);
                   if (lift == null) {
                     stats.skippedRows++;
                     continue;
@@ -452,11 +452,11 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
                   // Safe because we're inside one transaction — if the import
                   // fails halfway, ROLLBACK undoes the partial dimensions too.
 
-                  const federationCode = row[col.Federation]!.trim();
+                  const federationCode = row[columnIndex.Federation]!.trim();
                   const federationSlug = nameToSlug(federationCode);
                   let federationId = federationIds.get(federationSlug);
                   if (federationId == null) {
-                    const parent = trimToNull(row[col.ParentFederation]);
+                    const parent = trimToNull(row[columnIndex.ParentFederation]);
                     const result = insertFederation.run(
                       federationSlug,
                       federationCode,
@@ -469,11 +469,11 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
                   let lifterId = lifterIds.get(lift.lifter_slug);
                   if (lifterId == null) {
                     const result = insertLifter.run(
-                      row[col.Name]!.trim(),
+                      row[columnIndex.Name]!.trim(),
                       lift.lifter_slug,
-                      trimToNull(row[col.Sex]),
-                      trimToNull(row[col.Country]),
-                      trimToNull(row[col.State]),
+                      trimToNull(row[columnIndex.Sex]),
+                      trimToNull(row[columnIndex.Country]),
+                      trimToNull(row[columnIndex.State]),
                     );
                     lifterId = Number(result.lastInsertRowid);
                     lifterIds.set(lift.lifter_slug, lifterId);
@@ -481,15 +481,15 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
 
                   let meetId = meetIds.get(lift.meet_key);
                   if (meetId == null) {
-                    const meetNameRaw = row[col.MeetName]!.trim();
+                    const meetNameRaw = row[columnIndex.MeetName]!.trim();
                     const result = insertMeet.run(
                       federationId,
-                      row[col.Date]!.trim(),
+                      row[columnIndex.Date]!.trim(),
                       meetNameRaw,
                       nameToSlug(meetNameRaw),
-                      trimToNull(row[col.MeetCountry]),
-                      trimToNull(row[col.MeetState]),
-                      toBool(row[col.Sanctioned]),
+                      trimToNull(row[columnIndex.MeetCountry]),
+                      trimToNull(row[columnIndex.MeetState]),
+                      toBoolean(row[columnIndex.Sanctioned]),
                     );
                     meetId = Number(result.lastInsertRowid);
                     meetIds.set(lift.meet_key, meetId);
@@ -636,7 +636,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
   // Why a factory at all (instead of just a stream): keeps the API symmetric
   // with how tests work (they can pass `() => Readable.from(buffer)`) and
   // future-proof for any pass that needs to re-read.
-  function csvStreamFactoryForZip(zipPath: string, csvEntryName: string): CsvStreamFactory {
+  function createCsvStreamFactoryForZip(zipPath: string, csvEntryName: string): CsvStreamFactory {
     return () => {
       let stream: Readable | null = null;
       const proxy = new Readable({
@@ -703,7 +703,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
       }
 
       const csvEntryName = await findCsvEntryName(downloadInfo.filePath);
-      const factory = csvStreamFactoryForZip(downloadInfo.filePath, csvEntryName);
+      const factory = createCsvStreamFactoryForZip(downloadInfo.filePath, csvEntryName);
       try {
         return await ingestFromStream(factory, {
           sourceLastModified: lastModified,

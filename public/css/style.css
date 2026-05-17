@@ -434,6 +434,9 @@
   .pointer-events-none {
     pointer-events: none !important;
   }
+  .collapse {
+    visibility: collapse !important;
+  }
   .sr-only {
     clip-path: inset(50%) !important;
     white-space: nowrap !important;
