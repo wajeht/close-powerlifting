@@ -27,17 +27,23 @@ const REGEX_DIACRITICS = /\p{Mn}/gu;
 // `finally` block before the connection is returned to the knex pool, so
 // read traffic sees the normal serving config.
 const INGEST_PRAGMAS: ReadonlyArray<string> = [
-  // Big page cache so dirty pages stay in RAM through the import instead of
-  // spilling to the WAL on every flush.
-  "PRAGMA cache_size = -524288",
-  // mmap lets the OS pagecache serve b-tree lookups without copying through
-  // SQLite's own cache.
-  "PRAGMA mmap_size = 268435456",
+  // 128 MB page cache. Bigger doesn't help us — the bottleneck is sequential
+  // writes (the prepared INSERT + later CREATE INDEX scans), not random
+  // reads. A larger cache just retains more dirty pages.
+  "PRAGMA cache_size = -131072",
+  // mmap is a read-path optimisation; ingest is write-dominated, and the OS
+  // page cache already buffers reads against the b-tree. Keep it off so RSS
+  // doesn't double-count the DB file.
+  "PRAGMA mmap_size = 0",
   // Don't auto-checkpoint mid-transaction. We do one explicit
   // `wal_checkpoint(TRUNCATE)` after COMMIT.
   "PRAGMA wal_autocheckpoint = 0",
-  // Keep dirty pages in cache through the txn — don't flush opportunistically.
-  "PRAGMA cache_spill = OFF",
+  // Allow SQLite to spill dirty pages to the WAL when the cache fills. This
+  // is the default; we used to override it to OFF "for throughput", but on
+  // a 1+ GB transaction that meant holding every dirty page in RAM until
+  // COMMIT (peak RSS ~4 GB). Spilling caps RSS in exchange for some extra
+  // I/O which the WAL is designed for.
+  "PRAGMA cache_spill = ON",
 ];
 
 const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
@@ -395,6 +401,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             // Order matters: child tables before parents (FK constraints).
             // Wiping inside the txn means readers still see the previous data
             // until COMMIT swaps it in.
+            db.exec("DELETE FROM lifter_bests");
             db.exec("DELETE FROM lifts");
             db.exec("DELETE FROM meets");
             db.exec("DELETE FROM lifters");
@@ -565,6 +572,58 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             // of triggering on every row insert.
             db.exec("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
             db.exec("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
+
+            // Drop secondary indexes on lifter_bests so the INSERT below
+            // only touches the primary key. Maintaining 8 b-trees per row for
+            // ~880k rows during the bulk insert blows up peak memory (~2 GB
+            // of dirty pages); a single CREATE INDEX afterwards is far
+            // cheaper. Same pattern we use for lifts above.
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_dots");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_wilks");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_glossbrenner");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_goodlift");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_total");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_squat");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_bench");
+            db.exec("DROP INDEX IF EXISTS idx_lifter_bests_deadlift");
+
+            // Materialize per-lifter best across (event, equipment).
+            // SQLite's "bare columns alongside MAX/MIN" rule (documented since
+            // 3.7.11) returns row-of-max values for every bare column in the
+            // SELECT — so `id, dots, wilks, ..., total_kg` all come from the
+            // same row that produced MAX(dots). One scan, no window function.
+            // Lifts whose dots is NULL are excluded (they can't appear in any
+            // dots-sorted ranking, which is the default sort).
+            db.exec(`
+              INSERT INTO lifter_bests (
+                lifter_id, event, equipment, best_lift_id,
+                dots, wilks, glossbrenner, goodlift,
+                total_kg, best3_squat_kg, best3_bench_kg, best3_deadlift_kg
+              )
+              SELECT
+                lifter_id, event, equipment, id,
+                MAX(dots), wilks, glossbrenner, goodlift,
+                total_kg, best3_squat_kg, best3_bench_kg, best3_deadlift_kg
+              FROM lifts
+              WHERE dots IS NOT NULL
+              GROUP BY lifter_id, event, equipment
+            `);
+
+            // Re-create the 8 metric indexes now that the table is populated.
+            // Each is one sequential scan + sort over ~880k rows; cheap.
+            db.exec("CREATE INDEX idx_lifter_bests_dots ON lifter_bests(dots DESC)");
+            db.exec("CREATE INDEX idx_lifter_bests_wilks ON lifter_bests(wilks DESC)");
+            db.exec(
+              "CREATE INDEX idx_lifter_bests_glossbrenner ON lifter_bests(glossbrenner DESC)",
+            );
+            db.exec("CREATE INDEX idx_lifter_bests_goodlift ON lifter_bests(goodlift DESC)");
+            db.exec("CREATE INDEX idx_lifter_bests_total ON lifter_bests(total_kg DESC)");
+            db.exec("CREATE INDEX idx_lifter_bests_squat ON lifter_bests(best3_squat_kg DESC)");
+            db.exec("CREATE INDEX idx_lifter_bests_bench ON lifter_bests(best3_bench_kg DESC)");
+            db.exec(
+              "CREATE INDEX idx_lifter_bests_deadlift ON lifter_bests(best3_deadlift_kg DESC)",
+            );
+
             db.exec("COMMIT");
           } catch (error) {
             db.exec("ROLLBACK");

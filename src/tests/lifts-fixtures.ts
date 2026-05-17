@@ -212,6 +212,8 @@ const lifts: LiftSeed[] = [
 ];
 
 export async function seedLifts(knex: Knex): Promise<void> {
+  // lifter_bests has FKs on lifters + lifts; wipe it first.
+  await knex("lifter_bests").delete();
   await knex("lifts").delete();
   await knex("meets").delete();
   await knex("lifters").delete();
@@ -300,4 +302,21 @@ export async function seedLifts(knex: Knex): Promise<void> {
 
   await knex.raw("INSERT INTO lifters_fts(lifters_fts) VALUES('rebuild')");
   await knex.raw("INSERT INTO meets_fts(meets_fts) VALUES('rebuild')");
+
+  // Mirror the ingest's lifter_bests population so the rankings fast path
+  // has data to read. Same SQL as src/utils/ingest.ts.
+  await knex.raw(`
+    INSERT INTO lifter_bests (
+      lifter_id, event, equipment, best_lift_id,
+      dots, wilks, glossbrenner, goodlift,
+      total_kg, best3_squat_kg, best3_bench_kg, best3_deadlift_kg
+    )
+    SELECT
+      lifter_id, event, equipment, id,
+      MAX(dots), wilks, glossbrenner, goodlift,
+      total_kg, best3_squat_kg, best3_bench_kg, best3_deadlift_kg
+    FROM lifts
+    WHERE dots IS NOT NULL
+    GROUP BY lifter_id, event, equipment
+  `);
 }

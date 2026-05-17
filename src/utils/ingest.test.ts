@@ -115,6 +115,8 @@ describe("ingest", () => {
   const ingest = createIngestService(knex, logger);
 
   beforeEach(async () => {
+    // lifter_bests has FKs on lifters + lifts; wipe it first.
+    await knex("lifter_bests").delete();
     await knex("lifts").delete();
     await knex("meets").delete();
     await knex("lifters").delete();

@@ -47,6 +47,13 @@ const SORT_COLUMN: Record<string, string> = {
   "by-deadlift": "best3_deadlift_kg",
 };
 
+// Filters whose semantics live entirely on `lifter_bests` rows (the "best
+// lift per lifter per event/equipment"). When ONLY these are set, we serve
+// from the materialized table and skip the 3.9M-row window. Anything else
+// (weight_class, year, age_class, federation) needs the per-lift detail and
+// falls back to the slow path.
+const BESTS_PATH_FILTERS = new Set(["equipment", "sex", "event", "sort"]);
+
 interface RankingsFilters {
   equipment?: string;
   sex?: string;
@@ -180,7 +187,103 @@ function normalizeUnits(units: string | undefined): "kg" | "lbs" {
   return units === "kg" ? "kg" : "lbs";
 }
 
+// True when the filter set can be answered entirely from lifter_bests + a
+// constant number of joins (≤ perPage rows). False forces the slow path
+// because the filter references columns we didn't denormalize.
+function canUseBestsPath(filters: RankingsFilters): boolean {
+  for (const key of Object.keys(filters) as (keyof RankingsFilters)[]) {
+    const value = filters[key];
+    if (value == null || value === "") continue;
+    if (!BESTS_PATH_FILTERS.has(key)) return false;
+  }
+  return true;
+}
+
 export function createRankingService(knex: Knex) {
+  // Fast path for `/api/rankings` (and event/equipment/sex variants): read
+  // pre-aggregated rows from `lifter_bests` instead of windowing over 3.9M
+  // `lifts` rows. Backs the ranking column with a single descending index,
+  // so total cost is COUNT + indexed walk + ≤50 joined rows.
+  async function queryRankingsFromBests(
+    filters: RankingsFilters,
+    currentPage: number,
+    perPage: number,
+    units: "kg" | "lbs",
+    sortColumn: string,
+  ): Promise<{ rows: RankingRow[]; totalLength: number }> {
+    const offset = (currentPage - 1) * perPage;
+
+    function applyBestsFilters(query: Knex.QueryBuilder): Knex.QueryBuilder {
+      let q = query.whereNotNull(`lifter_bests.${sortColumn}`);
+      if (filters.equipment) {
+        const mapped = EQUIPMENT_MAP[filters.equipment];
+        if (mapped) q = q.whereIn("lifter_bests.equipment", mapped);
+      }
+      if (filters.event) {
+        const mapped = EVENT_MAP[filters.event];
+        if (mapped) q = q.where("lifter_bests.event", mapped);
+      }
+      if (filters.sex) {
+        const mapped = SEX_MAP[filters.sex];
+        if (mapped) q = q.where("lifters.sex", mapped);
+      }
+      return q;
+    }
+
+    const needsLiftersJoin = filters.sex != null;
+    function baseQuery(): Knex.QueryBuilder {
+      const q = knex("lifter_bests");
+      return needsLiftersJoin ? q.join("lifters", "lifters.id", "lifter_bests.lifter_id") : q;
+    }
+
+    const totalResult = await applyBestsFilters(baseQuery())
+      .count<{ count: number | string }[]>({ count: "lifter_bests.lifter_id" })
+      .first();
+    const totalLength = Number(totalResult?.count ?? 0);
+    if (totalLength === 0) return { rows: [], totalLength: 0 };
+
+    const rows = (await applyBestsFilters(
+      knex("lifter_bests")
+        .join("lifts", "lifts.id", "lifter_bests.best_lift_id")
+        .join("lifters", "lifters.id", "lifter_bests.lifter_id")
+        .join("meets", "meets.id", "lifts.meet_id")
+        .join("federations", "federations.id", "meets.federation_id"),
+    )
+      .orderBy(`lifter_bests.${sortColumn}`, "desc")
+      .limit(perPage)
+      .offset(offset)
+      .select(
+        knex.ref("lifters.name").as("name"),
+        knex.ref("lifters.name_slug").as("name_slug"),
+        knex.ref("lifters.sex").as("sex"),
+        knex.ref("lifters.instagram").as("instagram"),
+        "lifts.event",
+        "lifts.equipment",
+        "lifts.age",
+        "lifts.bodyweight_kg",
+        "lifts.weight_class_kg",
+        "lifts.best3_squat_kg",
+        "lifts.best3_bench_kg",
+        "lifts.best3_deadlift_kg",
+        "lifts.total_kg",
+        "lifts.dots",
+        "lifts.wilks",
+        "lifts.glossbrenner",
+        "lifts.goodlift",
+        knex.ref("federations.code").as("federation"),
+        knex.ref("federations.parent_slug").as("parent_federation"),
+        "meets.date",
+        "meets.meet_country",
+        "meets.meet_state",
+        "meets.meet_name",
+      )) as LiftRow[];
+
+    return {
+      rows: rows.map((row, idx) => liftRowToRankingRow(row, offset + idx + 1, units)),
+      totalLength,
+    };
+  }
+
   async function queryRankings(
     filters: RankingsFilters,
     currentPage: number,
@@ -188,6 +291,11 @@ export function createRankingService(knex: Knex) {
     units: "kg" | "lbs",
   ): Promise<{ rows: RankingRow[]; totalLength: number }> {
     const sortColumn = SORT_COLUMN[filters.sort ?? "by-dots"] ?? "dots";
+
+    if (canUseBestsPath(filters)) {
+      return queryRankingsFromBests(filters, currentPage, perPage, units, sortColumn);
+    }
+
     const offset = (currentPage - 1) * perPage;
 
     const filteredBase = applyFilters(joinedLiftsBase(knex), filters).whereNotNull(
