@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled, closed]
+    types: [opened, synchronize, reopened, labeled]
 
 permissions:
   contents: read
@@ -218,18 +218,5 @@ jobs:
     with:
       app-path: apps/close-powerlifting
       tag: ${{ needs.temp-build.outputs.tag }}
-    secrets:
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-  temp-cleanup:
-    name: Temp Cleanup
-    if: >
-      github.event.action == 'closed' ||
-      (github.event.action == 'unlabeled' && github.event.label.name == 'temp-deploy')
-    permissions:
-      deployments: write
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@c976aac4e51a559837963f7d903600c2c436e589 # v0.0.20
-    with:
-      app-path: apps/close-powerlifting
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
