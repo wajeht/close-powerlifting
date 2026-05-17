@@ -190,6 +190,20 @@ describe("health-check service", () => {
       expect(federationsGroup!.routes.length).toBe(5);
     });
 
+    it("Meets group has correct number of routes", async () => {
+      mockFetch();
+      const service = createHealthCheckService(createMockCache(), createMockLogger());
+
+      const result = await service.refreshAPIStatus({
+        apiKey: "test-key",
+        url: "http://localhost",
+      });
+
+      const meetsGroup = result.find((g) => g.name === "Meets");
+      expect(meetsGroup).toBeDefined();
+      expect(meetsGroup!.routes.length).toBe(7);
+    });
+
     it("Records group has correct number of routes", async () => {
       mockFetch();
       const service = createHealthCheckService(createMockCache(), createMockLogger());
@@ -374,6 +388,9 @@ describe("health-check service", () => {
 
       const federationsGroup = result.find((g) => g.name === "Federations");
       expect(federationsGroup!.routes.every((r) => r.url.includes("/api/federations"))).toBe(true);
+
+      const meetsGroup = result.find((g) => g.name === "Meets");
+      expect(meetsGroup!.routes.every((r) => r.url.includes("/api/meets"))).toBe(true);
 
       const recordsGroup = result.find((g) => g.name === "Records");
       expect(recordsGroup!.routes.every((r) => r.url.includes("/api/records"))).toBe(true);
