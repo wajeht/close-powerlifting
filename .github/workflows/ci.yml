@@ -17,32 +17,10 @@ env:
   APP_PORT: 80
   APP_ENV: "testing"
   APP_DOMAIN: "localhost"
-  APP_PASSWORD_SALT: 10
-  APP_JWT_SECRET: "test-jwt-secret"
-  APP_ADMIN_EMAIL: "test@gmail.com"
-  API_CALL_LOG_RETENTION_DAYS: 90
-
-  SESSION_SECRET: "test-session-secret"
-  SESSION_NAME: "close-powerlifting"
-  SESSION_DOMAIN: "localhost"
-
-  GOOGLE_CLIENT_ID: ""
-  GOOGLE_CLIENT_SECRET: ""
-  GOOGLE_OAUTH_REDIRECT_URL: "http://localhost/oauth/google/redirect"
-
-  OPENPOWERLIFTING_URL: "https://www.openpowerlifting.org"
-  APP_API_KEY: ""
-
-  EMAIL_HOST: "localhost"
-  EMAIL_PORT: 1025
-  EMAIL_SECURE: "false"
-  EMAIL_USER: ""
-  EMAIL_PASSWORD: ""
-  EMAIL_FROM: "noreply@close-powerlifting.local"
 
 jobs:
-  format:
-    name: Format
+  check:
+    name: Check
     runs-on: ubuntu-latest
 
     steps:
@@ -57,43 +35,15 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules
-        run: npm rebuild better-sqlite3 sharp --ignore-scripts=false
+        run: npm rebuild sharp --ignore-scripts=false
 
-      - name: Format
-        run: npm run format:check
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Use Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version-file: ".nvmrc"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Rebuild native modules
-        run: npm rebuild better-sqlite3 sharp --ignore-scripts=false
-
-      - name: Lint
-        run: npm run lint:check
+      - name: Format + lint + type-check
+        run: npm run check
 
   test:
     name: Unit tests
     runs-on: ubuntu-latest
 
-    services:
-      mailhog:
-        image: mailhog/mailhog:latest@sha256:8d76a3d4ffa32a3661311944007a415332c4bb855657f4f6c57996405c009bea
-        ports:
-          - 1025:1025
-          - 8025:8025
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Use Node.js
@@ -106,7 +56,7 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules
-        run: npm rebuild better-sqlite3 sharp --ignore-scripts=false
+        run: npm rebuild sharp --ignore-scripts=false
 
       - name: Verify package signatures
         run: npm audit signatures
@@ -115,7 +65,7 @@ jobs:
         run: npm run test:ci
 
   build:
-    needs: [format, lint, test]
+    needs: [check, test]
     name: Build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
