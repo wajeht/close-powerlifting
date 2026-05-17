@@ -14,7 +14,7 @@ const swaggerConfig = {
     title: "Close Powerlifting API",
     description: `
 ## Overview
-REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org), which updates multiple times daily with new meet results.
+REST API for accessing the world's largest powerlifting database. Data is sourced from [OpenPowerlifting.org](https://openpowerlifting.org) and refreshed nightly from the public CSV dump.
 
 ## Getting Started
 1. Register at [closepowerlifting.com](https://closepowerlifting.com/login)
@@ -64,7 +64,7 @@ Errors return \`status: "fail"\` with appropriate HTTP codes:
 | 403 | Forbidden - Access denied |
 | 404 | Not Found - Resource doesn't exist |
 | 400 | Validation Error - Invalid parameters |
-| 429 | Rate Limited - Monthly quota or IP rate limit exceeded |
+| 429 | Rate Limited - IP rate limit exceeded |
 
 ## Pagination
 Endpoints returning lists support pagination via query parameters:
@@ -106,27 +106,18 @@ Rankings can be sorted by: \`by-dots\`, \`by-wilks\`, \`by-glossbrenner\`, \`by-
 | \`age_class\` | string | Filter by age class (e.g., \`5-12\`, \`13-15\`, \`16-17\`, \`18-19\`, \`20-23\`, \`24-34\`, \`35-39\`, \`40-44\`, \`45-49\`, \`50-54\`, \`55-59\`, \`60-64\`, \`65-69\`, \`70-74\`, \`75-79\`, \`80-84\`, \`85-89\`, \`40-49\`, \`50-59\`, \`60-69\`, \`70-79\`, \`over80\`) |
 
 ## Rate Limits
-Rate limits protect the upstream OpenPowerlifting data source and ensure fair usage for all developers.
+Rate limits protect the service and ensure fair usage for all developers.
 
 | Limit | Threshold | Scope |
 |-------|-----------|-------|
-| **Monthly quota** | 750 requests/month | Per API key |
 | **Per-IP limit** | 50 requests/hour | Per IP address |
 | **Auth endpoints** | 10 requests/15 min | Per IP address |
 
-**Monthly quota details:**
-- Resets automatically on the 1st of each month
-- Email notifications are sent at 50%, 70%, and 100% usage
-- Exceeding the quota returns \`429 Too Many Requests\` until the next reset
-- Need a higher limit? Contact us via the support email below
-
 **Tips to stay within limits:**
-- Cache responses locally — data updates a few times daily, not in real-time
 - Use \`per_page\` to fetch larger pages in fewer requests
 - Leverage the 1-hour browser cache (\`Cache-Control: private, max-age=3600\`)
 
 ## Caching
-- **Server cache**: Responses are cached indefinitely until manually cleared by admins
 - **API browser cache**: \`private, max-age=3600\` (1 hour)
 - **View pages browser cache**: \`public, max-age=86400\` (24 hours)
     `,
@@ -176,10 +167,6 @@ Rate limits protect the upstream OpenPowerlifting data source and ensure fair us
     {
       name: "Users",
       description: "Athlete profiles and competition history",
-    },
-    {
-      name: "Quota",
-      description: "Per-user API quota and usage information",
     },
     {
       name: "Status",

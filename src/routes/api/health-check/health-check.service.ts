@@ -53,25 +53,6 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Federations", path: "/api/federations/ipf?year=2020" },
   { group: "Federations", path: "/api/federations/ipf/stats" },
 
-  // Meets
-  { group: "Meets", path: "/api/meets/uspa/1969" },
-  { group: "Meets", path: "/api/meets/uspa/1969/highlights" },
-  { group: "Meets", path: "/api/meets/uspa/1969/highlights?units=kg" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks2020" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-glossbrenner" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-goodlift" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-ipf-points" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-mcculloch" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-total" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-ah" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-nasa" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-reshel" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-schwartz-malone" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-division" },
-  { group: "Meets", path: "/api/meets/uspa/1969?units=kg" },
-  { group: "Meets", path: "/api/meets/uspa/1969?sort=by-wilks&units=kg" },
-
   // Records
   { group: "Records", path: "/api/records" },
   { group: "Records", path: "/api/records/raw" },
@@ -93,9 +74,6 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Users", path: "/api/users/johnhaack/personal-bests" },
   { group: "Users", path: "/api/users/johnhaack/rank" },
   { group: "Users", path: "/api/users/compare?a=johnhaack&b=kristyhawkins" },
-
-  // Account
-  { group: "Account", path: "/api/quota" },
 
   // Public (no auth)
   { group: "Public", path: "/api/status" },
@@ -128,15 +106,7 @@ export function createHealthCheckService(
       ROUTE_DEFINITIONS.map((r) => scraper.fetchWithAuth(url, r.path, apiKey)),
     );
 
-    const groupOrder = [
-      "Rankings",
-      "Federations",
-      "Meets",
-      "Records",
-      "Users",
-      "Account",
-      "Public",
-    ];
+    const groupOrder = ["Rankings", "Federations", "Records", "Users", "Public"];
     const groupMap = new Map<string, RouteStatus[]>();
 
     for (const groupName of groupOrder) {

@@ -59,16 +59,8 @@ function createMockScraper(
 }
 
 describe("health-check service", () => {
-  const EXPECTED_GROUPS = [
-    "Rankings",
-    "Federations",
-    "Meets",
-    "Records",
-    "Users",
-    "Account",
-    "Public",
-  ];
-  const TOTAL_ROUTES = 65;
+  const EXPECTED_GROUPS = ["Rankings", "Federations", "Records", "Users", "Public"];
+  const TOTAL_ROUTES = 47;
 
   describe("getAPIStatus", () => {
     beforeEach(() => {
@@ -220,23 +212,6 @@ describe("health-check service", () => {
       const federationsGroup = result.find((g: { name: string }) => g.name === "Federations");
       expect(federationsGroup).toBeDefined();
       expect(federationsGroup!.routes.length).toBe(5);
-    });
-
-    it("Meets group has correct number of routes", async () => {
-      const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
-      const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
-      const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
-
-      const result = await service.refreshAPIStatus({
-        apiKey: "test-key",
-        url: "http://localhost",
-      });
-
-      const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
-      expect(meetsGroup).toBeDefined();
-      expect(meetsGroup!.routes.length).toBe(17);
     });
 
     it("Records group has correct number of routes", async () => {
@@ -435,7 +410,7 @@ describe("health-check service", () => {
       expect(urls.some((u: string) => u.includes("units=kg"))).toBe(true);
     });
 
-    it("derived endpoints (progression, PBs, rank, compare, highlights, fed-stats) are tracked", async () => {
+    it("derived endpoints (progression, PBs, rank, compare, fed-stats) are tracked", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
       const scraper = createMockScraper(mockResponses);
@@ -455,7 +430,6 @@ describe("health-check service", () => {
       expect(allUrls).toContain("/api/users/johnhaack/personal-bests");
       expect(allUrls).toContain("/api/users/johnhaack/rank");
       expect(allUrls.some((u: string) => u.startsWith("/api/users/compare?"))).toBe(true);
-      expect(allUrls).toContain("/api/meets/uspa/1969/highlights");
       expect(allUrls).toContain("/api/federations/ipf/stats");
     });
 
@@ -480,11 +454,6 @@ describe("health-check service", () => {
       expect(
         federationsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/federations")),
       ).toBe(true);
-
-      const meetsGroup = result.find((g: { name: string }) => g.name === "Meets");
-      expect(meetsGroup!.routes.every((r: { url: string }) => r.url.includes("/api/meets"))).toBe(
-        true,
-      );
 
       const recordsGroup = result.find((g: { name: string }) => g.name === "Records");
       expect(
