@@ -43,31 +43,23 @@ async function main(): Promise<void> {
   process.on("uncaughtException", handleUncaughtException);
   process.on("unhandledRejection", handleUnhandledRejection);
 
-  // Start the HTTP server first so /healthz can return 503 while the
-  // snapshot is loading. Route handlers check store.tryGet() and respond
-  // 503 if the store isn't ready yet.
   const serverInfo = await createServer(context);
 
   process.on("SIGINT", () => gracefulShutdown("SIGINT", serverInfo));
   process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
   process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
 
-  // Fire-and-forget initial load. /healthz returns 503 until the store
-  // is populated, then flips to 200.
-  context.store
+  void context.store
     .load()
     .then((result) => {
       context.logger.info(
         `store: initial load complete in ${result.durationMs}ms ` +
           `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
       );
-      // Warm the route status cache so the first /status page hit doesn't
-      // pay the ~200 ms probe sweep on the request path.
       warmRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     })
     .catch((error: Error) => {
       context.logger.error("store: initial load failed", error);
-      // No data → no useful service. Exit so the orchestrator restarts us.
       process.exit(1);
     });
 }

@@ -1,7 +1,3 @@
-// Express app wiring. Public read-only API + a few HTML pages. No auth,
-// no sessions, no CSRF, no database — the in-memory store is the only
-// data dependency.
-
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import cors from "cors";

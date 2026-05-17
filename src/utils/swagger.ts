@@ -62,10 +62,6 @@ Endpoints that return weights accept \`?units=lbs\` (default) or \`?units=kg\`. 
   },
   servers: [
     {
-      // Relative server URL — Swagger UI resolves this against whichever
-      // origin loaded the spec. That makes Try-It-Out fire same-origin on
-      // every deploy (prod, temp PR previews, localhost) without needing
-      // to relax CSP `connect-src` or CORS `origin`.
       url: "/",
       description: "Current host",
     },

@@ -1,7 +1,3 @@
-// Dependency-injection container for the app. Everything reads through
-// AppContext so tests can swap in stubs and routes don't reach for module
-// singletons.
-
 import { createLogger, type LoggerType } from "./utils/logger";
 import { createHelper, type HelpersType } from "./utils/helpers";
 import { createDataStore, type DataStoreType } from "./data/store";

@@ -1,7 +1,3 @@
-// Builds a small AppData from a handful of in-memory rows for tests. Goes
-// through the same index builders the loader uses, so anything that
-// changes the precomputed shape will fail here too.
-
 import type { AppContext } from "../context";
 import { createContext, resetContext } from "../context";
 import {
@@ -14,9 +10,6 @@ import {
 } from "../data/store";
 import type { AppData, Entry, Lifter, Meet } from "../data/types";
 
-// Five lifters competing at three meets across two federations. Enough
-// variety to exercise top-N (rankings), top-3 per weight class (records),
-// federation grouping, and per-lifter history.
 export function makeFixtureAppData(): AppData {
   const lifters: Lifter[] = [
     { username: "edcoan", name: "Ed Coan" },
@@ -196,8 +189,6 @@ export function makeFixtureAppData(): AppData {
   };
 }
 
-// Returns an AppContext with the data store preloaded with the fixture.
-// Resets the module-level context so each test gets a fresh singleton.
 export function createTestContext(): AppContext {
   resetContext();
   const context = createContext();
@@ -205,8 +196,6 @@ export function createTestContext(): AppContext {
   return context;
 }
 
-// Convenience: full Entry with sensible nulls everywhere we don't care
-// about, so tests only set the fields they actually need.
 function makeEntry(overrides: Partial<Entry> & { lifterId: number; meetId: number }): Entry {
   return {
     sex: null,

@@ -1,7 +1,3 @@
-// Slim middleware stack: request logging, hostname memoization, rate
-// limit, validation, error/not-found, cache-control headers, app-local
-// state. No auth, no sessions, no CSRF, no database.
-
 import crypto from "crypto";
 import { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
@@ -186,15 +182,11 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
     };
   }
 
-  // Same shape as validationMiddleware. Kept as a separate symbol so API
-  // routes can opt into different error rendering later without rewiring.
   function apiValidationMiddleware(validators: RequestValidators) {
     return validationMiddleware(validators);
   }
 
   function hostNameMiddleware(req: Request, _res: Response, next: NextFunction): void {
-    // Memoize on app.locals — single-process, single connection identity.
-    // No DB, no cross-restart persistence needed.
     if (req.app.locals.hostname == null) {
       req.app.locals.hostname = helpers.getHostName(req);
     }
@@ -208,8 +200,6 @@ export function createMiddleware(helpers: HelpersType, logger: LoggerType): Midd
       domain: configuration.app.domain,
       currentYear,
       env: configuration.app.env,
-      // Cached snapshot of the route health for the nav status dot.
-      // Reads only — never triggers a probe on the request path.
       routeHealth: getCachedRouteHealth(),
     };
     next();

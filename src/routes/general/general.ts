@@ -90,8 +90,6 @@ export function createGeneralRouter(context: AppContext) {
   return router;
 }
 
-// Top-9 lifters by dots for the marketing home page. Cheap — slice of a
-// pre-sorted index array. Returns null if the store has no eligible rows.
 function buildHomeRankings(data: ReturnType<AppContext["store"]["tryGet"]>) {
   if (data == null) return null;
   const top = data.rankByMetric.dots.subarray(0, 9);
