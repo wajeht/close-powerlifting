@@ -3,7 +3,7 @@
     <!-- about -->
     <li>
       <a
-        class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
+        class="<%= typeof path !== 'undefined' && path === '/about' ? 'text-white' : 'text-neutral-400' %> inline-flex h-8 items-center transition-colors hover:text-white"
         href="/about"
         >About</a
       >
@@ -12,29 +12,31 @@
     <!-- status (with health dot in the top-right corner) -->
     <li class="relative">
       <a
-        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> transition-colors hover:text-white"
+        class="<%= typeof path !== 'undefined' && path === '/status' ? 'text-white' : 'text-neutral-400' %> inline-flex h-8 items-center transition-colors hover:text-white"
         href="/status"
         >Status</a
       >
       <% if (state.routeHealth === true) { %>
-      <span class="pointer-events-none absolute -top-1 -right-3 inline-flex h-2 w-2" aria-label="All systems operational" title="All systems operational">
+      <span class="pointer-events-none absolute right-[-12px] top-[-2px] inline-flex h-2 w-2" aria-label="All systems operational" title="All systems operational">
         <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-60"></span>
         <span class="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
       </span>
       <% } else if (state.routeHealth === false) { %>
-      <span class="pointer-events-none absolute -top-1 -right-3 inline-block h-2 w-2 rounded-full bg-power" aria-label="Service degraded" title="Service degraded"></span>
+      <span class="pointer-events-none absolute right-[-12px] top-[-2px] inline-block h-2 w-2 rounded-full bg-power" aria-label="Service degraded" title="Service degraded"></span>
       <% } %>
     </li>
 
     <!-- docs -->
     <li>
-      <a class="text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank">Docs</a>
+      <a class="inline-flex h-8 items-center text-neutral-400 transition-colors hover:text-white" href="/docs/api" target="_blank"
+        >Docs</a
+      >
     </li>
 
     <!-- github (ghost button) -->
     <li>
       <a
-        class="inline-flex items-center gap-2 rounded-md border border-neutral-700 px-4 py-2 text-neutral-300 transition-all hover:border-power hover:text-white"
+        class="inline-flex h-8 items-center gap-2 rounded-md border border-neutral-700 px-3 text-neutral-300 transition-all hover:border-power hover:text-white"
         href="https://github.com/wajeht/close-powerlifting"
         target="_blank"
         rel="noopener"
