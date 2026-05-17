@@ -116,7 +116,7 @@ describe("cron", () => {
 
       const status = cron.getStatus();
       expect(status.isRunning).toBe(true);
-      expect(status.jobCount).toBe(6);
+      expect(status.jobCount).toBe(3);
 
       cron.stop();
     });
@@ -133,7 +133,7 @@ describe("cron", () => {
       const cron = createCron(cache, userRepository, logger, scraper, ingest, knex);
       cron.start();
 
-      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 6 });
+      expect(logger.info).toHaveBeenCalledWith("cron service started", { jobs: 3 });
 
       cron.stop();
 

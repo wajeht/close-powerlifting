@@ -18,8 +18,6 @@ describe("Admin Routes", () => {
         email: adminEmail,
         verification_token: adminMagicToken,
         api_key: "test-admin-key",
-        api_call_count: 0,
-        api_call_limit: 750,
         admin: true,
         verified: true,
       })
@@ -32,8 +30,6 @@ describe("Admin Routes", () => {
         email: regularEmail,
         verification_token: regularMagicToken,
         api_key: "test-regular-key",
-        api_call_count: 50,
-        api_call_limit: 100,
         admin: false,
         verified: true,
       })
@@ -70,16 +66,6 @@ describe("Admin Routes", () => {
 
     it("should redirect GET /admin/users/:id to login", async () => {
       const response = await request(app).get("/admin/users/1");
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/users/:id/api-limit to login", async () => {
-      const response = await request(app)
-        .post("/admin/users/1/api-limit")
-        .type("form")
-        .send({ api_call_limit: 999 });
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
@@ -167,19 +153,6 @@ describe("Admin Routes", () => {
 
       expect(response.status).toBe(302);
       expect(response.headers.location).toBe("/login");
-    });
-
-    it("should redirect POST /admin/users/:id/api-limit to login for non-admin user", async () => {
-      const response = await nonAdminAgent
-        .post(`/admin/users/${regularUserId}/api-limit`)
-        .type("form")
-        .send({ api_call_limit: 99999 });
-
-      expect(response.status).toBe(302);
-      expect(response.headers.location).toBe("/login");
-
-      const user = await knex("users").where({ id: regularUserId }).first();
-      expect(user.api_call_limit).not.toBe(99999);
     });
 
     it("should redirect POST /admin/users/:id/delete to login for non-admin user", async () => {
@@ -291,24 +264,6 @@ describe("Admin Routes", () => {
       });
     });
 
-    describe("POST /admin/users/:id/api-limit", () => {
-      it("should update user api_call_limit", async () => {
-        const usersPage = await agent.get("/admin/users");
-        const csrfToken = extractCsrfToken(usersPage.text);
-
-        const response = await agent
-          .post(`/admin/users/${regularUserId}/api-limit`)
-          .type("form")
-          .send({ api_call_limit: 1000, _csrf: csrfToken });
-
-        expect(response.status).toBe(302);
-        expect(response.headers.location).toBe("/admin/users");
-
-        const user = await knex("users").where({ id: regularUserId }).first();
-        expect(user.api_call_limit).toBe(1000);
-      });
-    });
-
     describe("POST /admin/users/:id/delete", () => {
       it("should delete the user", async () => {
         const [doomedUser] = await knex("users")
@@ -360,26 +315,6 @@ describe("Admin Routes", () => {
         expect(response.text).toContain("User Details");
         expect(response.text).toContain("Regular Test User");
         expect(response.text).toContain(regularEmail);
-      });
-
-      it("should show API call history when logs exist", async () => {
-        await knex("api_call_logs").insert({
-          user_id: regularUserId,
-          method: "GET",
-          endpoint: "/api/rankings",
-          status_code: 200,
-          response_time_ms: 42,
-          ip_address: "127.0.0.1",
-        });
-
-        const response = await agent.get(`/admin/users/${regularUserId}`);
-
-        expect(response.status).toBe(200);
-        expect(response.text).toContain("API Call History");
-        expect(response.text).toContain("/api/rankings");
-        expect(response.text).toContain("42ms");
-
-        await knex("api_call_logs").where({ user_id: regularUserId }).del();
       });
 
       it("should redirect to users list for non-existent user", async () => {

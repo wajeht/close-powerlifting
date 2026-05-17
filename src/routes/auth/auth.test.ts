@@ -21,8 +21,6 @@ describe("Auth Routes", () => {
         email: testEmail,
         verification_token: testMagicToken,
         api_key: "test-auth-key",
-        api_call_count: 50,
-        api_call_limit: 100,
         admin: false,
         verified: true,
       })

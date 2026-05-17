@@ -20,8 +20,6 @@
       <tr>
         <th class="p-4">ID</th>
         <th class="p-4">User</th>
-        <th class="p-4">API Calls</th>
-        <th class="p-4">Limit</th>
         <th class="p-4">Created</th>
         <th class="p-4">Updated</th>
         <th class="p-4"></th>
@@ -42,15 +40,12 @@
           </div>
           <a href="mailto:<%= user.email %>" class="text-sm text-neutral-400 hover:text-white"><%= user.email %></a>
         </td>
-        <td class="p-4 text-neutral-300"><%= user.api_call_count %></td>
-        <td class="p-4 text-neutral-300"><%= user.api_call_limit %></td>
         <td class="p-4 text-sm text-neutral-300"><%= new Date(user.created_at).toLocaleString() %></td>
         <td class="p-4 text-sm text-neutral-300"><%= new Date(user.updated_at).toLocaleString() %></td>
         <td class="p-4">
           <%~ include('../_components/actions-dropdown.html', {
             id: 'dropdown-user-' + user.id,
             items: [
-              { label: 'Update API Limit', modal: 'modal-limit-' + user.id },
               { label: 'Resend Verification', modal: 'modal-resend-' + user.id, disabled: user.verified },
               { label: 'Delete User', modal: 'modal-delete-' + user.id, variant: 'danger', disabled: it.user && it.user.id === user.id }
             ]
@@ -60,7 +55,7 @@
       <% } %>
       <% if (it.users.length === 0) { %>
       <tr>
-        <td colspan="7" class="p-8 text-center text-neutral-400">No users found.</td>
+        <td colspan="5" class="p-8 text-center text-neutral-400">No users found.</td>
       </tr>
       <% } %>
     </tbody>
@@ -69,14 +64,6 @@
 
 <% for (const user of it.users) { %>
 <% const escapedName = user.name.split('&').join('&amp;').split(String.fromCharCode(60)).join('&lt;').split(String.fromCharCode(62)).join('&gt;').split('"').join('&quot;'); %>
-<%~ include('../_components/modal.html', {
-  id: 'modal-limit-' + user.id,
-  action: '/admin/users/' + user.id + '/api-limit',
-  title: 'Update API Limit',
-  description: 'Set a new API call limit for <span class="text-white">' + escapedName + '</span>.',
-  input: include('../_components/inputs/number.html', { label: 'API Call Limit', name: 'api_call_limit', value: user.api_call_limit, min: 0, required: true }),
-  confirmText: 'Update Limit'
-}) %>
 <% if (!user.verified) { %>
 <%~ include('../_components/modal.html', {
   id: 'modal-resend-' + user.id,
