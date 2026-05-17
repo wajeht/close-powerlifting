@@ -25,16 +25,16 @@
     <div class="fade-in-heading animation-delay-3 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
       <a
         class="rounded-md bg-power px-4 py-2 font-medium text-white shadow-lg shadow-power-glow hover:shadow-xl hover:shadow-power-glow transition-all hover:bg-power-dark"
-        href="/login"
-      >Get your free API key</a>
+        href="/docs/api"
+      >Read the docs</a>
       <a
         class="rounded-md border border-neutral-700 px-4 py-2 text-neutral-300 transition-all hover:border-power hover:text-white"
-        href="/docs/api"
+        href="/api/rankings?limit=10"
         target="_blank"
-      >Read the docs</a>
+      >Try /api/rankings</a>
     </div>
     <p class="fade-in-heading animation-delay-3 mt-4 text-sm text-neutral-500">
-      Free to use. No credit card required.
+      Public API. No keys, no signup, no rate-limit hassle.
     </p>
   </div>
 </section>
@@ -164,8 +164,39 @@
 <section class="mt-24">
   <div class="fade-in animation-delay-6 mx-auto max-w-5xl px-4">
     <h2 class="mb-2 text-center text-2xl font-bold text-white">See it in action</h2>
-    <p class="mb-6 text-center text-neutral-500">Live data from the /rankings endpoint</p>
-    <%~ include('../_components/rankings-table.html', rankings) %>
+    <p class="mb-6 text-center text-neutral-500">Live data from /api/rankings</p>
+    <% if (!it.rankings?.length) { %>
+    <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-8 text-center text-neutral-400">
+      Data is loading. Refresh in a moment.
+    </div>
+    <% } else { %>
+    <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+      <table class="w-full text-left">
+        <thead class="border-b border-neutral-800 text-neutral-400">
+          <tr>
+            <th class="whitespace-nowrap p-4">Rank</th>
+            <th class="whitespace-nowrap p-4">Name</th>
+            <th class="whitespace-nowrap p-4">Dots</th>
+            <th class="whitespace-nowrap p-4">Total (kg)</th>
+            <th class="whitespace-nowrap p-4">Equipment</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-800">
+          <% for (const row of it.rankings) { %>
+          <tr class="hover:bg-neutral-800/50">
+            <td class="whitespace-nowrap p-4"><span class="font-bold text-power"><%= row.rank %></span></td>
+            <td class="whitespace-nowrap p-4">
+              <a class="font-medium text-neutral-300 hover:text-power" href="/api/users/<%= row.username %>"><%= row.name %></a>
+            </td>
+            <td class="whitespace-nowrap p-4 text-neutral-400"><%= row.dots %></td>
+            <td class="whitespace-nowrap p-4 text-neutral-400"><%= row.total %></td>
+            <td class="whitespace-nowrap p-4 text-neutral-400"><%= row.equipment %></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
   </div>
 </section>
 
@@ -174,15 +205,15 @@
   <div class="fade-in animation-delay-7 mx-auto max-w-5xl px-4">
     <div class="overflow-hidden rounded-2xl border border-neutral-800 bg-black px-4 py-16 text-center transition-all hover:border-power/50">
       <h2 class="mb-4 text-2xl font-bold text-white">
-        Ready to build something great?
+        Open data. Open API. No friction.
       </h2>
       <p class="mb-8 text-neutral-400">
-        Get started in under a minute. No credit card required.
+        Hit any endpoint right now. No registration, no API key.
       </p>
       <a
         class="inline-block rounded-md bg-power px-4 py-2 font-medium text-white shadow-lg shadow-power-glow hover:shadow-xl hover:shadow-power-glow transition-all hover:bg-power-dark"
-        href="/login"
-      >Get your free API key</a>
+        href="/docs/api"
+      >Browse the docs</a>
       <p class="mt-6 text-sm text-neutral-500">
         Data sourced from
         <a class="text-power/80 hover:text-power" href="https://openpowerlifting.org" target="_blank">OpenPowerlifting.org</a>
