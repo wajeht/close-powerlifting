@@ -6,7 +6,7 @@ async function main(): Promise<void> {
 
   const force = process.argv.includes("--force");
   try {
-    const result = await context.ingest.runNightly({ force });
+    const result = await context.ingest.runNightlyInProcess({ force });
     context.logger.info(
       `ingest finished: status=${result.status} lifts=${result.stats.lifts} lifters=${result.stats.lifters} meets=${result.stats.meets} durationMs=${result.durationMs}`,
     );

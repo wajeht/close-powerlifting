@@ -11,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 import { pipeline } from "node:stream/promises";
 import { Readable, type Transform } from "node:stream";
+import { Worker } from "node:worker_threads";
 import type { Knex } from "knex";
 
 import { parse as parseCsv } from "csv-parse";
@@ -151,8 +152,18 @@ export interface IngestResult {
 
 export type CsvStreamFactory = () => Readable;
 
+// Wire-format for messages the ingest worker posts back to the parent.
+// Discriminated by `ok` so the parent can resolve or reject in one branch.
+export type IngestWorkerMessage = { ok: true; result: IngestResult } | { ok: false; error: string };
+
 export interface IngestServiceType {
+  // Main-process API: dispatches to a worker_thread so the Express event
+  // loop stays responsive while the SQLite-heavy work runs.
   runNightly: (options?: { force?: boolean }) => Promise<IngestResult>;
+  // Same logic, executed in the current thread. Called by the worker entry
+  // (src/utils/ingest-worker.ts) and the standalone CLI (scripts/ingest.ts);
+  // never call this from the API process — it will freeze HTTP traffic.
+  runNightlyInProcess: (options?: { force?: boolean }) => Promise<IngestResult>;
   ingestFromStream: (
     csvStreamFactory: CsvStreamFactory,
     options?: { sourceLastModified?: string | null; byteSize?: number | null },
@@ -664,7 +675,7 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     };
   }
 
-  async function runNightly(options: { force?: boolean } = {}): Promise<IngestResult> {
+  async function runNightlyInProcess(options: { force?: boolean } = {}): Promise<IngestResult> {
     const startedAt = new Date();
     let downloadInfo: {
       filePath: string;
@@ -735,8 +746,64 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     }
   }
 
+  // Spawns the ingest in a Worker thread so the API event loop keeps serving
+  // requests. SQLite phases like CREATE INDEX, FTS rebuild, COMMIT, and
+  // wal_checkpoint(TRUNCATE) are single C++ calls that hold the V8 thread
+  // for seconds — letting them run in a worker keeps /healthz fast.
+  //
+  // Each call spawns a fresh worker (one-shot). Cheaper-overall than keeping
+  // a long-lived worker since ingests are 1x/day + occasional manual triggers.
+  async function runNightly(options: { force?: boolean } = {}): Promise<IngestResult> {
+    const workerUrl = resolveWorkerEntry();
+    // tsx is the dev loader (resolves `.ts` worker files); compiled prod runs
+    // plain JS so no `execArgv` is needed.
+    const needsTsxLoader = workerUrl.pathname.endsWith(".ts");
+    const execArgv = needsTsxLoader ? ["--import", "tsx"] : undefined;
+
+    return new Promise<IngestResult>((resolve, reject) => {
+      const worker = new Worker(workerUrl, {
+        workerData: { options },
+        execArgv,
+      });
+
+      // Worker can emit message + exit + error; only the first outcome wins.
+      // Inline guard rather than a helper — explicit early returns read better.
+      let settled = false;
+
+      worker.on("message", (msg: IngestWorkerMessage) => {
+        if (settled) return;
+        settled = true;
+        if (msg.ok) resolve(msg.result);
+        else reject(new Error(msg.error));
+      });
+
+      worker.on("error", (err: Error) => {
+        if (settled) return;
+        settled = true;
+        reject(err);
+      });
+
+      worker.on("exit", (code: number) => {
+        if (settled) return;
+        if (code === 0) return;
+        settled = true;
+        reject(new Error(`ingest worker exited with code ${code}`));
+      });
+    });
+  }
+
   return {
     runNightly,
+    runNightlyInProcess,
     ingestFromStream,
   };
+}
+
+// Worker entry file lives next to this module. In dev it's a .ts file loaded
+// by the tsx loader; in prod the build emits dist/src/utils/ingest-worker.js.
+// Using __filename (CJS / tsx-shimmed) keeps this resolvable in both modes.
+function resolveWorkerEntry(): URL {
+  const isCompiledJs = __filename.endsWith(".js");
+  const filename = isCompiledJs ? "ingest-worker.js" : "ingest-worker.ts";
+  return new URL(`file://${path.join(path.dirname(__filename), filename)}`);
 }
