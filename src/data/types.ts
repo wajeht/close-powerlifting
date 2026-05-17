@@ -85,11 +85,11 @@ export interface Entry {
   placeStatus: PlaceStatus | null;
 
   // Scoring formulae, all precomputed in the CSV.
+  // (McCulloch is computed dynamically by OPL — not a column in the bulk CSV.)
   dots: number | null;
   wilks: number | null;
   glossbrenner: number | null;
   goodlift: number | null;
-  mcculloch: number | null;
 }
 
 // One row per (category, sex, equipmentGroup, weightClass, rank). Precomputed

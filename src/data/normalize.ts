@@ -14,6 +14,11 @@ import type {
 // Canonical list of CSV columns the loader touches. The header row of the
 // downloaded CSV is validated against this so an upstream rename fails
 // fast instead of silently writing nulls.
+//
+// Verified against the actual bulk CSV header (May 2026): McCulloch,
+// RuleSet, and MeetPath that earlier OPL drafts mentioned are NOT present.
+// We compute the meet path slug client-side; ruleset defaults to null;
+// McCulloch is dropped from the data model entirely.
 export const REQUIRED_COLUMNS = [
   "Name",
   "Sex",
@@ -46,7 +51,6 @@ export const REQUIRED_COLUMNS = [
   "Wilks",
   "Glossbrenner",
   "Goodlift",
-  "McCulloch",
   "Tested",
   "Country",
   "State",
@@ -57,9 +61,7 @@ export const REQUIRED_COLUMNS = [
   "MeetState",
   "MeetTown",
   "MeetName",
-  "MeetPath",
   "Sanctioned",
-  "RuleSet",
 ] as const;
 
 export type ColumnName = (typeof REQUIRED_COLUMNS)[number];
@@ -200,9 +202,6 @@ export function normalizeRow(
   const date = trimToNull(row[cols.Date]);
   if (date == null || !REGEX_ISO_DATE.test(date)) return null;
 
-  const meetPath = trimToNull(row[cols.MeetPath]);
-  if (meetPath == null) return null;
-
   const federation = trimToNull(row[cols.Federation]);
   if (federation == null) return null;
 
@@ -210,6 +209,10 @@ export function normalizeRow(
   if (meetName == null) return null;
 
   const lifterUsername = usernameFor(nameRaw, rowIdx);
+
+  // The CSV doesn't ship a MeetPath column anymore, so we synthesise the
+  // canonical URL slug ourselves: lower(federation) / date / slug(meetName).
+  const meetPath = `${nameToSlug(federation)}/${date}/${nameToSlug(meetName)}`;
 
   const place = splitPlace(row[cols.Place]);
 
@@ -222,7 +225,7 @@ export function normalizeRow(
     meetCountry: trimToNull(row[cols.MeetCountry]),
     meetState: trimToNull(row[cols.MeetState]),
     meetTown: trimToNull(row[cols.MeetTown]),
-    ruleset: trimToNull(row[cols.RuleSet]),
+    ruleset: null, // not a column in the bulk CSV
     sanctioned: toBoolean(row[cols.Sanctioned]),
   };
 
@@ -260,7 +263,6 @@ export function normalizeRow(
     wilks: toNumber(row[cols.Wilks]),
     glossbrenner: toNumber(row[cols.Glossbrenner]),
     goodlift: toNumber(row[cols.Goodlift]),
-    mcculloch: toNumber(row[cols.McCulloch]),
   };
 
   return {
