@@ -18,6 +18,8 @@ import { AppError, UnauthorizedError } from "../error";
 const ONE_DAY_SECONDS = 86400;
 const ONE_HOUR_SECONDS = 3600;
 
+export const HOSTNAME_CACHE_KEY = "hostname";
+
 type RequestValidators = {
   params?: z.ZodTypeAny;
   body?: z.ZodTypeAny;
@@ -287,14 +289,14 @@ export function createMiddleware(
   }
 
   async function hostNameMiddleware(req: Request, _res: Response, next: NextFunction) {
-    if (!req.app.locals.hostname) {
-      const hostname = await cache.get("hostname");
-
-      if (hostname === null) {
-        await cache.set("hostname", helpers.getHostName(req));
-        req.app.locals.hostname = await cache.get("hostname");
+    if (req.app.locals.hostname == null) {
+      const cached = await cache.get(HOSTNAME_CACHE_KEY);
+      if (cached == null) {
+        const resolved = helpers.getHostName(req);
+        await cache.set(HOSTNAME_CACHE_KEY, resolved);
+        req.app.locals.hostname = resolved;
       } else {
-        req.app.locals.hostname = hostname;
+        req.app.locals.hostname = cached;
       }
     }
     next();

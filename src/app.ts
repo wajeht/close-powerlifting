@@ -10,7 +10,8 @@ import { AddressInfo } from "net";
 
 import { configuration } from "./configuration";
 import { type AppContext } from "./context";
-import { createMiddleware } from "./routes/middleware";
+import { HEALTH_CHECK_CACHE_KEY } from "./routes/api/health-check/health-check.service";
+import { createMiddleware, HOSTNAME_CACHE_KEY } from "./routes/middleware";
 import { createMainRouter } from "./routes/routes";
 import { createSwagger } from "./utils/swagger";
 import { renderTemplate, layoutMiddleware } from "./utils/template";
@@ -143,6 +144,23 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
       }
 
       await context.adminUser.initializeAdminUser();
+
+      const cachedStatus = await context.cache.get(HEALTH_CHECK_CACHE_KEY);
+      if (cachedStatus == null) {
+        const existingHostname = await context.cache.get(HOSTNAME_CACHE_KEY);
+        if (existingHostname == null) {
+          const seedHostname =
+            configuration.app.env === "development"
+              ? `http://localhost:${port}`
+              : configuration.app.domain;
+          await context.cache.set(HOSTNAME_CACHE_KEY, seedHostname);
+        }
+
+        void context.cron.tasks.refreshHealthCheck().catch((error) => {
+          const message = error instanceof Error ? error.message : String(error);
+          context.logger.error("Boot warm-up of health-check cache failed", { error: message });
+        });
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error during startup";
       context.logger.error(message);
