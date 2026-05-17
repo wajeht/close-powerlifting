@@ -1,21 +1,19 @@
 import express, { Request, Response } from "express";
 
 import type { AppContext } from "../../../context";
-import { sendSuccess } from "../api.helpers";
+import { createHealthCheckService } from "./health-check.service";
 
 export function createHealthCheckRouter(context: AppContext) {
+  const healthCheckService = createHealthCheckService(context.store, context.cron);
   const router = express.Router();
 
   /**
    * GET /api/health-check
-   * @summary Readiness probe
    * @tags Health Check
-   * @return {object} 200 - Data is loaded and the cron is running
-   * @return {object} 503 - Data is still loading
+   * @summary Check API health status
    */
   router.get("/api/health-check", (req: Request, res: Response) => {
-    const ready = context.store.tryGet() != null;
-    if (!ready) {
+    if (!healthCheckService.isReady()) {
       res.status(503).json({
         status: "fail",
         request_url: req.originalUrl,
@@ -25,16 +23,12 @@ export function createHealthCheckRouter(context: AppContext) {
       });
       return;
     }
-    sendSuccess(
-      res,
-      {
-        uptime: process.uptime(),
-        timestamp: Date.now(),
-        data: "ready",
-        crons: context.cron.getStatus().isRunning ? "started" : "stopped",
-      },
-      { requestUrl: req.originalUrl },
-    );
+    res.status(200).json({
+      status: "success",
+      request_url: req.originalUrl,
+      message: "The resource was returned successfully!",
+      data: healthCheckService.getHealthCheck(),
+    });
   });
 
   return router;

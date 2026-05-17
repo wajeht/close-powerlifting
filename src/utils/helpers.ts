@@ -20,6 +20,16 @@ export function buildPagination(total: number, page: number, limit: number): Pag
   };
 }
 
+const KG_TO_LBS = 2.20462262185;
+
+export type Units = "lbs" | "kg";
+
+export function inUnits(kg: number | null | undefined, units: Units): number | null {
+  if (kg == null) return null;
+  if (units === "kg") return kg;
+  return Math.round(kg * KG_TO_LBS * 100) / 100;
+}
+
 // Stable URL-safe identifier — strip diacritics, lowercase, keep only
 // alphanumerics. Mirrors OpenPowerlifting's Username::from_name in
 // crates/opltypes/src/username.rs.

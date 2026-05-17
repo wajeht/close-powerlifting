@@ -1,20 +1,19 @@
 import express, { Request, Response } from "express";
 
 import type { AppContext } from "../../../context";
-import { sendSuccess } from "../api.helpers";
+import { createStatusService } from "./status.service";
 
 export function createStatusRouter(context: AppContext) {
+  const statusService = createStatusService(context.store);
   const router = express.Router();
 
   /**
    * GET /api/status
-   * @summary Snapshot metadata + entity counts
    * @tags Status
-   * @return {object} 200 - Counts plus the source CSV's Last-Modified header
-   * @return {object} 503 - Data is still warming up after boot
+   * @summary Get data source status and statistics
    */
   router.get("/api/status", (req: Request, res: Response) => {
-    const data = context.store.tryGet();
+    const data = statusService.getStatus();
     if (data == null) {
       res.status(503).json({
         status: "fail",
@@ -25,19 +24,12 @@ export function createStatusRouter(context: AppContext) {
       });
       return;
     }
-    sendSuccess(
-      res,
-      {
-        lifters: data.lifters.length,
-        meets: data.meets.length,
-        entries: data.entries.length,
-        federations: data.federations.length,
-        records: data.records.length,
-        source_last_modified: data.sourceLastModified,
-        ingested_at: data.ingestedAt,
-      },
-      { requestUrl: req.originalUrl },
-    );
+    res.status(200).json({
+      status: "success",
+      request_url: req.originalUrl,
+      message: "The resource was returned successfully!",
+      data,
+    });
   });
 
   return router;
