@@ -49,11 +49,10 @@ export function createApp(context: AppContext): HonoApp {
     }),
   );
 
-  app.use("/public/*", serveStatic({ root: "./" }));
   app.use("/css/*", serveStatic({ root: "./public" }));
   app.use("/js/*", serveStatic({ root: "./public" }));
-  app.use("/images/*", serveStatic({ root: "./public" }));
-  app.use("/favicon.ico", serveStatic({ path: "./public/favicon.ico" }));
+  app.use("/img/*", serveStatic({ root: "./public" }));
+  app.use("/fonts/*", serveStatic({ root: "./public" }));
   app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
 
   app.use("*", middleware.appLocalStateMiddleware);
