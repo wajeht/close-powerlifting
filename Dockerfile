@@ -46,10 +46,17 @@ COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/public ./public
 COPY --chown=node:node --from=build /usr/src/app/src/routes ./src/routes
 
-# On-disk cache for the OPL CSV (160 MB zip). Mounted as a volume in
-# docker-compose so it survives restarts; the loader uses a HEAD request
-# to decide whether the cached zip is still current, saving ~50 s of
-# download on every restart when upstream hasn't changed.
+# Pre-built data snapshot — committed to the repo by the weekly
+# update-data.yml workflow. The loader prefers this over downloading +
+# parsing the CSV; with the snapshot baked in, boot is <10 s instead of ~90 s.
+# The folder is copied to dist/src/data/snapshot so its __dirname-relative
+# resolution finds the JSON next to the compiled JS.
+COPY --chown=node:node --from=build /usr/src/app/dist/src/data/snapshot ./dist/src/data/snapshot
+
+# Fallback OPL CSV cache for the rare case the snapshot is unavailable
+# (corrupted file, brand-new clone before the first workflow run, etc.).
+# Mounted as a volume in docker-compose so a downloaded zip survives
+# restarts; the loader uses HEAD-vs-Last-Modified to skip re-downloading.
 RUN mkdir -p /data/csv-cache && chown -R node:node /data
 ENV OPL_CACHE_DIR=/data/csv-cache
 
