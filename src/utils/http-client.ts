@@ -1,19 +1,22 @@
 const FETCH_TIMEOUT_MS = 15000;
 
-export interface ScraperType {
-  fetchWithAuth: (
-    baseUrl: string,
-    path: string,
-    token: string,
-  ) => Promise<{ ok: boolean; url: string; date: string | null; body: string | null }>;
+export interface HttpResponse {
+  ok: boolean;
+  url: string;
+  date: string | null;
+  body: string | null;
 }
 
-export function createScraper(): ScraperType {
+export interface HttpClientType {
+  fetchWithAuth: (baseUrl: string, path: string, token: string) => Promise<HttpResponse>;
+}
+
+export function createHttpClient(): HttpClientType {
   async function fetchWithAuth(
     baseUrl: string,
     path: string,
     token: string,
-  ): Promise<{ ok: boolean; url: string; date: string | null; body: string | null }> {
+  ): Promise<HttpResponse> {
     try {
       const response = await fetch(`${baseUrl}${path}`, {
         headers: { authorization: `Bearer ${token}` },
