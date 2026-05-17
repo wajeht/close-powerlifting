@@ -29,10 +29,6 @@ const ROUTES = [
   { path: "/api/federations/ipf", requiresAuth: true },
   { path: "/api/federations/ipf/stats", requiresAuth: true },
 
-  // Meets
-  { path: "/api/meets/uspa/1969", requiresAuth: true },
-  { path: "/api/meets/uspa/1969/highlights", requiresAuth: true },
-
   // Records - All equipment types
   { path: "/api/records", requiresAuth: true },
   { path: "/api/records/raw", requiresAuth: true },
@@ -84,9 +80,6 @@ const ROUTES = [
   { path: "/api/records?age_class=40-44", requiresAuth: true },
   { path: "/api/records/raw/men?age_class=20-23", requiresAuth: true },
   { path: "/api/records/raw/ipf-classes/men?age_class=over80", requiresAuth: true },
-
-  // Account
-  { path: "/api/quota", requiresAuth: true },
 ];
 
 interface TestResult {
