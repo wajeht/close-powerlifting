@@ -37,9 +37,6 @@ const INGEST_PRAGMAS: ReadonlyArray<string> = [
   "PRAGMA wal_autocheckpoint = 0",
   // Keep dirty pages in cache through the txn — don't flush opportunistically.
   "PRAGMA cache_spill = OFF",
-  // Hold the file lock for the duration of the connection. Skips per-statement
-  // lock syscalls. Safe because the nightly cron is the only writer.
-  "PRAGMA locking_mode = EXCLUSIVE",
 ];
 
 const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
@@ -47,7 +44,6 @@ const STEADY_STATE_PRAGMAS: ReadonlyArray<string> = [
   "PRAGMA mmap_size = 0",
   "PRAGMA wal_autocheckpoint = 1000",
   "PRAGMA cache_spill = ON",
-  "PRAGMA locking_mode = NORMAL",
 ];
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
