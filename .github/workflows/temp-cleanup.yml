@@ -1,0 +1,33 @@
+name: Temp Cleanup
+
+# Tears down a temp PR deploy when the PR is closed (merged or not) OR when
+# the `temp-deploy` label is removed. Lives in its own workflow file so its
+# concurrency is independent of `ci.yml` — a merge fires both CI's PR-closed
+# event AND a push-to-main; we don't want either of those cancelling the
+# cleanup mid-run.
+
+on:
+  pull_request:
+    types: [closed, unlabeled]
+
+permissions:
+  contents: read
+  deployments: write
+
+# Serialize cleanups per PR. Never cancel an in-flight cleanup — a half-torn-
+# down stack is worse than waiting an extra few seconds.
+concurrency:
+  group: temp-cleanup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Temp Cleanup
+    if: >
+      github.event.action == 'closed' ||
+      (github.event.action == 'unlabeled' && github.event.label.name == 'temp-deploy')
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@c976aac4e51a559837963f7d903600c2c436e589 # v0.0.20
+    with:
+      app-path: apps/close-powerlifting
+    secrets:
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
