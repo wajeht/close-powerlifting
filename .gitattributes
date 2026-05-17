@@ -1,3 +1,0 @@
-src/data/snapshot/entries.json filter=lfs diff=lfs merge=lfs -text
-src/data/snapshot/lifters.json filter=lfs diff=lfs merge=lfs -text
-src/data/snapshot/meets.json filter=lfs diff=lfs merge=lfs -text
