@@ -1,7 +1,8 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
+import { HTTPException } from "hono/http-exception";
+
 import type { AppContext } from "../../../context";
-import { NotFoundError } from "../../../error";
 import { errorContent, jsonContent, paginatedResponse, successResponse } from "../api.schemas";
 import { createFederationsService } from "./federations.service";
 import {
@@ -82,7 +83,8 @@ export function createFederationsRouter(context: AppContext) {
   app.openapi(statsRoute, (c) => {
     const { federation } = c.req.valid("param");
     const stats = service.getFederationStats(federation);
-    if (stats == null) throw new NotFoundError(`Federation "${federation}" not found`);
+    if (stats == null)
+      throw new HTTPException(404, { message: `Federation "${federation}" not found` });
     return c.json(
       {
         status: "success" as const,
@@ -98,7 +100,8 @@ export function createFederationsRouter(context: AppContext) {
     const { federation } = c.req.valid("param");
     const query = c.req.valid("query");
     const detail = service.getFederation(federation, query);
-    if (detail == null) throw new NotFoundError(`Federation "${federation}" not found`);
+    if (detail == null)
+      throw new HTTPException(404, { message: `Federation "${federation}" not found` });
     return c.json(
       {
         status: "success" as const,

@@ -1,7 +1,8 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
+import { HTTPException } from "hono/http-exception";
+
 import type { AppContext } from "../../../context";
-import { NotFoundError } from "../../../error";
 import type { Units } from "../../../utils/helpers";
 import { errorContent, jsonContent, successResponse } from "../api.schemas";
 import { createUsersService } from "./users.service";
@@ -132,7 +133,7 @@ export function createUsersRouter(context: AppContext) {
     const result = service.compare(query);
     if (!result.found) {
       const missing = result.missing === "a" ? query.a : query.b;
-      throw new NotFoundError(`Lifter "${missing}" not found`);
+      throw new HTTPException(404, { message: `Lifter "${missing}" not found` });
     }
     return c.json(
       {
@@ -149,7 +150,7 @@ export function createUsersRouter(context: AppContext) {
     const { username } = c.req.valid("param");
     const { units = "lbs" } = c.req.valid("query");
     const data = service.getProgression(username, units as Units);
-    if (data == null) throw new NotFoundError(`Lifter "${username}" not found`);
+    if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
     return c.json(
       {
         status: "success" as const,
@@ -165,7 +166,7 @@ export function createUsersRouter(context: AppContext) {
     const { username } = c.req.valid("param");
     const { units = "lbs" } = c.req.valid("query");
     const data = service.getPersonalBests(username, units as Units);
-    if (data == null) throw new NotFoundError(`Lifter "${username}" not found`);
+    if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
     return c.json(
       {
         status: "success" as const,
@@ -180,7 +181,7 @@ export function createUsersRouter(context: AppContext) {
   app.openapi(rankRoute, (c) => {
     const { username } = c.req.valid("param");
     const data = service.getRank(username);
-    if (data == null) throw new NotFoundError(`Lifter "${username}" not found`);
+    if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
     return c.json(
       {
         status: "success" as const,
@@ -196,7 +197,7 @@ export function createUsersRouter(context: AppContext) {
     const { username } = c.req.valid("param");
     const query = c.req.valid("query");
     const data = service.getUser(username, query);
-    if (data == null) throw new NotFoundError(`Lifter "${username}" not found`);
+    if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
     return c.json(
       {
         status: "success" as const,

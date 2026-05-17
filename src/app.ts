@@ -3,10 +3,12 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { compress } from "hono/compress";
 import { cors } from "hono/cors";
+import { etag } from "hono/etag";
 import { secureHeaders } from "hono/secure-headers";
 
 import { configuration } from "./configuration";
 import type { AppContext } from "./context";
+import { layoutRenderer } from "./routes/_layouts/renderer";
 import { createMiddleware } from "./routes/middleware";
 import { createMainRouter } from "./routes/routes";
 
@@ -30,6 +32,7 @@ export function createApp(context: AppContext): HonoApp {
     }),
   );
   app.use("*", compress());
+  app.use("*", etag());
   app.use(
     "*",
     secureHeaders({
@@ -56,6 +59,7 @@ export function createApp(context: AppContext): HonoApp {
   app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
 
   app.use("*", middleware.appLocalStateMiddleware);
+  app.use("*", layoutRenderer);
   app.use("*", middleware.rateLimitMiddleware);
 
   app.route("/", createMainRouter(context));

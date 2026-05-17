@@ -20,11 +20,11 @@ export function createGeneralRouter(context: AppContext) {
   app.get("/", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) => {
     const data = context.store.tryGet();
     const rankings = data == null ? null : buildHomeRankings(data);
-    return c.html(<HomePage state={c.get("state")} rankings={rankings} />);
+    return c.render(<HomePage rankings={rankings} />);
   });
 
   app.get("/about", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) =>
-    c.html(<AboutPage state={c.get("state")} />),
+    c.render(<AboutPage />, { title: "About" }),
   );
 
   app.get("/contact", (c) =>
@@ -32,11 +32,11 @@ export function createGeneralRouter(context: AppContext) {
   );
 
   app.get("/terms", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) =>
-    c.html(<TermsPage state={c.get("state")} />),
+    c.render(<TermsPage />, { title: "Terms of Service" }),
   );
 
   app.get("/privacy", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) =>
-    c.html(<PrivacyPage state={c.get("state")} />),
+    c.render(<PrivacyPage />, { title: "Privacy Policy" }),
   );
 
   app.get("/status", middleware.cacheControlMiddleware(ONE_HOUR_SECONDS), async (c) => {
@@ -45,9 +45,8 @@ export function createGeneralRouter(context: AppContext) {
       data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     const allGood =
       routeGroups.length > 0 && routeGroups.every((g) => g.routes.every((r) => r.status));
-    return c.html(
+    return c.render(
       <StatusPage
-        state={c.get("state")}
         ready={data != null}
         rowCount={data?.rowCount ?? 0}
         sourceLastModified={data?.sourceLastModified ?? null}
@@ -55,6 +54,7 @@ export function createGeneralRouter(context: AppContext) {
         routeGroups={routeGroups}
         allGood={allGood}
       />,
+      { title: "Status" },
     );
   });
 

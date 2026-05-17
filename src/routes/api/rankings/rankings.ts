@@ -1,7 +1,8 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
+import { HTTPException } from "hono/http-exception";
+
 import type { AppContext } from "../../../context";
-import { NotFoundError } from "../../../error";
 import { errorContent, jsonContent, paginatedResponse, successResponse } from "../api.schemas";
 import { createRankingsService } from "./rankings.service";
 import {
@@ -125,7 +126,9 @@ export function createRankingsRouter(context: AppContext) {
     const rank = parseInt(rawRank, 10);
     const data = service.getRank(rank);
     if (data == null) {
-      throw new NotFoundError(`Rank ${rawRank} is out of range (max=${service.getMaxRank()})`);
+      throw new HTTPException(404, {
+        message: `Rank ${rawRank} is out of range (max=${service.getMaxRank()})`,
+      });
     }
     return c.json(
       {
