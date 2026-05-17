@@ -2,79 +2,125 @@ import express, { Request, Response } from "express";
 
 import type { AppContext } from "../../../context";
 import { NotFoundError } from "../../../error";
-import type { AppData, Entry } from "../../../data/types";
+import type { AppData, Entry, Meet } from "../../../data/types";
+import { type Units, inUnits, paginate, sendSuccess } from "../api.helpers";
+import {
+  getMeetHighlightsQueryValidation,
+  getMeetParamValidation,
+  getMeetQueryValidation,
+  listMeetsQueryValidation,
+} from "./meets.validation";
 
 export function createMeetsRouter(context: AppContext) {
   const router = express.Router();
 
   /**
    * GET /api/meets
-   * @summary Meet index, sorted by date descending
+   * @summary List meets across federations
    * @tags Meets
-   * @param {string} federation.query - Filter to one federation slug (e.g. "wrpf")
-   * @param {integer} limit.query - Page size, default 50, max 200
-   * @param {integer} offset.query - Page offset, default 0
-   * @return {object} 200 - { total, limit, offset, meets[] }
    */
   router.get("/api/meets", (req: Request, res: Response) => {
     const data = context.store.get();
-    const limit = clampInt(req.query.limit, 50, 1, 200);
-    const offset = clampInt(req.query.offset, 0, 0, Number.MAX_SAFE_INTEGER);
-    const federation =
-      typeof req.query.federation === "string" ? req.query.federation.toLowerCase() : null;
+    const q = listMeetsQueryValidation.parse(req.query);
 
-    // Build the candidate set lazily so we don't sort 62k rows every request
-    // when a small filter exists.
-    let candidates: number[];
-    if (federation != null) {
-      candidates = data.meetsByFederation.get(federation) ?? [];
+    let candidates: Meet[];
+    if (q.federation != null) {
+      const ids = data.meetsByFederation.get(q.federation.toLowerCase()) ?? [];
+      candidates = ids.map((id) => data.meets[id]!);
     } else {
-      candidates = Array.from({ length: data.meets.length }, (_, i) => i);
+      candidates = data.meets.slice();
     }
 
-    const sorted = candidates
-      .slice()
-      .sort((a, b) => data.meets[b]!.date.localeCompare(data.meets[a]!.date));
-    const page = sorted.slice(offset, offset + limit);
+    if (q.from != null) candidates = candidates.filter((m) => m.date >= q.from!);
+    if (q.to != null) candidates = candidates.filter((m) => m.date <= q.to!);
+    if (q.country != null) {
+      const needle = q.country.toLowerCase();
+      candidates = candidates.filter((m) => (m.meetCountry ?? "").toLowerCase() === needle);
+    }
+    if (q.state != null) {
+      const needle = q.state.toLowerCase();
+      candidates = candidates.filter((m) => (m.meetState ?? "").toLowerCase() === needle);
+    }
+    if (q.search != null) {
+      const needle = q.search.toLowerCase();
+      candidates = candidates.filter((m) => m.meetName.toLowerCase().includes(needle));
+    }
 
-    res.json({
-      status: "success",
-      data: {
-        total: sorted.length,
-        limit,
-        offset,
-        meets: page.map((id) => meetSummary(data, id)),
+    const direction = q.sort === "date-asc" ? 1 : -1;
+    candidates.sort((a, b) => direction * a.date.localeCompare(b.date));
+
+    const { slice, pagination } = paginate(candidates, q.current_page, q.per_page);
+    sendSuccess(res, slice.map(meetSummary), { requestUrl: req.originalUrl, pagination });
+  });
+
+  /**
+   * GET /api/meets/{federation}/{date}/{slug}/highlights
+   * @summary Get meet highlights — best lift in each category
+   * @tags Meets
+   */
+  router.get("/api/meets/:federation/:date/:slug/highlights", (req: Request, res: Response) => {
+    const data = context.store.get();
+    const params = getMeetParamValidation.parse(req.params);
+    const { units = "lbs" } = getMeetHighlightsQueryValidation.parse(req.query);
+
+    const meetId = lookupMeetId(data, params);
+    if (meetId == null) {
+      throw new NotFoundError(
+        `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
+      );
+    }
+    const meet = data.meets[meetId]!;
+    const entryIds = data.entriesByMeet.get(meetId) ?? [];
+    const entries = entryIds.map((id) => data.entries[id]!);
+
+    sendSuccess(
+      res,
+      {
+        path: meet.path,
+        meet_name: meet.meetName,
+        federation: meet.federation,
+        date: meet.date,
+        highlights: {
+          best_total: bestByField(data, entries, "totalKg", units),
+          best_squat: bestByField(data, entries, "best3SquatKg", units),
+          best_bench: bestByField(data, entries, "best3BenchKg", units),
+          best_deadlift: bestByField(data, entries, "best3DeadliftKg", units),
+          best_dots: bestByField(data, entries, "dots", units),
+        },
       },
-    });
+      { requestUrl: req.originalUrl },
+    );
   });
 
   /**
    * GET /api/meets/{federation}/{date}/{slug}
-   * @summary Single meet with all results
+   * @summary Get meet results
    * @tags Meets
-   * @param {string} meetPath.path.required - Slash-separated meet path (e.g. "wrpf/2024-05-12/wrpfamericanpro")
-   * @return {object} 200 - Meet details + entry rows sorted by place
-   * @return {object} 404 - No such meet path
    */
-  router.get("/api/meets/*meetPath", (req: Request, res: Response) => {
+  router.get("/api/meets/:federation/:date/:slug", (req: Request, res: Response) => {
     const data = context.store.get();
-    const raw = req.params.meetPath;
-    const path = Array.isArray(raw) ? raw.join("/") : String(raw ?? "");
-    const meetId = data.meetByPath.get(path);
+    const params = getMeetParamValidation.parse(req.params);
+    const { sort = "place", units = "lbs" } = getMeetQueryValidation.parse(req.query);
+
+    const meetId = lookupMeetId(data, params);
     if (meetId == null) {
-      throw new NotFoundError(`Meet "${path}" not found`);
+      throw new NotFoundError(
+        `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
+      );
     }
     const meet = data.meets[meetId]!;
     const entryIds = data.entriesByMeet.get(meetId) ?? [];
+    const entries = entryIds.map((id) => data.entries[id]!);
 
-    const results = entryIds
-      .map((id) => data.entries[id]!)
-      .sort(byPlaceThenTotal)
-      .map((e) => formatMeetEntry(data, e));
+    let sorter: (a: Entry, b: Entry) => number;
+    if (sort === "by-total") sorter = (a, b) => (b.totalKg ?? 0) - (a.totalKg ?? 0);
+    else if (sort === "by-dots") sorter = (a, b) => (b.dots ?? 0) - (a.dots ?? 0);
+    else sorter = byPlaceThenTotal;
+    const sorted = entries.slice().sort(sorter);
 
-    res.json({
-      status: "success",
-      data: {
+    sendSuccess(
+      res,
+      {
         path: meet.path,
         meet_name: meet.meetName,
         federation: meet.federation,
@@ -84,23 +130,25 @@ export function createMeetsRouter(context: AppContext) {
         state: meet.meetState,
         town: meet.meetTown,
         sanctioned: meet.sanctioned,
-        results,
+        results: sorted.map((e) => formatMeetEntry(data, e, units)),
       },
-    });
+      { requestUrl: req.originalUrl },
+    );
   });
 
   return router;
 }
 
-function clampInt(raw: unknown, fallback: number, min: number, max: number): number {
-  if (typeof raw !== "string") return fallback;
-  const n = parseInt(raw, 10);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.max(min, Math.min(max, n));
+function lookupMeetId(
+  data: AppData,
+  params: { federation: string; date: string; slug: string },
+): number | undefined {
+  const fed = params.federation.toLowerCase();
+  const slug = params.slug.toLowerCase();
+  return data.meetByPath.get(`${fed}/${params.date}/${slug}`);
 }
 
-function meetSummary(data: AppData, meetId: number) {
-  const m = data.meets[meetId]!;
+function meetSummary(m: Meet) {
   return {
     path: m.path,
     meet_name: m.meetName,
@@ -113,19 +161,16 @@ function meetSummary(data: AppData, meetId: number) {
   };
 }
 
-// Order entries within a meet: numerically placed lifters first (by rank
-// ascending), then non-placed (DQ / DD / NS / G).
 function byPlaceThenTotal(a: Entry, b: Entry): number {
   const ar = a.placeRank;
   const br = b.placeRank;
   if (ar != null && br != null) return ar - br;
   if (ar != null) return -1;
   if (br != null) return 1;
-  // Both non-placed: order by total desc as a tie-break.
   return (b.totalKg ?? 0) - (a.totalKg ?? 0);
 }
 
-function formatMeetEntry(data: AppData, entry: Entry) {
+function formatMeetEntry(data: AppData, entry: Entry, units: Units) {
   const lifter = data.lifters[entry.lifterId]!;
   return {
     username: lifter.username,
@@ -135,12 +180,35 @@ function formatMeetEntry(data: AppData, entry: Entry) {
     event: entry.event,
     equipment: entry.equipment,
     weight_class_kg: entry.weightClassKg,
-    bodyweight_kg: entry.bodyweightKg,
-    squat: entry.best3SquatKg,
-    bench: entry.best3BenchKg,
-    deadlift: entry.best3DeadliftKg,
-    total: entry.totalKg,
+    bodyweight: inUnits(entry.bodyweightKg, units),
+    squat: inUnits(entry.best3SquatKg, units),
+    bench: inUnits(entry.best3BenchKg, units),
+    deadlift: inUnits(entry.best3DeadliftKg, units),
+    total: inUnits(entry.totalKg, units),
     dots: entry.dots,
     place: entry.placeRank ?? entry.placeStatus,
+    units,
+  };
+}
+
+function bestByField(data: AppData, entries: Entry[], field: keyof Entry, units: Units): unknown {
+  let best: Entry | null = null;
+  let bestVal = -Infinity;
+  for (const e of entries) {
+    const v = e[field] as number | null;
+    if (v == null) continue;
+    if (v > bestVal) {
+      bestVal = v;
+      best = e;
+    }
+  }
+  if (best == null) return null;
+  const lifter = data.lifters[best.lifterId]!;
+  return {
+    username: lifter.username,
+    name: lifter.name,
+    equipment: best.equipment,
+    weight_class_kg: best.weightClassKg,
+    value: field === "dots" ? bestVal : inUnits(bestVal, units),
   };
 }
