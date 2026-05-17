@@ -1,7 +1,7 @@
 import type { DataStoreType } from "../../../data/store";
 import { type Pagination, buildPagination } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
-import type { GetFederationsType, GetFederationMeetsQueryType } from "./federations.validation";
+import type { GetFederationsType, GetFederationMeetsQueryType } from "./federations.schema";
 
 const { defaultPerPage } = configuration.pagination;
 

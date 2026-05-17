@@ -5,7 +5,7 @@ import {
   getRecordsBySexOrWeightClassParamValidation,
   getRecordsByWeightClassSexParamValidation,
   getRecordsQueryValidation,
-} from "./records.validation";
+} from "./records.schema";
 
 describe("getRecordsQueryValidation", () => {
   it("accepts an empty query", () => {

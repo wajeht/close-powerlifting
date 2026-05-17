@@ -5,7 +5,7 @@ import {
   getFilteredRankingsQueryValidation,
   getRankValidation,
   getRankingsValidation,
-} from "./rankings.validation";
+} from "./rankings.schema";
 
 describe("getRankingsValidation", () => {
   it("accepts an empty query", () => {

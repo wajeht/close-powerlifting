@@ -6,7 +6,7 @@ import type {
   GetFilteredRankingsParamType,
   GetFilteredRankingsQueryType,
   GetRankingsType,
-} from "./rankings.validation";
+} from "./rankings.schema";
 
 const { defaultPerPage } = configuration.pagination;
 

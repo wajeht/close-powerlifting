@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 
 export const recordsEquipmentEnum = z.enum([
   "raw",
@@ -63,3 +63,5 @@ export const getRecordsByWeightClassSexParamValidation = z.object({
 });
 
 export type GetRecordsQueryType = z.infer<typeof getRecordsQueryValidation>;
+
+export const RecordsData = z.unknown().openapi("RecordsData");

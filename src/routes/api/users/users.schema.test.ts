@@ -6,7 +6,7 @@ import {
   getUserQueryValidation,
   getUsersValidation,
   userUnitsQueryValidation,
-} from "./users.validation";
+} from "./users.schema";
 
 describe("getUsersValidation", () => {
   it("accepts an empty query", () => {
