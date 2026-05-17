@@ -78,14 +78,6 @@ curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
 
 Add `?pretty` to any endpoint for indented JSON output, or `?units=lbs` (default) / `?units=kg` to switch unit systems.
 
-## Stack
-
-- **[Hono](https://hono.dev)** on `@hono/node-server`, with `@hono/zod-openapi` for routes + auto-generated OpenAPI spec, `hono/jsx` for SSR pages, `hono/secure-headers` / `hono/cors` / `hono/compress` / `hono/etag` / `hono/request-id` / `hono/pretty-json` / `hono/trailing-slash` for middleware.
-- **Zod 4** for validation (request schemas double as OpenAPI definitions).
-- **Tailwind CSS v4** with CSS-native `@theme` config.
-- **TypeScript** compiled by `tsgo` (`@typescript/native-preview`); tests by `vite-plus`.
-- **In-memory data store** — a ~3.9 M-row OpenPowerlifting snapshot streamed in at boot from a weekly GitHub Release. No database, no auth, no sessions, no cron — just an immutable JSON snapshot loaded into typed JS structures.
-
 ## Docs
 
 - [Development guide](./docs/getting-started.md) — clone, install, snapshot download, dev server
