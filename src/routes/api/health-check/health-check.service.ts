@@ -1,4 +1,4 @@
-import type { CacheType, ScraperType, LoggerType } from "../../../context";
+import type { CacheType, HttpClientType, LoggerType } from "../../../context";
 
 interface RouteStatus {
   status: boolean;
@@ -84,7 +84,7 @@ export const HEALTH_CHECK_CACHE_KEY = "close-powerlifting-global-status-call-cac
 
 export function createHealthCheckService(
   cache: CacheType,
-  scraper: ScraperType,
+  httpClient: HttpClientType,
   logger: LoggerType,
 ) {
   async function getAPIStatus({
@@ -110,7 +110,7 @@ export function createHealthCheckService(
     }
 
     for (const routeDefinition of ROUTE_DEFINITIONS) {
-      const result = await scraper.fetchWithAuth(url, routeDefinition.path, apiKey);
+      const result = await httpClient.fetchWithAuth(url, routeDefinition.path, apiKey);
 
       const routeStatus: RouteStatus = {
         status: Boolean(result?.ok),

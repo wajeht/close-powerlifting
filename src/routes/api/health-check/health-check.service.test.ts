@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vite-plus/test";
 
-import type { CacheType, ScraperType, LoggerType } from "../../../context";
+import type { CacheType, HttpClientType, LoggerType } from "../../../context";
 import { createHealthCheckService } from "./health-check.service";
 
 function createMockCache(): CacheType {
@@ -40,9 +40,9 @@ function createMockLogger(): LoggerType {
   };
 }
 
-function createMockScraper(
+function createMockHttpClient(
   responses: { ok: boolean; date: string; body?: string | null }[],
-): ScraperType {
+): HttpClientType {
   let callIndex = 0;
   return {
     fetchWithAuth: vi.fn(() => {
@@ -55,7 +55,7 @@ function createMockScraper(
         body: response.body !== undefined ? response.body : '{"status":"success"}',
       });
     }),
-  } as unknown as ScraperType;
+  } as unknown as HttpClientType;
 }
 
 describe("health-check service", () => {
@@ -70,31 +70,31 @@ describe("health-check service", () => {
     it("falls back to refreshAPIStatus when cache is empty", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
       expect(result.length).toBe(EXPECTED_GROUPS.length);
-      expect(scraper.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
+      expect(httpClient.fetchWithAuth).toHaveBeenCalledTimes(TOTAL_ROUTES);
     });
 
     it("returns cached data without fetching", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       await service.refreshAPIStatus({ apiKey: "test-key", url: "http://localhost" });
-      vi.mocked(scraper.fetchWithAuth).mockClear();
+      vi.mocked(httpClient.fetchWithAuth).mockClear();
 
       const result = await service.getAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(EXPECTED_GROUPS.length);
-      expect(scraper.fetchWithAuth).not.toHaveBeenCalled();
+      expect(httpClient.fetchWithAuth).not.toHaveBeenCalled();
     });
   });
 
@@ -106,9 +106,9 @@ describe("health-check service", () => {
     it("returns grouped route statuses", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -122,9 +122,9 @@ describe("health-check service", () => {
     it("returns groups in correct order", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -138,9 +138,9 @@ describe("health-check service", () => {
     it("each group has name and routes properties", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -157,9 +157,9 @@ describe("health-check service", () => {
     it("each route has required properties", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -183,9 +183,9 @@ describe("health-check service", () => {
     it("Rankings group has correct number of routes", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -200,9 +200,9 @@ describe("health-check service", () => {
     it("Federations group has correct number of routes", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -217,9 +217,9 @@ describe("health-check service", () => {
     it("Records group has correct number of routes", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -234,9 +234,9 @@ describe("health-check service", () => {
     it("Users group has correct number of routes", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -251,9 +251,9 @@ describe("health-check service", () => {
     it("Public group has correct number of routes", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -268,9 +268,9 @@ describe("health-check service", () => {
     it("sets status to true when request succeeds", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -286,9 +286,9 @@ describe("health-check service", () => {
     it("sets status to false when request fails", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: false, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -304,9 +304,9 @@ describe("health-check service", () => {
     it("caches the result after fetch", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       await service.refreshAPIStatus({ apiKey: "test-key", url: "http://localhost" });
 
@@ -321,9 +321,9 @@ describe("health-check service", () => {
         body: '{"status":"success","data":[]}',
       });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -343,9 +343,9 @@ describe("health-check service", () => {
         body: '{"error":"oops"}',
       });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -361,9 +361,9 @@ describe("health-check service", () => {
     it("new feature routes are present in rankings group", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -395,9 +395,9 @@ describe("health-check service", () => {
     it("new feature routes are present in users group", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -413,9 +413,9 @@ describe("health-check service", () => {
     it("derived endpoints (progression, PBs, rank, compare, fed-stats) are tracked", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",
@@ -436,9 +436,9 @@ describe("health-check service", () => {
     it("routes in each group have correct URL patterns", async () => {
       const mockResponses = Array(TOTAL_ROUTES).fill({ ok: true, date: "2024-01-01T00:00:00Z" });
       const cache = createMockCache();
-      const scraper = createMockScraper(mockResponses);
+      const httpClient = createMockHttpClient(mockResponses);
       const logger = createMockLogger();
-      const service = createHealthCheckService(cache, scraper, logger);
+      const service = createHealthCheckService(cache, httpClient, logger);
 
       const result = await service.refreshAPIStatus({
         apiKey: "test-key",

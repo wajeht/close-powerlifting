@@ -23,7 +23,7 @@ export function createGeneralRouter(context: AppContext) {
 
   const healthCheckService = createHealthCheckService(
     context.cache,
-    context.scraper,
+    context.httpClient,
     context.logger,
   );
   const rankingService = createRankingService(context.knex);
