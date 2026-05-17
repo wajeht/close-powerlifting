@@ -4,72 +4,96 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC)
 [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/wajeht/close-powerlifting)
 
-An intuitive REST API for the OpenPowerlifting database.
+A public, anonymous REST API mirroring the OpenPowerlifting database in memory — no signup, no API keys, no rate-limit hassle.
 
 ## API Endpoints
 
-| Endpoint            | Description                                                             |
-| ------------------- | ----------------------------------------------------------------------- |
-| `/api/rankings`     | Global powerlifting rankings sorted by DOTS score                       |
-| `/api/federations`  | Powerlifting federation data and meet results                           |
-| `/api/meets`        | Meet index + individual competition/meet results with attempt data      |
-| `/api/records`      | All-time powerlifting records by equipment, weight class, and age class |
-| `/api/users`        | Athlete profiles and competition history                                |
-| `/api/status`       | Data source status and statistics (no auth required)                    |
-| `/api/health-check` | API health monitoring (no auth required)                                |
+| Endpoint                       | Description                                                              |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| `GET /api/rankings`            | Global powerlifting rankings sorted by DOTS                              |
+| `GET /api/rankings/filter/...` | Cumulative filters: equipment / sex / weight-class / year / event / sort |
+| `GET /api/federations`         | Federation list + per-federation meet history + per-year stats           |
+| `GET /api/meets`               | Meet index + individual meet results / highlights                        |
+| `GET /api/records`             | Top-3 records by equipment, weight class, sex (optional `?age_class=`)   |
+| `GET /api/users`               | Athlete search, profile, personal-bests, progression, rank, compare      |
+| `GET /api/status`              | Snapshot freshness + dataset counts                                      |
+| `GET /api/health-check`        | Liveness probe (returns 200 once the in-memory store is ready)           |
+| `GET /docs/api`                | Interactive Swagger UI                                                   |
+| `GET /docs/api.json`           | Auto-generated OpenAPI 3.1 spec                                          |
 
-See full query parameters, sort options, and filtering docs at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api)
+Full request parameters, filters, and response shapes are documented at [closepowerlifting.com/docs/api](https://closepowerlifting.com/docs/api).
 
-## Authentication
+## Quick start
 
-All endpoints except `/api/status` and `/api/health-check` require an API key:
-
-```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" https://closepowerlifting.com/api/rankings
-```
-
-Request an API key at [closepowerlifting.com](https://closepowerlifting.com)
-
-## Example Response
+No keys, no headers, no signup:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" "https://closepowerlifting.com/api/rankings?per_page=100&current_page=1&units=kg"
+curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
 ```
 
 ```json
 {
   "status": "success",
-  "request_url": "/api/rankings",
+  "request_url": "https://closepowerlifting.com/api/rankings?per_page=2&units=kg",
   "message": "The resource was returned successfully!",
   "data": [
     {
       "rank": 1,
-      "full_name": "John Haack",
-      "username": "johnhaack",
-      "user_profile": "/api/users/johnhaack"
+      "username": "deanatollefson",
+      "name": "Deana Tollefson",
+      "sex": "F",
+      "age": null,
+      "bodyweight": 83.2,
+      "weight_class_kg": 90,
+      "equipment": "Multi-ply",
+      "event": "SBD",
+      "squat": 365,
+      "bench": 237.5,
+      "deadlift": 282.5,
+      "total": 885,
+      "dots": 818.06,
+      "wilks": 793.01,
+      "glossbrenner": 693.75,
+      "goodlift": 139.71,
+      "federation": "WPO",
+      "meet_path": "wpo/2024-10-11/profinals",
+      "meet_name": "Pro Finals",
+      "meet_date": "2024-10-11",
+      "country": "USA",
+      "units": "kg"
     }
   ],
   "pagination": {
-    "items": 415567,
-    "pages": 4155,
-    "per_page": 100,
     "current_page": 1,
-    "last_page": 4155,
+    "per_page": 2,
+    "items": 954614,
+    "pages": 477307,
     "first_page": 1,
-    "from": 0,
-    "to": 100
+    "last_page": 477307,
+    "from": 1,
+    "to": 2
   }
 }
 ```
 
+Add `?pretty` to any endpoint for indented JSON output, or `?units=lbs` (default) / `?units=kg` to switch unit systems.
+
+## Stack
+
+- **[Hono](https://hono.dev)** on `@hono/node-server`, with `@hono/zod-openapi` for routes + auto-generated OpenAPI spec, `hono/jsx` for SSR pages, `hono/secure-headers` / `hono/cors` / `hono/compress` / `hono/etag` / `hono/request-id` / `hono/pretty-json` / `hono/trailing-slash` for middleware.
+- **Zod 4** for validation (request schemas double as OpenAPI definitions).
+- **Tailwind CSS v4** with CSS-native `@theme` config.
+- **TypeScript** compiled by `tsgo` (`@typescript/native-preview`); tests by `vite-plus`.
+- **In-memory data store** — a ~3.9 M-row OpenPowerlifting snapshot streamed in at boot from a weekly GitHub Release. No database, no auth, no sessions, no cron — just an immutable JSON snapshot loaded into typed JS structures.
+
 ## Docs
 
-- See [DEVELOPMENT](./docs/getting-started.md) for `development` guide.
-- See [CONTRIBUTION](./docs/contribution.md) for `contribution` guide.
+- [Development guide](./docs/getting-started.md) — clone, install, snapshot download, dev server
+- [Contributing](./docs/contribution.md)
 
-## Data Attribution
+## Data attribution
 
-This project uses data from the [OpenPowerlifting](https://www.openpowerlifting.org) project, a community service to create a permanent, open archive of the world's powerlifting data.
+This project uses data from the [OpenPowerlifting](https://www.openpowerlifting.org) project — a community service to create a permanent, open archive of the world's powerlifting data.
 
 All competition data is contributed to the **Public Domain**. You can download a copy of the raw data at [data.openpowerlifting.org](https://data.openpowerlifting.org).
 

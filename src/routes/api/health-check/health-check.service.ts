@@ -121,7 +121,7 @@ async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
 }
 
 async function refreshRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
-  // Sequential — parallel self-fetches against the single-process Express
+  // Sequential — parallel self-fetches against the single-process Hono
   // server can saturate Node's HTTP agent pool and leave requests hanging.
   // 40-ish probes × ~5 ms each ≈ 200 ms total, well below the cache TTL.
   const byGroup = new Map<string, RouteStatus[]>();
