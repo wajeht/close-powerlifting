@@ -10,6 +10,10 @@
     "isolatedModules": true,
     "removeComments": false, // we need jsdoc comments for the api docs
 
+    /* JSX for hono/jsx templates */
+    "jsx": "react-jsx",
+    "jsxImportSource": "hono/jsx",
+
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,

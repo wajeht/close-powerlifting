@@ -1,25 +1,24 @@
-import type { Express } from "express";
-import request from "supertest";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../../../app";
 import { createTestContext } from "../../../tests/fixtures";
 
-let app: Express;
+let app: ReturnType<typeof createApp>;
 
-beforeEach(async () => {
+beforeEach(() => {
   const context = createTestContext();
-  ({ app } = await createApp(context));
+  app = createApp(context);
 });
 
 describe("GET /api/status", () => {
   it("returns counts from the loaded snapshot", async () => {
-    const res = await request(app).get("/api/status");
+    const res = await app.request("/api/status");
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe("success");
-    expect(res.body.data.lifters).toBe(5);
-    expect(res.body.data.meets).toBe(3);
-    expect(res.body.data.entries).toBe(6);
-    expect(res.body.data.federations).toBe(3);
+    const body = await res.json();
+    expect(body.status).toBe("success");
+    expect(body.data.lifters).toBe(5);
+    expect(body.data.meets).toBe(3);
+    expect(body.data.entries).toBe(6);
+    expect(body.data.federations).toBe(3);
   });
 });

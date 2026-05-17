@@ -1,4 +1,4 @@
-import { Request } from "express";
+import type { Context } from "hono";
 
 import { configuration } from "../configuration";
 
@@ -41,15 +41,13 @@ export function inUnits(kg: number | null | undefined, units: Units): number | n
 }
 
 export interface HelpersType {
-  getHostName: (req: Request) => string;
+  getHostName: (c: Context) => string;
 }
 
 export function createHelper(): HelpersType {
-  function getHostName(req: Request): string {
+  function getHostName(c: Context): string {
     if (configuration.app.env === "development") {
-      const protocol = req.protocol;
-      const hostname = req.get("host");
-      return `${protocol}://${hostname}`;
+      return new URL(c.req.url).origin;
     }
     return configuration.app.domain;
   }
