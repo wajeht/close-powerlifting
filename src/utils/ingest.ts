@@ -1,21 +1,10 @@
 // Nightly ingest of the OpenPowerlifting CSV dump into our normalized SQLite
 // schema (federations, lifters, meets, lifts).
 //
-// Design:
-//   - Download → temp file (~157 MB zip).
-//   - Skip if Last-Modified matches the previous successful run (no work done).
-//   - Single streaming pass: parse CSV row-by-row, lazily insert dimensions
-//     (federation/lifter/meet) the first time each is seen, then immediately
-//     insert the lift row with the resolved foreign keys.
-//   - Whole import runs inside ONE manual BEGIN/COMMIT — atomic. Any failure
-//     ROLLBACKs and leaves the previous data set untouched.
-//
-// Memory: bounded. We never buffer rows — backpressure flows through pipeline()
-// down to the CSV parser. The only growth-with-input structures are 3
-// Map<slug, fk_id> dictionaries (~50 MB at full scale, integer values).
-//
-// History: previously was a scrape-and-cache proxy over OpenPowerlifting's HTML.
-// Now we own the data; this file is what makes that possible.
+// Whole import runs inside ONE manual BEGIN/COMMIT — atomic. Any failure
+// ROLLBACKs and leaves the previous data set untouched. We never buffer rows;
+// backpressure flows through pipeline() down to the CSV parser, so memory is
+// bounded regardless of input size.
 
 import fs from "node:fs";
 import os from "node:os";
@@ -36,25 +25,20 @@ const REGEX_DIACRITICS = /\p{Mn}/gu;
 // steady-state values (matching src/db/knexfile.ts `afterCreate`) in a
 // `finally` block before the connection is returned to the knex pool, so
 // read traffic sees the normal serving config.
-//
-// Container memory impact: peak ~2 GB RSS during ingest. See the matching
-// note in ~/dev/home-ops/apps/close-powerlifting/docker-compose.yml.
 const INGEST_PRAGMAS: ReadonlyArray<string> = [
-  // 512 MB page cache. Big enough to hold the entire lifts table's dirty pages
-  // in RAM through the import, so we don't constantly spill to the WAL.
+  // Big page cache so dirty pages stay in RAM through the import instead of
+  // spilling to the WAL on every flush.
   "PRAGMA cache_size = -524288",
-  // 256 MB mmap. Lets the OS pagecache serve dimension-table b-tree lookups
-  // without copying pages through SQLite's cache. Helps the per-row INSERT path.
+  // mmap lets the OS pagecache serve b-tree lookups without copying through
+  // SQLite's own cache.
   "PRAGMA mmap_size = 268435456",
   // Don't auto-checkpoint mid-transaction. We do one explicit
   // `wal_checkpoint(TRUNCATE)` after COMMIT.
   "PRAGMA wal_autocheckpoint = 0",
   // Keep dirty pages in cache through the txn — don't flush opportunistically.
-  // Combined with the 512 MB cache_size above, the whole import lives in RAM
-  // until COMMIT.
   "PRAGMA cache_spill = OFF",
   // Hold the file lock for the duration of the connection. Skips per-statement
-  // syscalls. Safe because the nightly cron is the only writer in this app.
+  // lock syscalls. Safe because the nightly cron is the only writer.
   "PRAGMA locking_mode = EXCLUSIVE",
 ];
 
@@ -358,11 +342,10 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
     });
   }
 
-  // `columns: false` is the key knob: csv-parse emits string[] per row instead
-  // of allocating a fresh {Name, Date, ...} object each time. At 3.9M rows
-  // that's ~3.9M fewer object allocations and a big drop in GC pressure.
-  // The header is consumed as the first row of the stream and used to build
-  // a `ColumnIndex` (see buildColumnIndex), so we never lose access by name.
+  // `columns: false` emits string[] per row instead of allocating a fresh
+  // {Name, Date, ...} object each row — drops a ton of GC pressure on a long
+  // ingest. The header is consumed as the first row of the stream and used to
+  // build a `ColumnIndex` (see buildColumnIndex) so we keep access by name.
   function csvParser(): Transform {
     return parseCsv({ columns: false, skip_empty_lines: true, relax_column_count: true });
   }
@@ -415,10 +398,8 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
             db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_total");
             db.exec("DROP INDEX IF EXISTS idx_lifts_rankings_dots");
 
-            // FK lookup tables. We learn each dimension's id from the
-            // `lastInsertRowid` of its first INSERT, then reuse for every
-            // subsequent lift that references the same dimension.
-            // Memory floor: ~50 MB at full scale (978k lifter entries dominate).
+            // FK lookup tables. The id comes from `lastInsertRowid` the first
+            // time we INSERT each dimension; every subsequent lift reuses it.
             const federationIds = new Map<string, number>();
             const lifterIds = new Map<string, number>();
             const meetIds = new Map<string, number>();
@@ -444,23 +425,17 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `);
 
-            // Built from the first row of the stream (CSV header), then reused
-            // for every data row that follows.
             let col: ColumnIndex | null = null;
 
-            // pipeline() gives us proper Node-stream backpressure end-to-end:
-            // when the SQLite write side falls behind, the CSV parser pauses,
-            // and ultimately the zip read pauses too. We never buffer rows.
-            // The terminal "sink" is a plain async function (Erick Wendel
-            // pattern) — same backpressure semantics as a Writable, no
-            // callback ceremony.
+            // pipeline() propagates backpressure end-to-end: when the SQLite
+            // write side falls behind, the CSV parser pauses, and ultimately
+            // the zip read pauses too. The terminal sink is a plain async
+            // function — same backpressure as a Writable, no callback noise.
             await pipeline(
               csvStreamFactory(),
               csvParser(),
               async function (source: AsyncIterable<string[]>) {
                 for await (const row of source) {
-                  // First emitted row is the CSV header — consume it to build
-                  // the index map and validate every column we need exists.
                   if (col == null) {
                     col = buildColumnIndex(row);
                     continue;
@@ -560,8 +535,6 @@ export function createIngestService(knex: Knex, logger: LoggerType): IngestServi
               },
             );
 
-            // The Map sizes ARE the dimension counts — derived, not tracked
-            // separately. Saves a counter per dimension type.
             stats.federations = federationIds.size;
             stats.lifters = lifterIds.size;
             stats.meets = meetIds.size;
