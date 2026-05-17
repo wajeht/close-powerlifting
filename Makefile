@@ -1,48 +1,44 @@
-# Docker compose shorthand
 DC := docker compose -f docker-compose.dev.yml
 EXEC := $(DC) exec close-powerlifting
 
-.PHONY: help push test lint format up down shell update-fixtures
+.PHONY: help up up-d down restart log shell test test-watch test-coverage \
+	lint format typecheck check snapshot snapshot-build snapshot-commit \
+	push clean
 
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Development:"
-	@echo "  up          Start dev server (fresh db)"
-	@echo "  up-d        Start dev server in background"
-	@echo "  down        Stop dev server"
-	@echo "  restart     Restart dev server"
-	@echo "  log         Follow container logs"
-	@echo "  shell       Open shell in container"
+	@echo "  up               Start dev server"
+	@echo "  up-d             Start dev server in background"
+	@echo "  down             Stop dev server"
+	@echo "  restart          Restart dev server"
+	@echo "  log              Follow container logs"
+	@echo "  shell            Open shell in container"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test        Run all tests"
-	@echo "  test-watch  Run tests in watch mode"
-	@echo "  test-coverage Run tests with coverage"
+	@echo "  test             Run all tests"
+	@echo "  test-watch       Run tests in watch mode"
+	@echo "  test-coverage    Run tests with coverage"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  lint        Run linter"
-	@echo "  format      Format code"
-	@echo "  typecheck   Run TypeScript type checking"
-	@echo "  check       Run lint + format + typecheck"
+	@echo "  lint             Run linter"
+	@echo "  format           Format code"
+	@echo "  typecheck        Run TypeScript type checking"
+	@echo "  check            Run lint + format + typecheck"
 	@echo ""
-	@echo "Database:"
-	@echo "  db-migrate  Run migrations"
-	@echo "  db-rollback Rollback last migration"
-	@echo "  db-seed     Run seeders"
-	@echo "  db-reset    Rollback + migrate + seed"
-	@echo ""
-	@echo "Fixtures:"
-	@echo "  update-fixtures  Update OpenPowerlifting test fixtures"
+	@echo "Snapshot:"
+	@echo "  snapshot         Rebuild + commit the OPL snapshot"
+	@echo "  snapshot-build   Rebuild the JSON snapshot from the OPL CSV"
+	@echo "  snapshot-commit  Stage + commit the snapshot files (requires git-lfs)"
 	@echo ""
 	@echo "Deployment:"
-	@echo "  push        Test + lint + format + commit + push"
-	@echo "  clean       Remove all containers and volumes"
+	@echo "  push             Test + lint + format + commit + push"
+	@echo "  clean            Remove all containers and volumes"
 
 # === Development ===
 
 up:
-	@rm -rf ./src/db/sqlite/*sqlite*
 	@$(DC) up
 
 up-d:
@@ -87,31 +83,36 @@ check:
 	@$(MAKE) format
 	@$(MAKE) typecheck
 
-# === Database ===
+# === Snapshot ===
 
-db-migrate:
-	@$(EXEC) npm run db:migrate:latest
+snapshot: snapshot-build snapshot-commit
 
-db-rollback:
-	@$(EXEC) npm run db:migrate:rollback
+snapshot-build:
+	@npx tsx scripts/build-snapshot.ts
 
-db-seed:
-	@$(EXEC) npm run db:seed:run
-
-db-reset:
-	@$(MAKE) db-rollback
-	@$(MAKE) db-migrate
-	@$(MAKE) db-seed
-
-db-clean:
-	@trash ./src/db/sqlite/db.sqlite*
+snapshot-commit:
+	@command -v git-lfs >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "git-lfs is not installed."; \
+		echo "  brew install git-lfs"; \
+		echo "  git lfs install"; \
+		echo ""; \
+		exit 1; \
+	}
+	@if git diff --quiet HEAD -- src/data/snapshot/ 2>/dev/null && \
+	   [ -z "$$(git ls-files --others --exclude-standard src/data/snapshot/)" ]; then \
+		echo "No snapshot changes to commit."; \
+		exit 0; \
+	fi
+	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
+	git add src/data/snapshot/ && \
+	git commit -m "chore(data): refresh OPL snapshot ($$BUILT)"
 
 # === Deployment ===
 
 push:
 	@$(MAKE) test
 	@$(MAKE) lint
-	@$(MAKE) build
 	@$(MAKE) format
 	@git add -A
 	@curl -s http://commit.jaw.dev/ | sh -s -- --no-verify
@@ -122,15 +123,3 @@ clean:
 	@docker system prune -a -f
 	@docker volume prune -f
 	@docker network prune -f
-
-# === Fixtures ===
-
-update-fixtures:
-	@npm run update:fixtures
-
-# === Misc ===
-
-fix-git:
-	@git rm -r --cached . -f
-	@git add .
-	@git commit -m "Untrack files in .gitignore"
