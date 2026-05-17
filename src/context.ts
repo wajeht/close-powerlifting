@@ -1,44 +1,20 @@
-import type { Knex } from "knex";
+// Dependency-injection container for the app. Everything reads through
+// AppContext so tests can swap in stubs and routes don't reach for module
+// singletons. Slim: no database, no auth, no mail — just the in-memory data
+// store, logger, and helpers.
 
 import { createLogger, type LoggerType } from "./utils/logger";
 import { createHelper, type HelpersType } from "./utils/helpers";
-import { createDatabase, type DatabaseType } from "./db/db";
-import { createCache, type CacheType } from "./db/cache";
-import { createMail, type MailType } from "./mail";
-import { createUserRepository, type UserRepositoryType } from "./db/user";
-import { createApiCallLogRepository, type ApiCallLogRepositoryType } from "./db/api-call-log";
-import { createIngestService, type IngestServiceType } from "./utils/ingest";
 import { createCron, type CronType } from "./cron";
-import { createAuthService, type AuthServiceType } from "./routes/auth/auth.service";
-import { createAdminUser, type AdminUserType } from "./utils/admin-user";
+import { createDataStore, type DataStoreType } from "./data/store";
 
-export type {
-  LoggerType,
-  HelpersType,
-  DatabaseType,
-  CacheType,
-  MailType,
-  UserRepositoryType,
-  ApiCallLogRepositoryType,
-  IngestServiceType,
-  CronType,
-  AuthServiceType,
-  AdminUserType,
-};
+export type { LoggerType, HelpersType, CronType, DataStoreType };
 
 export interface AppContext {
-  knex: Knex;
-  database: DatabaseType;
   logger: LoggerType;
   helpers: HelpersType;
-  cache: CacheType;
-  mail: MailType;
-  userRepository: UserRepositoryType;
-  apiCallLogRepository: ApiCallLogRepositoryType;
-  ingest: IngestServiceType;
+  store: DataStoreType;
   cron: CronType;
-  authService: AuthServiceType;
-  adminUser: AdminUserType;
 }
 
 let _context: AppContext | null = null;
@@ -50,32 +26,10 @@ export function createContext(): AppContext {
 
   const logger = createLogger();
   const helpers = createHelper();
-  const database = createDatabase(logger);
-  const knex = database.instance;
-  const cache = createCache(knex, logger);
-  const mail = createMail(logger);
-  const userRepository = createUserRepository(knex);
-  const apiCallLogRepository = createApiCallLogRepository(knex);
-  const ingest = createIngestService(knex, logger);
-  const authService = createAuthService(userRepository, mail, logger);
-  const cron = createCron(cache, userRepository, logger, ingest);
-  const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
+  const store = createDataStore(logger);
+  const cron = createCron(logger, store);
 
-  _context = {
-    knex,
-    database,
-    logger,
-    helpers,
-    cache,
-    mail,
-    userRepository,
-    apiCallLogRepository,
-    ingest,
-    cron,
-    authService,
-    adminUser,
-  };
-
+  _context = { logger, helpers, store, cron };
   return _context;
 }
 
