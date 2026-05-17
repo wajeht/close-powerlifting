@@ -1,7 +1,17 @@
 import { Request } from "express";
 
 import { configuration } from "../configuration";
-import type { Pagination } from "../types";
+
+export interface Pagination {
+  items: number;
+  pages: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  first_page: number;
+  from: number;
+  to: number;
+}
 
 export function buildPagination(total: number, page: number, limit: number): Pagination {
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -28,24 +38,6 @@ export function inUnits(kg: number | null | undefined, units: Units): number | n
   if (kg == null) return null;
   if (units === "kg") return kg;
   return Math.round(kg * KG_TO_LBS * 100) / 100;
-}
-
-// Stable URL-safe identifier — strip diacritics, lowercase, keep only
-// alphanumerics. Mirrors OpenPowerlifting's Username::from_name in
-// crates/opltypes/src/username.rs.
-//
-// Quirk: names with no ASCII transliteration (CJK / Cyrillic-only) collapse
-// to empty here. OPL falls back to a numeric ID in that case; we'll do the
-// same when we wire the loader (phase 2).
-const REGEX_DIACRITICS = /\p{Mn}/gu;
-const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
-
-export function nameToSlug(value: string): string {
-  return value
-    .normalize("NFKD")
-    .replace(REGEX_DIACRITICS, "")
-    .toLowerCase()
-    .replace(REGEX_SLUG_STRIP, "");
 }
 
 export interface HelpersType {
