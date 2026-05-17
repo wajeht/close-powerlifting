@@ -1,95 +1,69 @@
 <div class="mx-auto max-w-5xl px-4">
-  <!-- header -->
   <header class="fade-in-heading mb-6">
     <h1 class="text-2xl font-bold text-white">API Status</h1>
     <p class="mt-2 text-neutral-400">
-      Real-time health of all API endpoints.
+      Snapshot freshness and dataset counts.
     </p>
   </header>
 
   <section class="flex flex-col gap-6">
-    <% if (allGood) { %>
+    <% if (ready) { %>
     <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
       <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
       </svg>
       <div class="flex flex-col gap-1">
         <span class="font-medium text-green-400">All Systems Operational</span>
-        <p class="text-sm text-neutral-300">All API endpoints are responding normally.</p>
+        <p class="text-sm text-neutral-300"><%= rowCount.toLocaleString() %> entries loaded in memory; all endpoints are serving responses.</p>
       </div>
     </div>
     <% } else { %>
     <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-power/30 bg-power/10 p-4">
       <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-power" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <div class="flex flex-col gap-1">
-        <span class="font-medium text-power">Service Degraded</span>
-        <p class="text-sm text-neutral-300">Some endpoints are experiencing issues.</p>
+        <span class="font-medium text-power">Warming Up</span>
+        <p class="text-sm text-neutral-300">Snapshot is still loading. API endpoints return 503 until ready.</p>
       </div>
     </div>
     <% } %>
 
-    <% routeGroups.forEach(function(group) { %>
-    <div class="fade-in animation-delay-3 flex flex-col gap-3">
-      <h2 class="frosted sticky top-[72px] z-30 py-2 text-lg font-semibold text-white"><%= group.name %></h2>
-      <div class="flex flex-col gap-2">
-        <% group.routes.forEach(function(item) { %>
-        <article class="status-route flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
-          <button type="button" class="status-route-toggle flex w-full items-start justify-between gap-4 text-left" aria-expanded="false">
-            <div class="flex flex-col gap-2">
-              <div class="flex gap-4 text-neutral-400">
-                <div class="font-bold text-white"><%= item.method %></div>
-                <div class="overflow-scroll rounded bg-neutral-800 px-2 font-mono"><%= item.url %></div>
-              </div>
-              <div class="flex gap-1 text-sm">
-                <% if (item.status) { %>
-                <span class="text-green-400">Available</span>
-                <% } else { %>
-                <span class="text-power">Unavailable</span>
-                <% } %>
-                <div class="text-neutral-500">as of</div>
-                <div class="text-neutral-400"><%= item.date %></div>
-              </div>
-            </div>
-            <% if (item.body) { %>
-            <svg class="status-route-chevron mt-1 h-5 w-5 flex-shrink-0 text-neutral-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-            <% } %>
-          </button>
-          <% if (item.body) { %>
-          <pre class="status-route-pre hidden max-h-96 overflow-auto rounded bg-neutral-950 p-3 text-xs text-neutral-300"><%= item.body %></pre>
-          <% } %>
-        </article>
-        <% }); %>
+    <div class="fade-in animation-delay-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <div class="text-sm text-neutral-400">Total entries</div>
+        <div class="mt-1 text-xl font-semibold text-white"><%= rowCount.toLocaleString() %></div>
+      </article>
+
+      <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <div class="text-sm text-neutral-400">Snapshot built</div>
+        <div class="mt-1 text-xl font-semibold text-white"><%= ingestedAt || "—" %></div>
+      </article>
+
+      <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <div class="text-sm text-neutral-400">Upstream Last-Modified</div>
+        <div class="mt-1 text-xl font-semibold text-white"><%= sourceLastModified || "—" %></div>
+      </article>
+
+      <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <div class="text-sm text-neutral-400">Data source</div>
+        <div class="mt-1 text-xl font-semibold text-white">
+          <a class="hover:underline" href="https://openpowerlifting.org" target="_blank" rel="noopener">OpenPowerlifting</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="fade-in animation-delay-4 flex flex-col gap-2">
+      <h2 class="text-lg font-semibold text-white">Public endpoints</h2>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/status">/api/status</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/health-check">/api/health-check</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/rankings">/api/rankings</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/federations">/api/federations</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/meets">/api/meets</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/records">/api/records</a>
+        <a class="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-2 text-sm font-mono text-neutral-300 hover:border-power/50" href="/api/users">/api/users</a>
       </div>
     </div>
-    <% }); %>
   </section>
 </div>
-
-<script>
-(function() {
-  document.querySelectorAll('.status-route').forEach(function(article) {
-    var toggle = article.querySelector('.status-route-toggle');
-    var pre = article.querySelector('.status-route-pre');
-    var chevron = article.querySelector('.status-route-chevron');
-    if (!pre) return;
-
-    if (pre.textContent) {
-      try {
-        pre.textContent = JSON.stringify(JSON.parse(pre.textContent), null, 2);
-      } catch (e) {}
-    }
-
-    toggle.addEventListener('click', function() {
-      var expanded = pre.classList.toggle('hidden') === false;
-      toggle.setAttribute('aria-expanded', String(expanded));
-      if (chevron) {
-        chevron.classList.toggle('rotate-180', expanded);
-      }
-    });
-  });
-})();
-</script>
