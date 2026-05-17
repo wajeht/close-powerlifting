@@ -1,5 +1,8 @@
+// Express app wiring. Public read-only API + a few HTML pages. No auth,
+// no sessions, no CSRF, no database — the in-memory store is the only
+// data dependency.
+
 import compression from "compression";
-import flash from "connect-flash";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express, { Express } from "express";
@@ -10,8 +13,7 @@ import { AddressInfo } from "net";
 
 import { configuration } from "./configuration";
 import { type AppContext } from "./context";
-import { HEALTH_CHECK_CACHE_KEY } from "./routes/api/health-check/health-check.service";
-import { createMiddleware, HOSTNAME_CACHE_KEY } from "./routes/middleware";
+import { createMiddleware } from "./routes/middleware";
 import { createMainRouter } from "./routes/routes";
 import { createSwagger } from "./utils/swagger";
 import { renderTemplate, layoutMiddleware } from "./utils/template";
@@ -25,15 +27,7 @@ export interface ServerInfo {
 export async function createApp(
   context: AppContext,
 ): Promise<{ app: Express; context: AppContext }> {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.apiCallLogRepository,
-    context.helpers,
-    context.logger,
-    context.knex,
-    context.authService,
-  );
+  const middleware = createMiddleware(context.helpers, context.logger);
 
   const app = express();
 
@@ -60,8 +54,6 @@ export async function createApp(
     .use(middleware.hostNameMiddleware)
     .use(middleware.requestLoggerMiddleware)
     .use(cookieParser())
-    .use(flash())
-    .use(middleware.sessionMiddleware())
     .use(
       cors({
         credentials: true,
@@ -76,23 +68,11 @@ export async function createApp(
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: [
-              "'self'",
-              "'unsafe-inline'",
-              "https://static.cloudflareinsights.com",
-              "https://challenges.cloudflare.com",
-            ],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://static.cloudflareinsights.com"],
             scriptSrcAttr: ["'unsafe-inline'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: [
-              "'self'",
-              "https://cloudflareinsights.com",
-              "https://challenges.cloudflare.com",
-            ],
-            frameSrc: ["https://challenges.cloudflare.com"],
-            childSrc: ["https://challenges.cloudflare.com", "blob:"],
-            workerSrc: ["'self'", "blob:"],
+            connectSrc: ["'self'", "https://cloudflareinsights.com"],
             fontSrc: ["'self'"],
             objectSrc: ["'none'"],
             frameAncestors: ["'self'"],
@@ -108,17 +88,15 @@ export async function createApp(
     .set("views", path.resolve(path.join(process.cwd(), "src", "routes")))
     .set("view cache", configuration.app.env === "production")
     .use(layoutMiddleware)
-    .use(middleware.csrfMiddleware)
     .use(middleware.appLocalStateMiddleware)
     .use(middleware.rateLimitMiddleware)
-    .use("/api", middleware.apiAuditLogMiddleware)
     .use(createMainRouter(context));
 
   await createSwagger(app);
 
   app.use(middleware.notFoundMiddleware).use(middleware.errorMiddleware);
 
-  return { app, context: context };
+  return { app, context };
 }
 
 export async function createServer(context: AppContext): Promise<ServerInfo> {
@@ -126,7 +104,7 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
 
   const server: Server = app.listen(configuration.app.port);
 
-  server.on("listening", async () => {
+  server.on("listening", () => {
     const addr: string | AddressInfo | null = server.address();
     const port = typeof addr === "string" ? addr : (addr as AddressInfo).port;
 
@@ -134,39 +112,7 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
     context.logger.info(`Server running at http://localhost:${port}`);
     context.logger.info("=".repeat(50));
 
-    try {
-      await context.database.init();
-      context.cron.start();
-
-      const mailAvailable = await context.mail.verifyConnection();
-      if (mailAvailable) {
-        context.logger.info("Mail service connected");
-      } else {
-        context.logger.info("Mail service unavailable - emails will not be sent");
-      }
-
-      await context.adminUser.initializeAdminUser();
-
-      const cachedStatus = await context.cache.get(HEALTH_CHECK_CACHE_KEY);
-      if (cachedStatus == null) {
-        const existingHostname = await context.cache.get(HOSTNAME_CACHE_KEY);
-        if (existingHostname == null) {
-          // The /status self-pinger calls this hostname, so always point at
-          // ourselves on loopback. That stays correct in dev, prod, and any
-          // temp PR deploy — the public domain is irrelevant for hitting our
-          // own routes from inside the container.
-          await context.cache.set(HOSTNAME_CACHE_KEY, `http://localhost:${port}`);
-        }
-
-        void context.cron.tasks.refreshHealthCheck().catch((error) => {
-          const message = error instanceof Error ? error.message : String(error);
-          context.logger.error("Boot warm-up of health-check cache failed", { error: message });
-        });
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error during startup";
-      context.logger.error(message);
-    }
+    context.cron.start();
   });
 
   server.on("error", (error: NodeJS.ErrnoException) => {
@@ -191,20 +137,12 @@ export async function createServer(context: AppContext): Promise<ServerInfo> {
     }
   });
 
-  return { app, server, context: context };
+  return { app, server, context };
 }
 
 export async function closeServer({ server, context }: ServerInfo): Promise<void> {
   context.logger.info("Shutting down server gracefully");
-
   context.cron.stop();
-
-  try {
-    await context.database.stop();
-    context.logger.info("Database connection closed");
-  } catch (error) {
-    context.logger.error("Error closing database connection", error);
-  }
 
   await new Promise<void>((resolve, reject) => {
     const shutdownTimeout = setTimeout(() => {
