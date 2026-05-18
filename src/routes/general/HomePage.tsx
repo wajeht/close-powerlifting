@@ -20,7 +20,7 @@ const COUNTER_SCRIPT = `(function(){var counters=document.querySelectorAll('.cou
 
 export const HomePage: FC<HomePageProps> = ({ rankings }) => (
   <>
-    <section class="relative -mt-16 ml-[calc(50%-50vw)] w-screen overflow-hidden bg-power">
+    <section class="relative -mt-16 ml-[calc(50%-50vw)] w-screen overflow-hidden bg-power dark:bg-red-800">
       <div class="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay">
         <img
           src="/img/sumo-deadlift.webp"
