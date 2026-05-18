@@ -28,7 +28,7 @@ export const MainLayout: FC<PropsWithChildren<LayoutProps>> = ({
 }) => (
   <html lang="en">
     <Head title={title} state={state} />
-    <body class="paper-grid flex min-h-screen flex-col bg-red-50 text-neutral-700 dark:bg-black dark:text-neutral-500">
+    <body class="paper-grid flex min-h-screen flex-col bg-white text-neutral-700 dark:bg-black dark:text-neutral-500">
       <Header state={state} path={path} />
       <main id="main" class="flex-1 px-5 py-16">
         <div class="mx-auto max-w-7xl">{children}</div>

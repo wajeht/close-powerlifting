@@ -21,11 +21,11 @@
 
 @layer components {
   .frosted {
-    @apply bg-red-50/85 backdrop-blur-xl dark:bg-black/60;
+    @apply bg-white/85 backdrop-blur-xl dark:bg-black/60;
   }
 
   .paper-grid {
-    background-image: radial-gradient(circle, rgba(220, 38, 38, 0.12) 1px, transparent 1px);
+    background-image: radial-gradient(circle, rgba(220, 38, 38, 0.09) 1px, transparent 1px);
     background-size: 28px 28px;
     background-position: 0 0;
   }

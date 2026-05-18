@@ -5,7 +5,7 @@ import type { AppState } from "../_layouts/main";
 export const Footer: FC<{ state: AppState }> = ({ state }) => (
   <footer
     id="footer"
-    class="border-t border-neutral-200/80 bg-white dark:border-neutral-800 dark:bg-neutral-900"
+    class="border-t border-neutral-200/80 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900"
   >
     <div class="mx-auto max-w-7xl px-5 py-8">
       <div class="flex flex-col gap-6 sm:flex-row sm:justify-between">

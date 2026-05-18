@@ -72,9 +72,11 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
               <span class="ml-3 font-mono text-xs text-white/50">GET /api/rankings</span>
             </div>
             <pre class="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-white/85 sm:text-sm">
-              <code>{`$ curl close-powerlifting.com/api/rankings
+              <code>{`$ curl -s https://closepowerlifting.com/api/rankings | jq
 {
   "status": "success",
+  "request_url": "http://closepowerlifting.com/api/rankings",
+  "message": "The resource was returned successfully!",
   "data": [
     { "rank": 1, "name": "Ray Williams",   "total_kg": 1147.5, "dots": 633.5 },
     { "rank": 2, "name": "Jesus Olivares", "total_kg": 1265.0, "dots": 622.2 },

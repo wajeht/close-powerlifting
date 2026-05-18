@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 
 import { InfoCard } from "../_components/InfoCard";
+import { PageHero } from "../_components/PageHero";
 import { StatusBanner } from "../_components/StatusBanner";
 import type { RouteGroup } from "../api/health-check/health-check.service";
 
@@ -24,15 +25,11 @@ export const StatusPage: FC<StatusPageProps> = ({
   allGood,
 }) => (
   <>
+    <PageHero
+      title="API Status"
+      subtitle="Snapshot freshness, dataset counts, and per-endpoint health probes."
+    />
     <div class="mx-auto max-w-5xl px-4">
-      <header class="fade-in-heading mb-6">
-        <h1 class="font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
-          API Status
-        </h1>
-        <p class="mt-2 text-neutral-600 dark:text-neutral-400">
-          Snapshot freshness, dataset counts, and per-endpoint health probes.
-        </p>
-      </header>
       <section class="flex flex-col gap-6">
         <StatusBanner ready={ready} allGood={allGood} rowCount={rowCount} />
         <div class="fade-in animation-delay-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
