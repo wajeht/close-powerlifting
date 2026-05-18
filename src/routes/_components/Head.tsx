@@ -5,7 +5,7 @@ import type { AppState } from "../_layouts/main";
 // Runs synchronously before the stylesheet loads so the correct theme
 // class is on <html> by the time the browser paints. Reads localStorage
 // first, then falls back to the system preference.
-const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');if(s!=='light'){document.documentElement.classList.add('dark');}}catch(e){document.documentElement.classList.add('dark');}})();`;
 
 const ANIMATIONS_CSS = `
 .fade-in-heading { animation: fadeInDown 0.4s forwards; opacity: 0; }

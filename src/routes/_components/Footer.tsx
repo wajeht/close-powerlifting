@@ -1,6 +1,7 @@
 import type { FC } from "hono/jsx";
 
 import type { AppState } from "../_layouts/main";
+import { ThemeToggle } from "./ThemeToggle";
 
 export const Footer: FC<{ state: AppState }> = ({ state }) => (
   <footer
@@ -65,16 +66,16 @@ export const Footer: FC<{ state: AppState }> = ({ state }) => (
         </div>
       </div>
       <div class="mt-8 border-t border-neutral-200 pt-6 text-center text-sm text-neutral-500 dark:border-neutral-800">
-        <span>
-          © {state.currentYear} Close Powerlifting. Made with <span class="text-power">❤️</span> by{" "}
-          <a
-            class="text-neutral-600 hover:text-power dark:text-neutral-400"
-            href="https://github.com/wajeht"
-            target="_blank"
-          >
-            @wajeht
-          </a>
-        </span>
+        © {state.currentYear} Close Powerlifting. Made with <span class="text-power">❤️</span> by{" "}
+        <a
+          class="text-neutral-600 hover:text-power dark:text-neutral-400"
+          href="https://github.com/wajeht"
+          target="_blank"
+        >
+          @wajeht
+        </a>
+        {" · "}
+        <ThemeToggle />
       </div>
     </div>
   </footer>

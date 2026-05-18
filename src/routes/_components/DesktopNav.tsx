@@ -3,7 +3,6 @@ import type { FC } from "hono/jsx";
 import type { PageProps } from "../_layouts/main";
 import { GitHubIcon } from "./GitHubIcon";
 import { HealthDot } from "./HealthDot";
-import { ThemeToggle } from "./ThemeToggle";
 import { linkClass } from "./_utils";
 
 export const DesktopNav: FC<PageProps> = ({ state, path }) => (
@@ -28,9 +27,6 @@ export const DesktopNav: FC<PageProps> = ({ state, path }) => (
         >
           Docs
         </a>
-      </li>
-      <li>
-        <ThemeToggle />
       </li>
       <li>
         <a
