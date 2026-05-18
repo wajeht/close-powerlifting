@@ -23,9 +23,6 @@ export const Footer: FC<{ state: AppState }> = ({ state }) => (
             <a class="text-neutral-500 hover:text-white" href="/status">
               Status
             </a>
-            <a class="text-neutral-500 hover:text-white" href="/api/rankings?limit=10">
-              Try It
-            </a>
           </div>
           <div class="flex flex-col gap-2">
             <span class="font-medium text-power">Resources</span>
