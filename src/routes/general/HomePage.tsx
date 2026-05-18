@@ -216,6 +216,6 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
       </div>
     </section>
 
-    <script>{COUNTER_SCRIPT}</script>
+    <script dangerouslySetInnerHTML={{ __html: COUNTER_SCRIPT }} />
   </>
 );
