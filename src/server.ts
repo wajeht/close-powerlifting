@@ -3,7 +3,7 @@ import { serve, type ServerType } from "@hono/node-server";
 import { createApp, type HonoApp } from "./app";
 import { configuration } from "./configuration";
 import { createContext, type AppContext } from "./context";
-// import { warmRouteStatuses } from "./routes/api/health-check/health-check.service";
+import { warmRouteStatuses } from "./routes/api/health-check/health-check.service";
 
 export interface ServerInfo {
   app: HonoApp;
@@ -88,19 +88,19 @@ async function main(): Promise<void> {
   process.on("SIGTERM", () => gracefulShutdown("SIGTERM", serverInfo));
   process.on("SIGQUIT", () => gracefulShutdown("SIGQUIT", serverInfo));
 
-  // void context.store
-  //   .load()
-  //   .then((result) => {
-  //     context.logger.info(
-  //       `store: initial load complete in ${result.durationMs}ms ` +
-  //         `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
-  //     );
-  //     warmRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
-  //   })
-  //   .catch((error: Error) => {
-  //     context.logger.error("store: initial load failed", error);
-  //     process.exit(1);
-  //   });
+  void context.store
+    .load()
+    .then((result) => {
+      context.logger.info(
+        `store: initial load complete in ${result.durationMs}ms ` +
+          `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
+      );
+      warmRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
+    })
+    .catch((error: Error) => {
+      context.logger.error("store: initial load failed", error);
+      process.exit(1);
+    });
 }
 
 main().catch((error: Error) => {
