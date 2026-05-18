@@ -51,7 +51,6 @@ RUN npm run build:prod && \
 
 FROM node:26.1.0-slim@sha256:424cafd2a035ed2b2d74acc3142b68b426fb62a47742c80a75e7117db02d6b30
 
-# curl is for the Docker HEALTHCHECK; no SQLite tooling needed any more.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     apt-get clean && \
