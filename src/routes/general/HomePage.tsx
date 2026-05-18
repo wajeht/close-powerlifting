@@ -23,7 +23,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
     <section class="relative">
       <div class="mx-auto max-w-5xl px-4 text-center">
         <div class="max-w-8xl pointer-events-none absolute -top-40 left-1/2 -z-10 h-[900px] w-full -translate-x-1/2 opacity-10">
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black" />
+          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-black" />
           <img
             src="/img/sumo-deadlift.webp"
             alt=""
@@ -33,12 +33,12 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
         <p class="fade-in-heading mb-4 text-sm font-medium uppercase tracking-wider text-power">
           Powerlifting Data API
         </p>
-        <h1 class="fade-in-heading animation-delay-1 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+        <h1 class="fade-in-heading animation-delay-1 text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl dark:text-white">
           Build powerlifting apps
           <br class="hidden sm:inline" />
-          <span class="text-neutral-400"> in minutes, not months</span>
+          <span class="text-neutral-600 dark:text-neutral-400"> in minutes, not months</span>
         </h1>
-        <p class="fade-in-heading animation-delay-2 mx-auto mt-6 max-w-2xl text-lg text-neutral-400">
+        <p class="fade-in-heading animation-delay-2 mx-auto mt-6 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400">
           Query 3 million competition results with a single API call. No scraping. No parsing. Just
           clean, structured data.
         </p>
@@ -50,7 +50,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
             Read the docs
           </a>
           <a
-            class="rounded-md border border-neutral-700 px-4 py-2 text-neutral-300 transition-all hover:border-power hover:text-white"
+            class="rounded-md border border-neutral-300 px-4 py-2 text-neutral-700 transition-all hover:border-power hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-white"
             href="/api/rankings?limit=10"
             target="_blank"
           >
@@ -65,7 +65,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-4 mx-auto max-w-5xl px-4">
-        <h2 class="mb-3 text-center text-2xl font-bold text-white">
+        <h2 class="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">
           Tired of scraping OpenPowerlifting?
         </h2>
         <p class="mb-8 text-center text-neutral-500">We did the hard work so you don't have to.</p>
@@ -96,7 +96,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-5 mx-auto max-w-5xl px-4">
-        <h2 class="mb-3 text-center text-2xl font-bold text-white">
+        <h2 class="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">
           Six endpoints. Unlimited possibilities.
         </h2>
         <p class="mb-10 text-center text-neutral-500">
@@ -145,16 +145,18 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-6 mx-auto max-w-5xl px-4">
-        <h2 class="mb-2 text-center text-2xl font-bold text-white">See it in action</h2>
+        <h2 class="mb-2 text-center text-2xl font-bold text-neutral-900 dark:text-white">
+          See it in action
+        </h2>
         <p class="mb-6 text-center text-neutral-500">Live data from /api/rankings</p>
         {rankings == null || rankings.length === 0 ? (
-          <div class="rounded-lg border border-neutral-800 bg-neutral-900 p-8 text-center text-neutral-400">
+          <div class="card-lift rounded-lg border border-neutral-200/70 bg-white p-8 text-center text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
             Data is loading. Refresh in a moment.
           </div>
         ) : (
-          <div class="overflow-x-auto rounded-lg border border-neutral-800 bg-neutral-900">
+          <div class="card-lift overflow-x-auto rounded-lg border border-neutral-200/70 bg-white dark:border-neutral-800 dark:bg-neutral-900">
             <table class="w-full text-left">
-              <thead class="border-b border-neutral-800 text-neutral-400">
+              <thead class="border-b border-neutral-200 text-neutral-600 dark:border-neutral-800 dark:text-neutral-400">
                 <tr>
                   <th class="whitespace-nowrap p-4">Rank</th>
                   <th class="whitespace-nowrap p-4">Name</th>
@@ -163,23 +165,29 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
                   <th class="whitespace-nowrap p-4">Equipment</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-neutral-800">
+              <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
                 {rankings.map((row) => (
-                  <tr class="hover:bg-neutral-800/50">
+                  <tr class="hover:bg-stone-50 dark:hover:bg-neutral-800/50">
                     <td class="whitespace-nowrap p-4">
                       <span class="font-bold text-power">{row.rank}</span>
                     </td>
                     <td class="whitespace-nowrap p-4">
                       <a
-                        class="font-medium text-neutral-300 hover:text-power"
+                        class="font-medium text-neutral-700 hover:text-power dark:text-neutral-300"
                         href={`/api/users/${row.username}`}
                       >
                         {row.name}
                       </a>
                     </td>
-                    <td class="whitespace-nowrap p-4 text-neutral-400">{row.dots}</td>
-                    <td class="whitespace-nowrap p-4 text-neutral-400">{row.total}</td>
-                    <td class="whitespace-nowrap p-4 text-neutral-400">{row.equipment}</td>
+                    <td class="whitespace-nowrap p-4 text-neutral-600 dark:text-neutral-400">
+                      {row.dots}
+                    </td>
+                    <td class="whitespace-nowrap p-4 text-neutral-600 dark:text-neutral-400">
+                      {row.total}
+                    </td>
+                    <td class="whitespace-nowrap p-4 text-neutral-600 dark:text-neutral-400">
+                      {row.equipment}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -191,9 +199,11 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-7 mx-auto max-w-5xl px-4">
-        <div class="overflow-hidden rounded-2xl border border-neutral-800 bg-black px-4 py-16 text-center transition-all hover:border-power/50">
-          <h2 class="mb-4 text-2xl font-bold text-white">Open data. Open API. No friction.</h2>
-          <p class="mb-8 text-neutral-400">
+        <div class="card-lift overflow-hidden rounded-2xl border border-neutral-200/70 bg-white px-4 py-16 text-center transition-all hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-black dark:hover:shadow-none">
+          <h2 class="mb-4 text-2xl font-bold text-neutral-900 dark:text-white">
+            Open data. Open API. No friction.
+          </h2>
+          <p class="mb-8 text-neutral-600 dark:text-neutral-400">
             Hit any endpoint right now. No registration, no API key.
           </p>
           <a

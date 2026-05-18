@@ -25,7 +25,7 @@ export const StatusBanner: FC<StatusBannerProps> = ({ ready, allGood, rowCount }
         </svg>
         <div class="flex flex-col gap-1">
           <span class="font-medium text-power">Warming Up</span>
-          <p class="text-sm text-neutral-300">
+          <p class="text-sm text-neutral-700 dark:text-neutral-300">
             Snapshot is still loading. API endpoints return 503 until ready.
           </p>
         </div>
@@ -36,7 +36,7 @@ export const StatusBanner: FC<StatusBannerProps> = ({ ready, allGood, rowCount }
     return (
       <div class="fade-in animation-delay-2 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
         <svg
-          class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400"
+          class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600 dark:text-green-400"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -45,8 +45,10 @@ export const StatusBanner: FC<StatusBannerProps> = ({ ready, allGood, rowCount }
           <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
         </svg>
         <div class="flex flex-col gap-1">
-          <span class="font-medium text-green-400">All Systems Operational</span>
-          <p class="text-sm text-neutral-300">
+          <span class="font-medium text-green-600 dark:text-green-400">
+            All Systems Operational
+          </span>
+          <p class="text-sm text-neutral-700 dark:text-neutral-300">
             {rowCount.toLocaleString()} entries loaded in memory; all endpoints are serving
             responses.
           </p>
@@ -67,7 +69,7 @@ export const StatusBanner: FC<StatusBannerProps> = ({ ready, allGood, rowCount }
       </svg>
       <div class="flex flex-col gap-1">
         <span class="font-medium text-power">Service Degraded</span>
-        <p class="text-sm text-neutral-300">
+        <p class="text-sm text-neutral-700 dark:text-neutral-300">
           Some endpoints are experiencing issues. Open the cards below for details.
         </p>
       </div>

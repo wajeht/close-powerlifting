@@ -2,6 +2,11 @@ import type { FC } from "hono/jsx";
 
 import type { AppState } from "../_layouts/main";
 
+// Runs synchronously before the stylesheet loads so the correct theme
+// class is on <html> by the time the browser paints. Reads localStorage
+// first, then falls back to the system preference.
+const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('theme');var d=s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d){document.documentElement.classList.add('dark');}}catch(e){}})();`;
+
 const ANIMATIONS_CSS = `
 .fade-in-heading { animation: fadeInDown 0.4s forwards; opacity: 0; }
 .fade-in { animation: fadeIn 0.4s forwards; opacity: 0; }
@@ -64,6 +69,7 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
       rel="icon"
       href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏋🏻</text></svg>"
     />
+    <script>{THEME_INIT_SCRIPT}</script>
     <link rel="stylesheet" href="/css/style.css" />
 
     <style>{ANIMATIONS_CSS}</style>

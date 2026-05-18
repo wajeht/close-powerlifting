@@ -3,38 +3,40 @@ import type { FC } from "hono/jsx";
 export const TermsPage: FC = () => (
   <div class="mx-auto max-w-5xl px-4">
     <header class="fade-in-heading mb-8">
-      <h1 class="text-2xl font-bold text-white">Terms of Service</h1>
-      <p class="mt-2 text-neutral-400">Last updated: October 18, 2022</p>
+      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Terms of Service</h1>
+      <p class="mt-2 text-neutral-600 dark:text-neutral-400">Last updated: October 18, 2022</p>
     </header>
-    <div class="fade-in animation-delay-2 flex flex-col gap-6 leading-relaxed text-neutral-400">
+    <div class="fade-in animation-delay-2 flex flex-col gap-6 leading-relaxed text-neutral-600 dark:text-neutral-400">
       <p>Please read these terms and conditions carefully before using our Service.</p>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Definitions</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Definitions</h2>
         <ul class="list-inside list-disc space-y-2 text-neutral-500">
           <li>
-            <strong class="text-neutral-300">Company</strong> refers to Close Powerlifting.
+            <strong class="text-neutral-700 dark:text-neutral-300">Company</strong> refers to Close
+            Powerlifting.
           </li>
           <li>
-            <strong class="text-neutral-300">Service</strong> refers to the Website.
+            <strong class="text-neutral-700 dark:text-neutral-300">Service</strong> refers to the
+            Website.
           </li>
           <li>
-            <strong class="text-neutral-300">Website</strong> refers to Close Powerlifting,
-            accessible from{" "}
+            <strong class="text-neutral-700 dark:text-neutral-300">Website</strong> refers to Close
+            Powerlifting, accessible from{" "}
             <a class="text-power/80 hover:text-power" href="/">
               closepowerlifting.com
             </a>
             .
           </li>
           <li>
-            <strong class="text-neutral-300">You</strong> means the individual accessing or using
-            the Service.
+            <strong class="text-neutral-700 dark:text-neutral-300">You</strong> means the individual
+            accessing or using the Service.
           </li>
         </ul>
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Acknowledgment</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Acknowledgment</h2>
         <p>
           These are the Terms and Conditions governing the use of this Service and the agreement
           that operates between You and the Company. These Terms and Conditions set out the rights
@@ -61,7 +63,9 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Links to Other Websites</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Links to Other Websites
+        </h2>
         <p>
           Our Service may contain links to third-party web sites or services that are not owned or
           controlled by the Company.
@@ -73,7 +77,7 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Termination</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Termination</h2>
         <p>
           We may terminate or suspend Your access immediately, without prior notice or liability,
           for any reason whatsoever, including without limitation if You breach these Terms and
@@ -83,7 +87,9 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Limitation of Liability</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Limitation of Liability
+        </h2>
         <p>
           Notwithstanding any damages that You might incur, the entire liability of the Company and
           any of its suppliers under any provision of this Terms and Your exclusive remedy for all
@@ -98,7 +104,7 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Disclaimer</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Disclaimer</h2>
         <p>
           The Service is provided to You "AS IS" and "AS AVAILABLE" and with all faults and defects
           without warranty of any kind. To the maximum extent permitted under applicable law, the
@@ -108,7 +114,7 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Governing Law</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Governing Law</h2>
         <p>
           The laws of Georgia, United States, excluding its conflicts of law rules, shall govern
           this Terms and Your use of the Service.
@@ -116,7 +122,9 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Disputes Resolution</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Disputes Resolution
+        </h2>
         <p>
           If You have any concern or dispute about the Service, You agree to first try to resolve
           the dispute informally by contacting the Company.
@@ -124,7 +132,9 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Severability and Waiver</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Severability and Waiver
+        </h2>
         <p>
           If any provision of these Terms is held to be unenforceable or invalid, such provision
           will be changed and interpreted to accomplish the objectives of such provision to the
@@ -134,7 +144,9 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Changes to These Terms</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Changes to These Terms
+        </h2>
         <p>
           We reserve the right, at Our sole discretion, to modify or replace these Terms at any
           time. If a revision is material We will make reasonable efforts to provide at least 30
@@ -148,7 +160,7 @@ export const TermsPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Contact Us</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Contact Us</h2>
         <p>
           If you have any questions about these Terms and Conditions, You can{" "}
           <a

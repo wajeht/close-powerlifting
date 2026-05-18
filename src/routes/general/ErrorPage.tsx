@@ -13,10 +13,10 @@ export const ErrorPage: FC<ErrorPageProps> = ({ statusCode, heading, message, er
   <div class="mx-auto max-w-md px-4 text-center">
     <div class="flex flex-col gap-4">
       <h1 class="fade-in-heading text-6xl font-bold text-power">{statusCode}</h1>
-      <p class="fade-in animation-delay-2 text-xl text-white">{heading}</p>
+      <p class="fade-in animation-delay-2 text-xl text-neutral-900 dark:text-white">{heading}</p>
       <p class="fade-in animation-delay-3 text-neutral-500">{message}</p>
       {errorStack && (
-        <pre class="fade-in animation-delay-4 mt-4 overflow-scroll rounded-lg border border-neutral-800 bg-neutral-900 p-4 text-left text-xs text-neutral-400">
+        <pre class="fade-in animation-delay-4 mt-4 overflow-scroll rounded-lg border border-neutral-200 bg-neutral-100 p-4 text-left text-xs text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
           {errorStack}
         </pre>
       )}

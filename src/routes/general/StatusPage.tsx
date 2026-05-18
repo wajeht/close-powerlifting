@@ -26,8 +26,8 @@ export const StatusPage: FC<StatusPageProps> = ({
   <>
     <div class="mx-auto max-w-5xl px-4">
       <header class="fade-in-heading mb-6">
-        <h1 class="text-2xl font-bold text-white">API Status</h1>
-        <p class="mt-2 text-neutral-400">
+        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">API Status</h1>
+        <p class="mt-2 text-neutral-600 dark:text-neutral-400">
           Snapshot freshness, dataset counts, and per-endpoint health probes.
         </p>
       </header>
@@ -37,9 +37,9 @@ export const StatusPage: FC<StatusPageProps> = ({
           <InfoCard label="Total entries" value={rowCount.toLocaleString()} />
           <InfoCard label="Snapshot built" value={ingestedAt ?? "—"} />
           <InfoCard label="Upstream Last-Modified" value={sourceLastModified ?? "—"} />
-          <article class="rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
-            <div class="text-sm text-neutral-400">Data source</div>
-            <div class="mt-1 text-xl font-semibold text-white">
+          <article class="card-lift rounded-lg border border-neutral-200/70 bg-white p-4 transition-all hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:shadow-none">
+            <div class="text-sm text-neutral-600 dark:text-neutral-400">Data source</div>
+            <div class="mt-1 text-xl font-semibold text-neutral-900 dark:text-white">
               <a
                 class="hover:underline"
                 href="https://openpowerlifting.org"
@@ -54,37 +54,39 @@ export const StatusPage: FC<StatusPageProps> = ({
         {routeGroups.length > 0
           ? routeGroups.map((group) => (
               <div class="fade-in animation-delay-4 flex flex-col gap-3">
-                <h2 class="frosted sticky top-[72px] z-30 py-2 text-lg font-semibold text-white">
+                <h2 class="frosted sticky top-[72px] z-30 py-2 text-lg font-semibold text-neutral-900 dark:text-white">
                   {group.name}
                 </h2>
                 <div class="flex flex-col gap-2">
                   {group.routes.map((item) => (
-                    <article class="status-route flex flex-col gap-2 rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-all hover:border-power/50">
+                    <article class="status-route flex flex-col gap-2 card-lift rounded-lg border border-neutral-200/70 bg-white p-4 transition-all hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:shadow-none">
                       <button
                         type="button"
                         class="status-route-toggle flex w-full items-start justify-between gap-4 text-left"
                         aria-expanded="false"
                       >
                         <div class="flex min-w-0 flex-col gap-2">
-                          <div class="flex gap-4 text-neutral-400">
-                            <div class="font-bold text-white">{item.method}</div>
-                            <div class="overflow-x-auto rounded bg-neutral-800 px-2 font-mono">
+                          <div class="flex gap-4 text-neutral-600 dark:text-neutral-400">
+                            <div class="font-bold text-neutral-900 dark:text-white">
+                              {item.method}
+                            </div>
+                            <div class="overflow-x-auto rounded bg-neutral-200 px-2 font-mono dark:bg-neutral-800">
                               {item.url}
                             </div>
                           </div>
                           <div class="flex flex-wrap gap-1 text-sm">
                             {item.status ? (
-                              <span class="text-green-400">Healthy</span>
+                              <span class="text-green-600 dark:text-green-400">Healthy</span>
                             ) : (
                               <span class="text-power">Unhealthy</span>
                             )}
                             <div class="text-neutral-500">as of</div>
-                            <div class="text-neutral-400">{item.date}</div>
+                            <div class="text-neutral-600 dark:text-neutral-400">{item.date}</div>
                           </div>
                         </div>
                         {item.body && (
                           <svg
-                            class="status-route-chevron mt-1 h-5 w-5 flex-shrink-0 text-neutral-400 transition-transform"
+                            class="status-route-chevron mt-1 h-5 w-5 flex-shrink-0 text-neutral-600 transition-transform dark:text-neutral-400"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -99,7 +101,7 @@ export const StatusPage: FC<StatusPageProps> = ({
                         )}
                       </button>
                       {item.body && (
-                        <pre class="status-route-pre hidden max-h-96 overflow-auto rounded bg-neutral-950 p-3 text-xs text-neutral-300">
+                        <pre class="status-route-pre hidden max-h-96 overflow-auto rounded bg-neutral-50 p-3 text-xs text-neutral-700 dark:bg-neutral-950 dark:text-neutral-300">
                           {item.body}
                         </pre>
                       )}

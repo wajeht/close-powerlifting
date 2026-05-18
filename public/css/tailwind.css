@@ -2,6 +2,8 @@
 
 @source "../../src/**/*.{ts,tsx}";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --breakpoint-xs: 475px;
   --color-power: #dc2626;
@@ -11,7 +13,21 @@
 
 @layer components {
   .frosted {
-    @apply bg-black/60 backdrop-blur-xl;
+    @apply bg-stone-50/80 backdrop-blur-xl dark:bg-black/60;
+  }
+
+  .paper-grid {
+    background-image: radial-gradient(circle, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: 0 0;
+  }
+
+  .dark .paper-grid {
+    background-image: none;
+  }
+
+  .card-lift {
+    @apply shadow-[0_1px_2px_rgba(15,23,42,0.04),0_1px_3px_rgba(15,23,42,0.06)] dark:shadow-none;
   }
 }
 

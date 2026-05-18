@@ -13,10 +13,12 @@ const ContactLink: FC = () => (
 export const PrivacyPage: FC = () => (
   <div class="mx-auto max-w-5xl px-4">
     <header class="fade-in-heading mb-8">
-      <h1 class="text-2xl font-bold text-white">Privacy Policy</h1>
-      <p class="mt-2 text-neutral-400">How we collect, use, and protect your information.</p>
+      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Privacy Policy</h1>
+      <p class="mt-2 text-neutral-600 dark:text-neutral-400">
+        How we collect, use, and protect your information.
+      </p>
     </header>
-    <div class="fade-in animation-delay-2 flex flex-col gap-6 leading-relaxed text-neutral-400">
+    <div class="fade-in animation-delay-2 flex flex-col gap-6 leading-relaxed text-neutral-600 dark:text-neutral-400">
       <p>
         At Close Powerlifting, one of our main priorities is the privacy of our visitors. This
         Privacy Policy document contains types of information that is collected and recorded by
@@ -28,14 +30,16 @@ export const PrivacyPage: FC = () => (
       </p>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Consent</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Consent</h2>
         <p>
           By using our website, you hereby consent to our Privacy Policy and agree to its terms.
         </p>
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Information we collect</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Information we collect
+        </h2>
         <p>
           The personal information that you are asked to provide, and the reasons why you are asked
           to provide it, will be made clear to you at the point we ask you to provide your personal
@@ -53,7 +57,9 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">How we use your information</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          How we use your information
+        </h2>
         <p>We use the information we collect in various ways, including to:</p>
         <ul class="mt-3 list-inside list-disc space-y-1 text-neutral-500">
           <li>Provide, operate, and maintain our website</li>
@@ -67,7 +73,7 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Log Files</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Log Files</h2>
         <p>
           Close Powerlifting follows a standard procedure of using log files. These files log
           visitors when they visit websites. The information collected by log files include internet
@@ -79,7 +85,7 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Cookies</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">Cookies</h2>
         <p>
           Like any other website, Close Powerlifting uses cookies. These cookies are used to store
           information including visitors' preferences, and the pages on the website that the visitor
@@ -89,7 +95,9 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Third Party Privacy Policies</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Third Party Privacy Policies
+        </h2>
         <p>
           Close Powerlifting's Privacy Policy does not apply to other advertisers or websites. You
           can choose to disable cookies through your individual browser options.
@@ -97,7 +105,9 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">CCPA Privacy Rights</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          CCPA Privacy Rights
+        </h2>
         <p>Under the CCPA, California consumers have the right to:</p>
         <ul class="mt-3 list-inside list-disc space-y-1 text-neutral-500">
           <li>Request disclosure of personal data collected about them</li>
@@ -111,7 +121,9 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">GDPR Data Protection Rights</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          GDPR Data Protection Rights
+        </h2>
         <p>Every user is entitled to the following:</p>
         <ul class="mt-3 list-inside list-disc space-y-1 text-neutral-500">
           <li>The right to access your personal data</li>
@@ -128,7 +140,9 @@ export const PrivacyPage: FC = () => (
       </section>
 
       <section>
-        <h2 class="mb-3 text-lg font-semibold text-white">Children's Information</h2>
+        <h2 class="mb-3 text-lg font-semibold text-neutral-900 dark:text-white">
+          Children's Information
+        </h2>
         <p>
           Close Powerlifting does not knowingly collect any Personal Identifiable Information from
           children under the age of 13. If you think that your child provided this kind of
