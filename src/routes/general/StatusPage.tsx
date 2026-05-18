@@ -115,6 +115,6 @@ export const StatusPage: FC<StatusPageProps> = ({
             )}
       </section>
     </div>
-    <script>{STATUS_TOGGLE_SCRIPT}</script>
+    <script dangerouslySetInnerHTML={{ __html: STATUS_TOGGLE_SCRIPT }} />
   </>
 );
