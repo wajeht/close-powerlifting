@@ -18,6 +18,24 @@ interface HomePageProps {
 
 const COUNTER_SCRIPT = `(function(){var counters=document.querySelectorAll('.counter');var animated=false;function animateCounter(c){var target=parseFloat(c.dataset.target);var start=parseFloat(c.dataset.start)||0;var decimals=parseInt(c.dataset.decimals)||0;var suffix=c.dataset.suffix||'';var duration=2000;var steps=60;var stepDuration=duration/steps;var current=start;var increment=(target-start)/steps;function update(){current+=increment;if(current>=target){c.textContent=(decimals>0?target.toFixed(decimals):target)+suffix}else{var d=decimals>0?current.toFixed(decimals):Math.floor(current);c.textContent=d+suffix;requestAnimationFrame(function(){setTimeout(update,stepDuration)})}}update()}function handle(entries){entries.forEach(function(e){if(e.isIntersecting&&!animated){animated=true;counters.forEach(function(c,i){setTimeout(function(){animateCounter(c)},i*150)})}})}var obs=new IntersectionObserver(handle,{threshold:0.5});var g=document.getElementById('stats-grid');if(g){obs.observe(g)}})();`;
 
+const tDim = `class="text-white/40"`;
+const tCmd = `class="text-white/80"`;
+const tKey = `class="text-white"`;
+const tStr = `class="text-amber-200"`;
+const tNum = `class="text-pink-200"`;
+
+const HERO_SNIPPET_HTML = `<span ${tDim}>$</span> <span ${tCmd}>curl -s https://closepowerlifting.com/api/rankings | jq</span>
+<span ${tDim}>{</span>
+  <span ${tKey}>"status"</span><span ${tDim}>:</span> <span ${tStr}>"success"</span><span ${tDim}>,</span>
+  <span ${tKey}>"request_url"</span><span ${tDim}>:</span> <span ${tStr}>"http://closepowerlifting.com/api/rankings"</span><span ${tDim}>,</span>
+  <span ${tKey}>"message"</span><span ${tDim}>:</span> <span ${tStr}>"The resource was returned successfully!"</span><span ${tDim}>,</span>
+  <span ${tKey}>"data"</span><span ${tDim}>: [</span>
+    <span ${tDim}>{</span> <span ${tKey}>"rank"</span><span ${tDim}>:</span> <span ${tNum}>1</span><span ${tDim}>,</span> <span ${tKey}>"name"</span><span ${tDim}>:</span> <span ${tStr}>"Ray Williams"</span><span ${tDim}>,</span>   <span ${tKey}>"total_kg"</span><span ${tDim}>:</span> <span ${tNum}>1147.5</span><span ${tDim}>,</span> <span ${tKey}>"dots"</span><span ${tDim}>:</span> <span ${tNum}>633.5</span> <span ${tDim}>},</span>
+    <span ${tDim}>{</span> <span ${tKey}>"rank"</span><span ${tDim}>:</span> <span ${tNum}>2</span><span ${tDim}>,</span> <span ${tKey}>"name"</span><span ${tDim}>:</span> <span ${tStr}>"Jesus Olivares"</span><span ${tDim}>,</span> <span ${tKey}>"total_kg"</span><span ${tDim}>:</span> <span ${tNum}>1265.0</span><span ${tDim}>,</span> <span ${tKey}>"dots"</span><span ${tDim}>:</span> <span ${tNum}>622.2</span> <span ${tDim}>},</span>
+    <span ${tDim}>{</span> <span ${tKey}>"rank"</span><span ${tDim}>:</span> <span ${tNum}>3</span><span ${tDim}>,</span> <span ${tKey}>"name"</span><span ${tDim}>:</span> <span ${tStr}>"Sergey Ivanov"</span><span ${tDim}>,</span>  <span ${tKey}>"total_kg"</span><span ${tDim}>:</span> <span ${tNum}>1080.5</span><span ${tDim}>,</span> <span ${tKey}>"dots"</span><span ${tDim}>:</span> <span ${tNum}>619.3</span> <span ${tDim}>}</span>
+  <span ${tDim}>]</span>
+<span ${tDim}>}</span>`;
+
 export const HomePage: FC<HomePageProps> = ({ rankings }) => (
   <>
     <section class="relative -mt-16 ml-[calc(50%-50vw)] w-screen overflow-hidden bg-red-800">
@@ -71,19 +89,10 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
               <span class="h-2.5 w-2.5 rounded-full bg-white/25" />
               <span class="ml-3 font-mono text-xs text-white/50">GET /api/rankings</span>
             </div>
-            <pre class="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-white/85 sm:text-sm">
-              <code>{`$ curl -s https://closepowerlifting.com/api/rankings | jq
-{
-  "status": "success",
-  "request_url": "http://closepowerlifting.com/api/rankings",
-  "message": "The resource was returned successfully!",
-  "data": [
-    { "rank": 1, "name": "Ray Williams",   "total_kg": 1147.5, "dots": 633.5 },
-    { "rank": 2, "name": "Jesus Olivares", "total_kg": 1265.0, "dots": 622.2 },
-    { "rank": 3, "name": "Sergey Ivanov",  "total_kg": 1080.5, "dots": 619.3 }
-  ]
-}`}</code>
-            </pre>
+            <pre
+              class="overflow-x-auto p-5 font-mono text-xs leading-relaxed sm:text-sm"
+              dangerouslySetInnerHTML={{ __html: HERO_SNIPPET_HTML }}
+            />
           </div>
         </div>
       </div>
