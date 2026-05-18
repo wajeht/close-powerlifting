@@ -17,8 +17,8 @@ export const StatCounter: FC<StatCounterProps> = ({
   label,
   description,
 }) => (
-  <div class="card-lift rounded-lg border border-neutral-200/70 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:translate-y-0 dark:hover:shadow-none">
-    <div class="font-display text-4xl tracking-tight text-power sm:text-5xl">
+  <div class="group relative flex flex-col items-center gap-3 border-t-2 border-power pt-6 text-center">
+    <div class="font-display text-6xl leading-none tracking-tight text-power sm:text-7xl lg:text-8xl">
       <span
         class="counter"
         data-target={target}
@@ -29,7 +29,7 @@ export const StatCounter: FC<StatCounterProps> = ({
         0
       </span>
     </div>
-    <div class="mt-1 text-neutral-600 dark:text-neutral-400">{label}</div>
-    <div class="mt-2 text-xs text-neutral-500 dark:text-neutral-600">{description}</div>
+    <div class="font-medium text-neutral-900 dark:text-white">{label}</div>
+    <div class="text-sm text-neutral-500">{description}</div>
   </div>
 );

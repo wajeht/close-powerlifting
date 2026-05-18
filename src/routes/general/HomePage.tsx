@@ -20,46 +20,70 @@ const COUNTER_SCRIPT = `(function(){var counters=document.querySelectorAll('.cou
 
 export const HomePage: FC<HomePageProps> = ({ rankings }) => (
   <>
-    <section class="relative">
-      <div class="mx-auto max-w-5xl px-4 text-center">
-        <div class="max-w-8xl pointer-events-none absolute -top-40 left-1/2 -z-10 h-[900px] w-full -translate-x-1/2 opacity-10">
-          <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-black" />
-          <img
-            src="/img/sumo-deadlift.webp"
-            alt=""
-            class="h-full w-full object-cover object-top [mask-image:radial-gradient(ellipse_at_center,black_45%,transparent_80%)]"
-          />
-        </div>
-        <p class="fade-in-heading mb-4 text-sm font-medium uppercase tracking-wider text-power">
+    <section class="relative -mt-16 ml-[calc(50%-50vw)] w-screen overflow-hidden bg-power">
+      <div class="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay">
+        <img
+          src="/img/sumo-deadlift.webp"
+          alt=""
+          class="h-full w-full object-cover object-center [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_85%)]"
+        />
+      </div>
+      <div
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(255,255,255,0.18),transparent_70%)]"
+        aria-hidden="true"
+      />
+      <div class="relative mx-auto max-w-5xl px-6 py-28 text-center sm:py-36">
+        <p class="fade-in-heading mb-4 text-sm font-medium uppercase tracking-[0.2em] text-white/70">
           Powerlifting Data API
         </p>
-        <h1 class="fade-in-heading animation-delay-1 font-display text-5xl leading-[0.95] tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl dark:text-white">
+        <h1 class="fade-in-heading animation-delay-1 font-display text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
           Build powerlifting apps
           <br class="hidden sm:inline" />
-          <span class="text-neutral-500 dark:text-neutral-400"> in minutes, not months</span>
+          <span class="text-white/60"> in minutes, not months</span>
         </h1>
-        <p class="fade-in-heading animation-delay-2 mx-auto mt-6 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400">
+        <p class="fade-in-heading animation-delay-2 mx-auto mt-6 max-w-2xl text-lg text-white/80">
           Query 3 million competition results with a single API call. No scraping. No parsing. Just
           clean, structured data.
         </p>
         <div class="fade-in-heading animation-delay-3 mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a
-            class="rounded-md bg-power px-4 py-2 font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl hover:shadow-power-glow"
+            class="rounded-md bg-white px-5 py-2.5 font-medium text-power transition-all hover:bg-white/90 hover:shadow-lg"
             href="/docs/api"
           >
             Read the docs
           </a>
           <a
-            class="rounded-md border border-neutral-300 px-4 py-2 text-neutral-700 transition-all hover:border-power hover:text-neutral-900 dark:border-neutral-700 dark:text-neutral-300 dark:hover:text-white"
+            class="rounded-md border border-white/40 px-5 py-2.5 font-medium text-white transition-all hover:border-white hover:bg-white/10"
             href="/api/rankings?limit=10"
             target="_blank"
           >
             Try /api/rankings
           </a>
         </div>
-        <p class="fade-in-heading animation-delay-3 mt-4 text-sm text-neutral-500">
+        <p class="fade-in-heading animation-delay-3 mt-6 text-sm text-white/60">
           Public API. No keys, no signup, no rate-limit hassle.
         </p>
+        <div class="fade-in animation-delay-4 mx-auto mt-14 max-w-2xl text-left">
+          <div class="overflow-hidden rounded-xl border border-white/15 bg-black/40 shadow-2xl backdrop-blur-md">
+            <div class="flex items-center gap-1.5 border-b border-white/10 bg-black/50 px-4 py-2.5">
+              <span class="h-2.5 w-2.5 rounded-full bg-white/25" />
+              <span class="h-2.5 w-2.5 rounded-full bg-white/25" />
+              <span class="h-2.5 w-2.5 rounded-full bg-white/25" />
+              <span class="ml-3 font-mono text-xs text-white/50">GET /api/rankings</span>
+            </div>
+            <pre class="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-white/85 sm:text-sm">
+              <code>{`$ curl close-powerlifting.com/api/rankings
+{
+  "status": "success",
+  "data": [
+    { "rank": 1, "name": "Ray Williams",   "total_kg": 1147.5, "dots": 633.5 },
+    { "rank": 2, "name": "Jesus Olivares", "total_kg": 1265.0, "dots": 622.2 },
+    { "rank": 3, "name": "Sergey Ivanov",  "total_kg": 1080.5, "dots": 619.3 }
+  ]
+}`}</code>
+            </pre>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -69,7 +93,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
           Tired of scraping OpenPowerlifting?
         </h2>
         <p class="mb-8 text-center text-neutral-500">We did the hard work so you don't have to.</p>
-        <div class="grid gap-4 text-center sm:grid-cols-3" id="stats-grid">
+        <div class="grid gap-10 sm:grid-cols-3 sm:gap-6" id="stats-grid">
           <StatCounter
             target="3.3"
             start="1.0"
@@ -197,32 +221,34 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
       </div>
     </section>
 
-    <section class="mt-24">
-      <div class="fade-in animation-delay-7 mx-auto max-w-5xl px-4">
-        <div class="card-lift overflow-hidden rounded-2xl border border-neutral-200/70 bg-white px-4 py-16 text-center transition-all hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-black dark:hover:shadow-none">
-          <h2 class="mb-4 font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
-            Open data. Open API. No friction.
-          </h2>
-          <p class="mb-8 text-neutral-600 dark:text-neutral-400">
-            Hit any endpoint right now. No registration, no API key.
-          </p>
+    <section class="relative -mb-16 mt-24 ml-[calc(50%-50vw)] w-screen overflow-hidden bg-neutral-900 dark:bg-neutral-950">
+      <div
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_50%_100%,rgba(220,38,38,0.18),transparent_70%)]"
+        aria-hidden="true"
+      />
+      <div class="fade-in animation-delay-7 relative mx-auto max-w-5xl px-6 py-20 text-center sm:py-24">
+        <h2 class="mb-4 font-display text-3xl tracking-tight text-white sm:text-4xl">
+          Open data. Open API. No friction.
+        </h2>
+        <p class="mb-8 text-neutral-400">
+          Hit any endpoint right now. No registration, no API key.
+        </p>
+        <a
+          class="inline-block rounded-md bg-power px-5 py-2.5 font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl"
+          href="/docs/api"
+        >
+          Browse the docs
+        </a>
+        <p class="mt-6 text-sm text-neutral-500">
+          Data sourced from{" "}
           <a
-            class="inline-block rounded-md bg-power px-4 py-2 font-medium text-white shadow-lg shadow-power-glow transition-all hover:bg-power-dark hover:shadow-xl hover:shadow-power-glow"
-            href="/docs/api"
+            class="text-power/80 hover:text-power"
+            href="https://openpowerlifting.org"
+            target="_blank"
           >
-            Browse the docs
+            OpenPowerlifting.org
           </a>
-          <p class="mt-6 text-sm text-neutral-500">
-            Data sourced from{" "}
-            <a
-              class="text-power/80 hover:text-power"
-              href="https://openpowerlifting.org"
-              target="_blank"
-            >
-              OpenPowerlifting.org
-            </a>
-          </p>
-        </div>
+        </p>
       </div>
     </section>
 
