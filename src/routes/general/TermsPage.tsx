@@ -3,7 +3,9 @@ import type { FC } from "hono/jsx";
 export const TermsPage: FC = () => (
   <div class="mx-auto max-w-5xl px-4">
     <header class="fade-in-heading mb-8">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">Terms of Service</h1>
+      <h1 class="font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
+        Terms of Service
+      </h1>
       <p class="mt-2 text-neutral-600 dark:text-neutral-400">Last updated: October 18, 2022</p>
     </header>
     <div class="fade-in animation-delay-2 flex flex-col gap-6 leading-relaxed text-neutral-600 dark:text-neutral-400">

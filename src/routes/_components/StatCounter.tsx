@@ -18,7 +18,7 @@ export const StatCounter: FC<StatCounterProps> = ({
   description,
 }) => (
   <div class="card-lift rounded-lg border border-neutral-200/70 bg-white p-6 transition-all hover:-translate-y-0.5 hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900 dark:hover:translate-y-0 dark:hover:shadow-none">
-    <div class="text-3xl font-bold text-power">
+    <div class="font-display text-4xl tracking-tight text-power sm:text-5xl">
       <span
         class="counter"
         data-target={target}

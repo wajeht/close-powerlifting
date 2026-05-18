@@ -9,6 +9,14 @@
   --color-power: #dc2626;
   --color-power-dark: #b91c1c;
   --color-power-glow: #dc262640;
+
+  --font-sans:
+    "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --font-display: "Archivo Black", "DM Sans", ui-sans-serif, sans-serif;
 }
 
 @layer components {

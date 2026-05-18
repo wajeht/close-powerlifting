@@ -3,7 +3,9 @@ import type { FC } from "hono/jsx";
 export const AboutPage: FC = () => (
   <div class="mx-auto max-w-5xl px-4">
     <header class="fade-in-heading mb-6">
-      <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">About</h1>
+      <h1 class="font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
+        About
+      </h1>
       <p class="mt-2 text-neutral-600 dark:text-neutral-400">
         The story behind Close Powerlifting.
       </p>

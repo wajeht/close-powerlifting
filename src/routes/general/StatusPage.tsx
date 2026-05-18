@@ -26,7 +26,9 @@ export const StatusPage: FC<StatusPageProps> = ({
   <>
     <div class="mx-auto max-w-5xl px-4">
       <header class="fade-in-heading mb-6">
-        <h1 class="text-2xl font-bold text-neutral-900 dark:text-white">API Status</h1>
+        <h1 class="font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
+          API Status
+        </h1>
         <p class="mt-2 text-neutral-600 dark:text-neutral-400">
           Snapshot freshness, dataset counts, and per-endpoint health probes.
         </p>
@@ -54,7 +56,7 @@ export const StatusPage: FC<StatusPageProps> = ({
         {routeGroups.length > 0
           ? routeGroups.map((group) => (
               <div class="fade-in animation-delay-4 flex flex-col gap-3">
-                <h2 class="frosted sticky top-[72px] z-30 py-2 text-lg font-semibold text-neutral-900 dark:text-white">
+                <h2 class="frosted sticky top-[72px] z-30 py-2 font-display text-xl tracking-tight text-neutral-900 dark:text-white">
                   {group.name}
                 </h2>
                 <div class="flex flex-col gap-2">

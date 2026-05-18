@@ -39,6 +39,13 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
     <link rel="preconnect" href="https://cloudflareinsights.com" crossorigin="anonymous" />
     <link rel="dns-prefetch" href="https://cloudflareinsights.com" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    />
+
     <title>{title ? `Close Powerlifting - ${title}` : "Close Powerlifting"}</title>
 
     <meta name="description" content="An intuitive REST API for the OpenPowerlifting dataset" />

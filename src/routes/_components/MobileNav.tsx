@@ -26,7 +26,7 @@ export const MobileNav: FC<PageProps> = ({ state, path }) => (
     </label>
     <div class="fixed inset-0 z-[100] hidden h-screen w-screen bg-stone-50 peer-checked:block dark:bg-black">
       <div class="flex w-full items-center justify-between p-5">
-        <h1 class="text-2xl font-extrabold text-neutral-900 hover:text-neutral-600 dark:text-white dark:hover:text-neutral-300">
+        <h1 class="font-display text-xl tracking-tight text-neutral-900 hover:text-neutral-600 dark:text-white dark:hover:text-neutral-300">
           <a href="/">Close Powerlifting</a>
         </h1>
         <label for="mobile-menu-toggle" class="cursor-pointer p-2">

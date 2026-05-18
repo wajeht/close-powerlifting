@@ -33,10 +33,10 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
         <p class="fade-in-heading mb-4 text-sm font-medium uppercase tracking-wider text-power">
           Powerlifting Data API
         </p>
-        <h1 class="fade-in-heading animation-delay-1 text-4xl font-extrabold tracking-tight text-neutral-900 sm:text-5xl lg:text-6xl dark:text-white">
+        <h1 class="fade-in-heading animation-delay-1 font-display text-5xl leading-[0.95] tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl dark:text-white">
           Build powerlifting apps
           <br class="hidden sm:inline" />
-          <span class="text-neutral-600 dark:text-neutral-400"> in minutes, not months</span>
+          <span class="text-neutral-500 dark:text-neutral-400"> in minutes, not months</span>
         </h1>
         <p class="fade-in-heading animation-delay-2 mx-auto mt-6 max-w-2xl text-lg text-neutral-600 dark:text-neutral-400">
           Query 3 million competition results with a single API call. No scraping. No parsing. Just
@@ -65,7 +65,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-4 mx-auto max-w-5xl px-4">
-        <h2 class="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <h2 class="mb-3 text-center font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
           Tired of scraping OpenPowerlifting?
         </h2>
         <p class="mb-8 text-center text-neutral-500">We did the hard work so you don't have to.</p>
@@ -96,7 +96,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-5 mx-auto max-w-5xl px-4">
-        <h2 class="mb-3 text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <h2 class="mb-3 text-center font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
           Six endpoints. Unlimited possibilities.
         </h2>
         <p class="mb-10 text-center text-neutral-500">
@@ -145,7 +145,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
 
     <section class="mt-24">
       <div class="fade-in animation-delay-6 mx-auto max-w-5xl px-4">
-        <h2 class="mb-2 text-center text-2xl font-bold text-neutral-900 dark:text-white">
+        <h2 class="mb-2 text-center font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
           See it in action
         </h2>
         <p class="mb-6 text-center text-neutral-500">Live data from /api/rankings</p>
@@ -200,7 +200,7 @@ export const HomePage: FC<HomePageProps> = ({ rankings }) => (
     <section class="mt-24">
       <div class="fade-in animation-delay-7 mx-auto max-w-5xl px-4">
         <div class="card-lift overflow-hidden rounded-2xl border border-neutral-200/70 bg-white px-4 py-16 text-center transition-all hover:border-power/50 hover:shadow-md dark:border-neutral-800 dark:bg-black dark:hover:shadow-none">
-          <h2 class="mb-4 text-2xl font-bold text-neutral-900 dark:text-white">
+          <h2 class="mb-4 font-display text-3xl tracking-tight text-neutral-900 sm:text-4xl dark:text-white">
             Open data. Open API. No friction.
           </h2>
           <p class="mb-8 text-neutral-600 dark:text-neutral-400">
