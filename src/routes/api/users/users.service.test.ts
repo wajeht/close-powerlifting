@@ -8,19 +8,27 @@ function service() {
 }
 
 describe("users service", () => {
-  describe("searchOrSummary", () => {
-    it("returns the total lifter count when no search term is given", () => {
-      const { data } = service().searchOrSummary({});
-      expect((data as { total_lifters: number }).total_lifters).toBe(5);
+  describe("listLifters", () => {
+    it("returns every lifter paginated when no search term is given", () => {
+      const result = service().listLifters({});
+      expect(result.pagination.items).toBe(5);
+      expect(result.data).toHaveLength(5);
     });
 
     it("returns search matches with pagination", () => {
-      const result = service().searchOrSummary({ search: "Coan" });
+      const result = service().listLifters({ search: "Coan" });
       expect(result.pagination).not.toBeUndefined();
-      expect(result.data as Array<{ username: string }>).toContainEqual({
+      expect(result.data).toContainEqual({
         username: "edcoan",
         name: "Ed Coan",
       });
+    });
+
+    it("honours current_page + per_page", () => {
+      const result = service().listLifters({ per_page: 2, current_page: 2 });
+      expect(result.data).toHaveLength(2);
+      expect(result.pagination.current_page).toBe(2);
+      expect(result.pagination.per_page).toBe(2);
     });
   });
 

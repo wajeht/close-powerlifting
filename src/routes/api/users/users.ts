@@ -30,25 +30,25 @@ export function createUsersRouter(context: AppContext) {
       request: { query: getUsersValidation },
       responses: {
         200: {
-          description: "Search hits or summary",
+          description: "Paginated list of lifters (optionally filtered by ?search=)",
           ...jsonContent(successResponse(UserListData)),
         },
         400: { description: "Validation error", ...errorContent },
         429: { description: "Rate limit exceeded", ...errorContent },
       },
       tags: ["Users"],
-      summary: "Search for athletes or return total lifter count",
+      summary: "List lifters (paginated, optional case-insensitive ?search=)",
     }),
     (c) => {
       const query = c.req.valid("query");
-      const { data, pagination } = service.searchOrSummary(query);
+      const { data, pagination } = service.listLifters(query);
       return c.json(
         {
           status: "success" as const,
           request_url: c.req.url,
           message: "The resource was returned successfully!",
           data,
-          ...(pagination ? { pagination } : {}),
+          pagination,
         },
         200,
       );

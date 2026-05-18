@@ -18,26 +18,21 @@ const RANK_METRICS: RankMetric[] = [
 ];
 
 export function createUsersService(store: DataStoreType) {
-  function searchOrSummary(query: GetUsersType): { data: unknown; pagination?: Pagination } {
+  function listLifters(query: GetUsersType): {
+    data: { username: string; name: string }[];
+    pagination: Pagination;
+  } {
     const data = store.get();
     const needle = query.search?.trim() ?? "";
-
-    if (needle.length === 0) {
-      return {
-        data: {
-          total_lifters: data.lifters.length,
-          message:
-            "Pass ?search=<query> to find lifters by name or username, or hit /api/users/{username} to load a profile.",
-        },
-      };
-    }
-
-    const matches = findLifters(data, needle);
+    const matches = needle.length === 0 ? data.lifters : findLifters(data, needle);
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
     const pagination = buildPagination(matches.length, currentPage, perPage);
     const start = (pagination.current_page - 1) * pagination.per_page;
-    return { data: matches.slice(start, start + pagination.per_page), pagination };
+    const slice = matches
+      .slice(start, start + pagination.per_page)
+      .map((l) => ({ username: l.username, name: l.name }));
+    return { data: slice, pagination };
   }
 
   function getUser(username: string, query: GetUserQueryType): Record<string, unknown> | null {
@@ -180,7 +175,7 @@ export function createUsersService(store: DataStoreType) {
   }
 
   return {
-    searchOrSummary,
+    listLifters,
     getUser,
     getProgression,
     getPersonalBests,
