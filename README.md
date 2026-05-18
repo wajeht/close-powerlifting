@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/ISC)
 [![Open Source Love svg1](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/wajeht/close-powerlifting)
 
-A public, anonymous REST API mirroring the OpenPowerlifting database in memory — no signup, no API keys, no rate-limit hassle.
+An intuitive REST API for the OpenPowerlifting dataset.
 
 ## API Endpoints
 

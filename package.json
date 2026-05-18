@@ -1,7 +1,7 @@
 {
   "name": "close-powerlifting",
   "version": "0.0.1",
-  "description": "An in-memory REST API mirroring the OpenPowerlifting dataset",
+  "description": "An intuitive REST API for the OpenPowerlifting dataset",
   "keywords": [
     "powerlifting"
   ],

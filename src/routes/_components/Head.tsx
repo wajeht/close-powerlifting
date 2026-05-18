@@ -36,7 +36,7 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
 
     <title>{title ? `Close Powerlifting - ${title}` : "Close Powerlifting"}</title>
 
-    <meta name="description" content="An intuitive REST API for the OpenPowerlifting database" />
+    <meta name="description" content="An intuitive REST API for the OpenPowerlifting dataset" />
     <meta name="keywords" content="powerlifting, squat, bench, deadlift, open-powerlifting, api" />
     <meta name="author" content="wajeht" />
 
@@ -45,7 +45,7 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
     <meta property="og:title" content="Close Powerlifting" />
     <meta
       property="og:description"
-      content="An intuitive REST API for the OpenPowerlifting database"
+      content="An intuitive REST API for the OpenPowerlifting dataset"
     />
     <meta property="og:image" content={`https://${state.domain}/img/og.png`} />
     <meta property="og:image:width" content="1200" />
@@ -56,7 +56,7 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
     <meta property="twitter:title" content="Close Powerlifting" />
     <meta
       property="twitter:description"
-      content="An intuitive REST API for the OpenPowerlifting database"
+      content="An intuitive REST API for the OpenPowerlifting dataset"
     />
     <meta property="twitter:image" content={`https://${state.domain}/img/og.png`} />
 

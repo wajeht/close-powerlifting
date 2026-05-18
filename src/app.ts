@@ -90,8 +90,7 @@ export function createApp(context: AppContext): HonoApp {
     info: {
       title: "close-powerlifting API",
       version: configuration.app.version,
-      description:
-        "An in-memory REST API mirroring the OpenPowerlifting dataset. All endpoints are anonymous and read-only.",
+      description: "An intuitive REST API for the OpenPowerlifting dataset.",
     },
     servers: [{ url: "/" }],
   });
