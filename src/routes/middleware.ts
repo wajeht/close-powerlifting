@@ -6,7 +6,7 @@ import { ZodError } from "zod";
 import { configuration } from "../configuration";
 import type { HelpersType } from "../utils/helpers";
 import type { LoggerType } from "../utils/logger";
-import { getCachedRouteHealth } from "./api/health-check/health-check.service";
+import { getCachedRouteHealth } from "./api/health-check/route-status.service";
 import { renderErrorPage } from "./general/ErrorPage";
 import { renderRateLimitPage } from "./general/RateLimitPage";
 import type { ContentfulStatusCode } from "hono/utils/http-status";

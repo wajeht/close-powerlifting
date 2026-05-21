@@ -2,7 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
-import { getRouteStatuses } from "../api/health-check/health-check.service";
+import { getRouteStatuses } from "../api/health-check/route-status.service";
 import { createMiddleware } from "../middleware";
 import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";

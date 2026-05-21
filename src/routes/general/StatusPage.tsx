@@ -2,7 +2,7 @@ import type { FC } from "hono/jsx";
 
 import { InfoCard } from "../_components/InfoCard";
 import { StatusBanner } from "../_components/StatusBanner";
-import type { RouteGroup } from "../api/health-check/health-check.service";
+import type { RouteGroup } from "../api/health-check/route-status.service";
 
 interface StatusPageProps {
   ready: boolean;

@@ -3,7 +3,7 @@ import { serve, type ServerType } from "@hono/node-server";
 import { createApp, type HonoApp } from "./app";
 import { configuration } from "./configuration";
 import { createContext, type AppContext } from "./context";
-import { warmRouteStatuses } from "./routes/api/health-check/health-check.service";
+import { warmRouteStatuses } from "./routes/api/health-check/route-status.service";
 
 export interface ServerInfo {
   app: HonoApp;
