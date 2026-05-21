@@ -6,6 +6,8 @@
 //   meets.json    — JSON array, one Meet object per line
 //   entries.json  — JSON object, one column per line (column store).
 //                   Each value is the JSON-encoded array for that field.
+//   runtime-indexes.json — manifest + small precomputed runtime indexes
+//   runtime-indexes.bin  — binary typed-array indexes used at boot
 //   meta.json     — sourceLastModified / builtAt / counts
 //
 // All large files are stream-written via pipeline + Readable.from so we
@@ -28,15 +30,29 @@ import { parse as parseCsv } from "csv-parse";
 import unzipper from "unzipper";
 
 import { createLogger } from "../src/utils/logger";
-import { buildColumnIndex, normalizeRow, type ColumnIndex } from "../src/data/store";
-import type { Entry, Lifter, Meet } from "../src/data/types";
+import {
+  RANK_METRICS,
+  buildBestEntryByLifter,
+  buildColumnIndex,
+  buildEntriesByLifter,
+  buildEntriesByMeet,
+  buildFederations,
+  buildRankByMetric,
+  buildRecords,
+  normalizeRow,
+  type ColumnIndex,
+} from "../src/data/store";
+import type { Entry, FederationSummary, Lifter, Meet, WeightClassRecord } from "../src/data/types";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
 const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
 const LIFTERS_FILE = path.join(SNAPSHOT_DIR, "lifters.json");
 const MEETS_FILE = path.join(SNAPSHOT_DIR, "meets.json");
 const ENTRIES_FILE = path.join(SNAPSHOT_DIR, "entries.json");
+const RUNTIME_INDEXES_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.json");
+const RUNTIME_INDEXES_BIN_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.bin");
 const META_FILE = path.join(SNAPSHOT_DIR, "meta.json");
+const RUNTIME_INDEX_FORMAT_VERSION = 1;
 
 const logger = createLogger();
 
@@ -55,6 +71,7 @@ async function main(): Promise<void> {
   await streamWriteArray(LIFTERS_FILE, lifters);
   await streamWriteArray(MEETS_FILE, meets);
   await streamWriteEntries(ENTRIES_FILE, entries);
+  await writeRuntimeIndexes(lifters, meets, entries);
   await fs.promises.writeFile(
     META_FILE,
     JSON.stringify({
@@ -73,6 +90,8 @@ async function main(): Promise<void> {
   logger.info(`  lifters.json: ${humanSize(LIFTERS_FILE)}`);
   logger.info(`  meets.json:   ${humanSize(MEETS_FILE)}`);
   logger.info(`  entries.json: ${humanSize(ENTRIES_FILE)}`);
+  logger.info(`  runtime-indexes.json: ${humanSize(RUNTIME_INDEXES_FILE)}`);
+  logger.info(`  runtime-indexes.bin:  ${humanSize(RUNTIME_INDEXES_BIN_FILE)}`);
 }
 
 async function downloadFresh(): Promise<{ zipPath: string; sourceLastModified: string | null }> {
@@ -223,6 +242,125 @@ async function* generateEntriesLines(entries: Entry[]): AsyncGenerator<string> {
     yield `,\n${JSON.stringify(name)}:${JSON.stringify(column)}`;
   }
   yield "\n}\n";
+}
+
+type RuntimeIndexSegmentType = "int32" | "uint32";
+
+interface RuntimeIndexSegment {
+  type: RuntimeIndexSegmentType;
+  offset: number;
+  length: number;
+  byteLength: number;
+}
+
+interface RuntimeIndexManifest {
+  version: number;
+  counts: {
+    lifters: number;
+    meets: number;
+    entries: number;
+  };
+  segments: Record<string, RuntimeIndexSegment>;
+  records: WeightClassRecord[];
+  federations: FederationSummary[];
+  meetsByFederation: [string, number[]][];
+}
+
+interface BinaryIndexBuild {
+  chunks: Buffer[];
+  segments: Record<string, RuntimeIndexSegment>;
+  offset: number;
+}
+
+async function writeRuntimeIndexes(
+  lifters: Lifter[],
+  meets: Meet[],
+  entries: Entry[],
+): Promise<void> {
+  logger.info("build-snapshot: building runtime indexes");
+  const entriesByLifter = buildEntriesByLifter(entries);
+  const entriesByMeet = buildEntriesByMeet(entries);
+  const bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
+  const rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
+  const records = buildRecords(entries);
+  const { federations, meetsByFederation } = buildFederations(meets);
+
+  const binary: BinaryIndexBuild = { chunks: [], segments: {}, offset: 0 };
+  const lifterIndex = mapToCsr(entriesByLifter, lifters.length);
+  addSegment(binary, "entriesByLifter.offsets", lifterIndex.offsets, "uint32");
+  addSegment(binary, "entriesByLifter.values", lifterIndex.values, "uint32");
+
+  const meetIndex = mapToCsr(entriesByMeet, meets.length);
+  addSegment(binary, "entriesByMeet.offsets", meetIndex.offsets, "uint32");
+  addSegment(binary, "entriesByMeet.values", meetIndex.values, "uint32");
+
+  for (const metric of RANK_METRICS) {
+    addSegment(binary, `bestEntryByLifter.${metric}`, bestEntryByLifter[metric], "int32");
+    addSegment(binary, `rankByMetric.${metric}`, rankByMetric[metric], "uint32");
+  }
+
+  await fs.promises.writeFile(
+    RUNTIME_INDEXES_BIN_FILE,
+    Buffer.concat(binary.chunks, binary.offset),
+  );
+
+  const manifest: RuntimeIndexManifest = {
+    version: RUNTIME_INDEX_FORMAT_VERSION,
+    counts: {
+      lifters: lifters.length,
+      meets: meets.length,
+      entries: entries.length,
+    },
+    segments: binary.segments,
+    records,
+    federations,
+    meetsByFederation: Array.from(meetsByFederation.entries()),
+  };
+  await fs.promises.writeFile(RUNTIME_INDEXES_FILE, JSON.stringify(manifest), "utf8");
+}
+
+function mapToCsr(
+  map: Map<number, number[]>,
+  count: number,
+): {
+  offsets: Uint32Array;
+  values: Uint32Array;
+} {
+  const offsets = new Uint32Array(count + 1);
+  let total = 0;
+  for (let id = 0; id < count; id++) {
+    offsets[id] = total;
+    total += map.get(id)?.length ?? 0;
+  }
+  offsets[count] = total;
+
+  const values = new Uint32Array(total);
+  let cursor = 0;
+  for (let id = 0; id < count; id++) {
+    const ids = map.get(id);
+    if (ids == null) continue;
+    values.set(ids, cursor);
+    cursor += ids.length;
+  }
+
+  return { offsets, values };
+}
+
+function addSegment(
+  binary: BinaryIndexBuild,
+  name: string,
+  array: Int32Array | Uint32Array,
+  type: RuntimeIndexSegmentType,
+): void {
+  const byteLength = array.byteLength;
+  binary.chunks.push(Buffer.from(array.buffer, array.byteOffset, byteLength));
+  binary.segments[name] = {
+    type,
+    offset: binary.offset,
+    length: array.length,
+    byteLength,
+  };
+  binary.offset += byteLength;
 }
 
 function humanSize(file: string): string {

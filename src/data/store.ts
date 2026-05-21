@@ -1,6 +1,6 @@
 // Data layer. Owns everything between the on-disk snapshot and the route
 // handlers: CSV-row normalization (used at build time by
-// scripts/build-snapshot.ts), index builders, the stream reader, and the
+// scripts/build-snapshot.ts), index builders, snapshot readers, and the
 // in-memory singleton.
 //
 // Snapshot layout (alongside this module at src/data/snapshot/):
@@ -8,6 +8,8 @@
 //   lifters.json   — JSON array, one Lifter per line
 //   meets.json     — JSON array, one Meet per line
 //   entries.json   — JSON object, one column per line (column store)
+//   runtime-indexes.json — manifest + small precomputed runtime indexes
+//   runtime-indexes.bin  — binary typed-array indexes used at boot
 //   meta.json      — sourceLastModified / builtAt / counts
 //
 // Each line of lifters/meets/entries is independently JSON.parse-able after
@@ -45,6 +47,8 @@ const LIFTERS_FILE = path.join(SNAPSHOT_DIR, "lifters.json");
 const MEETS_FILE = path.join(SNAPSHOT_DIR, "meets.json");
 const ENTRIES_FILE = path.join(SNAPSHOT_DIR, "entries.json");
 const META_FILE = path.join(SNAPSHOT_DIR, "meta.json");
+const RUNTIME_INDEXES_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.json");
+const RUNTIME_INDEXES_BIN_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.bin");
 
 const ENTRY_COLUMN_NAMES = [
   "lifterId",
@@ -351,7 +355,7 @@ const METRIC_FIELD: Record<RankMetric, keyof Entry> = {
   deadlift: "best3DeadliftKg",
 };
 
-const RANK_METRICS: ReadonlyArray<RankMetric> = [
+export const RANK_METRICS: ReadonlyArray<RankMetric> = [
   "dots",
   "wilks",
   "glossbrenner",
@@ -708,6 +712,183 @@ function fromColumns(cols: EntriesColumns): Entry[] {
   return entries;
 }
 
+// ---------- Runtime index snapshot ----------
+
+const RUNTIME_INDEX_FORMAT_VERSION = 1;
+
+type RuntimeIndexSegmentType = "int32" | "uint32";
+
+interface RuntimeIndexSegment {
+  type: RuntimeIndexSegmentType;
+  offset: number;
+  length: number;
+  byteLength: number;
+}
+
+interface RuntimeIndexManifest {
+  version: number;
+  counts: {
+    lifters: number;
+    meets: number;
+    entries: number;
+  };
+  segments: Record<string, RuntimeIndexSegment>;
+  records: WeightClassRecord[];
+  federations: FederationSummary[];
+  meetsByFederation: [string, number[]][];
+}
+
+interface RuntimeIndexes {
+  entriesByLifter: Map<number, number[]>;
+  entriesByMeet: Map<number, number[]>;
+  bestEntryByLifter: MetricInt32Arrays;
+  rankByMetric: MetricUint32Arrays;
+  records: WeightClassRecord[];
+  federations: FederationSummary[];
+  meetsByFederation: Map<string, number[]>;
+}
+
+function runtimeIndexesExist(): boolean {
+  return fs.existsSync(RUNTIME_INDEXES_FILE) && fs.existsSync(RUNTIME_INDEXES_BIN_FILE);
+}
+
+function readRuntimeIndexes(
+  lifterCount: number,
+  meetCount: number,
+  entryCount: number,
+): RuntimeIndexes | null {
+  if (!runtimeIndexesExist()) return null;
+
+  const manifest = JSON.parse(
+    fs.readFileSync(RUNTIME_INDEXES_FILE, "utf8"),
+  ) as RuntimeIndexManifest;
+  if (manifest.version !== RUNTIME_INDEX_FORMAT_VERSION) {
+    throw new Error(
+      `runtime indexes: unsupported version ${manifest.version}; expected ${RUNTIME_INDEX_FORMAT_VERSION}`,
+    );
+  }
+  if (
+    manifest.counts.lifters !== lifterCount ||
+    manifest.counts.meets !== meetCount ||
+    manifest.counts.entries !== entryCount
+  ) {
+    throw new Error(
+      "runtime indexes: count mismatch " +
+        `(manifest lifters=${manifest.counts.lifters}, meets=${manifest.counts.meets}, entries=${manifest.counts.entries}; ` +
+        `snapshot lifters=${lifterCount}, meets=${meetCount}, entries=${entryCount})`,
+    );
+  }
+  if (!Array.isArray(manifest.records) || !Array.isArray(manifest.federations)) {
+    throw new Error("runtime indexes: missing records or federations");
+  }
+  if (!Array.isArray(manifest.meetsByFederation)) {
+    throw new Error("runtime indexes: missing meetsByFederation");
+  }
+
+  const bin = fs.readFileSync(RUNTIME_INDEXES_BIN_FILE);
+  const entriesByLifter = csrToMap(
+    "entriesByLifter",
+    readUint32Segment(bin, manifest, "entriesByLifter.offsets"),
+    readUint32Segment(bin, manifest, "entriesByLifter.values"),
+    lifterCount,
+  );
+  const entriesByMeet = csrToMap(
+    "entriesByMeet",
+    readUint32Segment(bin, manifest, "entriesByMeet.offsets"),
+    readUint32Segment(bin, manifest, "entriesByMeet.values"),
+    meetCount,
+  );
+
+  const bestEntryByLifter = {} as MetricInt32Arrays;
+  const rankByMetric = {} as MetricUint32Arrays;
+  for (const metric of RANK_METRICS) {
+    const best = readInt32Segment(bin, manifest, `bestEntryByLifter.${metric}`);
+    if (best.length !== lifterCount) {
+      throw new Error(
+        `runtime indexes: bestEntryByLifter.${metric} length ${best.length} does not match lifter count ${lifterCount}`,
+      );
+    }
+    bestEntryByLifter[metric] = best;
+    rankByMetric[metric] = readUint32Segment(bin, manifest, `rankByMetric.${metric}`);
+  }
+
+  return {
+    entriesByLifter,
+    entriesByMeet,
+    bestEntryByLifter,
+    rankByMetric,
+    records: manifest.records,
+    federations: manifest.federations,
+    meetsByFederation: new Map(manifest.meetsByFederation),
+  };
+}
+
+function readUint32Segment(bin: Buffer, manifest: RuntimeIndexManifest, name: string): Uint32Array {
+  return new Uint32Array(readSegmentBuffer(bin, manifest, name, "uint32"));
+}
+
+function readInt32Segment(bin: Buffer, manifest: RuntimeIndexManifest, name: string): Int32Array {
+  return new Int32Array(readSegmentBuffer(bin, manifest, name, "int32"));
+}
+
+function readSegmentBuffer(
+  bin: Buffer,
+  manifest: RuntimeIndexManifest,
+  name: string,
+  type: RuntimeIndexSegmentType,
+): ArrayBuffer {
+  const segment = manifest.segments[name];
+  if (segment == null) throw new Error(`runtime indexes: missing binary segment ${name}`);
+  if (segment.type !== type) {
+    throw new Error(`runtime indexes: segment ${name} has type ${segment.type}, expected ${type}`);
+  }
+  if (
+    !Number.isInteger(segment.offset) ||
+    !Number.isInteger(segment.length) ||
+    !Number.isInteger(segment.byteLength) ||
+    segment.offset < 0 ||
+    segment.length < 0 ||
+    segment.byteLength !== segment.length * 4 ||
+    segment.offset + segment.byteLength > bin.byteLength
+  ) {
+    throw new Error(`runtime indexes: invalid binary segment ${name}`);
+  }
+  const copy = new Uint8Array(segment.byteLength);
+  copy.set(bin.subarray(segment.offset, segment.offset + segment.byteLength));
+  return copy.buffer;
+}
+
+function csrToMap(
+  name: string,
+  offsets: Uint32Array,
+  values: Uint32Array,
+  count: number,
+): Map<number, number[]> {
+  if (offsets.length !== count + 1) {
+    throw new Error(
+      `runtime indexes: ${name} offset length ${offsets.length} does not match count ${count}`,
+    );
+  }
+  if (offsets[count] !== values.length) {
+    throw new Error(
+      `runtime indexes: ${name} value length ${values.length} does not match final offset ${offsets[count]}`,
+    );
+  }
+
+  const map = new Map<number, number[]>();
+  let previous = 0;
+  for (let id = 0; id < count; id++) {
+    const start = offsets[id]!;
+    const end = offsets[id + 1]!;
+    if (start < previous || end < start || end > values.length) {
+      throw new Error(`runtime indexes: invalid ${name} offsets at id ${id}`);
+    }
+    previous = end;
+    if (start !== end) map.set(id, Array.from(values.subarray(start, end)));
+  }
+  return map;
+}
+
 // ---------- Store API ----------
 
 export interface LoadResult {
@@ -748,12 +929,37 @@ export function createDataStore(logger: LoggerType): DataStoreType {
     const meetByPath = new Map<string, number>();
     for (let i = 0; i < meets.length; i++) meetByPath.set(meets[i]!.path, i);
 
-    const entriesByLifter = buildEntriesByLifter(entries);
-    const entriesByMeet = buildEntriesByMeet(entries);
-    const bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
-    const rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
-    const records = buildRecords(entries);
-    const { federations, meetsByFederation } = buildFederations(meets);
+    const runtimeIndexes = readRuntimeIndexes(lifters.length, meets.length, entries.length);
+    if (runtimeIndexes == null) {
+      logger.warn("runtime indexes not found; rebuilding indexes from snapshot");
+    } else {
+      logger.info("runtime indexes loaded from snapshot");
+    }
+
+    let entriesByLifter: Map<number, number[]>;
+    let entriesByMeet: Map<number, number[]>;
+    let bestEntryByLifter: MetricInt32Arrays;
+    let rankByMetric: MetricUint32Arrays;
+    let records: WeightClassRecord[];
+    let federations: FederationSummary[];
+    let meetsByFederation: Map<string, number[]>;
+
+    if (runtimeIndexes != null) {
+      entriesByLifter = runtimeIndexes.entriesByLifter;
+      entriesByMeet = runtimeIndexes.entriesByMeet;
+      bestEntryByLifter = runtimeIndexes.bestEntryByLifter;
+      rankByMetric = runtimeIndexes.rankByMetric;
+      records = runtimeIndexes.records;
+      federations = runtimeIndexes.federations;
+      meetsByFederation = runtimeIndexes.meetsByFederation;
+    } else {
+      entriesByLifter = buildEntriesByLifter(entries);
+      entriesByMeet = buildEntriesByMeet(entries);
+      bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
+      rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
+      records = buildRecords(entries);
+      ({ federations, meetsByFederation } = buildFederations(meets));
+    }
 
     APP = {
       lifters,

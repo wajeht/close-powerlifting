@@ -25,7 +25,7 @@ COPY src ./src
 COPY public ./public
 COPY scripts ./scripts
 
-# Pre-built data snapshot lives in the `snapshot-latest` GitHub Release
+# Pre-built runtime snapshot lives in the `snapshot-latest` GitHub Release
 # (published weekly by .github/workflows/update-data.yml). Fetched here at
 # build time so the image is fully self-contained at runtime. The cache
 # buster ARG forces a fresh layer when the release moves — pass it via
@@ -39,6 +39,13 @@ RUN mkdir -p src/data/snapshot && \
     curl -fsSL --retry 3 -o src/data/snapshot/lifters.json  "$BASE/lifters.json"  && \
     curl -fsSL --retry 3 -o src/data/snapshot/meets.json    "$BASE/meets.json"    && \
     curl -fsSL --retry 3 -o src/data/snapshot/entries.json  "$BASE/entries.json"  && \
+    if curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.json "$BASE/runtime-indexes.json" && \
+       curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.bin  "$BASE/runtime-indexes.bin"; then \
+      echo "Fetched runtime indexes"; \
+    else \
+      rm -f src/data/snapshot/runtime-indexes.json src/data/snapshot/runtime-indexes.bin; \
+      echo "Runtime indexes not available; app will rebuild indexes at startup"; \
+    fi && \
     curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$BASE/meta.json"     && \
     ls -lh src/data/snapshot/
 

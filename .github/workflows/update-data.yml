@@ -1,6 +1,6 @@
 name: Update OPL Snapshot
 
-# Re-parses OpenPowerlifting's nightly bulk CSV into our snapshot JSON
+# Re-parses OpenPowerlifting's nightly bulk CSV into our runtime snapshot
 # and publishes it as assets on the `snapshot-latest` GitHub Release.
 # The Dockerfile fetches these assets at image-build time, so the
 # snapshot lives entirely outside the git history — no LFS, no quota
@@ -56,4 +56,6 @@ jobs:
             src/data/snapshot/lifters.json \
             src/data/snapshot/meets.json \
             src/data/snapshot/entries.json \
+            src/data/snapshot/runtime-indexes.json \
+            src/data/snapshot/runtime-indexes.bin \
             src/data/snapshot/meta.json

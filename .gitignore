@@ -18,5 +18,6 @@ opencode*
 .vite-hooks/
 tmp/
 src/data/snapshot/*.json
+src/data/snapshot/*.bin
 src/data/snapshot/.tmp-*
 src/data/snapshot/.DS_Store
