@@ -2,6 +2,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
+import { createMemoryCache } from "../../utils/cache";
 import { getRouteStatuses } from "../api/health-check/route-status.service";
 import { createMiddleware } from "../middleware";
 import { AboutPage } from "./AboutPage";
@@ -11,14 +12,27 @@ import { StatusPage } from "./StatusPage";
 import { TermsPage } from "./TermsPage";
 
 const ONE_DAY_SECONDS = 86400;
+const HOME_RANKINGS_CACHE_KEY = "home-rankings";
+
+type AppData = NonNullable<ReturnType<AppContext["store"]["tryGet"]>>;
+type HomeRankings = ReturnType<typeof buildHomeRankings>;
 
 export function createGeneralRouter(context: AppContext) {
   const middleware = createMiddleware(context.helpers, context.logger);
   const app = new OpenAPIHono();
+  const homeRankingsCache = createMemoryCache<HomeRankings>({
+    ttlMs: Number.POSITIVE_INFINITY,
+  });
+
+  function getHomeRankings(data: AppData): HomeRankings {
+    const cached = homeRankingsCache.get(HOME_RANKINGS_CACHE_KEY);
+    if (cached !== undefined) return cached;
+    return homeRankingsCache.set(HOME_RANKINGS_CACHE_KEY, buildHomeRankings(data));
+  }
 
   app.get("/", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) => {
     const data = context.store.tryGet();
-    const rankings = data == null ? null : buildHomeRankings(data);
+    const rankings = data == null ? null : getHomeRankings(data);
     return c.render(<HomePage rankings={rankings} />);
   });
 
@@ -76,8 +90,7 @@ export function createGeneralRouter(context: AppContext) {
   return app;
 }
 
-function buildHomeRankings(data: ReturnType<AppContext["store"]["tryGet"]>) {
-  if (data == null) return null;
+function buildHomeRankings(data: AppData) {
   const top = data.rankByMetric.dots.subarray(0, 9);
   return Array.from(top, (lifterId, idx) => {
     const entryId = data.bestEntryByLifter.dots[lifterId];
