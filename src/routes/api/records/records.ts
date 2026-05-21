@@ -1,430 +1,155 @@
-import express, { Request, Response } from "express";
+import { OpenAPIHono, createRoute } from "@hono/zod-openapi";
 
 import type { AppContext } from "../../../context";
-import { NotFoundError } from "../../../error";
-import { createMiddleware } from "../../middleware";
-import { createRecordService } from "./records.service";
+import { errorContent, jsonContent, successResponse } from "../api.schemas";
 import {
-  getRecordsValidation,
-  getFilteredRecordsParamValidation,
-  getFilteredRecordsQueryValidation,
-  type GetRecordsType,
-  type GetFilteredRecordsParamType,
-  type GetFilteredRecordsQueryType,
-} from "./records.validation";
-
-/**
- * Record entry representing a single powerlifting record
- * @typedef {object} RecordEntry
- * @property {string} weightclass - Weight class (e.g., "90", "100+")
- * @property {string} lifter - Record holder name
- * @property {string} lift - Lift amount in lbs/kg
- * @property {string} date - Date record was set (YYYY-MM-DD)
- * @property {string} federation - Federation where record was set
- */
-
-/**
- * Record category grouping records by lift type
- * @typedef {object} RecordCategory
- * @property {string} title - Category title (e.g., "Men's Raw Squat", "Women's Unlimited Bench")
- * @property {RecordEntry[]} records - Array of records in this category
- */
-
-/**
- * Successful records response
- * @typedef {object} RecordsResponse
- * @property {string} status - Response status ("success")
- * @property {string} request_url - Original request URL
- * @property {string} message - Success message
- * @property {RecordCategory[]} data - Array of record categories
- */
-
-/**
- * Error response for failed requests
- * @typedef {object} RecordsErrorResponse
- * @property {string} status - Response status ("fail")
- * @property {string} request_url - Original request URL
- * @property {string} message - Error message describing the failure
- * @property {object[]} errors - Error details array
- * @property {object[]} data - Empty array
- */
+  RecordsData,
+  getRecordsByEquipmentParamValidation,
+  getRecordsBySexOrWeightClassParamValidation,
+  getRecordsByWeightClassSexParamValidation,
+  getRecordsQueryValidation,
+} from "./records.schema";
+import { EQUIPMENT_GROUP_BY_QUERY, SEX_BY_QUERY, createRecordsService } from "./records.service";
 
 export function createRecordsRouter(context: AppContext) {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.mail,
-    context.helpers,
-    context.logger,
-    context.knex,
-    context.authService,
-    context.apiCallLogRepository,
-  );
-  const recordService = createRecordService(context.scraper);
+  const service = createRecordsService(context.store);
+  const app = new OpenAPIHono();
 
-  const router = express.Router();
-
-  /**
-   * GET /api/records
-   * @tags Records
-   * @summary Get all powerlifting records
-   * @description Returns all-time powerlifting world records organized by category (lift type and sex). Records are grouped into categories like "Men's Raw Squat", "Women's Unlimited Deadlift", etc.
-   * @security BearerAuth
-   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
-   * @return {RecordsResponse} 200 - All records organized by category
-   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {RecordsErrorResponse} 404 - Records not found
-   * @return {RecordsErrorResponse} 429 - Rate limit exceeded
-   * @example response - 200 - Success response
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/records",
-   *   "message": "The resource was returned successfully!",
-   *   "data": [
-   *     {
-   *       "title": "Men's Raw Squat",
-   *       "records": [
-   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
-   *       ]
-   *     }
-   *   ]
-   * }
-   * @example response - 401 - Unauthorized
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records",
-   *   "message": "Authorization header required!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 404 - Records not found
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records",
-   *   "message": "The resource cannot be found!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 429 - Rate limit exceeded
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records",
-   *   "message": "Too many requests, please try again later?",
-   *   "errors": [],
-   *   "data": []
-   * }
-   */
-  router.get(
-    "/api/records",
-    middleware.rateLimitMiddleware,
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({ query: getRecordsValidation }),
-    async (req: Request<{}, {}, {}, GetRecordsType>, res: Response) => {
-      const records = await recordService.getRecords(req.query);
-
-      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
-
-      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "The resource was returned successfully!",
-        data: records?.data,
-      });
-    },
-  );
-
-  /**
-   * GET /api/records/{equipment}
-   * @tags Records
-   * @summary Get records filtered by equipment type
-   * @description Returns powerlifting records filtered by equipment category. Equipment types correspond to different levels of supportive gear allowed in competition.
-   * @security BearerAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
-   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
-   * @return {RecordsResponse} 200 - Records filtered by equipment
-   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {RecordsErrorResponse} 404 - Records not found
-   * @return {RecordsErrorResponse} 400 - Validation error - Invalid equipment parameter
-   * @return {RecordsErrorResponse} 429 - Rate limit exceeded
-   * @example response - 200 - Success response for raw records
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/records/raw",
-   *   "message": "The resource was returned successfully!",
-   *   "data": [
-   *     {
-   *       "title": "Men's Raw Squat",
-   *       "records": [
-   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
-   *       ]
-   *     }
-   *   ]
-   * }
-   * @example response - 400 - Invalid equipment value
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/invalid",
-   *   "message": "Invalid enum value. Expected 'raw' | 'wraps' | 'single' | 'multi' | 'unlimited' | 'all-tested', received 'invalid'",
-   *   "errors": [{"code": "invalid_enum_value", "path": ["equipment"], "message": "Invalid enum value"}],
-   *   "data": []
-   * }
-   * @example response - 401 - Unauthorized
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw",
-   *   "message": "Authorization header required!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 404 - Records not found
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw",
-   *   "message": "The resource cannot be found!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 429 - Rate limit exceeded
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw",
-   *   "message": "Too many requests, please try again later?",
-   *   "errors": [],
-   *   "data": []
-   * }
-   */
-  router.get(
-    "/api/records/:equipment",
-    middleware.rateLimitMiddleware,
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({
-      params: getFilteredRecordsParamValidation.pick({ equipment: true }),
-      query: getFilteredRecordsQueryValidation,
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/api/records",
+      request: { query: getRecordsQueryValidation },
+      responses: {
+        200: { description: "All records", ...jsonContent(successResponse(RecordsData)) },
+        400: { description: "Validation error", ...errorContent },
+        429: { description: "Rate limit exceeded", ...errorContent },
+      },
+      tags: ["Records"],
+      summary: "Get all powerlifting records",
     }),
-    async (
-      req: Request<
-        Pick<GetFilteredRecordsParamType, "equipment">,
-        {},
-        {},
-        GetFilteredRecordsQueryType
-      >,
-      res: Response,
-    ) => {
-      const records = await recordService.getFilteredRecords(req.params, req.query);
-
-      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
-
-      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "The resource was returned successfully!",
-        data: records?.data,
-      });
-    },
-  );
-
-  /**
-   * GET /api/records/{equipment}/{sex_or_weight_class}
-   * @tags Records
-   * @summary Get records filtered by equipment and sex or weight class
-   * @description Returns records filtered by equipment and either sex (men/women) or weight class system. Weight class systems include: expanded-classes (more weight divisions), ipf-classes (IPF standard), para-classes (Paralympic), wp-classes (World Powerlifting).
-   * @security BearerAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
-   * @param {string} sex_or_weight_class.path.required - Either sex (men, women) or weight class system (expanded-classes, ipf-classes, para-classes, wp-classes)
-   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
-   * @return {RecordsResponse} 200 - Records filtered by equipment and sex/weight class
-   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {RecordsErrorResponse} 404 - Not found - Invalid sex or weight class parameter
-   * @return {RecordsErrorResponse} 429 - Rate limit exceeded
-   * @example response - 200 - Success response filtered by sex
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/records/raw/men",
-   *   "message": "The resource was returned successfully!",
-   *   "data": [
-   *     {
-   *       "title": "Men's Raw Squat",
-   *       "records": [
-   *         {"weightclass": "90", "lifter": "John Haack", "lift": "782", "date": "2023-10-15", "federation": "USPA"}
-   *       ]
-   *     }
-   *   ]
-   * }
-   * @example response - 200 - Success response filtered by weight class system
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/records/unlimited/wp-classes",
-   *   "message": "The resource was returned successfully!",
-   *   "data": [
-   *     {
-   *       "title": "Men's Unlimited Squat",
-   *       "records": [
-   *         {"weightclass": "120+", "lifter": "Blaine Sumner", "lift": "1102", "date": "2023-03-04", "federation": "WP"}
-   *       ]
-   *     }
-   *   ]
-   * }
-   * @example response - 401 - Unauthorized
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw/men",
-   *   "message": "Authorization header required!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 404 - Not found
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw/invalid",
-   *   "message": "The resource cannot be found!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 429 - Rate limit exceeded
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw/men",
-   *   "message": "Too many requests, please try again later?",
-   *   "errors": [],
-   *   "data": []
-   * }
-   */
-  router.get(
-    "/api/records/:equipment/:sex_or_weight_class",
-    middleware.rateLimitMiddleware,
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({ query: getFilteredRecordsQueryValidation }),
-    async (
-      req: Request<
-        { equipment: string; sex_or_weight_class: string },
-        {},
-        {},
-        GetFilteredRecordsQueryType
-      >,
-      res: Response,
-      next,
-    ) => {
-      try {
-        const { equipment, sex_or_weight_class } = req.params;
-        const filters = recordService.parseSexOrWeightClass(equipment, sex_or_weight_class);
-        const records = await recordService.getFilteredRecords(filters, req.query);
-
-        if (!records?.data) throw new NotFoundError("The resource cannot be found!");
-
-        context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-        res.status(200).json({
-          status: "success",
-          request_url: req.originalUrl,
+    (c) => {
+      const { age_class } = c.req.valid("query");
+      const data = service.groupRecords({ ageClass: age_class ?? null });
+      return c.json(
+        {
+          status: "success" as const,
+          request_url: c.req.url,
           message: "The resource was returned successfully!",
-          data: records?.data,
-        });
-      } catch (error) {
-        next(error);
-      }
+          data,
+        },
+        200,
+      );
     },
   );
 
-  /**
-   * GET /api/records/{equipment}/{weight_class}/{sex}
-   * @tags Records
-   * @summary Get records filtered by equipment, weight class system, and sex
-   * @description Returns records filtered by all three criteria: equipment category, weight class system, and sex. This is the most specific filtering option available.
-   * @security BearerAuth
-   * @param {string} equipment.path.required - Equipment type - enum:raw,wraps,single,multi,unlimited,all-tested
-   * @param {string} weight_class.path.required - Weight class system - enum:expanded-classes,ipf-classes,para-classes,wp-classes
-   * @param {string} sex.path.required - Sex - enum:men,women
-   * @param {string} age_class.query - Age class filter - enum:5-12,13-15,16-17,18-19,20-23,24-34,35-39,40-44,45-49,50-54,55-59,60-64,65-69,70-74,75-79,80-84,85-89,40-49,50-59,60-69,70-79,over80
-   * @return {RecordsResponse} 200 - Records filtered by all criteria
-   * @return {RecordsErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {RecordsErrorResponse} 404 - Records not found
-   * @return {RecordsErrorResponse} 400 - Validation error - Invalid parameters
-   * @return {RecordsErrorResponse} 429 - Rate limit exceeded
-   * @example response - 200 - Success response for women's unlimited WP-class records
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/records/unlimited/wp-classes/women",
-   *   "message": "The resource was returned successfully!",
-   *   "data": [
-   *     {
-   *       "title": "Women's Unlimited Squat",
-   *       "records": [
-   *         {"weightclass": "84+", "lifter": "April Mathis", "lift": "854", "date": "2022-11-12", "federation": "WP"}
-   *       ]
-   *     }
-   *   ]
-   * }
-   * @example response - 400 - Invalid parameter value
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/raw/ipf-classes/invalid",
-   *   "message": "Invalid enum value. Expected 'men' | 'women', received 'invalid'",
-   *   "errors": [{"code": "invalid_enum_value", "path": ["sex"], "message": "Invalid enum value"}],
-   *   "data": []
-   * }
-   * @example response - 401 - Unauthorized
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/unlimited/wp-classes/women",
-   *   "message": "Authorization header required!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 404 - Records not found
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/unlimited/wp-classes/women",
-   *   "message": "The resource cannot be found!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 429 - Rate limit exceeded
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/records/unlimited/wp-classes/women",
-   *   "message": "Too many requests, please try again later?",
-   *   "errors": [],
-   *   "data": []
-   * }
-   */
-  router.get(
-    "/api/records/:equipment/:weight_class/:sex",
-    middleware.rateLimitMiddleware,
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({
-      params: getFilteredRecordsParamValidation,
-      query: getFilteredRecordsQueryValidation,
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/api/records/{equipment}/{weight_class}/{sex}",
+      request: {
+        params: getRecordsByWeightClassSexParamValidation,
+        query: getRecordsQueryValidation,
+      },
+      responses: {
+        200: { description: "Filtered records", ...jsonContent(successResponse(RecordsData)) },
+        400: { description: "Validation error", ...errorContent },
+        429: { description: "Rate limit exceeded", ...errorContent },
+      },
+      tags: ["Records"],
+      summary: "Get records filtered by equipment, weight-class system, and sex",
     }),
-    async (
-      req: Request<GetFilteredRecordsParamType, {}, {}, GetFilteredRecordsQueryType>,
-      res: Response,
-    ) => {
-      const records = await recordService.getFilteredRecords(req.params, req.query);
-
-      if (!records?.data) throw new NotFoundError("The resource cannot be found!");
-
-      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "The resource was returned successfully!",
-        data: records?.data,
+    (c) => {
+      const { equipment, sex } = c.req.valid("param");
+      const { age_class } = c.req.valid("query");
+      const data = service.groupRecords({
+        equipmentGroup: EQUIPMENT_GROUP_BY_QUERY[equipment],
+        sex: SEX_BY_QUERY[sex],
+        ageClass: age_class ?? null,
       });
+      return c.json(
+        {
+          status: "success" as const,
+          request_url: c.req.url,
+          message: "The resource was returned successfully!",
+          data,
+        },
+        200,
+      );
     },
   );
 
-  return router;
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/api/records/{equipment}/{sex_or_weight_class}",
+      request: {
+        params: getRecordsBySexOrWeightClassParamValidation,
+        query: getRecordsQueryValidation,
+      },
+      responses: {
+        200: { description: "Filtered records", ...jsonContent(successResponse(RecordsData)) },
+        400: { description: "Validation error", ...errorContent },
+      },
+      tags: ["Records"],
+      summary: "Get records filtered by equipment and (sex or weight class)",
+    }),
+    (c) => {
+      const { equipment, sex_or_weight_class } = c.req.valid("param");
+      const { age_class } = c.req.valid("query");
+      const equipmentGroup = EQUIPMENT_GROUP_BY_QUERY[equipment];
+      const resolved = service.resolveSexOrWeightClass(sex_or_weight_class);
+      const data = service.groupRecords({
+        equipmentGroup,
+        sex: resolved?.kind === "sex" ? resolved.value : undefined,
+        weightClassKg: resolved?.kind === "weightClass" ? resolved.value : undefined,
+        ageClass: age_class ?? null,
+      });
+      return c.json(
+        {
+          status: "success" as const,
+          request_url: c.req.url,
+          message: "The resource was returned successfully!",
+          data,
+        },
+        200,
+      );
+    },
+  );
+
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/api/records/{equipment}",
+      request: {
+        params: getRecordsByEquipmentParamValidation,
+        query: getRecordsQueryValidation,
+      },
+      responses: {
+        200: { description: "Filtered records", ...jsonContent(successResponse(RecordsData)) },
+        400: { description: "Invalid equipment", ...errorContent },
+      },
+      tags: ["Records"],
+      summary: "Get records filtered by equipment type",
+    }),
+    (c) => {
+      const { equipment } = c.req.valid("param");
+      const { age_class } = c.req.valid("query");
+      const data = service.groupRecords({
+        equipmentGroup: EQUIPMENT_GROUP_BY_QUERY[equipment],
+        ageClass: age_class ?? null,
+      });
+      return c.json(
+        {
+          status: "success" as const,
+          request_url: c.req.url,
+          message: "The resource was returned successfully!",
+          data,
+        },
+        200,
+      );
+    },
+  );
+
+  return app;
 }

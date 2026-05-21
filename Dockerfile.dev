@@ -1,12 +1,16 @@
-FROM node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f
+FROM node:26.2.0-slim@sha256:1e738cb88890a15c71880323fbc35a739b7bbc703d72e8bfd1613128f8182f78
 
-RUN apk --no-cache add curl python3 make g++
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 
-RUN npm install
+RUN npm install && \
+    npm rebuild sharp --ignore-scripts=false
 
 COPY ./ ./
 
@@ -14,4 +18,4 @@ EXPOSE 80
 
 CMD ["npm", "run", "dev"]
 
-HEALTHCHECK CMD curl -f http://localhost:80/api/health-check || exit 1
+HEALTHCHECK CMD curl -f http://localhost:80/healthz || exit 1

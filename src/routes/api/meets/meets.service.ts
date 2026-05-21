@@ -1,175 +1,186 @@
-import type { ScraperType } from "../../../context";
+import type { DataStoreType } from "../../../data/store";
+import type { Entry, Meet } from "../../../data/types";
+import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
+import { configuration } from "../../../configuration";
 import type {
-  MeetData,
-  MeetResult,
-  ApiResponse,
-  MeetHighlights,
-  MeetHighlightLifter,
-} from "../../../types";
-import type { GetMeetParamType, GetMeetHighlightsParamType } from "./meets.validation";
+  GetMeetHighlightsQueryType,
+  GetMeetParamType,
+  GetMeetQueryType,
+  ListMeetsQueryType,
+} from "./meets.schema";
 
-const HIGHLIGHTS_TOP_N = 3;
-const REGEX_MEET_SORT_SUFFIX = /-(by-[a-z0-9-]+)$/;
+const { defaultPerPage } = configuration.pagination;
 
-function meetField(row: MeetResult, ...candidates: string[]): string {
-  for (const candidate of candidates) {
-    const lower = candidate.toLowerCase();
-    for (const key of Object.keys(row)) {
-      if (key.toLowerCase() === lower) {
-        const value = row[key];
-        if (value != null) return value;
-      }
+export function createMeetsService(store: DataStoreType) {
+  function listMeets(query: ListMeetsQueryType): { data: unknown[]; pagination: Pagination } {
+    const data = store.get();
+    let candidates: Meet[];
+    if (query.federation != null) {
+      const ids = data.meetsByFederation.get(query.federation.toLowerCase()) ?? [];
+      candidates = ids.map((id) => data.meets[id]!);
+    } else {
+      candidates = data.meets.slice();
     }
-  }
-  return "";
-}
 
-function toLifter(row: MeetResult): MeetHighlightLifter {
-  return {
-    place: meetField(row, "rank", "place"),
-    name: meetField(row, "lifter", "name"),
-    sex: meetField(row, "sex"),
-    weight_class: meetField(row, "class", "weight_class"),
-    bodyweight: meetField(row, "weight", "bodyweight"),
-    squat: meetField(row, "squat"),
-    bench: meetField(row, "bench"),
-    deadlift: meetField(row, "deadlift"),
-    total: meetField(row, "total"),
-    dots: meetField(row, "dots"),
-  };
-}
+    if (query.from != null) candidates = candidates.filter((m) => m.date >= query.from!);
+    if (query.to != null) candidates = candidates.filter((m) => m.date <= query.to!);
+    if (query.country != null) {
+      const needle = query.country.toLowerCase();
+      candidates = candidates.filter((m) => (m.meetCountry ?? "").toLowerCase() === needle);
+    }
+    if (query.state != null) {
+      const needle = query.state.toLowerCase();
+      candidates = candidates.filter((m) => (m.meetState ?? "").toLowerCase() === needle);
+    }
+    if (query.search != null) {
+      const needle = query.search.toLowerCase();
+      candidates = candidates.filter((m) => m.meetName.toLowerCase().includes(needle));
+    }
 
-export function buildMeetHighlights(meet: MeetData): MeetHighlights {
-  const lifters = meet.results;
+    const direction = query.sort === "date-asc" ? 1 : -1;
+    candidates.sort((a, b) => direction * a.date.localeCompare(b.date));
 
-  const byDots = [...lifters].sort(
-    (a, b) => parseFloat(meetField(b, "dots") || "0") - parseFloat(meetField(a, "dots") || "0"),
-  );
-  const byTotal = [...lifters].sort(
-    (a, b) => parseFloat(meetField(b, "total") || "0") - parseFloat(meetField(a, "total") || "0"),
-  );
-
-  const weightClasses = new Set<string>();
-  for (const row of lifters) {
-    const wc = meetField(row, "class", "weight_class");
-    if (wc) weightClasses.add(wc);
+    const currentPage = query.current_page ?? 1;
+    const perPage = query.per_page ?? defaultPerPage;
+    const pagination = buildPagination(candidates.length, currentPage, perPage);
+    const start = (pagination.current_page - 1) * pagination.per_page;
+    const page = candidates.slice(start, start + pagination.per_page);
+    return { data: page.map(toMeetSummary), pagination };
   }
 
-  return {
-    title: meet.title,
-    date: meet.date,
-    location: meet.location,
-    total_lifters: lifters.length,
-    weight_classes_contested: [...weightClasses].sort(),
-    top_by_dots: byDots.slice(0, HIGHLIGHTS_TOP_N).map(toLifter),
-    top_by_total: byTotal.slice(0, HIGHLIGHTS_TOP_N).map(toLifter),
-  };
-}
+  function getMeet(
+    params: GetMeetParamType,
+    query: GetMeetQueryType,
+  ): Record<string, unknown> | null {
+    const data = store.get();
+    const meetId = lookupMeetId(params);
+    if (meetId == null) return null;
+    const meet = data.meets[meetId]!;
+    const entryIds = data.entriesByMeet.get(meetId) ?? [];
+    const entries = entryIds.map((id) => data.entries[id]!);
+    const sort = query.sort ?? "place";
+    const units: Units = query.units ?? "lbs";
 
-export function createMeetService(scraper: ScraperType) {
-  function parseMeetHtml(doc: Document): MeetData {
-    const h1 = doc.querySelector("h1#meet");
-    const title = h1?.textContent?.trim() || "";
-
-    const p = h1?.nextElementSibling;
-    const dateLocationText = p?.textContent?.trim().split("\n")[0] || "";
-    const [date, ...locationParts] = dateLocationText.split(",").map((s) => s.trim());
-    const location = locationParts.join(", ");
-
-    const table = doc.querySelector("table");
-    const results = scraper.tableToJson(table) as MeetResult[];
+    let sorter: (a: Entry, b: Entry) => number;
+    if (sort === "by-total") sorter = (a, b) => (b.totalKg ?? 0) - (a.totalKg ?? 0);
+    else if (sort === "by-dots") sorter = (a, b) => (b.dots ?? 0) - (a.dots ?? 0);
+    else sorter = byPlaceThenTotal;
+    const sorted = entries.slice().sort(sorter);
 
     return {
-      title,
-      date: date || "",
-      location: location || "",
-      results,
+      path: meet.path,
+      meet_name: meet.meetName,
+      federation: meet.federation,
+      parent_federation: meet.parentFederation,
+      date: meet.date,
+      country: meet.meetCountry,
+      state: meet.meetState,
+      town: meet.meetTown,
+      sanctioned: meet.sanctioned,
+      results: sorted.map((e) => formatMeetEntry(e, units)),
     };
   }
 
-  async function fetchMeetData(meet: string, sort?: string, units?: string): Promise<MeetData> {
-    const sortPath = sort ? `/${sort}` : "";
-    const html = await scraper.fetchHtml(`/m/${meet}${sortPath}`, units);
-    const doc = scraper.parseHtml(html);
-    return parseMeetHtml(doc);
+  function getMeetHighlights(
+    params: GetMeetParamType,
+    query: GetMeetHighlightsQueryType,
+  ): Record<string, unknown> | null {
+    const data = store.get();
+    const meetId = lookupMeetId(params);
+    if (meetId == null) return null;
+    const meet = data.meets[meetId]!;
+    const entryIds = data.entriesByMeet.get(meetId) ?? [];
+    const entries = entryIds.map((id) => data.entries[id]!);
+    const units: Units = query.units ?? "lbs";
+
+    return {
+      path: meet.path,
+      meet_name: meet.meetName,
+      federation: meet.federation,
+      date: meet.date,
+      highlights: {
+        best_total: bestByField(entries, "totalKg", units),
+        best_squat: bestByField(entries, "best3SquatKg", units),
+        best_bench: bestByField(entries, "best3BenchKg", units),
+        best_deadlift: bestByField(entries, "best3DeadliftKg", units),
+        best_dots: bestByField(entries, "dots", units),
+      },
+    };
   }
 
-  async function getMeet(
-    { meet }: GetMeetParamType,
-    sort?: string,
-    units?: string,
-  ): Promise<ApiResponse<MeetData>> {
-    const cacheKey = `meet-${meet}${sort ? `-${sort}` : ""}${units ? `-${units}` : ""}`;
-    return scraper.withCache<MeetData>(cacheKey, () => fetchMeetData(meet, sort, units));
+  function lookupMeetId(params: GetMeetParamType): number | undefined {
+    const data = store.get();
+    return data.meetByPath.get(
+      `${params.federation.toLowerCase()}/${params.date}/${params.slug.toLowerCase()}`,
+    );
   }
 
-  async function getMeetHighlights(
-    { meet }: GetMeetHighlightsParamType,
-    units?: string,
-  ): Promise<ApiResponse<MeetHighlights>> {
-    const meetPath = meet;
-    const cacheKey = `meet-${meetPath}-highlights${units ? `-${units}` : ""}`;
-    return scraper.withCache<MeetHighlights>(cacheKey, async () => {
-      const data = await fetchMeetData(meetPath, undefined, units);
-      return buildMeetHighlights(data);
-    });
+  function toMeetSummary(m: Meet) {
+    return {
+      path: m.path,
+      meet_name: m.meetName,
+      federation: m.federation,
+      date: m.date,
+      country: m.meetCountry,
+      state: m.meetState,
+      town: m.meetTown,
+      sanctioned: m.sanctioned,
+    };
   }
 
-  function parseMeetCacheKey(
-    key: string,
-  ): { path: string; sort?: string; units?: string; isHighlights: boolean } | null {
-    if (!key.startsWith("meet-")) return null;
-    let remainder = key.slice("meet-".length);
+  function formatMeetEntry(entry: Entry, units: Units) {
+    const data = store.get();
+    const lifter = data.lifters[entry.lifterId]!;
+    return {
+      username: lifter.username,
+      name: lifter.name,
+      sex: entry.sex,
+      age: entry.age,
+      event: entry.event,
+      equipment: entry.equipment,
+      weight_class_kg: entry.weightClassKg,
+      bodyweight: inUnits(entry.bodyweightKg, units),
+      squat: inUnits(entry.best3SquatKg, units),
+      bench: inUnits(entry.best3BenchKg, units),
+      deadlift: inUnits(entry.best3DeadliftKg, units),
+      total: inUnits(entry.totalKg, units),
+      dots: entry.dots,
+      place: entry.placeRank ?? entry.placeStatus,
+      units,
+    };
+  }
 
-    let units: string | undefined;
-    if (remainder.endsWith("-kg")) {
-      units = "kg";
-      remainder = remainder.slice(0, -"-kg".length);
-    } else if (remainder.endsWith("-lbs")) {
-      units = "lbs";
-      remainder = remainder.slice(0, -"-lbs".length);
+  function bestByField(entries: Entry[], field: keyof Entry, units: Units): unknown {
+    const data = store.get();
+    let best: Entry | null = null;
+    let bestVal = -Infinity;
+    for (const e of entries) {
+      const v = e[field] as number | null;
+      if (v == null) continue;
+      if (v > bestVal) {
+        bestVal = v;
+        best = e;
+      }
     }
-
-    let isHighlights = false;
-    if (remainder.endsWith("-highlights")) {
-      isHighlights = true;
-      remainder = remainder.slice(0, -"-highlights".length);
-    }
-
-    let sort: string | undefined;
-    const sortMatch = remainder.match(REGEX_MEET_SORT_SUFFIX);
-    if (sortMatch) {
-      sort = sortMatch[1];
-      remainder = remainder.slice(0, -sortMatch[0].length);
-    }
-
-    if (!remainder) return null;
-    return { path: remainder, sort, units, isHighlights };
+    if (best == null) return null;
+    const lifter = data.lifters[best.lifterId]!;
+    return {
+      username: lifter.username,
+      name: lifter.name,
+      equipment: best.equipment,
+      weight_class_kg: best.weightClassKg,
+      value: field === "dots" ? bestVal : inUnits(bestVal, units),
+    };
   }
 
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseMeetCacheKey(key);
-    if (!parsed) return false;
+  return { listMeets, getMeet, getMeetHighlights };
+}
 
-    if (parsed.isHighlights) {
-      await scraper.refreshCache<MeetHighlights>(key, async () => {
-        const data = await fetchMeetData(parsed.path, undefined, parsed.units);
-        return buildMeetHighlights(data);
-      });
-    } else {
-      await scraper.refreshCache<MeetData>(key, () =>
-        fetchMeetData(parsed.path, parsed.sort, parsed.units),
-      );
-    }
-
-    return true;
-  }
-
-  return {
-    parseMeetHtml,
-    parseMeetCacheKey,
-    getMeet,
-    getMeetHighlights,
-    refreshCacheKey,
-  };
+function byPlaceThenTotal(a: Entry, b: Entry): number {
+  const ar = a.placeRank;
+  const br = b.placeRank;
+  if (ar != null && br != null) return ar - br;
+  if (ar != null) return -1;
+  if (br != null) return 1;
+  return (b.totalKg ?? 0) - (a.totalKg ?? 0);
 }

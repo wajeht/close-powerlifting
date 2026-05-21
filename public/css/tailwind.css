@@ -1,12 +1,18 @@
 @import "tailwindcss" important;
 
-@source "../../src/routes/**/*.html";
+@source "../../src/**/*.{ts,tsx}";
 
 @theme {
   --breakpoint-xs: 475px;
   --color-power: #dc2626;
   --color-power-dark: #b91c1c;
   --color-power-glow: #dc262640;
+}
+
+@layer components {
+  .frosted {
+    @apply bg-black/60 backdrop-blur-xl;
+  }
 }
 
 @layer base {

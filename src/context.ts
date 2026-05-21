@@ -1,44 +1,13 @@
-import type { Knex } from "knex";
-
 import { createLogger, type LoggerType } from "./utils/logger";
 import { createHelper, type HelpersType } from "./utils/helpers";
-import { createDatabase, type DatabaseType } from "./db/db";
-import { createCache, type CacheType } from "./db/cache";
-import { createMail, type MailType } from "./mail";
-import { createUserRepository, type UserRepositoryType } from "./db/user";
-import { createApiCallLogRepository, type ApiCallLogRepositoryType } from "./db/api-call-log";
-import { createScraper, type ScraperType } from "./utils/scraper";
-import { createCron, type CronType } from "./cron";
-import { createAuthService, type AuthServiceType } from "./routes/auth/auth.service";
-import { createAdminUser, type AdminUserType } from "./utils/admin-user";
+import { createDataStore, type DataStoreType } from "./data/store";
 
-export type {
-  LoggerType,
-  HelpersType,
-  DatabaseType,
-  CacheType,
-  MailType,
-  UserRepositoryType,
-  ApiCallLogRepositoryType,
-  ScraperType,
-  CronType,
-  AuthServiceType,
-  AdminUserType,
-};
+export type { LoggerType, HelpersType, DataStoreType };
 
 export interface AppContext {
-  knex: Knex;
-  database: DatabaseType;
   logger: LoggerType;
   helpers: HelpersType;
-  cache: CacheType;
-  mail: MailType;
-  userRepository: UserRepositoryType;
-  apiCallLogRepository: ApiCallLogRepositoryType;
-  scraper: ScraperType;
-  cron: CronType;
-  authService: AuthServiceType;
-  adminUser: AdminUserType;
+  store: DataStoreType;
 }
 
 let _context: AppContext | null = null;
@@ -50,32 +19,9 @@ export function createContext(): AppContext {
 
   const logger = createLogger();
   const helpers = createHelper();
-  const database = createDatabase(logger);
-  const knex = database.instance;
-  const cache = createCache(knex, logger);
-  const mail = createMail(logger);
-  const userRepository = createUserRepository(knex);
-  const apiCallLogRepository = createApiCallLogRepository(knex);
-  const scraper = createScraper(cache, logger);
-  const authService = createAuthService(userRepository, mail, logger);
-  const cron = createCron(cache, userRepository, mail, logger, scraper, apiCallLogRepository);
-  const adminUser = createAdminUser(userRepository, authService, helpers, mail, logger);
+  const store = createDataStore(logger);
 
-  _context = {
-    knex,
-    database,
-    logger,
-    helpers,
-    cache,
-    mail,
-    userRepository,
-    apiCallLogRepository,
-    scraper,
-    cron,
-    authService,
-    adminUser,
-  };
-
+  _context = { logger, helpers, store };
   return _context;
 }
 

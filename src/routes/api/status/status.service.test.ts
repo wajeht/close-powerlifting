@@ -1,83 +1,28 @@
-import { describe, expect, it, vi } from "vite-plus/test";
+import { beforeEach, describe, expect, it } from "vite-plus/test";
 
-import { createContext } from "../../../context";
+import { createTestContext } from "../../../tests/fixtures";
 import { createStatusService } from "./status.service";
-import { statusHtml } from "./fixtures";
 
-const context = createContext();
-const scraper = context.scraper;
-const statusService = createStatusService(scraper);
-
-const statusDoc = scraper.parseHtml(statusHtml);
-const statusData = statusService.parseStatusHtml(statusDoc);
-
-describe.concurrent("status service", () => {
-  describe("parseStatusHtml", () => {
-    it("parses status HTML correctly", () => {
-      expect(statusData).toBeDefined();
-    });
-
-    it("returns StatusData structure", () => {
-      expect(statusData).toHaveProperty("server_version");
-      expect(statusData).toHaveProperty("meets");
-      expect(statusData).toHaveProperty("federations");
-    });
-
-    it("extracts server version commit hash", () => {
-      expect(statusData.server_version).toBeDefined();
-      expect(statusData.server_version.length).toBeGreaterThan(0);
-      expect(statusData.server_version).toMatch(/^[a-f0-9]+$/);
-    });
-
-    it("extracts meets info string", () => {
-      expect(statusData.meets).toBeDefined();
-      expect(statusData.meets.length).toBeGreaterThan(0);
-      expect(statusData.meets).toContain("Tracking");
-    });
-
-    it("extracts federations array", () => {
-      expect(Array.isArray(statusData.federations)).toBe(true);
-      expect(statusData.federations.length).toBeGreaterThan(0);
-    });
-
-    it("federations have Name column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasName = keys.some((k) => k.toLowerCase().includes("name"));
-        expect(hasName).toBe(true);
-      }
-    });
-
-    it("federations have Status column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasStatus = keys.some((k) => k.toLowerCase().includes("status"));
-        expect(hasStatus).toBe(true);
-      }
-    });
-
-    it("federations have Meets column", () => {
-      if (statusData.federations.length > 0) {
-        const keys = Object.keys(statusData.federations[0]);
-        const hasMeets = keys.some((k) => k.toLowerCase().includes("meets"));
-        expect(hasMeets).toBe(true);
-      }
-    });
-  });
+beforeEach(() => {
+  createTestContext();
 });
 
-describe("status service refreshCacheKey", () => {
-  it("returns false for non-status keys", async () => {
-    expect(await statusService.refreshCacheKey("federations-list")).toBe(false);
-    expect(await statusService.refreshCacheKey("user-johnhaack-lbs")).toBe(false);
+describe("status service", () => {
+  it("returns the counts of the loaded fixture", () => {
+    const { store } = createTestContext();
+    const service = createStatusService(store);
+    const data = service.getStatus();
+    expect(data).not.toBeNull();
+    expect(data!.lifters).toBe(5);
+    expect(data!.meets).toBe(3);
+    expect(data!.entries).toBe(6);
+    expect(data!.federations).toBe(3);
   });
 
-  it("returns true for status key and triggers refresh", async () => {
-    const refreshSpy = vi.spyOn(scraper, "refreshCache").mockResolvedValueOnce({ data: null });
-
-    const result = await statusService.refreshCacheKey("status");
-    expect(result).toBe(true);
-    expect(refreshSpy).toHaveBeenCalledWith("status", expect.any(Function));
-    refreshSpy.mockRestore();
+  it("returns null when the store has not been populated", () => {
+    const { store } = createTestContext();
+    store.reset();
+    const data = createStatusService(store).getStatus();
+    expect(data).toBeNull();
   });
 });

@@ -1,77 +1,29 @@
-import type { ScraperType } from "../../../context";
-import type { StatusData, Federation, ApiResponse } from "../../../types";
-import type { GetStatusType } from "./status.validation";
+import type { DataStoreType } from "../../../data/store";
 
-const CACHE_KEY = "status";
+export interface StatusData {
+  lifters: number;
+  meets: number;
+  entries: number;
+  federations: number;
+  records: number;
+  source_last_modified: string | null;
+  ingested_at: string;
+}
 
-export function createStatusService(scraper: ScraperType) {
-  function parseStatusHtml(doc: Document): StatusData {
-    const textContent = scraper.getElementByClass(doc, "text-content");
-    if (!textContent) {
-      throw new Error("Could not find text-content element on status page");
-    }
-
-    let serverVersion = "";
-    const h2s = textContent.querySelectorAll("h2");
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Server Version")) {
-        const p = h2.nextElementSibling;
-        const link = p?.querySelector("a");
-        const href = link?.getAttribute("href") || "";
-        const match = href.match(/commits\/([a-f0-9]+)/);
-        serverVersion = match?.[1] ?? "";
-        break;
-      }
-    }
-
-    let meetsInfo = "";
-    for (const h2 of h2s) {
-      if (h2.textContent?.includes("Meets")) {
-        let sibling = h2.nextSibling;
-        while (sibling) {
-          if (sibling.nodeType === 3) {
-            const text = sibling.textContent?.trim() || "";
-            if (text.includes("Tracking")) {
-              meetsInfo = text;
-              break;
-            }
-          }
-          if (sibling.nodeType === 1) break;
-          sibling = sibling.nextSibling;
-        }
-        break;
-      }
-    }
-
-    const table = textContent.querySelector("table");
-    const federations = scraper.tableToJson(table) as Federation[];
-
+export function createStatusService(store: DataStoreType) {
+  function getStatus(): StatusData | null {
+    const data = store.tryGet();
+    if (data == null) return null;
     return {
-      server_version: serverVersion,
-      meets: meetsInfo,
-      federations,
+      lifters: data.lifters.length,
+      meets: data.meets.length,
+      entries: data.entries.length,
+      federations: data.federations.length,
+      records: data.records.length,
+      source_last_modified: data.sourceLastModified,
+      ingested_at: data.ingestedAt,
     };
   }
 
-  async function fetchStatus(): Promise<StatusData> {
-    const html = await scraper.fetchHtml("/status");
-    const doc = scraper.parseHtml(html);
-    return parseStatusHtml(doc);
-  }
-
-  async function getStatus(_options: GetStatusType): Promise<ApiResponse<StatusData>> {
-    return scraper.withCache<StatusData>(CACHE_KEY, fetchStatus);
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    if (key !== CACHE_KEY) return false;
-    await scraper.refreshCache<StatusData>(key, fetchStatus);
-    return true;
-  }
-
-  return {
-    parseStatusHtml,
-    getStatus,
-    refreshCacheKey,
-  };
+  return { getStatus };
 }

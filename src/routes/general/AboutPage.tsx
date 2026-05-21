@@ -1,0 +1,106 @@
+import type { FC } from "hono/jsx";
+
+export const AboutPage: FC = () => (
+  <div class="mx-auto max-w-5xl px-4">
+    <header class="fade-in-heading mb-6">
+      <h1 class="text-2xl font-bold text-white">About</h1>
+      <p class="mt-2 text-neutral-400">The story behind Close Powerlifting.</p>
+    </header>
+    <div class="flex flex-col gap-6 leading-relaxed text-neutral-400">
+      <section class="fade-in animation-delay-2 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+        <div class="flex items-start gap-3">
+          <svg
+            class="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div class="flex flex-col gap-1">
+            <span class="font-medium text-blue-400">Built on OpenPowerlifting</span>
+            <p class="text-sm text-neutral-300">
+              All data is sourced from{" "}
+              <a
+                class="font-medium text-blue-400 hover:text-blue-300"
+                href="https://www.openpowerlifting.org"
+                target="_blank"
+              >
+                OpenPowerlifting.org
+              </a>
+              , a community service project to create a permanent, open archive of the world's
+              powerlifting data. They do the hard work of collecting and maintaining the data — we
+              just make it easier to access programmatically.
+            </p>
+            <p class="mt-2 text-sm text-neutral-300">
+              All competition data is contributed to the{" "}
+              <span class="font-medium">Public Domain</span>. You can download a copy of the raw
+              data at{" "}
+              <a
+                class="text-blue-400 hover:text-blue-300"
+                href="https://openpowerlifting.gitlab.io/opl-csv/"
+                target="_blank"
+              >
+                https://openpowerlifting.gitlab.io/opl-csv/
+              </a>
+              .
+            </p>
+            <p class="mt-2 text-sm text-neutral-400">
+              Consider{" "}
+              <a
+                class="text-blue-400 hover:text-blue-300"
+                href="https://www.patreon.com/join/openpowerlifting"
+                target="_blank"
+              >
+                supporting their project
+              </a>{" "}
+              if you find this API useful.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="fade-in animation-delay-3">
+        <p>
+          OpenPowerlifting.org is an incredible resource — over 3 million competition results from
+          more than 100 federations worldwide, all freely available to the public. But if you want
+          to build an application with that data, you're stuck scraping HTML tables and parsing
+          inconsistent formats across thousands of pages.
+        </p>
+        <p class="mt-3">
+          Close Powerlifting was created to solve exactly that problem. Instead of spending days or
+          weeks writing scrapers, handling edge cases, and normalizing data formats, developers can
+          now query the entire database with a simple, well-documented REST API.
+        </p>
+        <p class="mt-3">
+          Whether you're building a coaching dashboard to track your athletes, analyzing historical
+          strength trends, or just want to look up your own competition history programmatically —
+          this API makes it possible in minutes, not days.
+        </p>
+        <div class="mt-6 flex justify-end">
+          <a
+            href="https://www.openpowerlifting.org/u/kyawnyein"
+            target="_blank"
+            class="group inline-flex items-center gap-3 text-right"
+          >
+            <div>
+              <p class="font-medium text-neutral-300 group-hover:text-white">@wajeht</p>
+              <p class="text-xs text-neutral-500">
+                1585lb gym total @ 200lb · 1477lb comp total @ 185lb
+              </p>
+            </div>
+            <img
+              src="https://github.com/wajeht.png"
+              alt="wajeht"
+              class="h-10 w-10 rounded-full border-2 border-neutral-700 transition-all group-hover:border-neutral-300"
+            />
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+);

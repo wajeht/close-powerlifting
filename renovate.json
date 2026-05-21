@@ -1,5 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["github>wajeht/renovate-config"],
-  "skipInstalls": false
+  "skipInstalls": false,
+  "constraints": {
+    "node": ">=26.1.0",
+    "npm": ">=11.13.0"
+  },
+  "packageRules": [
+    {
+      "description": "Group vitest stack — vite-plus-test peer-pins coverage-v8, so they must bump in lockstep",
+      "matchPackageNames": [
+        "vitest",
+        "vite-plus",
+        "@vitest/coverage-v8",
+        "@voidzero-dev/vite-plus-core",
+        "@voidzero-dev/vite-plus-test"
+      ],
+      "groupName": "vitest stack"
+    }
+  ]
 }

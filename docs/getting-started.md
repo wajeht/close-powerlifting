@@ -2,9 +2,10 @@
 
 ## Prerequisites
 
-- Node.js >= 24.x (use [fnm](https://github.com/Schniz/fnm) or [nvm](https://github.com/nvm-sh/nvm))
+- Node.js >= 26.x (use [fnm](https://github.com/Schniz/fnm) or [nvm](https://github.com/nvm-sh/nvm))
 - npm
-- Docker (optional, for containerized development)
+- Git LFS is **not** required — the OPL snapshot lives in a GitHub Release, not in the repo
+- Docker (optional, for containerised development)
 
 ## Setup
 
@@ -27,94 +28,57 @@ Install dependencies:
 npm install
 ```
 
+Fetch the latest pre-built snapshot from the GitHub Release (~30 s, ~770 MB):
+
+```bash
+npm run snapshot:download
+```
+
+This drops `lifters.json`, `meets.json`, `entries.json`, and `meta.json` into `src/data/snapshot/`. The server reads these at boot — without them, `npm run dev` will refuse to start.
+
 ## Environment Variables
 
-| Variable               | Description                                         | Required |
-| ---------------------- | --------------------------------------------------- | -------- |
-| `APP_PORT`             | Server port (default: 80)                           | Yes      |
-| `APP_ENV`              | Environment: `development`, `production`, `testing` | Yes      |
-| `APP_DOMAIN`           | Public domain URL                                   | Yes      |
-| `APP_ADMIN_EMAIL`      | Admin user email                                    | Yes      |
-| `APP_JWT_SECRET`       | Secret for JWT signing                              | Yes      |
-| `SESSION_SECRET`       | Secret for session encryption                       | Yes      |
-| `SESSION_NAME`         | Session cookie name                                 | Yes      |
-| `SESSION_DOMAIN`       | Cookie domain (without protocol)                    | Yes      |
-| `GOOGLE_CLIENT_ID`     | Google OAuth client ID                              | No       |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth secret                                 | No       |
-| `EMAIL_HOST`           | SMTP host                                           | Yes      |
-| `EMAIL_PORT`           | SMTP port                                           | Yes      |
-| `EMAIL_FROM`           | From address for emails                             | Yes      |
+| Variable     | Description                                         | Required |
+| ------------ | --------------------------------------------------- | -------- |
+| `APP_PORT`   | Server port (default: 80)                           | Yes      |
+| `APP_ENV`    | Environment: `development`, `production`, `testing` | Yes      |
+| `APP_DOMAIN` | Public domain URL                                   | Yes      |
+
+That's the whole list. There is no database, no auth, no email service — every endpoint serves anonymous reads from an in-memory mirror of the OpenPowerlifting dataset.
 
 ## Development
 
-### Option 1: Local (recommended)
-
-Run the development server with Tailwind watch:
+Run the dev server with Tailwind watch:
 
 ```bash
 npm run dev
 ```
 
-Run only the API server (no Tailwind rebuild):
+Run only the API server (skip the Tailwind rebuild loop):
 
 ```bash
-npm run dev:only
+npm run dev:api
 ```
 
-For email testing locally, run Mailpit in a separate terminal:
-
-```bash
-docker run -p 8025:8025 -p 1025:1025 axllent/mailpit
-```
-
-Then access the Mailpit UI at http://localhost:8025
-
-### Option 2: Docker
-
-Run everything in containers (app + Mailpit):
+Or with Docker:
 
 ```bash
 docker compose -f docker-compose.dev.yml up
 ```
 
-Access:
+Access the app at <http://localhost:80>.
 
-- App: http://localhost:80
-- Mailpit UI: http://localhost:8025
+The HTTP server starts immediately but `GET /healthz` returns 503 for the first ~20 s while the snapshot streams off disk and the in-memory indexes are built. Once `data store ready` shows up in the logs, every endpoint responds in single-digit milliseconds.
 
-## Database
+## Snapshot
 
-The app uses SQLite. The database file is auto-created on first run.
+The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a GitHub Release (`snapshot-latest`). The Dockerfile downloads the release assets at image-build time, so production containers ship with the data baked in.
 
-Prepare database (migrate + seed):
-
-```bash
-npm run db:prepare:dev
-```
-
-Run migrations only:
-
-```bash
-npm run db:migrate:latest
-```
-
-Rollback migrations:
-
-```bash
-npm run db:migrate:rollback
-```
-
-Create a new migration:
-
-```bash
-npm run db:migrate:make -- <migration-name>
-```
-
-Run seeds:
-
-```bash
-npm run db:seed:run
-```
+| Task                          | Command                     | Notes                                                                            |
+| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| Pull the published snapshot   | `npm run snapshot:download` | ~30 s. Use this for local dev. `make snapshot-download` works too (same script). |
+| Rebuild locally from upstream | `make snapshot-build`       | ~6 min. Downloads the latest OPL bulk CSV, normalises, writes the JSON files.    |
+| Publish a fresh release       | `make snapshot-publish`     | Builds + uploads to GitHub Releases via the `gh` CLI. Requires `gh auth login`.  |
 
 ## Testing
 
@@ -124,54 +88,35 @@ Run all tests:
 npm test
 ```
 
-Run tests in watch mode:
+Watch mode:
 
 ```bash
 npm run test:watch
 ```
 
-Run a single test file:
+Single test file:
 
 ```bash
-APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 npx vitest --run src/path/to/test.ts
+APP_ENV=testing NODE_ENV=testing NODE_NO_WARNINGS=1 npx vp test src/path/to/test.ts
 ```
 
-Run tests with coverage:
+Coverage:
 
 ```bash
 npm run test:coverage
 ```
 
-Update test fixtures from live API:
-
-```bash
-npm run update:fixtures
-```
+Tests use a small fixture `AppData` (5 lifters, 3 meets, 2 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
 
 ## Code Quality
 
-Format code (oxfmt):
+`vp check` runs format, lint, and type-check in one shot:
 
 ```bash
-npm run format
-```
-
-Check formatting:
-
-```bash
-npm run format:check
-```
-
-Lint code (oxlint):
-
-```bash
-npm run lint
-```
-
-Check linting:
-
-```bash
-npm run lint:check
+npm run check       # check only
+npm run check:fix   # auto-fix where possible
+npm run format      # vp fmt --write .
+npm run lint        # vp lint --fix .
 ```
 
 ## Build
@@ -182,7 +127,7 @@ Build for production (compiles TypeScript + minifies Tailwind):
 npm run build
 ```
 
-Start production server:
+Start the production server:
 
 ```bash
 npm run start
@@ -190,16 +135,7 @@ npm run start
 
 ## Troubleshooting
 
-**Port 80 permission denied**: Use a higher port like 3000 in `.env`, or run with sudo.
-
-**Node version mismatch**: Use fnm or nvm to switch to Node 24+:
-
-```bash
-fnm use 24
-# or
-nvm use 24
-```
-
-**Database locked errors**: Stop all running instances and try again.
-
-**Email not sending**: Ensure Mailpit is running (Docker or standalone) and `EMAIL_HOST=localhost` in `.env` for local dev.
+- **Port 80 permission denied**: change `APP_PORT` in `.env` to a higher port (e.g. 3000), or run with `sudo`.
+- **Node version mismatch**: `fnm use 26` or `nvm use 26`.
+- **Boot fails with "data snapshot not found"**: run `npm run snapshot:download` (or `make snapshot-build` to rebuild from the upstream CSV).
+- **`/healthz` returns 503**: snapshot is still loading. Wait ~20 s; check the logs for `data store ready`.

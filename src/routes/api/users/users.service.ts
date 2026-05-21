@@ -1,624 +1,312 @@
-import type { ScraperType } from "../../../context";
+import type { DataStoreType } from "../../../data/store";
+import type { AppData, Entry, RankMetric } from "../../../data/types";
+import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
-import type {
-  UserProfile,
-  PersonalBest,
-  CompetitionResult,
-  RankingRow,
-  RankingsApiResponse,
-  ProgressionPoint,
-  PersonalBestEntry,
-  PersonalBestsByEquipment,
-  UserComparison,
-  UserComparisonSummary,
-  SharedMeetEntry,
-  UserRank,
-} from "../../../types";
-import type { GetUserType, GetUsersType, GetCompareType } from "./users.validation";
-import { transformRankingRow } from "../rankings/rankings.service";
+import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.schema";
 
 const { defaultPerPage } = configuration.pagination;
 
-const LIFT_PREFIXES = ["squat", "bench", "deadlift"] as const;
-const ATTEMPTS_PER_LIFT = 4;
-const REGEX_TRAILING_DIGIT = /\d$/;
+const RANK_METRICS: RankMetric[] = [
+  "dots",
+  "wilks",
+  "glossbrenner",
+  "goodlift",
+  "total",
+  "squat",
+  "bench",
+  "deadlift",
+];
 
-function isAttemptColumn(key: string): boolean {
-  for (const prefix of LIFT_PREFIXES) {
-    if (key !== prefix && key.startsWith(prefix) && REGEX_TRAILING_DIGIT.test(key)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function pickBestAttempt(row: Record<string, string>, prefix: string): string {
-  let best = "";
-  let bestValue = -Infinity;
-
-  for (let i = 1; i <= ATTEMPTS_PER_LIFT; i++) {
-    const value = row[`${prefix}${i}`] ?? "";
-    if (value === "") continue;
-
-    const numeric = parseFloat(value);
-    if (Number.isNaN(numeric)) continue;
-    if (numeric <= 0) continue;
-
-    if (numeric > bestValue) {
-      best = value;
-      bestValue = numeric;
-    }
+export function createUsersService(store: DataStoreType) {
+  function listLifters(query: GetUsersType): {
+    data: { username: string; name: string }[];
+    pagination: Pagination;
+  } {
+    const data = store.get();
+    const needle = query.search?.trim() ?? "";
+    const matches = needle.length === 0 ? data.lifters : findLifters(data, needle);
+    const currentPage = query.current_page ?? 1;
+    const perPage = query.per_page ?? defaultPerPage;
+    const pagination = buildPagination(matches.length, currentPage, perPage);
+    const start = (pagination.current_page - 1) * pagination.per_page;
+    const slice = matches
+      .slice(start, start + pagination.per_page)
+      .map((l) => ({ username: l.username, name: l.name }));
+    return { data: slice, pagination };
   }
 
-  return best;
-}
-
-function pickField(row: CompetitionResult, ...candidates: string[]): string {
-  for (const candidate of candidates) {
-    const lower = candidate.toLowerCase();
-    for (const key of Object.keys(row)) {
-      if (key.toLowerCase() === lower) {
-        const value = row[key];
-        if (value != null) return value;
-      }
-    }
+  function getUser(username: string, query: GetUserQueryType): Record<string, unknown> | null {
+    const data = store.get();
+    const lifterId = data.lifterByUsername.get(username.toLowerCase());
+    if (lifterId == null) return null;
+    const units: Units = query.units ?? "lbs";
+    const includeAttempts = (query.include_attempts ?? "false") === "true";
+    const profile = profileSummary(data, lifterId, units);
+    const entries = lifterEntriesByDate(data, lifterId, "desc");
+    return {
+      ...profile,
+      competition_results: entries.map((e) =>
+        formatCompetitionRow(data, e, units, includeAttempts),
+      ),
+    };
   }
-  return "";
-}
 
-function toNumber(value: string): number {
-  const numeric = parseFloat(value);
-  return Number.isFinite(numeric) ? numeric : 0;
-}
+  function getProgression(username: string, units: Units): Record<string, unknown> | null {
+    const data = store.get();
+    const lifterId = data.lifterByUsername.get(username.toLowerCase());
+    if (lifterId == null) return null;
 
-export function buildProgression(profile: UserProfile): ProgressionPoint[] {
-  const points: ProgressionPoint[] = profile.competition_results.map((row) => ({
-    date: pickField(row, "date"),
-    meet: pickField(row, "competition", "meet", "meetname"),
-    federation: pickField(row, "fed", "federation"),
-    equipment: pickField(row, "equip", "equipment"),
-    weight_class: pickField(row, "class", "weight_class"),
-    bodyweight: pickField(row, "weight", "bodyweight"),
-    squat: pickField(row, "squat"),
-    bench: pickField(row, "bench"),
-    deadlift: pickField(row, "deadlift"),
-    total: pickField(row, "total"),
-    dots: pickField(row, "dots"),
-    place: pickField(row, "place"),
-  }));
+    const entries = lifterEntriesByDate(data, lifterId, "asc");
+    let runningSquat = -Infinity;
+    let runningBench = -Infinity;
+    let runningDeadlift = -Infinity;
+    let runningTotal = -Infinity;
+    let runningDots = -Infinity;
+    const out: unknown[] = [];
+    for (const e of entries) {
+      const meet = data.meets[e.meetId]!;
+      if ((e.best3SquatKg ?? -Infinity) > runningSquat)
+        runningSquat = e.best3SquatKg ?? runningSquat;
+      if ((e.best3BenchKg ?? -Infinity) > runningBench)
+        runningBench = e.best3BenchKg ?? runningBench;
+      if ((e.best3DeadliftKg ?? -Infinity) > runningDeadlift)
+        runningDeadlift = e.best3DeadliftKg ?? runningDeadlift;
+      if ((e.totalKg ?? -Infinity) > runningTotal) runningTotal = e.totalKg ?? runningTotal;
+      if ((e.dots ?? -Infinity) > runningDots) runningDots = e.dots ?? runningDots;
+      out.push({
+        date: meet.date,
+        meet_name: meet.meetName,
+        meet_path: meet.path,
+        federation: meet.federation,
+        event: e.event,
+        equipment: e.equipment,
+        weight_class_kg: e.weightClassKg,
+        bodyweight: inUnits(e.bodyweightKg, units),
+        squat: inUnits(e.best3SquatKg, units),
+        bench: inUnits(e.best3BenchKg, units),
+        deadlift: inUnits(e.best3DeadliftKg, units),
+        total: inUnits(e.totalKg, units),
+        dots: e.dots,
+        place: e.placeRank ?? e.placeStatus,
+        running_pb: {
+          squat: inUnits(Number.isFinite(runningSquat) ? runningSquat : null, units),
+          bench: inUnits(Number.isFinite(runningBench) ? runningBench : null, units),
+          deadlift: inUnits(Number.isFinite(runningDeadlift) ? runningDeadlift : null, units),
+          total: inUnits(Number.isFinite(runningTotal) ? runningTotal : null, units),
+          dots: Number.isFinite(runningDots) ? runningDots : null,
+        },
+        units,
+      });
+    }
+    const lifter = data.lifters[lifterId]!;
+    return {
+      username: lifter.username,
+      name: lifter.name,
+      meets: entries.length,
+      progression: out,
+    };
+  }
 
-  points.sort((a, b) => a.date.localeCompare(b.date));
-
-  return points;
-}
-
-function emptyEntry(): PersonalBestEntry {
-  return { value: "", meet: "", date: "", federation: "" };
-}
-
-function maybeUpdateBest(
-  current: PersonalBestEntry,
-  candidateValue: string,
-  row: CompetitionResult,
-): PersonalBestEntry {
-  if (candidateValue === "") return current;
-  const numeric = toNumber(candidateValue);
-  if (numeric <= 0) return current;
-  if (current.value !== "" && toNumber(current.value) >= numeric) return current;
-
-  return {
-    value: candidateValue,
-    meet: pickField(row, "competition", "meet", "meetname"),
-    date: pickField(row, "date"),
-    federation: pickField(row, "fed", "federation"),
-  };
-}
-
-export function buildPersonalBests(profile: UserProfile): PersonalBestsByEquipment[] {
-  const grouped = new Map<string, PersonalBestsByEquipment>();
-
-  for (const row of profile.competition_results) {
-    const equipment = pickField(row, "equip", "equipment");
-    if (!equipment) continue;
-
-    const existing = grouped.get(equipment) ?? {
+  function getPersonalBests(username: string, units: Units): Record<string, unknown> | null {
+    const data = store.get();
+    const lifterId = data.lifterByUsername.get(username.toLowerCase());
+    if (lifterId == null) return null;
+    const entryIds = data.entriesByLifter.get(lifterId) ?? [];
+    const byEquipment = new Map<string, Entry[]>();
+    for (const id of entryIds) {
+      const e = data.entries[id]!;
+      const list = byEquipment.get(e.equipment);
+      if (list == null) byEquipment.set(e.equipment, [e]);
+      else list.push(e);
+    }
+    const groups = Array.from(byEquipment, ([equipment, list]) => ({
       equipment,
-      squat: emptyEntry(),
-      bench: emptyEntry(),
-      deadlift: emptyEntry(),
-      total: emptyEntry(),
-      dots: emptyEntry(),
-    };
-
-    const updated: PersonalBestsByEquipment = {
-      equipment,
-      squat: maybeUpdateBest(existing.squat, pickField(row, "squat"), row),
-      bench: maybeUpdateBest(existing.bench, pickField(row, "bench"), row),
-      deadlift: maybeUpdateBest(existing.deadlift, pickField(row, "deadlift"), row),
-      total: maybeUpdateBest(existing.total, pickField(row, "total"), row),
-      dots: maybeUpdateBest(existing.dots, pickField(row, "dots"), row),
-    };
-
-    grouped.set(equipment, updated);
-  }
-
-  return [...grouped.values()];
-}
-
-export function buildComparisonSummary(profile: UserProfile): UserComparisonSummary {
-  let bestTotal = 0;
-  let bestTotalStr = "";
-  let bestDots = 0;
-  let bestDotsStr = "";
-  let bestSquat = 0;
-  let bestSquatStr = "";
-  let bestBench = 0;
-  let bestBenchStr = "";
-  let bestDeadlift = 0;
-  let bestDeadliftStr = "";
-  let earliestDate = "";
-  let latestDate = "";
-
-  for (const row of profile.competition_results) {
-    const total = toNumber(pickField(row, "total"));
-    if (total > bestTotal) {
-      bestTotal = total;
-      bestTotalStr = pickField(row, "total");
-    }
-
-    const dots = toNumber(pickField(row, "dots"));
-    if (dots > bestDots) {
-      bestDots = dots;
-      bestDotsStr = pickField(row, "dots");
-    }
-
-    const squat = toNumber(pickField(row, "squat"));
-    if (squat > bestSquat) {
-      bestSquat = squat;
-      bestSquatStr = pickField(row, "squat");
-    }
-
-    const bench = toNumber(pickField(row, "bench"));
-    if (bench > bestBench) {
-      bestBench = bench;
-      bestBenchStr = pickField(row, "bench");
-    }
-
-    const deadlift = toNumber(pickField(row, "deadlift"));
-    if (deadlift > bestDeadlift) {
-      bestDeadlift = deadlift;
-      bestDeadliftStr = pickField(row, "deadlift");
-    }
-
-    const date = pickField(row, "date");
-    if (date && (earliestDate === "" || date < earliestDate)) earliestDate = date;
-    if (date && (latestDate === "" || date > latestDate)) latestDate = date;
-  }
-
-  return {
-    name: profile.name,
-    username: profile.username,
-    sex: profile.sex,
-    total_meets: profile.competition_results.length,
-    best_total: bestTotalStr,
-    best_dots: bestDotsStr,
-    best_squat: bestSquatStr,
-    best_bench: bestBenchStr,
-    best_deadlift: bestDeadliftStr,
-    first_meet_date: earliestDate,
-    last_meet_date: latestDate,
-  };
-}
-
-export function findSharedMeets(a: UserProfile, b: UserProfile): SharedMeetEntry[] {
-  const bIndex = new Map<string, CompetitionResult>();
-  for (const row of b.competition_results) {
-    const key = `${pickField(row, "date")}::${pickField(row, "competition", "meet", "meetname")}`;
-    if (!bIndex.has(key)) bIndex.set(key, row);
-  }
-
-  const shared: SharedMeetEntry[] = [];
-  for (const aRow of a.competition_results) {
-    const date = pickField(aRow, "date");
-    const meet = pickField(aRow, "competition", "meet", "meetname");
-    const key = `${date}::${meet}`;
-    const bRow = bIndex.get(key);
-    if (!bRow) continue;
-
-    shared.push({
-      date,
-      meet,
-      federation: pickField(aRow, "fed", "federation"),
-      a_total: pickField(aRow, "total"),
-      a_dots: pickField(aRow, "dots"),
-      a_place: pickField(aRow, "place"),
-      b_total: pickField(bRow, "total"),
-      b_dots: pickField(bRow, "dots"),
-      b_place: pickField(bRow, "place"),
-    });
-  }
-
-  shared.sort((a, b) => a.date.localeCompare(b.date));
-  return shared;
-}
-
-export function buildUserRank(profile: UserProfile, globalRank: number | null): UserRank {
-  let bestDots = 0;
-  let bestDotsStr = "";
-  let bestEquip = "";
-  let bestWeightClass = "";
-  let bestTotalStr = "";
-  let bestTotalNumeric = 0;
-
-  for (const row of profile.competition_results) {
-    const dots = toNumber(pickField(row, "dots"));
-    if (dots > bestDots) {
-      bestDots = dots;
-      bestDotsStr = pickField(row, "dots");
-      bestEquip = pickField(row, "equip", "equipment");
-      bestWeightClass = pickField(row, "class", "weight_class");
-    }
-    const total = toNumber(pickField(row, "total"));
-    if (total > bestTotalNumeric) {
-      bestTotalNumeric = total;
-      bestTotalStr = pickField(row, "total");
-    }
-  }
-
-  return {
-    username: profile.username,
-    name: profile.name,
-    sex: profile.sex,
-    best_total: bestTotalStr,
-    best_dots: bestDotsStr,
-    best_equipment: bestEquip,
-    best_weight_class: bestWeightClass,
-    global_rank: globalRank,
-  };
-}
-
-export function transformCompetitionResults(
-  rows: ReadonlyArray<Record<string, string>>,
-): CompetitionResult[] {
-  const results: CompetitionResult[] = [];
-
-  for (const row of rows) {
-    const transformed: Record<string, string> = {};
-
-    for (const key of Object.keys(row)) {
-      if (!isAttemptColumn(key)) {
-        transformed[key] = row[key]!;
-      }
-    }
-
-    for (const prefix of LIFT_PREFIXES) {
-      transformed[prefix] = pickBestAttempt(row, prefix);
-    }
-
-    results.push(transformed as CompetitionResult);
-  }
-
-  return results;
-}
-
-export function createUserService(scraper: ScraperType) {
-  function parseUserProfileHtml(
-    doc: Document,
-    username: string,
-    includeAttempts: boolean = false,
-  ): UserProfile {
-    const mixedContent = scraper.getElementByClass(doc, "mixed-content");
-    if (!mixedContent) {
-      throw new Error(`User profile not found: ${username}`);
-    }
-
-    const h1 = mixedContent.querySelector("h1");
-    const nameSpan = h1?.querySelector("span.green") || h1?.querySelector("span");
-    const name = nameSpan?.textContent?.trim() || username;
-
-    const h1Text = h1?.textContent || "";
-    const sexMatch = h1Text.match(/\(([MF])\)/);
-    const sex = sexMatch?.[1] ?? "";
-
-    const igLink = h1?.querySelector("a.instagram");
-    const igHref = igLink?.getAttribute("href") || "";
-    const igMatch = igHref.match(/instagram\.com\/([^/]+)/);
-    const instagram = igMatch?.[1] ?? "";
-
-    const tables = mixedContent.querySelectorAll("table");
-    const personalBest = tables[0] ? scraper.tableToJson<PersonalBest>(tables[0]) : [];
-    const rawCompetitionResults = tables[1]
-      ? scraper.tableToJson<Record<string, string>>(tables[1])
-      : [];
-    const competitionResults = includeAttempts
-      ? (rawCompetitionResults as CompetitionResult[])
-      : transformCompetitionResults(rawCompetitionResults);
-
+      meets: list.length,
+      personal_best: bestPerMetric(list, units),
+    }));
+    const lifter = data.lifters[lifterId]!;
     return {
-      name,
-      username,
-      sex,
-      instagram,
-      instagram_url: instagram ? `https://www.instagram.com/${instagram}` : "",
-      personal_best: personalBest,
-      competition_results: competitionResults,
+      username: lifter.username,
+      name: lifter.name,
+      total_meets: entryIds.length,
+      by_equipment: groups,
     };
   }
 
-  async function fetchUserProfile(
-    username: string,
-    includeAttempts: boolean = false,
-    units: string = "lbs",
-  ): Promise<UserProfile> {
-    const html = await scraper.fetchHtml(`/u/${username}`, units);
-    const doc = scraper.parseHtml(html);
-    return parseUserProfileHtml(doc, username, includeAttempts);
-  }
-
-  async function getUser(
-    { username }: GetUserType,
-    includeAttempts: boolean = false,
-    units: string = "lbs",
-  ): Promise<UserProfile[] | null> {
-    const cacheKey = `user-${username}${includeAttempts ? "-attempts" : ""}-${units}`;
-    const result = await scraper.withCache<UserProfile>(cacheKey, () =>
-      fetchUserProfile(username, includeAttempts, units),
-    );
-
-    if (!result.data) {
-      return null;
+  function getRank(username: string): Record<string, unknown> | null {
+    const data = store.get();
+    const lifterId = data.lifterByUsername.get(username.toLowerCase());
+    if (lifterId == null) return null;
+    const ranks: Record<string, { rank: number; out_of: number } | null> = {};
+    for (const metric of RANK_METRICS) {
+      const list = data.rankByMetric[metric];
+      const rank = indexOfTyped(list, lifterId);
+      ranks[metric] = rank === -1 ? null : { rank: rank + 1, out_of: list.length };
     }
-
-    return [result.data];
+    const lifter = data.lifters[lifterId]!;
+    return { username: lifter.username, name: lifter.name, ranks };
   }
 
-  async function getUserProfileCached(
-    username: string,
-    units: string = "lbs",
-  ): Promise<UserProfile | null> {
-    const cacheKey = `user-${username}-${units}`;
-    const result = await scraper.withCache<UserProfile>(cacheKey, () =>
-      fetchUserProfile(username, false, units),
-    );
-    return result.data ?? null;
-  }
-
-  async function getProgression(
-    { username }: GetUserType,
-    units: string = "lbs",
-  ): Promise<ProgressionPoint[] | null> {
-    const profile = await getUserProfileCached(username, units);
-    if (!profile) return null;
-    return buildProgression(profile);
-  }
-
-  async function getPersonalBests(
-    { username }: GetUserType,
-    units: string = "lbs",
-  ): Promise<PersonalBestsByEquipment[] | null> {
-    const profile = await getUserProfileCached(username, units);
-    if (!profile) return null;
-    return buildPersonalBests(profile);
-  }
-
-  async function compareUsers(
-    { a, b }: GetCompareType,
-    units: string = "lbs",
-  ): Promise<UserComparison | null> {
-    const [profileA, profileB] = await Promise.all([
-      getUserProfileCached(a, units),
-      getUserProfileCached(b, units),
-    ]);
-
-    if (!profileA || !profileB) return null;
-
+  function compare(
+    query: GetCompareType,
+  ): { found: true; data: unknown } | { found: false; missing: "a" | "b" } {
+    const data = store.get();
+    const aId = data.lifterByUsername.get(query.a.toLowerCase());
+    const bId = data.lifterByUsername.get(query.b.toLowerCase());
+    if (aId == null) return { found: false, missing: "a" };
+    if (bId == null) return { found: false, missing: "b" };
+    const units: Units = query.units ?? "lbs";
+    const aProfile = profileSummary(data, aId, units);
+    const bProfile = profileSummary(data, bId, units);
     return {
-      a: buildComparisonSummary(profileA),
-      b: buildComparisonSummary(profileB),
-      shared_meets: findSharedMeets(profileA, profileB),
-    };
-  }
-
-  async function fetchGlobalRank(username: string): Promise<number | null> {
-    try {
-      const result = await scraper.fetchJson<{ next_index: number }>(
-        `/search/rankings?q=${encodeURIComponent(username)}&start=0`,
-      );
-      if (!Number.isInteger(result.next_index) || result.next_index < 0) return null;
-      return result.next_index + 1;
-    } catch {
-      return null;
-    }
-  }
-
-  async function getRank(
-    { username }: GetUserType,
-    units: string = "lbs",
-  ): Promise<UserRank | null> {
-    const profile = await getUserProfileCached(username, units);
-    if (!profile) return null;
-
-    const cacheKey = `user-${username}-rank`;
-    const cached = await scraper.withCache<number | null>(cacheKey, () =>
-      fetchGlobalRank(username),
-    );
-    return buildUserRank(profile, cached.data ?? null);
-  }
-
-  interface SearchPagination {
-    per_page: number;
-    current_page: number;
-  }
-
-  async function fetchUserSearchData({
-    search,
-    per_page,
-    current_page,
-    units,
-  }: Required<Pick<GetUsersType, "search" | "per_page" | "current_page" | "units">>): Promise<{
-    rows: RankingRow[];
-    pagination: SearchPagination;
-  }> {
-    const offset = (current_page - 1) * per_page;
-    const searchResult = await scraper.fetchJson<{ next_index: number }>(
-      `/search/rankings?q=${encodeURIComponent(search)}&start=${offset}`,
-    );
-
-    const startIndex = searchResult.next_index;
-    if (!Number.isInteger(startIndex) || startIndex < 0) {
-      throw new Error("Search endpoint returned an invalid next_index");
-    }
-
-    const endIndex = startIndex + per_page;
-    const query = `start=${startIndex}&end=${endIndex}&lang=en&units=${units}`;
-    const response = await scraper.fetchJson<RankingsApiResponse>(`/rankings?${query}`);
-
-    return {
-      rows: response.rows.map(transformRankingRow),
-      pagination: {
-        per_page,
-        current_page,
+      found: true,
+      data: {
+        a: aProfile,
+        b: bProfile,
+        deltas: {
+          squat: numericDelta(aProfile.personal_best.squat, bProfile.personal_best.squat),
+          bench: numericDelta(aProfile.personal_best.bench, bProfile.personal_best.bench),
+          deadlift: numericDelta(aProfile.personal_best.deadlift, bProfile.personal_best.deadlift),
+          total: numericDelta(aProfile.personal_best.total, bProfile.personal_best.total),
+          dots: numericDelta(aProfile.personal_best.dots, bProfile.personal_best.dots),
+        },
       },
     };
   }
 
-  async function searchUser({
-    search,
-    per_page = defaultPerPage,
-    current_page = 1,
-    units = "lbs",
-  }: GetUsersType): Promise<{
-    data: RankingRow[] | null;
-    pagination?: SearchPagination;
-  }> {
-    const normalizedSearch = search?.trim();
-    if (!normalizedSearch) {
-      return { data: null };
-    }
-
-    const cacheKey = `users-search-${encodeURIComponent(normalizedSearch)}-${current_page}-${per_page}-${units}`;
-    const result = await scraper.withCache<{ rows: RankingRow[]; pagination: SearchPagination }>(
-      cacheKey,
-      () => fetchUserSearchData({ search: normalizedSearch, per_page, current_page, units }),
-    );
-
-    if (!result.data) {
-      return { data: null };
-    }
-
-    return {
-      data: result.data.rows,
-      pagination: result.data.pagination,
-    };
-  }
-
-  function parseUserCacheKey(key: string): {
-    kind: "profile" | "rank" | "search";
-    username?: string;
-    includeAttempts?: boolean;
-    units?: string;
-    search?: string;
-    current_page?: number;
-    per_page?: number;
-  } | null {
-    if (key.startsWith("users-search-")) {
-      const remainder = key.slice("users-search-".length);
-      const lastDash = remainder.lastIndexOf("-");
-      if (lastDash === -1) return null;
-      const secondLastDash = remainder.lastIndexOf("-", lastDash - 1);
-      if (secondLastDash === -1) return null;
-      const thirdLastDash = remainder.lastIndexOf("-", secondLastDash - 1);
-      if (thirdLastDash === -1) return null;
-
-      const units = remainder.slice(lastDash + 1);
-      const perPage = parseInt(remainder.slice(secondLastDash + 1, lastDash), 10);
-      const currentPage = parseInt(remainder.slice(thirdLastDash + 1, secondLastDash), 10);
-      const encoded = remainder.slice(0, thirdLastDash);
-
-      if ((units !== "lbs" && units !== "kg") || isNaN(currentPage) || isNaN(perPage)) {
-        return null;
-      }
-
-      return {
-        kind: "search",
-        search: decodeURIComponent(encoded),
-        current_page: currentPage,
-        per_page: perPage,
-        units,
-      };
-    }
-
-    if (!key.startsWith("user-")) return null;
-    let remainder = key.slice("user-".length);
-
-    if (remainder.endsWith("-rank")) {
-      const username = remainder.slice(0, -"-rank".length);
-      if (!username) return null;
-      return { kind: "rank", username };
-    }
-
-    let units: string | undefined;
-    if (remainder.endsWith("-kg")) {
-      units = "kg";
-      remainder = remainder.slice(0, -"-kg".length);
-    } else if (remainder.endsWith("-lbs")) {
-      units = "lbs";
-      remainder = remainder.slice(0, -"-lbs".length);
-    } else {
-      return null;
-    }
-
-    let includeAttempts = false;
-    if (remainder.endsWith("-attempts")) {
-      includeAttempts = true;
-      remainder = remainder.slice(0, -"-attempts".length);
-    }
-
-    if (!remainder) return null;
-    return { kind: "profile", username: remainder, includeAttempts, units };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseUserCacheKey(key);
-    if (!parsed) return false;
-
-    if (parsed.kind === "profile") {
-      await scraper.refreshCache<UserProfile>(key, () =>
-        fetchUserProfile(parsed.username!, parsed.includeAttempts!, parsed.units!),
-      );
-      return true;
-    }
-
-    if (parsed.kind === "rank") {
-      await scraper.refreshCache<number | null>(key, () => fetchGlobalRank(parsed.username!));
-      return true;
-    }
-
-    if (parsed.kind === "search") {
-      const units = parsed.units === "kg" ? "kg" : "lbs";
-      await scraper.refreshCache<{ rows: RankingRow[]; pagination: SearchPagination }>(key, () =>
-        fetchUserSearchData({
-          search: parsed.search!,
-          per_page: parsed.per_page!,
-          current_page: parsed.current_page!,
-          units,
-        }),
-      );
-      return true;
-    }
-
-    return false;
-  }
-
   return {
-    parseUserProfileHtml,
-    parseUserCacheKey,
+    listLifters,
     getUser,
-    searchUser,
     getProgression,
     getPersonalBests,
-    compareUsers,
     getRank,
-    refreshCacheKey,
+    compare,
   };
+}
+
+function indexOfTyped(arr: Uint32Array, value: number): number {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === value) return i;
+  }
+  return -1;
+}
+
+function findLifters(data: AppData, needle: string): { username: string; name: string }[] {
+  const q = needle.toLowerCase();
+  const matches: { username: string; name: string }[] = [];
+  for (const lifter of data.lifters) {
+    if (lifter.username.includes(q) || lifter.name.toLowerCase().includes(q)) {
+      matches.push({ username: lifter.username, name: lifter.name });
+    }
+  }
+  return matches;
+}
+
+function lifterEntriesByDate(data: AppData, lifterId: number, dir: "asc" | "desc"): Entry[] {
+  const ids = data.entriesByLifter.get(lifterId) ?? [];
+  const out = ids.map((id) => data.entries[id]!);
+  out.sort((a, b) => {
+    const ad = data.meets[a.meetId]!.date;
+    const bd = data.meets[b.meetId]!.date;
+    return dir === "asc" ? ad.localeCompare(bd) : bd.localeCompare(ad);
+  });
+  return out;
+}
+
+interface PersonalBest {
+  squat: number | null;
+  bench: number | null;
+  deadlift: number | null;
+  total: number | null;
+  dots: number | null;
+  wilks: number | null;
+  units: Units;
+}
+
+function bestPerMetric(entries: Entry[], units: Units): PersonalBest {
+  function bestKg(field: keyof Entry): number | null {
+    let max: number | null = null;
+    for (const e of entries) {
+      const v = e[field] as number | null;
+      if (v == null) continue;
+      if (max == null || v > max) max = v;
+    }
+    return max;
+  }
+  return {
+    squat: inUnits(bestKg("best3SquatKg"), units),
+    bench: inUnits(bestKg("best3BenchKg"), units),
+    deadlift: inUnits(bestKg("best3DeadliftKg"), units),
+    total: inUnits(bestKg("totalKg"), units),
+    dots: bestKg("dots"),
+    wilks: bestKg("wilks"),
+    units,
+  };
+}
+
+function profileSummary(data: AppData, lifterId: number, units: Units) {
+  const lifter = data.lifters[lifterId]!;
+  const entryIds = data.entriesByLifter.get(lifterId) ?? [];
+  const entries = entryIds.map((id) => data.entries[id]!);
+  const sortedDesc = entries
+    .slice()
+    .sort((a, b) => data.meets[b.meetId]!.date.localeCompare(data.meets[a.meetId]!.date));
+  return {
+    username: lifter.username,
+    name: lifter.name,
+    total_entries: entries.length,
+    first_meet:
+      entries.length > 0 ? data.meets[sortedDesc[sortedDesc.length - 1]!.meetId]!.date : null,
+    last_meet: entries.length > 0 ? data.meets[sortedDesc[0]!.meetId]!.date : null,
+    personal_best: bestPerMetric(entries, units),
+  };
+}
+
+function numericDelta(a: number | null, b: number | null): number | null {
+  if (a == null || b == null) return null;
+  return Math.round((a - b) * 100) / 100;
+}
+
+function formatCompetitionRow(data: AppData, entry: Entry, units: Units, includeAttempts: boolean) {
+  const meet = data.meets[entry.meetId]!;
+  const base: Record<string, unknown> = {
+    date: meet.date,
+    meet_name: meet.meetName,
+    meet_path: meet.path,
+    federation: meet.federation,
+    event: entry.event,
+    equipment: entry.equipment,
+    weight_class_kg: entry.weightClassKg,
+    bodyweight: inUnits(entry.bodyweightKg, units),
+    squat: inUnits(entry.best3SquatKg, units),
+    bench: inUnits(entry.best3BenchKg, units),
+    deadlift: inUnits(entry.best3DeadliftKg, units),
+    total: inUnits(entry.totalKg, units),
+    dots: entry.dots,
+    place: entry.placeRank ?? entry.placeStatus,
+    units,
+  };
+  if (includeAttempts) {
+    base.attempts = {
+      squat: [
+        inUnits(entry.squat1Kg, units),
+        inUnits(entry.squat2Kg, units),
+        inUnits(entry.squat3Kg, units),
+        inUnits(entry.squat4Kg, units),
+      ],
+      bench: [
+        inUnits(entry.bench1Kg, units),
+        inUnits(entry.bench2Kg, units),
+        inUnits(entry.bench3Kg, units),
+        inUnits(entry.bench4Kg, units),
+      ],
+      deadlift: [
+        inUnits(entry.deadlift1Kg, units),
+        inUnits(entry.deadlift2Kg, units),
+        inUnits(entry.deadlift3Kg, units),
+        inUnits(entry.deadlift4Kg, units),
+      ],
+    };
+  }
+  return base;
 }

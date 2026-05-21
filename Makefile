@@ -1,48 +1,46 @@
-# Docker compose shorthand
 DC := docker compose -f docker-compose.dev.yml
 EXEC := $(DC) exec close-powerlifting
 
-.PHONY: help push test lint format up down shell update-fixtures
+.PHONY: help up up-d down restart log shell test test-watch test-coverage \
+	lint format typecheck check snapshot-build snapshot-download \
+	snapshot-publish push clean
+
+SNAPSHOT_TAG ?= snapshot-latest
 
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Development:"
-	@echo "  up          Start dev server (fresh db)"
-	@echo "  up-d        Start dev server in background"
-	@echo "  down        Stop dev server"
-	@echo "  restart     Restart dev server"
-	@echo "  log         Follow container logs"
-	@echo "  shell       Open shell in container"
+	@echo "  up               Start dev server"
+	@echo "  up-d             Start dev server in background"
+	@echo "  down             Stop dev server"
+	@echo "  restart          Restart dev server"
+	@echo "  log              Follow container logs"
+	@echo "  shell            Open shell in container"
 	@echo ""
 	@echo "Testing:"
-	@echo "  test        Run all tests"
-	@echo "  test-watch  Run tests in watch mode"
-	@echo "  test-coverage Run tests with coverage"
+	@echo "  test             Run all tests"
+	@echo "  test-watch       Run tests in watch mode"
+	@echo "  test-coverage    Run tests with coverage"
 	@echo ""
 	@echo "Code Quality:"
-	@echo "  lint        Run linter"
-	@echo "  format      Format code"
-	@echo "  typecheck   Run TypeScript type checking"
-	@echo "  check       Run lint + format + typecheck"
+	@echo "  lint             Run linter"
+	@echo "  format           Format code"
+	@echo "  typecheck        Run TypeScript type checking"
+	@echo "  check            Run lint + format + typecheck"
 	@echo ""
-	@echo "Database:"
-	@echo "  db-migrate  Run migrations"
-	@echo "  db-rollback Rollback last migration"
-	@echo "  db-seed     Run seeders"
-	@echo "  db-reset    Rollback + migrate + seed"
-	@echo ""
-	@echo "Fixtures:"
-	@echo "  update-fixtures  Update OpenPowerlifting test fixtures"
+	@echo "Snapshot (data lives in the snapshot-latest GitHub Release, not git):"
+	@echo "  snapshot-download  Fetch the latest snapshot assets from the release"
+	@echo "  snapshot-build     Rebuild the JSON snapshot locally from OPL's CSV"
+	@echo "  snapshot-publish   Build + upload as snapshot-latest release assets (gh CLI)"
 	@echo ""
 	@echo "Deployment:"
-	@echo "  push        Test + lint + format + commit + push"
-	@echo "  clean       Remove all containers and volumes"
+	@echo "  push             Test + lint + format + commit + push"
+	@echo "  clean            Remove all containers and volumes"
 
 # === Development ===
 
 up:
-	@rm -rf ./src/db/sqlite/*sqlite*
 	@$(DC) up
 
 up-d:
@@ -87,24 +85,34 @@ check:
 	@$(MAKE) format
 	@$(MAKE) typecheck
 
-# === Database ===
+# === Snapshot ===
 
-db-migrate:
-	@$(EXEC) npm run db:migrate:latest
+snapshot-build:
+	@npx tsx scripts/build-snapshot.ts
 
-db-rollback:
-	@$(EXEC) npm run db:migrate:rollback
+snapshot-download:
+	@npm run snapshot:download
 
-db-seed:
-	@$(EXEC) npm run db:seed:run
-
-db-reset:
-	@$(MAKE) db-rollback
-	@$(MAKE) db-migrate
-	@$(MAKE) db-seed
-
-db-clean:
-	@trash ./src/db/sqlite/db.sqlite*
+snapshot-publish:
+	@command -v gh >/dev/null 2>&1 || { \
+		echo ""; \
+		echo "gh CLI is not installed."; \
+		echo "  brew install gh"; \
+		echo "  gh auth login"; \
+		echo ""; \
+		exit 1; \
+	}
+	@$(MAKE) snapshot-build
+	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
+	echo "Publishing snapshot-latest release..."; \
+	gh release delete $(SNAPSHOT_TAG) --yes --cleanup-tag 2>/dev/null || true; \
+	gh release create $(SNAPSHOT_TAG) \
+		--title "OPL snapshot ($$BUILT)" \
+		--notes "Manual publish via Makefile. See meta.json for counts." \
+		src/data/snapshot/lifters.json \
+		src/data/snapshot/meets.json \
+		src/data/snapshot/entries.json \
+		src/data/snapshot/meta.json
 
 # === Deployment ===
 
@@ -121,15 +129,3 @@ clean:
 	@docker system prune -a -f
 	@docker volume prune -f
 	@docker network prune -f
-
-# === Fixtures ===
-
-update-fixtures:
-	@npm run update:fixtures
-
-# === Misc ===
-
-fix-git:
-	@git rm -r --cached . -f
-	@git add .
-	@git commit -m "Untrack files in .gitignore"

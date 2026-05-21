@@ -1,210 +1,103 @@
-import compression from "compression";
-import flash from "connect-flash";
-import cookieParser from "cookie-parser";
-import cors from "cors";
-import express, { Express } from "express";
-import helmet from "helmet";
-import path from "path";
-import { Server } from "http";
-import { AddressInfo } from "net";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { swaggerUI } from "@hono/swagger-ui";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { compress } from "hono/compress";
+import { cors } from "hono/cors";
+import { etag } from "hono/etag";
+import { prettyJSON } from "hono/pretty-json";
+import { requestId } from "hono/request-id";
+import { secureHeaders } from "hono/secure-headers";
+import { trimTrailingSlash } from "hono/trailing-slash";
 
 import { configuration } from "./configuration";
-import { type AppContext } from "./context";
+import type { AppContext } from "./context";
+import { layoutRenderer } from "./routes/_layouts/renderer";
 import { createMiddleware } from "./routes/middleware";
 import { createMainRouter } from "./routes/routes";
-import { createSwagger } from "./utils/swagger";
-import { renderTemplate, layoutMiddleware } from "./utils/template";
 
-export interface ServerInfo {
-  app: Express;
-  server: Server;
-  context: AppContext;
-}
+export type HonoApp = OpenAPIHono;
 
-export async function createApp(
-  context: AppContext,
-): Promise<{ app: Express; context: AppContext }> {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.mail,
-    context.helpers,
-    context.logger,
-    context.knex,
-    context.authService,
-    context.apiCallLogRepository,
+const STATIC_CACHE_CONTROL = "public, max-age=2592000, immutable"; // 30 days
+
+export function createApp(context: AppContext): HonoApp {
+  const middleware = createMiddleware(context.helpers, context.logger);
+
+  const app = new OpenAPIHono();
+
+  // Normalize `/foo/` -> `/foo` before anything else looks at the path.
+  app.use(trimTrailingSlash());
+
+  app.use("*", requestId());
+  app.use("*", middleware.hostNameMiddleware);
+  app.use("*", middleware.requestLoggerMiddleware);
+  app.use(
+    "*",
+    cors({
+      credentials: true,
+      origin: (origin) => {
+        if (configuration.app.env !== "production") return origin ?? "*";
+        return origin === configuration.app.domain ? origin : configuration.app.domain;
+      },
+    }),
+  );
+  // Static assets — 30d browser cache. Container images rebuild from scratch
+  // every deploy so cache-busting comes from new image revisions, not query
+  // string fingerprints. Mounted BEFORE compress/etag/prettyJSON so binary
+  // files (images, fonts) skip body-buffering middlewares.
+  const onStaticFound = (_path: string, c: import("hono").Context) =>
+    c.header("Cache-Control", STATIC_CACHE_CONTROL);
+  app.use("/css/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/js/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/img/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/fonts/*", serveStatic({ root: "./public", onFound: onStaticFound }));
+  app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
+
+  app.use("*", compress());
+  app.use("*", etag());
+  app.use("*", prettyJSON());
+  app.use(
+    "*",
+    secureHeaders({
+      contentSecurityPolicy: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://static.cloudflareinsights.com",
+          "https://cdn.jsdelivr.net",
+        ],
+        scriptSrcAttr: ["'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https://cloudflareinsights.com"],
+        fontSrc: ["'self'", "data:", "https://cdn.jsdelivr.net"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    }),
   );
 
-  const app = express();
+  app.use("*", middleware.appLocalStateMiddleware);
+  app.use("*", layoutRenderer);
+  app.use("*", middleware.rateLimitMiddleware);
 
-  if (configuration.app.env === "development") {
-    try {
-      const { expressTemplatesReload } = await import("@wajeht/express-templates-reload");
-      expressTemplatesReload({
-        app,
-        watch: [
-          { path: "./public", extensions: [".css", ".js"] },
-          { path: "./src/routes", extensions: [".html"] },
-        ],
-        options: { quiet: false },
-      });
-    } catch {
-      context.logger.warn("Express templates reload not available in production");
-    }
-  }
+  app.route("/", createMainRouter(context));
 
-  app
-    .disable("x-powered-by")
-    .set("trust proxy", 1)
-    .set("etag", "strong")
-    .use(middleware.hostNameMiddleware)
-    .use(middleware.requestLoggerMiddleware)
-    .use(cookieParser())
-    .use(flash())
-    .use(middleware.sessionMiddleware())
-    .use(
-      cors({
-        credentials: true,
-        origin: configuration.app.env === "production" ? configuration.app.domain : true,
-      }),
-    )
-    .use(compression())
-    .use(express.json({ limit: "10kb" }))
-    .use(express.urlencoded({ limit: "10kb", extended: true }))
-    .use(
-      helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            scriptSrc: [
-              "'self'",
-              "'unsafe-inline'",
-              "https://static.cloudflareinsights.com",
-              "https://challenges.cloudflare.com",
-            ],
-            scriptSrcAttr: ["'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: [
-              "'self'",
-              "https://cloudflareinsights.com",
-              "https://challenges.cloudflare.com",
-            ],
-            frameSrc: ["https://challenges.cloudflare.com"],
-            childSrc: ["https://challenges.cloudflare.com", "blob:"],
-            workerSrc: ["'self'", "blob:"],
-            fontSrc: ["'self'"],
-            objectSrc: ["'none'"],
-            frameAncestors: ["'self'"],
-            baseUri: ["'self'"],
-            formAction: ["'self'"],
-          },
-        },
-      }),
-    )
-    .use(express.static(path.resolve(path.join(process.cwd(), "public")), { maxAge: "30d" }))
-    .engine("html", renderTemplate)
-    .set("view engine", "html")
-    .set("views", path.resolve(path.join(process.cwd(), "src", "routes")))
-    .set("view cache", configuration.app.env === "production")
-    .use(layoutMiddleware)
-    .use(middleware.csrfMiddleware)
-    .use(middleware.appLocalStateMiddleware)
-    .use(middleware.rateLimitMiddleware)
-    .use(createMainRouter(context));
-
-  await createSwagger(app);
-
-  app.use(middleware.notFoundMiddleware).use(middleware.errorMiddleware);
-
-  return { app, context: context };
-}
-
-export async function createServer(context: AppContext): Promise<ServerInfo> {
-  const { app } = await createApp(context);
-
-  const server: Server = app.listen(configuration.app.port);
-
-  server.on("listening", async () => {
-    const addr: string | AddressInfo | null = server.address();
-    const port = typeof addr === "string" ? addr : (addr as AddressInfo).port;
-
-    context.logger.info("=".repeat(50));
-    context.logger.info(`Server running at http://localhost:${port}`);
-    context.logger.info("=".repeat(50));
-
-    try {
-      await context.database.init();
-      context.cron.start();
-
-      const mailAvailable = await context.mail.verifyConnection();
-      if (mailAvailable) {
-        context.logger.info("Mail service connected");
-      } else {
-        context.logger.info("Mail service unavailable - emails will not be sent");
-      }
-
-      await context.adminUser.initializeAdminUser();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error during startup";
-      context.logger.error(message);
-    }
+  app.doc("/docs/api.json", {
+    openapi: "3.1.0",
+    info: {
+      title: "close-powerlifting API",
+      version: configuration.app.version,
+      description: "An intuitive REST API for the OpenPowerlifting dataset.",
+    },
+    servers: [{ url: "/" }],
   });
+  app.get("/docs/api", swaggerUI({ url: "/docs/api.json" }));
 
-  server.on("error", (error: NodeJS.ErrnoException) => {
-    if (error.syscall !== "listen") {
-      throw error;
-    }
+  app.notFound(middleware.notFoundHandler);
+  app.onError(middleware.errorHandler);
 
-    const bind: string =
-      typeof configuration.app.port === "string"
-        ? "Pipe " + configuration.app.port
-        : "Port " + configuration.app.port;
-
-    switch (error.code) {
-      case "EACCES":
-        context.logger.error(`${bind} requires elevated privileges`);
-        process.exit(1);
-      case "EADDRINUSE":
-        context.logger.error(`${bind} is already in use`);
-        process.exit(1);
-      default:
-        throw error;
-    }
-  });
-
-  return { app, server, context: context };
-}
-
-export async function closeServer({ server, context }: ServerInfo): Promise<void> {
-  context.logger.info("Shutting down server gracefully");
-
-  context.cron.stop();
-
-  try {
-    await context.database.stop();
-    context.logger.info("Database connection closed");
-  } catch (error) {
-    context.logger.error("Error closing database connection", error);
-  }
-
-  await new Promise<void>((resolve, reject) => {
-    const shutdownTimeout = setTimeout(() => {
-      context.logger.error("Could not close connections in time, forcefully shutting down");
-      reject(new Error("Server close timeout"));
-    }, 10000);
-
-    server.close((error) => {
-      clearTimeout(shutdownTimeout);
-      if (error) {
-        context.logger.error("Error closing HTTP server", error);
-        reject(error);
-      } else {
-        context.logger.info("HTTP server closed");
-        resolve();
-      }
-    });
-  });
-
-  context.logger.info("Server shutdown complete");
+  return app;
 }

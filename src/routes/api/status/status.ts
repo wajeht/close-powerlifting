@@ -1,117 +1,66 @@
-import express, { Request, Response } from "express";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import type { AppContext } from "../../../context";
-import { createMiddleware } from "../../middleware";
+import { errorContent, jsonContent, successResponse } from "../api.schemas";
 import { createStatusService } from "./status.service";
-import { getStatusValidation, GetStatusType } from "./status.validation";
 
-/**
- * Federation status
- * @typedef {object} FederationStatus
- * @property {string} name - Federation name
- * @property {string} meetsentered - Number of meets entered
- * @property {string} status - Federation status
- * @property {string} newmeetdetection - New meet detection status
- * @property {string} resultsformat - Results format
- * @property {string} easeofimport - Ease of import rating
- * @property {string} maintainers - Federation maintainers
- */
-
-/**
- * Status data
- * @typedef {object} StatusData
- * @property {string} server_version - Server version commit hash
- * @property {string} meets - Total meets tracked
- * @property {FederationStatus[]} federations - Federation status list
- */
-
-/**
- * Status response
- * @typedef {object} StatusResponse
- * @property {string} status - Response status
- * @property {string} request_url - Request URL
- * @property {string} message - Response message
- * @property {StatusData} data - Status data
- */
-
-/**
- * Error response
- * @typedef {object} ErrorResponse
- * @property {string} status - Response status (fail)
- * @property {string} request_url - Request URL
- * @property {string} message - Error message
- * @property {object[]} errors - Error details array
- * @property {object[]} data - Empty array
- */
+const StatusData = z
+  .object({
+    lifters: z.number(),
+    meets: z.number(),
+    entries: z.number(),
+    federations: z.number(),
+    records: z.number(),
+    source_last_modified: z.string().nullable(),
+    ingested_at: z.string().nullable(),
+  })
+  .openapi("StatusData");
 
 export function createStatusRouter(context: AppContext) {
-  const middleware = createMiddleware(
-    context.cache,
-    context.userRepository,
-    context.mail,
-    context.helpers,
-    context.logger,
-    context.knex,
-    context.authService,
-    context.apiCallLogRepository,
-  );
-  const statusService = createStatusService(context.scraper);
+  const service = createStatusService(context.store);
+  const app = new OpenAPIHono();
 
-  const router = express.Router();
-
-  /**
-   * GET /api/status
-   * @tags Status
-   * @summary Get data source status and statistics
-   * @description Returns information about the OpenPowerlifting data source including server version, total meets tracked, and status of all federations.
-   * @security BearerAuth
-   * @return {StatusResponse} 200 - Status information
-   * @return {ErrorResponse} 401 - Unauthorized - Invalid or missing API key
-   * @return {ErrorResponse} 429 - Rate limit exceeded
-   * @example response - 200 - Success response
-   * {
-   *   "status": "success",
-   *   "request_url": "/api/status",
-   *   "message": "The resource was returned successfully!",
-   *   "data": {"server_version": "abc123", "meets": "50000", "federations": []}
-   * }
-   * @example response - 401 - Unauthorized
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/status",
-   *   "message": "Authorization header required!",
-   *   "errors": [],
-   *   "data": []
-   * }
-   * @example response - 429 - Rate limit exceeded
-   * {
-   *   "status": "fail",
-   *   "request_url": "/api/status",
-   *   "message": "Too many requests, please try again later?",
-   *   "errors": [],
-   *   "data": []
-   * }
-   */
-  router.get(
-    "/api/status",
-    middleware.rateLimitMiddleware,
-    middleware.apiAuthenticationMiddleware,
-    middleware.trackAPICallsMiddleware,
-    middleware.apiCacheControlMiddleware,
-    middleware.apiValidationMiddleware({ query: getStatusValidation }),
-    async (req: Request<{}, {}, GetStatusType>, res: Response) => {
-      const status = await statusService.getStatus({});
-
-      context.logger.info(`user_id: ${req.user.id} has called ${req.originalUrl}`);
-
-      res.status(200).json({
-        status: "success",
-        request_url: req.originalUrl,
-        message: "The resource was returned successfully!",
-        data: status.data,
-      });
+  app.openapi(
+    createRoute({
+      method: "get",
+      path: "/api/status",
+      responses: {
+        200: {
+          description: "Snapshot metadata + counts",
+          ...jsonContent(successResponse(StatusData)),
+        },
+        503: { description: "Snapshot still loading", ...errorContent },
+      },
+      tags: ["Status"],
+      summary: "Get data source status and statistics",
+      description:
+        "Returns counts of every entity in the loaded snapshot plus the upstream `Last-Modified` header from the OpenPowerlifting bulk CSV that produced it.",
+    }),
+    (c) => {
+      const data = service.getStatus();
+      if (data == null) {
+        return c.json(
+          {
+            status: "fail" as const,
+            request_url: c.req.url,
+            message: "Data is still warming up",
+            errors: [],
+            data: [],
+          },
+          503,
+        );
+      }
+      return c.json(
+        {
+          status: "success" as const,
+          request_url: c.req.url,
+          message: "The resource was returned successfully!",
+          data,
+        },
+        200,
+      );
     },
   );
 
-  return router;
+  return app;
 }

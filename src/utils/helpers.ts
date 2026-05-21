@@ -1,8 +1,17 @@
-import crypto from "crypto";
-import { Request } from "express";
+import type { Context } from "hono";
 
 import { configuration } from "../configuration";
-import type { Pagination, TurnstileVerifyResponse } from "../types";
+
+export interface Pagination {
+  items: number;
+  pages: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  first_page: number;
+  from: number;
+  to: number;
+}
 
 export function buildPagination(total: number, page: number, limit: number): Pagination {
   const totalPages = Math.max(1, Math.ceil(total / limit));
@@ -21,85 +30,27 @@ export function buildPagination(total: number, page: number, limit: number): Pag
   };
 }
 
+const KG_TO_LBS = 2.20462262185;
+
+export type Units = "lbs" | "kg";
+
+export function inUnits(kg: number | null | undefined, units: Units): number | null {
+  if (kg == null) return null;
+  if (units === "kg") return kg;
+  return Math.round(kg * KG_TO_LBS * 100) / 100;
+}
+
 export interface HelpersType {
-  getHostName: (req: Request) => string;
-  generateToken: () => string;
-  timingSafeEqual: (a: string, b: string) => boolean;
-  extractNameFromEmail: (email: string) => string;
-  verifyTurnstileToken: (token: string, remoteip?: string) => Promise<TurnstileVerifyResponse>;
+  getHostName: (c: Context) => string;
 }
 
 export function createHelper(): HelpersType {
-  function getHostName(req: Request): string {
+  function getHostName(c: Context): string {
     if (configuration.app.env === "development") {
-      const protocol = req.protocol;
-      const hostname = req.get("host");
-      return `${protocol}://${hostname}`;
+      return new URL(c.req.url).origin;
     }
     return configuration.app.domain;
   }
 
-  function generateToken(): string {
-    return crypto.randomUUID();
-  }
-
-  function timingSafeEqual(a: string, b: string): boolean {
-    const aHash = crypto.createHash("sha256").update(a).digest();
-    const bHash = crypto.createHash("sha256").update(b).digest();
-    return crypto.timingSafeEqual(aHash, bHash);
-  }
-
-  function extractNameFromEmail(email: string): string {
-    const username = email.split("@")[0] ?? email;
-    return username
-      .replace(/[._-]/g, " ")
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  }
-
-  async function verifyTurnstileToken(
-    token: string,
-    remoteip?: string,
-  ): Promise<TurnstileVerifyResponse> {
-    const formData = new URLSearchParams();
-    formData.append("secret", configuration.cloudflare.turnstileSecretKey);
-    formData.append("response", token);
-    if (remoteip) {
-      formData.append("remoteip", remoteip);
-    }
-
-    try {
-      const result = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!result.ok) {
-        throw new Error(`Turnstile API returned ${result.status}: ${result.statusText}`);
-      }
-
-      const outcome = (await result.json()) as TurnstileVerifyResponse;
-
-      if (!outcome.success) {
-        const errors = outcome["error-codes"]?.join(", ") || "Unknown error";
-        throw new Error(`Turnstile validation failed: ${errors}`);
-      }
-
-      return outcome;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(`Failed to verify Turnstile token: ${error.message}`);
-      }
-      throw new Error("Failed to verify Turnstile token: Unknown error");
-    }
-  }
-
-  return {
-    getHostName,
-    generateToken,
-    timingSafeEqual,
-    extractNameFromEmail,
-    verifyTurnstileToken,
-  };
+  return { getHostName };
 }

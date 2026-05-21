@@ -1,195 +1,112 @@
-import type { ScraperType } from "../../../context";
+import type { DataStoreType } from "../../../data/store";
+import { type Pagination, buildPagination } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
-import type {
-  Meet,
-  ApiResponse,
-  Pagination,
-  FederationStats,
-  FederationYearStat,
-} from "../../../types";
-import type {
-  GetFederationsType,
-  GetFederationsParamType,
-  GetFederationsQueryType,
-} from "./federations.validation";
+import type { GetFederationsType, GetFederationMeetsQueryType } from "./federations.schema";
 
 const { defaultPerPage } = configuration.pagination;
-const REGEX_YEAR_PREFIX = /^(\d{4})/;
-const REGEX_FEDERATION_YEAR_SUFFIX = /^(.+)-(\d{4})$/;
 
-type FederationMeet = Meet;
-
-function fedField(row: FederationMeet, ...candidates: string[]): string {
-  for (const candidate of candidates) {
-    const lower = candidate.toLowerCase();
-    for (const key of Object.keys(row)) {
-      if (key.toLowerCase() === lower) {
-        const value = row[key];
-        if (value != null) return value;
-      }
-    }
-  }
-  return "";
+export interface FederationRow {
+  slug: string;
+  code: string;
+  parent_slug: string | null;
+  meet_count: number;
 }
 
-export function buildFederationStats(
-  federation: string,
-  meets: ReadonlyArray<FederationMeet>,
-): FederationStats {
-  const yearCounts = new Map<number, number>();
-
-  for (const row of meets) {
-    const dateField = fedField(row, "date");
-    const match = dateField.match(REGEX_YEAR_PREFIX);
-    if (!match) continue;
-    const year = Number(match[1]);
-    if (!Number.isFinite(year)) continue;
-    yearCounts.set(year, (yearCounts.get(year) ?? 0) + 1);
-  }
-
-  const meetsByYear: FederationYearStat[] = [...yearCounts.entries()]
-    .map(([year, count]) => ({ year, meets: count }))
-    .sort((a, b) => a.year - b.year);
-
-  const earliestYear = meetsByYear.length > 0 ? meetsByYear[0]!.year : null;
-  const latestYear = meetsByYear.length > 0 ? meetsByYear[meetsByYear.length - 1]!.year : null;
-
-  return {
-    federation,
-    total_meets: meets.length,
-    earliest_year: earliestYear,
-    latest_year: latestYear,
-    meets_by_year: meetsByYear,
-  };
+export interface FederationDetail extends FederationRow {
+  meets: Array<{
+    path: string;
+    meet_name: string;
+    date: string;
+    country: string | null;
+    state: string | null;
+    town: string | null;
+    sanctioned: boolean;
+  }>;
 }
 
-export function createFederationService(scraper: ScraperType) {
-  function parseFederationMeetsHtml(doc: Document): FederationMeet[] {
-    const table = doc.querySelector("table");
-    return scraper.tableToJson(table) as FederationMeet[];
+export interface FederationStats {
+  slug: string;
+  code: string;
+  parent_slug: string | null;
+  total_meets: number;
+  meets_by_year: Array<{ year: number; meet_count: number }>;
+}
+
+export function createFederationsService(store: DataStoreType) {
+  function getFederations(query: GetFederationsType): {
+    data: FederationRow[];
+    pagination: Pagination;
+  } {
+    const data = store.get();
+    const rows: FederationRow[] = data.federations.map((fed) => ({
+      slug: fed.slug,
+      code: fed.code,
+      parent_slug: fed.parentSlug,
+      meet_count: fed.meetCount,
+    }));
+    const currentPage = query.current_page ?? 1;
+    const perPage = query.per_page ?? defaultPerPage;
+    const pagination = buildPagination(rows.length, currentPage, perPage);
+    const start = (pagination.current_page - 1) * pagination.per_page;
+    return { data: rows.slice(start, start + pagination.per_page), pagination };
   }
 
-  async function fetchFederationsList(): Promise<FederationMeet[]> {
-    const html = await scraper.fetchHtml("/mlist");
-    const doc = scraper.parseHtml(html);
-    return parseFederationMeetsHtml(doc);
-  }
+  function getFederation(
+    slugInput: string,
+    query: GetFederationMeetsQueryType,
+  ): FederationDetail | null {
+    const data = store.get();
+    const slug = slugInput.toLowerCase();
+    const fed = data.federations.find((f) => f.slug === slug);
+    if (fed == null) return null;
 
-  async function getFederations({
-    current_page = 1,
-    per_page = defaultPerPage,
-  }: GetFederationsType): Promise<ApiResponse<FederationMeet[]> & { pagination?: Pagination }> {
-    const cacheKey = `federations-list`;
-
-    const result = await scraper.withCache<FederationMeet[]>(cacheKey, fetchFederationsList);
-
-    if (!result.data) {
-      return result;
+    const meetIds = data.meetsByFederation.get(slug) ?? [];
+    let meets = meetIds.map((id) => data.meets[id]!).sort((a, b) => b.date.localeCompare(a.date));
+    if (query.year != null) {
+      const prefix = `${query.year}-`;
+      meets = meets.filter((m) => m.date.startsWith(prefix));
     }
-
-    const allData = result.data;
-    const startIndex = (current_page - 1) * per_page;
-    const endIndex = startIndex + per_page;
-    const paginatedData = allData.slice(startIndex, endIndex);
-
     return {
-      data: paginatedData,
-      pagination: scraper.calculatePagination(allData.length, current_page, per_page),
+      slug: fed.slug,
+      code: fed.code,
+      parent_slug: fed.parentSlug,
+      meet_count: meets.length,
+      meets: meets.map((m) => ({
+        path: m.path,
+        meet_name: m.meetName,
+        date: m.date,
+        country: m.meetCountry,
+        state: m.meetState,
+        town: m.meetTown,
+        sanctioned: m.sanctioned,
+      })),
     };
   }
 
-  async function fetchFederationMeets(
-    federation: string,
-    year?: number,
-  ): Promise<FederationMeet[]> {
-    const path = year ? `/mlist/${federation}/${year}` : `/mlist/${federation}`;
-    const html = await scraper.fetchHtml(path);
-    const doc = scraper.parseHtml(html);
-    return parseFederationMeetsHtml(doc);
-  }
+  function getFederationStats(slugInput: string): FederationStats | null {
+    const data = store.get();
+    const slug = slugInput.toLowerCase();
+    const fed = data.federations.find((f) => f.slug === slug);
+    if (fed == null) return null;
 
-  async function getFederation({
-    federation,
-    year,
-  }: GetFederationsParamType & GetFederationsQueryType): Promise<ApiResponse<FederationMeet[]>> {
-    const cacheKey = year ? `federation-${federation}-${year}` : `federation-${federation}`;
-
-    return scraper.withCache<FederationMeet[]>(cacheKey, () =>
-      fetchFederationMeets(federation, year),
+    const meetIds = data.meetsByFederation.get(slug) ?? [];
+    const byYear = new Map<number, number>();
+    for (const id of meetIds) {
+      const year = parseInt(data.meets[id]!.date.slice(0, 4), 10);
+      if (!Number.isFinite(year)) continue;
+      byYear.set(year, (byYear.get(year) ?? 0) + 1);
+    }
+    const stats = Array.from(byYear, ([year, meet_count]) => ({ year, meet_count })).sort(
+      (a, b) => b.year - a.year,
     );
+    return {
+      slug: fed.slug,
+      code: fed.code,
+      parent_slug: fed.parentSlug,
+      total_meets: fed.meetCount,
+      meets_by_year: stats,
+    };
   }
 
-  async function getFederationStats(federation: string): Promise<ApiResponse<FederationStats>> {
-    const cacheKey = `federation-${federation}-stats`;
-    return scraper.withCache<FederationStats>(cacheKey, async () => {
-      const meets = await fetchFederationMeets(federation);
-      return buildFederationStats(federation, meets);
-    });
-  }
-
-  function parseFederationCacheKey(key: string):
-    | { kind: "list" }
-    | { kind: "federation"; federation: string; year?: number }
-    | {
-        kind: "stats";
-        federation: string;
-      }
-    | null {
-    if (key === "federations-list") {
-      return { kind: "list" };
-    }
-
-    if (!key.startsWith("federation-")) return null;
-    const remainder = key.slice("federation-".length);
-
-    if (remainder.endsWith("-stats")) {
-      const federation = remainder.slice(0, -"-stats".length);
-      if (!federation) return null;
-      return { kind: "stats", federation };
-    }
-
-    const yearMatch = remainder.match(REGEX_FEDERATION_YEAR_SUFFIX);
-    if (yearMatch && yearMatch[1] && yearMatch[2]) {
-      return { kind: "federation", federation: yearMatch[1], year: parseInt(yearMatch[2], 10) };
-    }
-
-    if (!remainder) return null;
-    return { kind: "federation", federation: remainder };
-  }
-
-  async function refreshCacheKey(key: string): Promise<boolean> {
-    const parsed = parseFederationCacheKey(key);
-    if (!parsed) return false;
-
-    if (parsed.kind === "list") {
-      await scraper.refreshCache<FederationMeet[]>(key, fetchFederationsList);
-      return true;
-    }
-
-    if (parsed.kind === "federation") {
-      await scraper.refreshCache<FederationMeet[]>(key, () =>
-        fetchFederationMeets(parsed.federation, parsed.year),
-      );
-      return true;
-    }
-
-    if (parsed.kind === "stats") {
-      await scraper.refreshCache<FederationStats>(key, async () => {
-        const meets = await fetchFederationMeets(parsed.federation);
-        return buildFederationStats(parsed.federation, meets);
-      });
-      return true;
-    }
-
-    return false;
-  }
-
-  return {
-    parseFederationMeetsHtml,
-    parseFederationCacheKey,
-    getFederations,
-    getFederation,
-    getFederationStats,
-    refreshCacheKey,
-  };
+  return { getFederations, getFederation, getFederationStats };
 }

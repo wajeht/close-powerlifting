@@ -14,21 +14,6 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       DOCKER_CONTAINER: "true"
-    depends_on:
-      - mailpit
-    networks:
-      - close-powerlifting-network
-
-  mailpit:
-    container_name: close-powerlifting-mailpit
-    restart: unless-stopped
-    image: axllent/mailpit@sha256:757f22b56c1da03570afdb3d259effe5091018008a81bbedc8158cee7e16fdbc
-    ports:
-      - "8025:8025"
-      - "1025:1025"
-    environment:
-      MP_SMTP_AUTH_ACCEPT_ANY: 1
-      MP_SMTP_AUTH_ALLOW_INSECURE: 1
     networks:
       - close-powerlifting-network
 

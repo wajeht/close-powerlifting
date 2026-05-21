@@ -1,0 +1,19 @@
+import type { Context } from "hono";
+import type { FC } from "hono/jsx";
+
+export const RateLimitPage: FC = () => (
+  <div class="mx-auto max-w-md px-4 text-center">
+    <div class="flex flex-col gap-4">
+      <h1 class="fade-in-heading text-6xl font-bold text-power">429</h1>
+      <p class="fade-in animation-delay-2 text-xl text-white">Too Many Requests</p>
+      <p class="fade-in animation-delay-3 text-neutral-500">
+        You've exceeded the rate limit. Please wait a moment and try again.
+      </p>
+    </div>
+  </div>
+);
+
+export function renderRateLimitPage(c: Context) {
+  c.status(429);
+  return c.render(<RateLimitPage />, { title: "Rate Limited" });
+}
