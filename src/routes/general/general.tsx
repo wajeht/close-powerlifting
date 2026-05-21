@@ -43,7 +43,7 @@ export function createGeneralRouter(context: AppContext) {
     const routeGroups =
       data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     const allGood =
-      routeGroups.length > 0 && routeGroups.every((g) => g.routes.every((r) => r.status));
+      routeGroups.length > 0 ? routeGroups.every((g) => g.routes.every((r) => r.status)) : null;
     return c.render(
       <StatusPage
         ready={data != null}

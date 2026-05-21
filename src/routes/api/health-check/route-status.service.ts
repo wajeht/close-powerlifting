@@ -5,6 +5,7 @@ export interface RouteStatus {
   method: string;
   url: string;
   date: string;
+  durationMs: number;
   body: string | null;
 }
 
@@ -23,9 +24,9 @@ interface RouteDefinition {
 // "Unavailable", short enough that a hung route can't stall the page.
 const FETCH_TIMEOUT_MS = 10_000;
 
-// Cache TTL for the route status payload. The /status HTML page hits the
-// shared cache on every load; we refresh at most once an hour.
-const CACHE_TTL_MS = 60 * 60 * 1000;
+// Cache TTL for the route status payload. The /status HTML page renders this
+// cached snapshot, including response bodies, instead of probing on every hit.
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 const ROUTE_STATUS_CACHE_KEY = "route-statuses";
 
 // Ordered list of every API endpoint we surface on /status. Grouped so the
@@ -91,6 +92,7 @@ const GROUP_ORDER: ReadonlyArray<string> = [
 const routeStatusCache = createMemoryCache<RouteGroup[]>({ ttlMs: CACHE_TTL_MS });
 
 async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
+  const startedAt = Date.now();
   try {
     const response = await fetch(`${baseUrl}${path}`, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
@@ -101,7 +103,8 @@ async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
       method: "GET",
       url: path,
       date: response.headers.get("date") ?? new Date().toUTCString(),
-      body: response.ok ? body : null,
+      durationMs: Date.now() - startedAt,
+      body: formatBody(body),
     };
   } catch {
     return {
@@ -109,8 +112,18 @@ async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
       method: "GET",
       url: path,
       date: new Date().toUTCString(),
+      durationMs: Date.now() - startedAt,
       body: null,
     };
+  }
+}
+
+function formatBody(body: string): string | null {
+  if (body.length === 0) return null;
+  try {
+    return JSON.stringify(JSON.parse(body), null, 2);
+  } catch {
+    return body;
   }
 }
 

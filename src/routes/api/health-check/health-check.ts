@@ -30,7 +30,7 @@ export function createHealthCheckRouter(context: AppContext) {
       tags: ["Health Check"],
       summary: "Check API health status",
       description:
-        "Readiness probe. Returns 200 once the in-memory snapshot is loaded, 503 while the boot-time stream-read is still running. Anonymous and unmetered — safe to call from load balancers and uptime monitors.",
+        "Readiness probe. Returns 200 once the snapshot is ready, 503 while startup is still preparing data. Anonymous and unmetered — safe to call from load balancers and uptime monitors.",
     }),
     (c) => {
       if (!service.isReady()) {

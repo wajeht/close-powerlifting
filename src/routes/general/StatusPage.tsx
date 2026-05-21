@@ -10,10 +10,10 @@ interface StatusPageProps {
   sourceLastModified: string | null;
   ingestedAt: string | null;
   routeGroups: RouteGroup[];
-  allGood: boolean;
+  allGood: boolean | null;
 }
 
-const STATUS_TOGGLE_SCRIPT = `(function(){document.querySelectorAll('.status-route').forEach(function(a){var t=a.querySelector('.status-route-toggle');var p=a.querySelector('.status-route-pre');var c=a.querySelector('.status-route-chevron');if(!p)return;if(p.textContent){try{p.textContent=JSON.stringify(JSON.parse(p.textContent),null,2)}catch(e){}}t.addEventListener('click',function(){var x=p.classList.toggle('hidden')===false;t.setAttribute('aria-expanded',String(x));if(c){c.classList.toggle('rotate-180',x)}})})})();`;
+const STATUS_TOGGLE_SCRIPT = `(function(){document.querySelectorAll('.status-route').forEach(function(card){var button=card.querySelector('.status-route-toggle');var pre=card.querySelector('.status-route-pre');var chevron=card.querySelector('.status-route-chevron');if(!button||!pre)return;button.addEventListener('click',function(){var isOpen=pre.classList.toggle('hidden')===false;button.setAttribute('aria-expanded',String(isOpen));if(chevron)chevron.classList.toggle('rotate-180',isOpen)})})})();`;
 
 export const StatusPage: FC<StatusPageProps> = ({
   ready,
@@ -82,21 +82,24 @@ export const StatusPage: FC<StatusPageProps> = ({
                             <div class="text-neutral-400">{item.date}</div>
                           </div>
                         </div>
-                        {item.body && (
-                          <svg
-                            class="status-route-chevron mt-1 h-5 w-5 flex-shrink-0 text-neutral-400 transition-transform"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                          >
-                            <path
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                              d="M19 9l-7 7-7-7"
-                            />
-                          </svg>
-                        )}
+                        <div class="flex shrink-0 items-center gap-3">
+                          <span class="text-sm text-neutral-400">{item.durationMs}ms</span>
+                          {item.body && (
+                            <svg
+                              class="status-route-chevron h-5 w-5 text-neutral-400 transition-transform"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              stroke-width="2"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          )}
+                        </div>
                       </button>
                       {item.body && (
                         <pre class="status-route-pre hidden max-h-96 overflow-auto rounded bg-neutral-950 p-3 text-xs text-neutral-300">
