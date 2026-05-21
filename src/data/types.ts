@@ -1,4 +1,4 @@
-// In-memory data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
+// Snapshot data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
 // gitlab.com/openpowerlifting/opl-data — crates/db/src/data.rs. The
 // canonical id of each entity is its index in the corresponding array
 // on `AppData`.
@@ -93,7 +93,7 @@ export interface Entry {
 }
 
 // One row per (category, sex, equipmentGroup, weightClass, rank). Precomputed
-// at load time; ~17k rows total across all combinations.
+// into the SQLite snapshot; ~17k rows total across all combinations.
 export type RecordCategory =
   | "squat_full_power"
   | "squat_all_events"
@@ -115,8 +115,8 @@ export interface WeightClassRecord {
   liftValue: number;
 }
 
-// /api/federations row shape. Materialised at load so the endpoint is a
-// straight array read instead of an aggregation over meets.
+// /api/federations row shape. Materialised into the snapshot so the endpoint
+// avoids request-time aggregation over meets.
 export interface FederationSummary {
   slug: string; // lowercased + alphanumeric-only ("wrpfuk")
   code: string; // original casing ("WRPF-UK")
@@ -124,8 +124,8 @@ export interface FederationSummary {
   meetCount: number;
 }
 
-// Ranking metric keys. Each maps to a column on Entry; precomputed indexes
-// in AppData.bestEntryByLifter and AppData.rankByMetric mirror these keys.
+// Ranking metric keys. Each maps to a column on Entry; snapshot-build uses
+// these keys to materialise the rankings table.
 export type RankMetric =
   | "dots"
   | "wilks"

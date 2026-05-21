@@ -7,7 +7,7 @@ import {
   buildFederations,
   buildRankByMetric,
   buildRecords,
-} from "../data/store";
+} from "../data/snapshot-build";
 import type { AppData, Entry, Lifter, Meet } from "../data/types";
 
 export function makeFixtureAppData(): AppData {

@@ -17,22 +17,14 @@ import { parse as parseCsv } from "csv-parse";
 import unzipper from "unzipper";
 
 import { createLogger } from "../src/utils/logger";
-import {
-  buildBestEntryByLifter,
-  buildColumnIndex,
-  buildEntriesByLifter,
-  buildFederations,
-  buildRankByMetric,
-  buildRecords,
-  normalizeRow,
-  type ColumnIndex,
-} from "../src/data/store";
+import { buildColumnIndex, normalizeRow, type ColumnIndex } from "../src/data/openpowerlifting-csv";
+import { buildSnapshotData, type SnapshotBuildData } from "../src/data/snapshot-build";
 import {
   SQLITE_SNAPSHOT_FILENAME,
   createWritableDatabase,
   insertSqliteSnapshot,
 } from "../src/data/sqlite";
-import type { Entry, Lifter, Meet, MetricInt32Arrays, MetricUint32Arrays } from "../src/data/types";
+import type { Entry, Lifter, Meet } from "../src/data/types";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";
 const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
@@ -49,12 +41,13 @@ async function main(): Promise<void> {
   logger.info(`build-snapshot: parsing CSV`);
   const { lifters, meets, entries } = await parseAll(zipPath);
 
+  logger.info("build-snapshot: building snapshot data");
+  const snapshotData = buildSnapshotData(lifters, meets, entries);
+  const builtAt = new Date().toISOString();
   logger.info(
     `build-snapshot: writing sqlite for ${lifters.length} lifters, ${meets.length} meets, ${entries.length} entries`,
   );
-  const runtimeIndexes = buildSqliteIndexes(lifters, meets, entries);
-  const builtAt = new Date().toISOString();
-  await writeSqliteSnapshot(lifters, meets, entries, runtimeIndexes, sourceLastModified, builtAt);
+  await writeSqliteSnapshot(lifters, meets, entries, snapshotData, sourceLastModified, builtAt);
 
   logger.info(`build-snapshot: done`);
   logger.info(`  snapshot.sqlite: ${humanSize(SQLITE_FILE)}`);
@@ -135,38 +128,11 @@ function createCsvParser(): Transform {
   return parseCsv({ columns: false, skip_empty_lines: true, relax_column_count: true });
 }
 
-interface RuntimeIndexesBuild {
-  bestEntryByLifter: MetricInt32Arrays;
-  rankByMetric: MetricUint32Arrays;
-  records: ReturnType<typeof buildRecords>;
-  federations: ReturnType<typeof buildFederations>["federations"];
-}
-
-function buildSqliteIndexes(
-  lifters: Lifter[],
-  meets: Meet[],
-  entries: Entry[],
-): RuntimeIndexesBuild {
-  logger.info("build-snapshot: building sqlite indexes");
-  const entriesByLifter = buildEntriesByLifter(entries);
-  const bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
-  const rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
-  const records = buildRecords(entries);
-  const { federations } = buildFederations(meets);
-
-  return {
-    bestEntryByLifter,
-    rankByMetric,
-    records,
-    federations,
-  };
-}
-
 async function writeSqliteSnapshot(
   lifters: Lifter[],
   meets: Meet[],
   entries: Entry[],
-  runtimeIndexes: RuntimeIndexesBuild,
+  snapshotData: SnapshotBuildData,
   sourceLastModified: string | null,
   builtAt: string,
 ): Promise<void> {
@@ -177,10 +143,10 @@ async function writeSqliteSnapshot(
       lifters,
       meets,
       entries,
-      bestEntryByLifter: runtimeIndexes.bestEntryByLifter,
-      rankByMetric: runtimeIndexes.rankByMetric,
-      records: runtimeIndexes.records,
-      federations: runtimeIndexes.federations,
+      bestEntryByLifter: snapshotData.bestEntryByLifter,
+      rankByMetric: snapshotData.rankByMetric,
+      records: snapshotData.records,
+      federations: snapshotData.federations,
       sourceLastModified,
       builtAt,
     });
