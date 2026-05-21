@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import type { DatabaseSync } from "node:sqlite";
 
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
@@ -14,7 +15,6 @@ import { TermsPage } from "./TermsPage";
 const ONE_DAY_SECONDS = 86400;
 const HOME_RANKINGS_CACHE_KEY = "home-rankings";
 
-type AppData = NonNullable<ReturnType<AppContext["store"]["tryGet"]>>;
 type HomeRankings = ReturnType<typeof buildHomeRankings>;
 
 export function createGeneralRouter(context: AppContext) {
@@ -24,15 +24,15 @@ export function createGeneralRouter(context: AppContext) {
     ttlMs: Number.POSITIVE_INFINITY,
   });
 
-  function getHomeRankings(data: AppData): HomeRankings {
+  function getHomeRankings(db: DatabaseSync): HomeRankings {
     const cached = homeRankingsCache.get(HOME_RANKINGS_CACHE_KEY);
     if (cached !== undefined) return cached;
-    return homeRankingsCache.set(HOME_RANKINGS_CACHE_KEY, buildHomeRankings(data));
+    return homeRankingsCache.set(HOME_RANKINGS_CACHE_KEY, buildHomeRankings(db));
   }
 
   app.get("/", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) => {
-    const data = context.store.tryGet();
-    const rankings = data == null ? null : getHomeRankings(data);
+    const ready = context.store.tryGet() != null;
+    const rankings = ready ? getHomeRankings(context.store.get()) : null;
     return c.render(<HomePage rankings={rankings} />);
   });
 
@@ -53,17 +53,17 @@ export function createGeneralRouter(context: AppContext) {
   );
 
   app.get("/status", middleware.noCacheMiddleware, async (c) => {
-    const data = context.store.tryGet();
+    const metadata = context.store.tryGet();
     const routeGroups =
-      data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
+      metadata == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     const allGood =
       routeGroups.length > 0 ? routeGroups.every((g) => g.routes.every((r) => r.status)) : null;
     return c.render(
       <StatusPage
-        ready={data != null}
-        rowCount={data?.rowCount ?? 0}
-        sourceLastModified={data?.sourceLastModified ?? null}
-        ingestedAt={data?.ingestedAt ?? null}
+        ready={metadata != null}
+        rowCount={metadata?.rowCount ?? 0}
+        sourceLastModified={metadata?.sourceLastModified ?? null}
+        ingestedAt={metadata?.ingestedAt ?? null}
         routeGroups={routeGroups}
         allGood={allGood}
       />,
@@ -90,21 +90,42 @@ export function createGeneralRouter(context: AppContext) {
   return app;
 }
 
-function buildHomeRankings(data: AppData) {
-  const top = data.rankByMetric.dots.subarray(0, 9);
-  return Array.from(top, (lifterId, idx) => {
-    const entryId = data.bestEntryByLifter.dots[lifterId];
-    if (entryId == null || entryId < 0) return null;
-    const lifter = data.lifters[lifterId];
-    const entry = data.entries[entryId];
-    if (lifter == null || entry == null) return null;
+function buildHomeRankings(db: DatabaseSync) {
+  const rows = db
+    .prepare(
+      `
+      SELECT
+        r.rank,
+        l.name,
+        l.username,
+        e.dots,
+        e.total_kg,
+        e.equipment
+      FROM rankings r
+      JOIN entries e ON e.id = r.entry_id
+      JOIN lifters l ON l.id = r.lifter_id
+      WHERE r.metric = 'dots'
+      ORDER BY r.rank
+      LIMIT 9
+    `,
+    )
+    .all() as Array<{
+    rank: number;
+    name: string;
+    username: string;
+    dots: number | null;
+    total_kg: number | null;
+    equipment: string;
+  }>;
+
+  return rows.map((row) => {
     return {
-      rank: idx + 1,
-      name: lifter.name,
-      username: lifter.username,
-      dots: entry.dots ?? 0,
-      total: entry.totalKg ?? 0,
-      equipment: entry.equipment,
+      rank: row.rank,
+      name: row.name,
+      username: row.username,
+      dots: row.dots ?? 0,
+      total: row.total_kg ?? 0,
+      equipment: row.equipment,
     };
-  }).filter((x) => x != null);
+  });
 }

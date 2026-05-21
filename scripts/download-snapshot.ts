@@ -1,9 +1,6 @@
 // Downloads the prebuilt snapshot from the `snapshot-latest` GitHub
-// Release into src/data/snapshot/. The files match the layout produced
+// Release into src/data/snapshot/. The file matches the layout produced
 // by scripts/build-snapshot.ts and consumed by src/data/store.ts at boot.
-//
-// Streams each response body directly to disk via pipeline +
-// Readable.fromWeb so the ~700 MB entries.json never lands in memory.
 //
 // Run via `npm run snapshot:download` or `npx tsx scripts/download-snapshot.ts`.
 
@@ -19,8 +16,7 @@ const TAG = "snapshot-latest";
 const BASE_URL = `https://github.com/${REPO}/releases/download/${TAG}`;
 const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
 
-const REQUIRED_FILES = ["lifters.json", "meets.json", "entries.json", "meta.json"] as const;
-const RUNTIME_INDEX_FILES = ["runtime-indexes.json", "runtime-indexes.bin"] as const;
+const SQLITE_FILE = "snapshot.sqlite";
 
 const logger = createLogger();
 
@@ -28,26 +24,10 @@ async function main(): Promise<void> {
   await fs.promises.mkdir(SNAPSHOT_DIR, { recursive: true });
 
   logger.info(`download-snapshot: source ${BASE_URL}`);
-  for (const name of REQUIRED_FILES) {
-    const dest = path.join(SNAPSHOT_DIR, name);
-    logger.info(`download-snapshot: fetching ${name}`);
-    await downloadTo(`${BASE_URL}/${name}`, dest);
-    logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-  }
-  try {
-    for (const name of RUNTIME_INDEX_FILES) {
-      const dest = path.join(SNAPSHOT_DIR, name);
-      logger.info(`download-snapshot: fetching ${name}`);
-      await downloadTo(`${BASE_URL}/${name}`, dest);
-      logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-    }
-  } catch (error) {
-    for (const name of RUNTIME_INDEX_FILES) {
-      await fs.promises.rm(path.join(SNAPSHOT_DIR, name), { force: true });
-    }
-    logger.warn("download-snapshot: runtime indexes unavailable; startup will rebuild them", error);
-  }
-
+  const sqliteDest = path.join(SNAPSHOT_DIR, SQLITE_FILE);
+  logger.info(`download-snapshot: fetching ${SQLITE_FILE}`);
+  await downloadTo(`${BASE_URL}/${SQLITE_FILE}`, sqliteDest);
+  logger.info(`download-snapshot:   wrote ${SQLITE_FILE} (${humanSize(sqliteDest)})`);
   logger.info(`download-snapshot: done`);
 }
 

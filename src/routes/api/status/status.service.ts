@@ -12,16 +12,16 @@ export interface StatusData {
 
 export function createStatusService(store: DataStoreType) {
   function getStatus(): StatusData | null {
-    const data = store.tryGet();
-    if (data == null) return null;
+    const metadata = store.tryGet();
+    if (metadata == null) return null;
     return {
-      lifters: data.lifters.length,
-      meets: data.meets.length,
-      entries: data.entries.length,
-      federations: data.federations.length,
-      records: data.records.length,
-      source_last_modified: data.sourceLastModified,
-      ingested_at: data.ingestedAt,
+      lifters: metadata.lifterCount,
+      meets: metadata.meetCount,
+      entries: metadata.rowCount,
+      federations: metadata.federationCount,
+      records: metadata.recordCount,
+      source_last_modified: metadata.sourceLastModified,
+      ingested_at: metadata.ingestedAt,
     };
   }
 

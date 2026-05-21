@@ -36,17 +36,7 @@ ARG SNAPSHOT_CACHE_BUST=0
 RUN mkdir -p src/data/snapshot && \
     BASE="https://github.com/${SNAPSHOT_REPO}/releases/download/${SNAPSHOT_TAG}" && \
     echo "Fetching snapshot from $BASE (cache-bust=$SNAPSHOT_CACHE_BUST)" && \
-    curl -fsSL --retry 3 -o src/data/snapshot/lifters.json  "$BASE/lifters.json"  && \
-    curl -fsSL --retry 3 -o src/data/snapshot/meets.json    "$BASE/meets.json"    && \
-    curl -fsSL --retry 3 -o src/data/snapshot/entries.json  "$BASE/entries.json"  && \
-    if curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.json "$BASE/runtime-indexes.json" && \
-       curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.bin  "$BASE/runtime-indexes.bin"; then \
-      echo "Fetched runtime indexes"; \
-    else \
-      rm -f src/data/snapshot/runtime-indexes.json src/data/snapshot/runtime-indexes.bin; \
-      echo "Runtime indexes not available; app will rebuild indexes at startup"; \
-    fi && \
-    curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$BASE/meta.json"     && \
+    curl -fsSL --retry 3 -o src/data/snapshot/snapshot.sqlite "$BASE/snapshot.sqlite" && \
     ls -lh src/data/snapshot/
 
 # Compile TS + minify CSS. The runtime reads exclusively from dist/ and

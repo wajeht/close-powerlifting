@@ -1,5 +1,6 @@
+import type { DatabaseSync, SQLInputValue } from "node:sqlite";
+
 import type { DataStoreType } from "../../../data/store";
-import type { Entry, Meet } from "../../../data/types";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
 import type {
@@ -11,73 +12,82 @@ import type {
 
 const { defaultPerPage } = configuration.pagination;
 
+interface MeetRow {
+  id: number;
+  path: string;
+  federation: string;
+  parent_federation: string | null;
+  date: string;
+  meet_name: string;
+  meet_country: string | null;
+  meet_state: string | null;
+  meet_town: string | null;
+  sanctioned: number;
+}
+
+interface MeetEntryRow {
+  username: string;
+  name: string;
+  sex: string | null;
+  age: number | null;
+  event: string;
+  equipment: string;
+  weight_class_kg: number | null;
+  bodyweight_kg: number | null;
+  best3_squat_kg: number | null;
+  best3_bench_kg: number | null;
+  best3_deadlift_kg: number | null;
+  total_kg: number | null;
+  dots: number | null;
+  place_rank: number | null;
+  place_status: string | null;
+}
+
+interface HighlightRow extends MeetEntryRow {
+  value: number;
+}
+
 export function createMeetsService(store: DataStoreType) {
   function listMeets(query: ListMeetsQueryType): { data: unknown[]; pagination: Pagination } {
-    const data = store.get();
-    let candidates: Meet[];
-    if (query.federation != null) {
-      const ids = data.meetsByFederation.get(query.federation.toLowerCase()) ?? [];
-      candidates = ids.map((id) => data.meets[id]!);
-    } else {
-      candidates = data.meets.slice();
-    }
-
-    if (query.from != null) candidates = candidates.filter((m) => m.date >= query.from!);
-    if (query.to != null) candidates = candidates.filter((m) => m.date <= query.to!);
-    if (query.country != null) {
-      const needle = query.country.toLowerCase();
-      candidates = candidates.filter((m) => (m.meetCountry ?? "").toLowerCase() === needle);
-    }
-    if (query.state != null) {
-      const needle = query.state.toLowerCase();
-      candidates = candidates.filter((m) => (m.meetState ?? "").toLowerCase() === needle);
-    }
-    if (query.search != null) {
-      const needle = query.search.toLowerCase();
-      candidates = candidates.filter((m) => m.meetName.toLowerCase().includes(needle));
-    }
-
-    const direction = query.sort === "date-asc" ? 1 : -1;
-    candidates.sort((a, b) => direction * a.date.localeCompare(b.date));
-
+    const db = store.get();
+    const { where, params } = buildMeetFilters(query);
+    const total = scalarCount(db, `SELECT COUNT(*) AS count FROM meets ${where}`, params);
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
-    const pagination = buildPagination(candidates.length, currentPage, perPage);
-    const start = (pagination.current_page - 1) * pagination.per_page;
-    const page = candidates.slice(start, start + pagination.per_page);
-    return { data: page.map(toMeetSummary), pagination };
+    const pagination = buildPagination(total, currentPage, perPage);
+    const direction = query.sort === "date-asc" ? "ASC" : "DESC";
+    const rows = db
+      .prepare(
+        `SELECT ${meetColumns()} FROM meets ${where} ORDER BY date ${direction}, id LIMIT ? OFFSET ?`,
+      )
+      .all(...params, pagination.per_page, offset(pagination)) as unknown as MeetRow[];
+    return { data: rows.map(toMeetSummary), pagination };
   }
 
   function getMeet(
     params: GetMeetParamType,
     query: GetMeetQueryType,
   ): Record<string, unknown> | null {
-    const data = store.get();
-    const meetId = lookupMeetId(params);
-    if (meetId == null) return null;
-    const meet = data.meets[meetId]!;
-    const entryIds = data.entriesByMeet.get(meetId) ?? [];
-    const entries = entryIds.map((id) => data.entries[id]!);
-    const sort = query.sort ?? "place";
+    const db = store.get();
+    const meet = lookupMeet(db, params);
+    if (meet == null) return null;
     const units: Units = query.units ?? "lbs";
-
-    let sorter: (a: Entry, b: Entry) => number;
-    if (sort === "by-total") sorter = (a, b) => (b.totalKg ?? 0) - (a.totalKg ?? 0);
-    else if (sort === "by-dots") sorter = (a, b) => (b.dots ?? 0) - (a.dots ?? 0);
-    else sorter = byPlaceThenTotal;
-    const sorted = entries.slice().sort(sorter);
+    const sort = query.sort ?? "place";
+    const rows = db
+      .prepare(`${meetEntrySelectSql()} WHERE e.meet_id = ? ORDER BY ${entryOrderBy(sort)}`)
+      .all(meet.id) as unknown as MeetEntryRow[];
 
     return {
       path: meet.path,
-      meet_name: meet.meetName,
+      meet_name: meet.meet_name,
       federation: meet.federation,
-      parent_federation: meet.parentFederation,
+      parent_federation: meet.parent_federation,
       date: meet.date,
-      country: meet.meetCountry,
-      state: meet.meetState,
-      town: meet.meetTown,
-      sanctioned: meet.sanctioned,
-      results: sorted.map((e) => formatMeetEntry(e, units)),
+      country: meet.meet_country,
+      state: meet.meet_state,
+      town: meet.meet_town,
+      sanctioned: Boolean(meet.sanctioned),
+      results: rows.map((entry) => formatMeetEntry(entry, units)),
     };
   }
 
@@ -85,102 +95,196 @@ export function createMeetsService(store: DataStoreType) {
     params: GetMeetParamType,
     query: GetMeetHighlightsQueryType,
   ): Record<string, unknown> | null {
-    const data = store.get();
-    const meetId = lookupMeetId(params);
-    if (meetId == null) return null;
-    const meet = data.meets[meetId]!;
-    const entryIds = data.entriesByMeet.get(meetId) ?? [];
-    const entries = entryIds.map((id) => data.entries[id]!);
+    const db = store.get();
+    const meet = lookupMeet(db, params);
+    if (meet == null) return null;
     const units: Units = query.units ?? "lbs";
 
     return {
       path: meet.path,
-      meet_name: meet.meetName,
+      meet_name: meet.meet_name,
       federation: meet.federation,
       date: meet.date,
       highlights: {
-        best_total: bestByField(entries, "totalKg", units),
-        best_squat: bestByField(entries, "best3SquatKg", units),
-        best_bench: bestByField(entries, "best3BenchKg", units),
-        best_deadlift: bestByField(entries, "best3DeadliftKg", units),
-        best_dots: bestByField(entries, "dots", units),
+        best_total: bestByField(db, meet.id, "total_kg", units),
+        best_squat: bestByField(db, meet.id, "best3_squat_kg", units),
+        best_bench: bestByField(db, meet.id, "best3_bench_kg", units),
+        best_deadlift: bestByField(db, meet.id, "best3_deadlift_kg", units),
+        best_dots: bestByField(db, meet.id, "dots", units),
       },
-    };
-  }
-
-  function lookupMeetId(params: GetMeetParamType): number | undefined {
-    const data = store.get();
-    return data.meetByPath.get(
-      `${params.federation.toLowerCase()}/${params.date}/${params.slug.toLowerCase()}`,
-    );
-  }
-
-  function toMeetSummary(m: Meet) {
-    return {
-      path: m.path,
-      meet_name: m.meetName,
-      federation: m.federation,
-      date: m.date,
-      country: m.meetCountry,
-      state: m.meetState,
-      town: m.meetTown,
-      sanctioned: m.sanctioned,
-    };
-  }
-
-  function formatMeetEntry(entry: Entry, units: Units) {
-    const data = store.get();
-    const lifter = data.lifters[entry.lifterId]!;
-    return {
-      username: lifter.username,
-      name: lifter.name,
-      sex: entry.sex,
-      age: entry.age,
-      event: entry.event,
-      equipment: entry.equipment,
-      weight_class_kg: entry.weightClassKg,
-      bodyweight: inUnits(entry.bodyweightKg, units),
-      squat: inUnits(entry.best3SquatKg, units),
-      bench: inUnits(entry.best3BenchKg, units),
-      deadlift: inUnits(entry.best3DeadliftKg, units),
-      total: inUnits(entry.totalKg, units),
-      dots: entry.dots,
-      place: entry.placeRank ?? entry.placeStatus,
-      units,
-    };
-  }
-
-  function bestByField(entries: Entry[], field: keyof Entry, units: Units): unknown {
-    const data = store.get();
-    let best: Entry | null = null;
-    let bestVal = -Infinity;
-    for (const e of entries) {
-      const v = e[field] as number | null;
-      if (v == null) continue;
-      if (v > bestVal) {
-        bestVal = v;
-        best = e;
-      }
-    }
-    if (best == null) return null;
-    const lifter = data.lifters[best.lifterId]!;
-    return {
-      username: lifter.username,
-      name: lifter.name,
-      equipment: best.equipment,
-      weight_class_kg: best.weightClassKg,
-      value: field === "dots" ? bestVal : inUnits(bestVal, units),
     };
   }
 
   return { listMeets, getMeet, getMeetHighlights };
 }
 
-function byPlaceThenTotal(a: Entry, b: Entry): number {
-  const ar = a.placeRank;
-  const br = b.placeRank;
-  if (ar != null && br != null) return ar - br;
-  if (ar != null) return -1;
-  if (br != null) return 1;
-  return (b.totalKg ?? 0) - (a.totalKg ?? 0);
+function buildMeetFilters(query: ListMeetsQueryType): { where: string; params: SQLInputValue[] } {
+  const clauses: string[] = [];
+  const params: SQLInputValue[] = [];
+  if (query.federation != null) {
+    clauses.push("federation_slug = ?");
+    params.push(query.federation.toLowerCase());
+  }
+  if (query.from != null) {
+    clauses.push("date >= ?");
+    params.push(query.from);
+  }
+  if (query.to != null) {
+    clauses.push("date <= ?");
+    params.push(query.to);
+  }
+  if (query.country != null) {
+    clauses.push("lower(coalesce(meet_country, '')) = ?");
+    params.push(query.country.toLowerCase());
+  }
+  if (query.state != null) {
+    clauses.push("lower(coalesce(meet_state, '')) = ?");
+    params.push(query.state.toLowerCase());
+  }
+  if (query.search != null) {
+    clauses.push("lower(meet_name) LIKE ?");
+    params.push(`%${query.search.toLowerCase()}%`);
+  }
+  return {
+    where: clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "",
+    params,
+  };
+}
+
+function lookupMeet(db: DatabaseSync, params: GetMeetParamType): MeetRow | null {
+  const path = `${params.federation.toLowerCase()}/${params.date}/${params.slug.toLowerCase()}`;
+  const row = db.prepare(`SELECT ${meetColumns()} FROM meets WHERE path = ?`).get(path) as
+    | MeetRow
+    | undefined;
+  return row ?? null;
+}
+
+function meetColumns(): string {
+  return `
+    id,
+    path,
+    federation,
+    parent_federation,
+    date,
+    meet_name,
+    meet_country,
+    meet_state,
+    meet_town,
+    sanctioned
+  `;
+}
+
+function toMeetSummary(row: MeetRow) {
+  return {
+    path: row.path,
+    meet_name: row.meet_name,
+    federation: row.federation,
+    date: row.date,
+    country: row.meet_country,
+    state: row.meet_state,
+    town: row.meet_town,
+    sanctioned: Boolean(row.sanctioned),
+  };
+}
+
+function meetEntrySelectSql(): string {
+  return `
+    SELECT
+      l.username,
+      l.name,
+      e.sex,
+      e.age,
+      e.event,
+      e.equipment,
+      e.weight_class_kg,
+      e.bodyweight_kg,
+      e.best3_squat_kg,
+      e.best3_bench_kg,
+      e.best3_deadlift_kg,
+      e.total_kg,
+      e.dots,
+      e.place_rank,
+      e.place_status
+    FROM entries e
+    JOIN lifters l ON l.id = e.lifter_id
+  `;
+}
+
+function entryOrderBy(sort: string): string {
+  if (sort === "by-total") return "e.total_kg DESC";
+  if (sort === "by-dots") return "e.dots DESC";
+  return "(e.place_rank IS NULL), e.place_rank ASC, e.total_kg DESC";
+}
+
+function formatMeetEntry(entry: MeetEntryRow, units: Units) {
+  return {
+    username: entry.username,
+    name: entry.name,
+    sex: entry.sex,
+    age: entry.age,
+    event: entry.event,
+    equipment: entry.equipment,
+    weight_class_kg: entry.weight_class_kg,
+    bodyweight: inUnits(entry.bodyweight_kg, units),
+    squat: inUnits(entry.best3_squat_kg, units),
+    bench: inUnits(entry.best3_bench_kg, units),
+    deadlift: inUnits(entry.best3_deadlift_kg, units),
+    total: inUnits(entry.total_kg, units),
+    dots: entry.dots,
+    place: entry.place_rank ?? entry.place_status,
+    units,
+  };
+}
+
+function bestByField(
+  db: DatabaseSync,
+  meetId: number,
+  field: "total_kg" | "best3_squat_kg" | "best3_bench_kg" | "best3_deadlift_kg" | "dots",
+  units: Units,
+): unknown {
+  const row = db
+    .prepare(
+      `
+      SELECT
+        l.username,
+        l.name,
+        e.sex,
+        e.age,
+        e.event,
+        e.equipment,
+        e.weight_class_kg,
+        e.bodyweight_kg,
+        e.best3_squat_kg,
+        e.best3_bench_kg,
+        e.best3_deadlift_kg,
+        e.total_kg,
+        e.dots,
+        e.place_rank,
+        e.place_status,
+        e.${field} AS value
+      FROM entries e
+      JOIN lifters l ON l.id = e.lifter_id
+      WHERE e.meet_id = ? AND e.${field} IS NOT NULL
+      ORDER BY e.${field} DESC
+      LIMIT 1
+    `,
+    )
+    .get(meetId) as HighlightRow | undefined;
+  if (row == null) return null;
+  return {
+    username: row.username,
+    name: row.name,
+    equipment: row.equipment,
+    weight_class_kg: row.weight_class_kg,
+    value: field === "dots" ? row.value : inUnits(row.value, units),
+  };
+}
+
+function scalarCount(db: DatabaseSync, sql: string, params: SQLInputValue[] = []): number {
+  const row = db.prepare(sql).get(...params) as { count: number } | undefined;
+  return row?.count ?? 0;
+}
+
+function offset(pagination: Pagination): number {
+  return (pagination.current_page - 1) * pagination.per_page;
 }

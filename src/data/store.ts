@@ -1,25 +1,10 @@
-// Data layer. Owns everything between the on-disk snapshot and the route
-// handlers: CSV-row normalization (used at build time by
-// scripts/build-snapshot.ts), index builders, snapshot readers, and the
-// in-memory singleton.
-//
-// Snapshot layout (alongside this module at src/data/snapshot/):
-//
-//   lifters.json   — JSON array, one Lifter per line
-//   meets.json     — JSON array, one Meet per line
-//   entries.json   — JSON object, one column per line (column store)
-//   runtime-indexes.json — manifest + small precomputed runtime indexes
-//   runtime-indexes.bin  — binary typed-array indexes used at boot
-//   meta.json      — sourceLastModified / builtAt / counts
-//
-// Each line of lifters/meets/entries is independently JSON.parse-able after
-// stripping the trailing comma, so we read via readline without ever
-// holding the full payload in a single string (entries.json is ~700 MB —
-// past V8's per-string max).
+// Data layer. Owns CSV-row normalization used by scripts/build-snapshot.ts,
+// shared index builders used by tests and the SQLite snapshot builder, and
+// the runtime SQLite store facade.
 
 import fs from "node:fs";
 import path from "node:path";
-import readline from "node:readline";
+import { DatabaseSync } from "node:sqlite";
 
 import type {
   AppData,
@@ -28,7 +13,6 @@ import type {
   EquipmentGroup,
   Event as PowerliftingEvent,
   FederationSummary,
-  Lifter,
   Meet,
   MetricInt32Arrays,
   MetricUint32Arrays,
@@ -38,55 +22,20 @@ import type {
   Sex,
   WeightClassRecord,
 } from "./types";
+import {
+  SQLITE_SNAPSHOT_FILENAME,
+  createWritableDatabase,
+  insertSqliteSnapshot,
+  openReadonlyDatabase,
+  readMetadata,
+  type StoreMetadata,
+} from "./sqlite";
 import type { LoggerType } from "../utils/logger";
 
 // ---------- Snapshot paths + column list ----------
 
 const SNAPSHOT_DIR = path.join(__dirname, "snapshot");
-const LIFTERS_FILE = path.join(SNAPSHOT_DIR, "lifters.json");
-const MEETS_FILE = path.join(SNAPSHOT_DIR, "meets.json");
-const ENTRIES_FILE = path.join(SNAPSHOT_DIR, "entries.json");
-const META_FILE = path.join(SNAPSHOT_DIR, "meta.json");
-const RUNTIME_INDEXES_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.json");
-const RUNTIME_INDEXES_BIN_FILE = path.join(SNAPSHOT_DIR, "runtime-indexes.bin");
-
-const ENTRY_COLUMN_NAMES = [
-  "lifterId",
-  "meetId",
-  "sex",
-  "age",
-  "ageClass",
-  "division",
-  "lifterCountry",
-  "lifterState",
-  "event",
-  "equipment",
-  "tested",
-  "bodyweightKg",
-  "weightClassKg",
-  "squat1Kg",
-  "squat2Kg",
-  "squat3Kg",
-  "squat4Kg",
-  "bench1Kg",
-  "bench2Kg",
-  "bench3Kg",
-  "bench4Kg",
-  "deadlift1Kg",
-  "deadlift2Kg",
-  "deadlift3Kg",
-  "deadlift4Kg",
-  "best3SquatKg",
-  "best3BenchKg",
-  "best3DeadliftKg",
-  "totalKg",
-  "placeRank",
-  "placeStatus",
-  "dots",
-  "wilks",
-  "glossbrenner",
-  "goodlift",
-] as const;
+const SQLITE_FILE = path.join(SNAPSHOT_DIR, SQLITE_SNAPSHOT_FILENAME);
 
 // ---------- CSV column schema (consumed by scripts/build-snapshot.ts) ----------
 //
@@ -566,329 +515,6 @@ export function buildFederations(meets: Meet[]): {
   return { federations, meetsByFederation };
 }
 
-// ---------- Snapshot reading (runtime) ----------
-
-interface SnapshotMeta {
-  sourceLastModified: string | null;
-  builtAt: string;
-  counts: { lifters: number; meets: number; entries: number };
-}
-
-interface EntriesColumns {
-  count: number;
-  lifterId: number[];
-  meetId: number[];
-  sex: (Sex | null)[];
-  age: (number | null)[];
-  ageClass: (string | null)[];
-  division: (string | null)[];
-  lifterCountry: (string | null)[];
-  lifterState: (string | null)[];
-  event: PowerliftingEvent[];
-  equipment: Equipment[];
-  tested: number[];
-  bodyweightKg: (number | null)[];
-  weightClassKg: (number | null)[];
-  squat1Kg: (number | null)[];
-  squat2Kg: (number | null)[];
-  squat3Kg: (number | null)[];
-  squat4Kg: (number | null)[];
-  bench1Kg: (number | null)[];
-  bench2Kg: (number | null)[];
-  bench3Kg: (number | null)[];
-  bench4Kg: (number | null)[];
-  deadlift1Kg: (number | null)[];
-  deadlift2Kg: (number | null)[];
-  deadlift3Kg: (number | null)[];
-  deadlift4Kg: (number | null)[];
-  best3SquatKg: (number | null)[];
-  best3BenchKg: (number | null)[];
-  best3DeadliftKg: (number | null)[];
-  totalKg: (number | null)[];
-  placeRank: (number | null)[];
-  placeStatus: (PlaceStatus | null)[];
-  dots: (number | null)[];
-  wilks: (number | null)[];
-  glossbrenner: (number | null)[];
-  goodlift: (number | null)[];
-}
-
-function snapshotExists(): boolean {
-  return (
-    fs.existsSync(LIFTERS_FILE) &&
-    fs.existsSync(MEETS_FILE) &&
-    fs.existsSync(ENTRIES_FILE) &&
-    fs.existsSync(META_FILE)
-  );
-}
-
-async function streamReadArray<T>(file: string): Promise<T[]> {
-  const items: T[] = [];
-  const reader = readline.createInterface({
-    input: fs.createReadStream(file, { encoding: "utf8" }),
-    crlfDelay: Infinity,
-  });
-  for await (const raw of reader) {
-    const line = raw.endsWith(",") ? raw.slice(0, -1) : raw;
-    const trimmed = line.trim();
-    if (trimmed === "" || trimmed === "[" || trimmed === "]") continue;
-    items.push(JSON.parse(trimmed) as T);
-  }
-  return items;
-}
-
-async function streamReadEntries(file: string): Promise<EntriesColumns> {
-  const cols = {} as Record<string, unknown>;
-  const reader = readline.createInterface({
-    input: fs.createReadStream(file, { encoding: "utf8" }),
-    crlfDelay: Infinity,
-  });
-  for await (const raw of reader) {
-    const line = raw.endsWith(",") ? raw.slice(0, -1) : raw;
-    const trimmed = line.trim();
-    if (trimmed === "" || trimmed === "{" || trimmed === "}") continue;
-    const sepIdx = trimmed.indexOf(":");
-    if (sepIdx === -1) {
-      throw new Error(`entries.json: malformed line (no colon): ${trimmed.slice(0, 60)}`);
-    }
-    const name = JSON.parse(trimmed.slice(0, sepIdx)) as string;
-    cols[name] = JSON.parse(trimmed.slice(sepIdx + 1));
-  }
-  if (typeof cols.count !== "number") {
-    throw new Error("entries.json: missing or invalid `count` field");
-  }
-  for (const name of ENTRY_COLUMN_NAMES) {
-    if (!Array.isArray(cols[name])) {
-      throw new Error(`entries.json: missing or invalid column \`${name}\``);
-    }
-  }
-  return cols as unknown as EntriesColumns;
-}
-
-// Reconstructs Entry[] from the column store. Plain object literals; V8
-// picks up the monomorphic shape after a few thousand rows so per-row
-// access stays fast on the read path.
-function fromColumns(cols: EntriesColumns): Entry[] {
-  const entries: Entry[] = Array.from<Entry>({ length: cols.count });
-  for (let i = 0; i < cols.count; i++) {
-    entries[i] = {
-      lifterId: cols.lifterId[i]!,
-      meetId: cols.meetId[i]!,
-      sex: cols.sex[i]!,
-      age: cols.age[i]!,
-      ageClass: cols.ageClass[i]!,
-      division: cols.division[i]!,
-      lifterCountry: cols.lifterCountry[i]!,
-      lifterState: cols.lifterState[i]!,
-      event: cols.event[i]!,
-      equipment: cols.equipment[i]!,
-      tested: cols.tested[i] === 1,
-      bodyweightKg: cols.bodyweightKg[i]!,
-      weightClassKg: cols.weightClassKg[i]!,
-      squat1Kg: cols.squat1Kg[i]!,
-      squat2Kg: cols.squat2Kg[i]!,
-      squat3Kg: cols.squat3Kg[i]!,
-      squat4Kg: cols.squat4Kg[i]!,
-      bench1Kg: cols.bench1Kg[i]!,
-      bench2Kg: cols.bench2Kg[i]!,
-      bench3Kg: cols.bench3Kg[i]!,
-      bench4Kg: cols.bench4Kg[i]!,
-      deadlift1Kg: cols.deadlift1Kg[i]!,
-      deadlift2Kg: cols.deadlift2Kg[i]!,
-      deadlift3Kg: cols.deadlift3Kg[i]!,
-      deadlift4Kg: cols.deadlift4Kg[i]!,
-      best3SquatKg: cols.best3SquatKg[i]!,
-      best3BenchKg: cols.best3BenchKg[i]!,
-      best3DeadliftKg: cols.best3DeadliftKg[i]!,
-      totalKg: cols.totalKg[i]!,
-      placeRank: cols.placeRank[i]!,
-      placeStatus: cols.placeStatus[i]!,
-      dots: cols.dots[i]!,
-      wilks: cols.wilks[i]!,
-      glossbrenner: cols.glossbrenner[i]!,
-      goodlift: cols.goodlift[i]!,
-    };
-  }
-  return entries;
-}
-
-// ---------- Runtime index snapshot ----------
-
-const RUNTIME_INDEX_FORMAT_VERSION = 1;
-
-type RuntimeIndexSegmentType = "int32" | "uint32";
-
-interface RuntimeIndexSegment {
-  type: RuntimeIndexSegmentType;
-  offset: number;
-  length: number;
-  byteLength: number;
-}
-
-interface RuntimeIndexManifest {
-  version: number;
-  counts: {
-    lifters: number;
-    meets: number;
-    entries: number;
-  };
-  segments: Record<string, RuntimeIndexSegment>;
-  records: WeightClassRecord[];
-  federations: FederationSummary[];
-  meetsByFederation: [string, number[]][];
-}
-
-interface RuntimeIndexes {
-  entriesByLifter: Map<number, number[]>;
-  entriesByMeet: Map<number, number[]>;
-  bestEntryByLifter: MetricInt32Arrays;
-  rankByMetric: MetricUint32Arrays;
-  records: WeightClassRecord[];
-  federations: FederationSummary[];
-  meetsByFederation: Map<string, number[]>;
-}
-
-function runtimeIndexesExist(): boolean {
-  return fs.existsSync(RUNTIME_INDEXES_FILE) && fs.existsSync(RUNTIME_INDEXES_BIN_FILE);
-}
-
-function readRuntimeIndexes(
-  lifterCount: number,
-  meetCount: number,
-  entryCount: number,
-): RuntimeIndexes | null {
-  if (!runtimeIndexesExist()) return null;
-
-  const manifest = JSON.parse(
-    fs.readFileSync(RUNTIME_INDEXES_FILE, "utf8"),
-  ) as RuntimeIndexManifest;
-  if (manifest.version !== RUNTIME_INDEX_FORMAT_VERSION) {
-    throw new Error(
-      `runtime indexes: unsupported version ${manifest.version}; expected ${RUNTIME_INDEX_FORMAT_VERSION}`,
-    );
-  }
-  if (
-    manifest.counts.lifters !== lifterCount ||
-    manifest.counts.meets !== meetCount ||
-    manifest.counts.entries !== entryCount
-  ) {
-    throw new Error(
-      "runtime indexes: count mismatch " +
-        `(manifest lifters=${manifest.counts.lifters}, meets=${manifest.counts.meets}, entries=${manifest.counts.entries}; ` +
-        `snapshot lifters=${lifterCount}, meets=${meetCount}, entries=${entryCount})`,
-    );
-  }
-  if (!Array.isArray(manifest.records) || !Array.isArray(manifest.federations)) {
-    throw new Error("runtime indexes: missing records or federations");
-  }
-  if (!Array.isArray(manifest.meetsByFederation)) {
-    throw new Error("runtime indexes: missing meetsByFederation");
-  }
-
-  const bin = fs.readFileSync(RUNTIME_INDEXES_BIN_FILE);
-  const entriesByLifter = csrToMap(
-    "entriesByLifter",
-    readUint32Segment(bin, manifest, "entriesByLifter.offsets"),
-    readUint32Segment(bin, manifest, "entriesByLifter.values"),
-    lifterCount,
-  );
-  const entriesByMeet = csrToMap(
-    "entriesByMeet",
-    readUint32Segment(bin, manifest, "entriesByMeet.offsets"),
-    readUint32Segment(bin, manifest, "entriesByMeet.values"),
-    meetCount,
-  );
-
-  const bestEntryByLifter = {} as MetricInt32Arrays;
-  const rankByMetric = {} as MetricUint32Arrays;
-  for (const metric of RANK_METRICS) {
-    const best = readInt32Segment(bin, manifest, `bestEntryByLifter.${metric}`);
-    if (best.length !== lifterCount) {
-      throw new Error(
-        `runtime indexes: bestEntryByLifter.${metric} length ${best.length} does not match lifter count ${lifterCount}`,
-      );
-    }
-    bestEntryByLifter[metric] = best;
-    rankByMetric[metric] = readUint32Segment(bin, manifest, `rankByMetric.${metric}`);
-  }
-
-  return {
-    entriesByLifter,
-    entriesByMeet,
-    bestEntryByLifter,
-    rankByMetric,
-    records: manifest.records,
-    federations: manifest.federations,
-    meetsByFederation: new Map(manifest.meetsByFederation),
-  };
-}
-
-function readUint32Segment(bin: Buffer, manifest: RuntimeIndexManifest, name: string): Uint32Array {
-  return new Uint32Array(readSegmentBuffer(bin, manifest, name, "uint32"));
-}
-
-function readInt32Segment(bin: Buffer, manifest: RuntimeIndexManifest, name: string): Int32Array {
-  return new Int32Array(readSegmentBuffer(bin, manifest, name, "int32"));
-}
-
-function readSegmentBuffer(
-  bin: Buffer,
-  manifest: RuntimeIndexManifest,
-  name: string,
-  type: RuntimeIndexSegmentType,
-): ArrayBuffer {
-  const segment = manifest.segments[name];
-  if (segment == null) throw new Error(`runtime indexes: missing binary segment ${name}`);
-  if (segment.type !== type) {
-    throw new Error(`runtime indexes: segment ${name} has type ${segment.type}, expected ${type}`);
-  }
-  if (
-    !Number.isInteger(segment.offset) ||
-    !Number.isInteger(segment.length) ||
-    !Number.isInteger(segment.byteLength) ||
-    segment.offset < 0 ||
-    segment.length < 0 ||
-    segment.byteLength !== segment.length * 4 ||
-    segment.offset + segment.byteLength > bin.byteLength
-  ) {
-    throw new Error(`runtime indexes: invalid binary segment ${name}`);
-  }
-  const copy = new Uint8Array(segment.byteLength);
-  copy.set(bin.subarray(segment.offset, segment.offset + segment.byteLength));
-  return copy.buffer;
-}
-
-function csrToMap(
-  name: string,
-  offsets: Uint32Array,
-  values: Uint32Array,
-  count: number,
-): Map<number, number[]> {
-  if (offsets.length !== count + 1) {
-    throw new Error(
-      `runtime indexes: ${name} offset length ${offsets.length} does not match count ${count}`,
-    );
-  }
-  if (offsets[count] !== values.length) {
-    throw new Error(
-      `runtime indexes: ${name} value length ${values.length} does not match final offset ${offsets[count]}`,
-    );
-  }
-
-  const map = new Map<number, number[]>();
-  let previous = 0;
-  for (let id = 0; id < count; id++) {
-    const start = offsets[id]!;
-    const end = offsets[id + 1]!;
-    if (start < previous || end < start || end > values.length) {
-      throw new Error(`runtime indexes: invalid ${name} offsets at id ${id}`);
-    }
-    previous = end;
-    if (start !== end) map.set(id, Array.from(values.subarray(start, end)));
-  }
-  return map;
-}
-
 // ---------- Store API ----------
 
 export interface LoadResult {
@@ -899,112 +525,88 @@ export interface LoadResult {
 
 export interface DataStoreType {
   load: () => Promise<LoadResult>;
-  get: () => AppData;
-  tryGet: () => AppData | null;
+  get: () => DatabaseSync;
+  tryGet: () => StoreMetadata | null;
+  getMetadata: () => StoreMetadata;
   set: (next: AppData) => void;
   reset: () => void;
 }
 
-let APP: AppData | null = null;
+let DB: DatabaseSync | null = null;
+let METADATA: StoreMetadata | null = null;
 
 export function createDataStore(logger: LoggerType): DataStoreType {
-  async function load(): Promise<LoadResult> {
+  function load(): Promise<LoadResult> {
     const startedAt = Date.now();
 
-    if (!snapshotExists()) {
+    if (!fs.existsSync(SQLITE_FILE)) {
       throw new Error(
-        "data snapshot not found. Run `npx tsx scripts/build-snapshot.ts` to build " +
-          "it locally, or wait for the weekly GitHub Actions workflow to commit a fresh one.",
+        "sqlite snapshot not found. Run `npx tsx scripts/build-snapshot.ts` to build it locally, " +
+          "or wait for the weekly GitHub Actions workflow to publish a fresh one.",
       );
     }
 
-    const meta = JSON.parse(fs.readFileSync(META_FILE, "utf8")) as SnapshotMeta;
-    const lifters = await streamReadArray<Lifter>(LIFTERS_FILE);
-    const meets = await streamReadArray<Meet>(MEETS_FILE);
-    const cols = await streamReadEntries(ENTRIES_FILE);
-    const entries = fromColumns(cols);
-
-    const lifterByUsername = new Map<string, number>();
-    for (let i = 0; i < lifters.length; i++) lifterByUsername.set(lifters[i]!.username, i);
-    const meetByPath = new Map<string, number>();
-    for (let i = 0; i < meets.length; i++) meetByPath.set(meets[i]!.path, i);
-
-    const runtimeIndexes = readRuntimeIndexes(lifters.length, meets.length, entries.length);
-    if (runtimeIndexes == null) {
-      logger.warn("runtime indexes not found; rebuilding indexes from snapshot");
-    } else {
-      logger.info("runtime indexes loaded from snapshot");
-    }
-
-    let entriesByLifter: Map<number, number[]>;
-    let entriesByMeet: Map<number, number[]>;
-    let bestEntryByLifter: MetricInt32Arrays;
-    let rankByMetric: MetricUint32Arrays;
-    let records: WeightClassRecord[];
-    let federations: FederationSummary[];
-    let meetsByFederation: Map<string, number[]>;
-
-    if (runtimeIndexes != null) {
-      entriesByLifter = runtimeIndexes.entriesByLifter;
-      entriesByMeet = runtimeIndexes.entriesByMeet;
-      bestEntryByLifter = runtimeIndexes.bestEntryByLifter;
-      rankByMetric = runtimeIndexes.rankByMetric;
-      records = runtimeIndexes.records;
-      federations = runtimeIndexes.federations;
-      meetsByFederation = runtimeIndexes.meetsByFederation;
-    } else {
-      entriesByLifter = buildEntriesByLifter(entries);
-      entriesByMeet = buildEntriesByMeet(entries);
-      bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
-      rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
-      records = buildRecords(entries);
-      ({ federations, meetsByFederation } = buildFederations(meets));
-    }
-
-    APP = {
-      lifters,
-      meets,
-      entries,
-      lifterByUsername,
-      meetByPath,
-      entriesByLifter,
-      entriesByMeet,
-      bestEntryByLifter,
-      rankByMetric,
-      records,
-      federations,
-      meetsByFederation,
-      sourceLastModified: meta.sourceLastModified,
-      ingestedAt: meta.builtAt,
-      rowCount: entries.length,
-    };
+    closeCurrentDatabase();
+    DB = openReadonlyDatabase(SQLITE_FILE);
+    METADATA = readMetadata(DB);
 
     const durationMs = Date.now() - startedAt;
     logger.info(
-      `data store ready: ${lifters.length} lifters, ${meets.length} meets, ${entries.length} entries in ${durationMs}ms (source last-modified=${meta.sourceLastModified ?? "unknown"}, built ${meta.builtAt})`,
+      `sqlite store ready: ${METADATA.lifterCount} lifters, ${METADATA.meetCount} meets, ${METADATA.rowCount} entries in ${durationMs}ms (source last-modified=${METADATA.sourceLastModified ?? "unknown"}, built ${METADATA.ingestedAt})`,
     );
 
-    return { durationMs, sourceLastModified: meta.sourceLastModified, rowCount: entries.length };
+    return Promise.resolve({
+      durationMs,
+      sourceLastModified: METADATA.sourceLastModified,
+      rowCount: METADATA.rowCount,
+    });
   }
 
-  function get(): AppData {
-    if (APP == null) {
-      throw new Error("AppData not ready — boot has not finished loading the snapshot");
+  function get(): DatabaseSync {
+    if (DB == null) {
+      throw new Error("SQLite store not ready - boot has not finished opening the snapshot");
     }
-    return APP;
+    return DB;
   }
 
-  function tryGet(): AppData | null {
-    return APP;
+  function tryGet(): StoreMetadata | null {
+    return METADATA;
   }
 
   function set(next: AppData): void {
-    APP = next;
+    closeCurrentDatabase();
+    const db = createWritableDatabase(":memory:");
+    insertSqliteSnapshot(db, {
+      lifters: next.lifters,
+      meets: next.meets,
+      entries: next.entries,
+      bestEntryByLifter: next.bestEntryByLifter,
+      rankByMetric: next.rankByMetric,
+      records: next.records,
+      federations: next.federations,
+      sourceLastModified: next.sourceLastModified,
+      builtAt: next.ingestedAt,
+    });
+    DB = db;
+    METADATA = readMetadata(db);
   }
 
   function reset(): void {
-    APP = null;
+    closeCurrentDatabase();
   }
 
-  return { load, get, tryGet, set, reset };
+  function getMetadata(): StoreMetadata {
+    if (METADATA == null) {
+      throw new Error("SQLite store not ready - boot has not finished opening the snapshot");
+    }
+    return METADATA;
+  }
+
+  return { load, get, tryGet, getMetadata, set, reset };
+}
+
+function closeCurrentDatabase(): void {
+  if (DB != null) DB.close();
+  DB = null;
+  METADATA = null;
 }
