@@ -11,7 +11,6 @@ import { StatusPage } from "./StatusPage";
 import { TermsPage } from "./TermsPage";
 
 const ONE_DAY_SECONDS = 86400;
-const ONE_HOUR_SECONDS = 3600;
 
 export function createGeneralRouter(context: AppContext) {
   const middleware = createMiddleware(context.helpers, context.logger);
@@ -39,7 +38,7 @@ export function createGeneralRouter(context: AppContext) {
     c.render(<PrivacyPage />, { title: "Privacy Policy" }),
   );
 
-  app.get("/status", middleware.cacheControlMiddleware(ONE_HOUR_SECONDS), async (c) => {
+  app.get("/status", middleware.noCacheMiddleware, async (c) => {
     const data = context.store.tryGet();
     const routeGroups =
       data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);

@@ -1,4 +1,5 @@
 import type { DataStoreType } from "../../../context";
+import { createMemoryCache } from "../../../utils/cache";
 
 export interface HealthCheckData {
   uptime: number;
@@ -32,6 +33,7 @@ const FETCH_TIMEOUT_MS = 10_000;
 // Cache TTL for the route status payload. The /status HTML page hits the
 // shared cache on every load; we refresh at most once an hour.
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const ROUTE_STATUS_CACHE_KEY = "route-statuses";
 
 // Ordered list of every API endpoint we surface on /status. Grouped so the
 // HTML page can render sticky headers per tag. Variations of the same
@@ -93,8 +95,7 @@ const GROUP_ORDER: ReadonlyArray<string> = [
   "Public",
 ];
 
-let routeCache: { groups: RouteGroup[]; refreshedAt: number } | null = null;
-let inFlight: Promise<RouteGroup[]> | null = null;
+const routeStatusCache = createMemoryCache<RouteGroup[]>({ ttlMs: CACHE_TTL_MS });
 
 async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
   try {
@@ -138,7 +139,6 @@ async function refreshRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
     if (routes != null && routes.length > 0) groups.push({ name, routes });
   }
 
-  routeCache = { groups, refreshedAt: Date.now() };
   return groups;
 }
 
@@ -147,14 +147,7 @@ async function refreshRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
 // same in-flight refresh so the /status page never kicks off more than one
 // probe sweep at a time.
 export async function getRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
-  if (routeCache && Date.now() - routeCache.refreshedAt < CACHE_TTL_MS) {
-    return routeCache.groups;
-  }
-  if (inFlight) return inFlight;
-  inFlight = refreshRouteStatuses(baseUrl).finally(() => {
-    inFlight = null;
-  });
-  return inFlight;
+  return routeStatusCache.getOrSet(ROUTE_STATUS_CACHE_KEY, () => refreshRouteStatuses(baseUrl));
 }
 
 // Fire-and-forget warm hook invoked from server.ts once the data store is
@@ -171,8 +164,9 @@ export function warmRouteStatuses(baseUrl: string): void {
 // triggering a probe sweep on the request path. Returns null until the
 // first probe completes.
 export function getCachedRouteHealth(): boolean | null {
-  if (routeCache == null) return null;
-  return routeCache.groups.every((g) => g.routes.every((r) => r.status));
+  const groups = routeStatusCache.peek(ROUTE_STATUS_CACHE_KEY);
+  if (groups == null) return null;
+  return groups.every((g) => g.routes.every((r) => r.status));
 }
 
 export function createHealthCheckService(store: DataStoreType) {
