@@ -67,5 +67,13 @@ export const Head: FC<{ title?: string; state: AppState }> = ({ title, state }) 
     <link rel="stylesheet" href="/css/style.css" />
 
     <style>{ANIMATIONS_CSS}</style>
+
+    {state.env === "production" && (
+      <script
+        defer
+        src="https://umami.jaw.dev/script.js"
+        data-website-id="28bc953b-51a2-4b7d-abd0-e799440e9e6e"
+      />
+    )}
   </head>
 );
