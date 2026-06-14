@@ -26,7 +26,7 @@ jobs:
     if: >
       github.event.action == 'closed' ||
       (github.event.action == 'unlabeled' && github.event.label.name == 'temp-deploy')
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@v0.0.26 # v0.0.25
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-cleanup.yaml@970a4d7bd568e096d091fbec3371019c763def1f # v0.0.26
     with:
       app-path: apps/close-powerlifting
     secrets:
