@@ -106,7 +106,7 @@ jobs:
     if: github.event_name == 'push'
     needs: build
     name: Deploy
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@v0.0.26 # v0.0.25
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@970a4d7bd568e096d091fbec3371019c763def1f # v0.0.26
     with:
       app-path: apps/close-powerlifting
       service-name: close-powerlifting
@@ -165,7 +165,7 @@ jobs:
     needs: temp-build
     permissions:
       deployments: write
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@v0.0.26 # v0.0.25
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@970a4d7bd568e096d091fbec3371019c763def1f # v0.0.26
     with:
       app-path: apps/close-powerlifting
       service-name: close-powerlifting
