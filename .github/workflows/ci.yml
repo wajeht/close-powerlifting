@@ -35,7 +35,7 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules
-        run: npm rebuild sharp --ignore-scripts=false
+        run: npm run rebuild:native
 
       - name: Format + lint + type-check
         run: npm run check
@@ -56,7 +56,7 @@ jobs:
         run: npm ci
 
       - name: Rebuild native modules
-        run: npm rebuild sharp --ignore-scripts=false
+        run: npm run rebuild:native
 
       - name: Verify package signatures
         run: npm audit signatures

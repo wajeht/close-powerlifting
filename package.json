@@ -21,7 +21,7 @@
     "minify": "tsx scripts/minify.ts",
     "update:deps": "npx npm-check -u",
     "check:deps": "npx depcheck",
-    "rebuild:native": "npm rebuild sharp --ignore-scripts=false",
+    "rebuild:native": "npm rebuild sharp better-sqlite3 --ignore-scripts=false",
     "database:build": "tsx ./scripts/build-database.ts",
     "snapshot:build": "npm run database:build",
     "snapshot:download": "tsx ./scripts/download-snapshot.ts",
