@@ -4,7 +4,7 @@
 
 import type { Entry, Equipment, Event as PowerliftingEvent, Meet, PlaceStatus, Sex } from "./types";
 
-// ---------- CSV column schema (consumed by scripts/build-database.ts) ----------
+// ---------- CSV column schema (consumed by database-builder.ts) ----------
 //
 // Verified against the actual bulk CSV header (May 2026): McCulloch,
 // RuleSet, and MeetPath that earlier OPL drafts mentioned are NOT present.

@@ -2,28 +2,25 @@
 // GitHub Release into src/data/snapshot/.
 
 import fs from "node:fs";
-import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
+import { DATABASE_FILE, DATABASE_FILE_NAME, SNAPSHOT_DIR } from "../src/data/database-files";
 import { createLogger } from "../src/utils/logger";
 
 const REPO = "wajeht/close-powerlifting";
 const TAG = "snapshot-latest";
-const FILE_NAME = "close-powerlifting.sqlite";
 const BASE_URL = `https://github.com/${REPO}/releases/download/${TAG}`;
-const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
 
 const logger = createLogger();
 
 async function main(): Promise<void> {
   await fs.promises.mkdir(SNAPSHOT_DIR, { recursive: true });
 
-  const dest = path.join(SNAPSHOT_DIR, FILE_NAME);
   logger.info(`download-snapshot: source ${BASE_URL}`);
-  logger.info(`download-snapshot: fetching ${FILE_NAME}`);
-  await downloadTo(`${BASE_URL}/${FILE_NAME}`, dest);
-  logger.info(`download-snapshot: wrote ${FILE_NAME} (${humanSize(dest)})`);
+  logger.info(`download-snapshot: fetching ${DATABASE_FILE_NAME}`);
+  await downloadTo(`${BASE_URL}/${DATABASE_FILE_NAME}`, DATABASE_FILE);
+  logger.info(`download-snapshot: wrote ${DATABASE_FILE_NAME} (${humanSize(DATABASE_FILE)})`);
 }
 
 async function downloadTo(url: string, dest: string): Promise<void> {

@@ -1,13 +1,9 @@
 import fs from "node:fs";
-import path from "node:path";
 
 import createKnex, { type Knex } from "knex";
 
 import type { LoggerType } from "../utils/logger";
-
-const DATABASE_DIR = path.join(__dirname, "snapshot");
-const DATABASE_FILE = path.join(DATABASE_DIR, "close-powerlifting.sqlite");
-const EXPECTED_SCHEMA_VERSION = 1;
+import { DATABASE_FILE, DATABASE_SCHEMA_VERSION } from "./database-files";
 
 export interface SnapshotMetadata {
   schemaVersion: number;
@@ -54,9 +50,9 @@ export function createDataStore(logger: LoggerType): DataStoreType {
     const db = createDatabaseClient(DATABASE_FILE, true);
     try {
       const metadata = await readMetadata(db);
-      if (metadata.schemaVersion !== EXPECTED_SCHEMA_VERSION) {
+      if (metadata.schemaVersion !== DATABASE_SCHEMA_VERSION) {
         throw new Error(
-          `SQLite snapshot schema ${metadata.schemaVersion} is not supported; expected ${EXPECTED_SCHEMA_VERSION}`,
+          `SQLite snapshot schema ${metadata.schemaVersion} is not supported; expected ${DATABASE_SCHEMA_VERSION}`,
         );
       }
 
