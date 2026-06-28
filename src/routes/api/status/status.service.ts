@@ -1,4 +1,4 @@
-import type { DataStoreType } from "../../../data/store";
+import type { DataStoreType } from "../../../data/database";
 
 export interface StatusData {
   lifters: number;
@@ -12,16 +12,17 @@ export interface StatusData {
 
 export function createStatusService(store: DataStoreType) {
   function getStatus(): StatusData | null {
-    const data = store.tryGet();
-    if (data == null) return null;
+    const state = store.tryGet();
+    if (state == null) return null;
+    const { metadata } = state;
     return {
-      lifters: data.lifters.length,
-      meets: data.meets.length,
-      entries: data.entries.length,
-      federations: data.federations.length,
-      records: data.records.length,
-      source_last_modified: data.sourceLastModified,
-      ingested_at: data.ingestedAt,
+      lifters: metadata.lifters,
+      meets: metadata.meets,
+      entries: metadata.entries,
+      federations: metadata.federations,
+      records: metadata.records,
+      source_last_modified: metadata.sourceLastModified,
+      ingested_at: metadata.builtAt,
     };
   }
 

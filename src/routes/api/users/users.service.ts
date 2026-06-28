@@ -1,5 +1,7 @@
-import type { DataStoreType } from "../../../data/store";
-import type { AppData, Entry, RankMetric } from "../../../data/types";
+import type { Knex } from "knex";
+
+import type { DataStoreType } from "../../../data/database";
+import type { Entry, RankMetric } from "../../../data/types";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
 import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.schema";
@@ -17,77 +19,151 @@ const RANK_METRICS: RankMetric[] = [
   "deadlift",
 ];
 
+interface LifterRow {
+  id: number;
+  username: string;
+  name: string;
+}
+
+interface EntryWithMeetRow {
+  id: number;
+  lifter_id: number;
+  meet_id: number;
+  sex: Entry["sex"];
+  age: number | null;
+  age_class: string | null;
+  division: string | null;
+  lifter_country: string | null;
+  lifter_state: string | null;
+  event: Entry["event"];
+  equipment: Entry["equipment"];
+  tested: number;
+  bodyweight_kg: number | null;
+  weight_class_kg: number | null;
+  squat1_kg: number | null;
+  squat2_kg: number | null;
+  squat3_kg: number | null;
+  squat4_kg: number | null;
+  bench1_kg: number | null;
+  bench2_kg: number | null;
+  bench3_kg: number | null;
+  bench4_kg: number | null;
+  deadlift1_kg: number | null;
+  deadlift2_kg: number | null;
+  deadlift3_kg: number | null;
+  deadlift4_kg: number | null;
+  best3_squat_kg: number | null;
+  best3_bench_kg: number | null;
+  best3_deadlift_kg: number | null;
+  total_kg: number | null;
+  place_rank: number | null;
+  place_status: string | null;
+  dots: number | null;
+  wilks: number | null;
+  glossbrenner: number | null;
+  goodlift: number | null;
+  meet_path: string;
+  meet_name: string;
+  federation: string;
+  meet_date: string;
+}
+
+interface RankRow {
+  metric: RankMetric;
+  rank: number;
+}
+
+interface RankCountRow {
+  metric: RankMetric;
+  count: string | number;
+}
+
 export function createUsersService(store: DataStoreType) {
-  function listLifters(query: GetUsersType): {
+  async function listLifters(query: GetUsersType): Promise<{
     data: { username: string; name: string }[];
     pagination: Pagination;
-  } {
-    const data = store.get();
+  }> {
+    const { db } = store.get();
     const needle = query.search?.trim() ?? "";
-    const matches = needle.length === 0 ? data.lifters : findLifters(data, needle);
+    const base = db<LifterRow>("lifters");
+    applyLifterSearch(base, needle);
+
+    const totalRow = await base.clone().count({ count: "*" }).first();
+    const total = Number(totalRow?.count ?? 0);
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
-    const pagination = buildPagination(matches.length, currentPage, perPage);
-    const start = (pagination.current_page - 1) * pagination.per_page;
-    const slice = matches
-      .slice(start, start + pagination.per_page)
-      .map((l) => ({ username: l.username, name: l.name }));
-    return { data: slice, pagination };
+    const pagination = buildPagination(total, currentPage, perPage);
+    const rows = await base
+      .clone()
+      .select("username", "name")
+      .orderBy("name", "asc")
+      .limit(pagination.per_page)
+      .offset(pagination.from > 0 ? pagination.from - 1 : 0);
+
+    return {
+      data: rows.map((row) => ({ username: row.username, name: row.name })),
+      pagination,
+    };
   }
 
-  function getUser(username: string, query: GetUserQueryType): Record<string, unknown> | null {
-    const data = store.get();
-    const lifterId = data.lifterByUsername.get(username.toLowerCase());
-    if (lifterId == null) return null;
+  async function getUser(
+    username: string,
+    query: GetUserQueryType,
+  ): Promise<Record<string, unknown> | null> {
+    const { db } = store.get();
+    const lifter = await getLifterByUsername(db, username);
+    if (lifter == null) return null;
     const units: Units = query.units ?? "lbs";
     const includeAttempts = (query.include_attempts ?? "false") === "true";
-    const profile = profileSummary(data, lifterId, units);
-    const entries = lifterEntriesByDate(data, lifterId, "desc");
+    const entries = await lifterEntriesByDate(db, lifter.id, "desc");
     return {
-      ...profile,
-      competition_results: entries.map((e) =>
-        formatCompetitionRow(data, e, units, includeAttempts),
+      ...profileSummary(lifter, entries, units),
+      competition_results: entries.map((entry) =>
+        formatCompetitionRow(entry, units, includeAttempts),
       ),
     };
   }
 
-  function getProgression(username: string, units: Units): Record<string, unknown> | null {
-    const data = store.get();
-    const lifterId = data.lifterByUsername.get(username.toLowerCase());
-    if (lifterId == null) return null;
+  async function getProgression(
+    username: string,
+    units: Units,
+  ): Promise<Record<string, unknown> | null> {
+    const { db } = store.get();
+    const lifter = await getLifterByUsername(db, username);
+    if (lifter == null) return null;
 
-    const entries = lifterEntriesByDate(data, lifterId, "asc");
+    const entries = await lifterEntriesByDate(db, lifter.id, "asc");
     let runningSquat = -Infinity;
     let runningBench = -Infinity;
     let runningDeadlift = -Infinity;
     let runningTotal = -Infinity;
     let runningDots = -Infinity;
     const out: unknown[] = [];
-    for (const e of entries) {
-      const meet = data.meets[e.meetId]!;
-      if ((e.best3SquatKg ?? -Infinity) > runningSquat)
-        runningSquat = e.best3SquatKg ?? runningSquat;
-      if ((e.best3BenchKg ?? -Infinity) > runningBench)
-        runningBench = e.best3BenchKg ?? runningBench;
-      if ((e.best3DeadliftKg ?? -Infinity) > runningDeadlift)
-        runningDeadlift = e.best3DeadliftKg ?? runningDeadlift;
-      if ((e.totalKg ?? -Infinity) > runningTotal) runningTotal = e.totalKg ?? runningTotal;
-      if ((e.dots ?? -Infinity) > runningDots) runningDots = e.dots ?? runningDots;
+    for (const entry of entries) {
+      if ((entry.best3_squat_kg ?? -Infinity) > runningSquat)
+        runningSquat = entry.best3_squat_kg ?? runningSquat;
+      if ((entry.best3_bench_kg ?? -Infinity) > runningBench)
+        runningBench = entry.best3_bench_kg ?? runningBench;
+      if ((entry.best3_deadlift_kg ?? -Infinity) > runningDeadlift)
+        runningDeadlift = entry.best3_deadlift_kg ?? runningDeadlift;
+      if ((entry.total_kg ?? -Infinity) > runningTotal)
+        runningTotal = entry.total_kg ?? runningTotal;
+      if ((entry.dots ?? -Infinity) > runningDots) runningDots = entry.dots ?? runningDots;
       out.push({
-        date: meet.date,
-        meet_name: meet.meetName,
-        meet_path: meet.path,
-        federation: meet.federation,
-        event: e.event,
-        equipment: e.equipment,
-        weight_class_kg: e.weightClassKg,
-        bodyweight: inUnits(e.bodyweightKg, units),
-        squat: inUnits(e.best3SquatKg, units),
-        bench: inUnits(e.best3BenchKg, units),
-        deadlift: inUnits(e.best3DeadliftKg, units),
-        total: inUnits(e.totalKg, units),
-        dots: e.dots,
-        place: e.placeRank ?? e.placeStatus,
+        date: entry.meet_date,
+        meet_name: entry.meet_name,
+        meet_path: entry.meet_path,
+        federation: entry.federation,
+        event: entry.event,
+        equipment: entry.equipment,
+        weight_class_kg: entry.weight_class_kg,
+        bodyweight: inUnits(entry.bodyweight_kg, units),
+        squat: inUnits(entry.best3_squat_kg, units),
+        bench: inUnits(entry.best3_bench_kg, units),
+        deadlift: inUnits(entry.best3_deadlift_kg, units),
+        total: inUnits(entry.total_kg, units),
+        dots: entry.dots,
+        place: entry.place_rank ?? entry.place_status,
         running_pb: {
           squat: inUnits(Number.isFinite(runningSquat) ? runningSquat : null, units),
           bench: inUnits(Number.isFinite(runningBench) ? runningBench : null, units),
@@ -98,7 +174,6 @@ export function createUsersService(store: DataStoreType) {
         units,
       });
     }
-    const lifter = data.lifters[lifterId]!;
     return {
       username: lifter.username,
       name: lifter.name,
@@ -107,57 +182,73 @@ export function createUsersService(store: DataStoreType) {
     };
   }
 
-  function getPersonalBests(username: string, units: Units): Record<string, unknown> | null {
-    const data = store.get();
-    const lifterId = data.lifterByUsername.get(username.toLowerCase());
-    if (lifterId == null) return null;
-    const entryIds = data.entriesByLifter.get(lifterId) ?? [];
-    const byEquipment = new Map<string, Entry[]>();
-    for (const id of entryIds) {
-      const e = data.entries[id]!;
-      const list = byEquipment.get(e.equipment);
-      if (list == null) byEquipment.set(e.equipment, [e]);
-      else list.push(e);
+  async function getPersonalBests(
+    username: string,
+    units: Units,
+  ): Promise<Record<string, unknown> | null> {
+    const { db } = store.get();
+    const lifter = await getLifterByUsername(db, username);
+    if (lifter == null) return null;
+    const entries = await lifterEntriesByDate(db, lifter.id, "desc");
+    const byEquipment = new Map<string, EntryWithMeetRow[]>();
+    for (const entry of entries) {
+      const list = byEquipment.get(entry.equipment);
+      if (list == null) byEquipment.set(entry.equipment, [entry]);
+      else list.push(entry);
     }
     const groups = Array.from(byEquipment, ([equipment, list]) => ({
       equipment,
       meets: list.length,
       personal_best: bestPerMetric(list, units),
     }));
-    const lifter = data.lifters[lifterId]!;
     return {
       username: lifter.username,
       name: lifter.name,
-      total_meets: entryIds.length,
+      total_meets: entries.length,
       by_equipment: groups,
     };
   }
 
-  function getRank(username: string): Record<string, unknown> | null {
-    const data = store.get();
-    const lifterId = data.lifterByUsername.get(username.toLowerCase());
-    if (lifterId == null) return null;
+  async function getRank(username: string): Promise<Record<string, unknown> | null> {
+    const { db } = store.get();
+    const lifter = await getLifterByUsername(db, username);
+    if (lifter == null) return null;
+
+    const rankRows = await db<RankRow>("lifter_bests")
+      .where("lifter_id", lifter.id)
+      .select("metric", "rank");
+    const countRows = await db<RankCountRow>("lifter_bests")
+      .select("metric")
+      .count({ count: "*" })
+      .groupBy("metric");
+
+    const rankByMetric = new Map(rankRows.map((row) => [row.metric, row.rank]));
+    const outOfByMetric = new Map(
+      countRows.map((row) => [row.metric as RankMetric, Number(row.count)]),
+    );
     const ranks: Record<string, { rank: number; out_of: number } | null> = {};
     for (const metric of RANK_METRICS) {
-      const list = data.rankByMetric[metric];
-      const rank = indexOfTyped(list, lifterId);
-      ranks[metric] = rank === -1 ? null : { rank: rank + 1, out_of: list.length };
+      const rank = rankByMetric.get(metric);
+      const outOf = outOfByMetric.get(metric);
+      ranks[metric] = rank == null || outOf == null ? null : { rank, out_of: outOf };
     }
-    const lifter = data.lifters[lifterId]!;
+
     return { username: lifter.username, name: lifter.name, ranks };
   }
 
-  function compare(
+  async function compare(
     query: GetCompareType,
-  ): { found: true; data: unknown } | { found: false; missing: "a" | "b" } {
-    const data = store.get();
-    const aId = data.lifterByUsername.get(query.a.toLowerCase());
-    const bId = data.lifterByUsername.get(query.b.toLowerCase());
-    if (aId == null) return { found: false, missing: "a" };
-    if (bId == null) return { found: false, missing: "b" };
+  ): Promise<{ found: true; data: unknown } | { found: false; missing: "a" | "b" }> {
+    const { db } = store.get();
+    const a = await getLifterByUsername(db, query.a);
+    const b = await getLifterByUsername(db, query.b);
+    if (a == null) return { found: false, missing: "a" };
+    if (b == null) return { found: false, missing: "b" };
     const units: Units = query.units ?? "lbs";
-    const aProfile = profileSummary(data, aId, units);
-    const bProfile = profileSummary(data, bId, units);
+    const aEntries = await lifterEntriesByDate(db, a.id, "desc");
+    const bEntries = await lifterEntriesByDate(db, b.id, "desc");
+    const aProfile = profileSummary(a, aEntries, units);
+    const bProfile = profileSummary(b, bEntries, units);
     return {
       found: true,
       data: {
@@ -184,33 +275,73 @@ export function createUsersService(store: DataStoreType) {
   };
 }
 
-function indexOfTyped(arr: Uint32Array, value: number): number {
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i] === value) return i;
-  }
-  return -1;
-}
-
-function findLifters(data: AppData, needle: string): { username: string; name: string }[] {
-  const q = needle.toLowerCase();
-  const matches: { username: string; name: string }[] = [];
-  for (const lifter of data.lifters) {
-    if (lifter.username.includes(q) || lifter.name.toLowerCase().includes(q)) {
-      matches.push({ username: lifter.username, name: lifter.name });
-    }
-  }
-  return matches;
-}
-
-function lifterEntriesByDate(data: AppData, lifterId: number, dir: "asc" | "desc"): Entry[] {
-  const ids = data.entriesByLifter.get(lifterId) ?? [];
-  const out = ids.map((id) => data.entries[id]!);
-  out.sort((a, b) => {
-    const ad = data.meets[a.meetId]!.date;
-    const bd = data.meets[b.meetId]!.date;
-    return dir === "asc" ? ad.localeCompare(bd) : bd.localeCompare(ad);
+function applyLifterSearch(query: Knex.QueryBuilder<LifterRow>, needle: string): void {
+  if (needle.length === 0) return;
+  const pattern = `%${needle}%`;
+  query.where(function applySearch() {
+    this.where("username", "like", pattern).orWhere("name", "like", pattern);
   });
-  return out;
+}
+
+async function getLifterByUsername(db: Knex, username: string): Promise<LifterRow | null> {
+  const row = await db<LifterRow>("lifters")
+    .where("username", username.toLowerCase())
+    .select("id", "username", "name")
+    .first();
+  return row ?? null;
+}
+
+async function lifterEntriesByDate(
+  db: Knex,
+  lifterId: number,
+  dir: "asc" | "desc",
+): Promise<EntryWithMeetRow[]> {
+  return db("entries as e")
+    .join("meets as m", "m.id", "e.meet_id")
+    .where("e.lifter_id", lifterId)
+    .orderBy("m.date", dir)
+    .select({
+      id: "e.id",
+      lifter_id: "e.lifter_id",
+      meet_id: "e.meet_id",
+      sex: "e.sex",
+      age: "e.age",
+      age_class: "e.age_class",
+      division: "e.division",
+      lifter_country: "e.lifter_country",
+      lifter_state: "e.lifter_state",
+      event: "e.event",
+      equipment: "e.equipment",
+      tested: "e.tested",
+      bodyweight_kg: "e.bodyweight_kg",
+      weight_class_kg: "e.weight_class_kg",
+      squat1_kg: "e.squat1_kg",
+      squat2_kg: "e.squat2_kg",
+      squat3_kg: "e.squat3_kg",
+      squat4_kg: "e.squat4_kg",
+      bench1_kg: "e.bench1_kg",
+      bench2_kg: "e.bench2_kg",
+      bench3_kg: "e.bench3_kg",
+      bench4_kg: "e.bench4_kg",
+      deadlift1_kg: "e.deadlift1_kg",
+      deadlift2_kg: "e.deadlift2_kg",
+      deadlift3_kg: "e.deadlift3_kg",
+      deadlift4_kg: "e.deadlift4_kg",
+      best3_squat_kg: "e.best3_squat_kg",
+      best3_bench_kg: "e.best3_bench_kg",
+      best3_deadlift_kg: "e.best3_deadlift_kg",
+      total_kg: "e.total_kg",
+      place_rank: "e.place_rank",
+      place_status: "e.place_status",
+      dots: "e.dots",
+      wilks: "e.wilks",
+      glossbrenner: "e.glossbrenner",
+      goodlift: "e.goodlift",
+      meet_path: "m.path",
+      meet_name: "m.meet_name",
+      federation: "m.federation",
+      meet_date: "m.date",
+    });
 }
 
 interface PersonalBest {
@@ -223,41 +354,34 @@ interface PersonalBest {
   units: Units;
 }
 
-function bestPerMetric(entries: Entry[], units: Units): PersonalBest {
-  function bestKg(field: keyof Entry): number | null {
+function bestPerMetric(entries: EntryWithMeetRow[], units: Units): PersonalBest {
+  function bestKg(field: keyof EntryWithMeetRow): number | null {
     let max: number | null = null;
-    for (const e of entries) {
-      const v = e[field] as number | null;
-      if (v == null) continue;
-      if (max == null || v > max) max = v;
+    for (const entry of entries) {
+      const value = entry[field] as number | null;
+      if (value == null) continue;
+      if (max == null || value > max) max = value;
     }
     return max;
   }
   return {
-    squat: inUnits(bestKg("best3SquatKg"), units),
-    bench: inUnits(bestKg("best3BenchKg"), units),
-    deadlift: inUnits(bestKg("best3DeadliftKg"), units),
-    total: inUnits(bestKg("totalKg"), units),
+    squat: inUnits(bestKg("best3_squat_kg"), units),
+    bench: inUnits(bestKg("best3_bench_kg"), units),
+    deadlift: inUnits(bestKg("best3_deadlift_kg"), units),
+    total: inUnits(bestKg("total_kg"), units),
     dots: bestKg("dots"),
     wilks: bestKg("wilks"),
     units,
   };
 }
 
-function profileSummary(data: AppData, lifterId: number, units: Units) {
-  const lifter = data.lifters[lifterId]!;
-  const entryIds = data.entriesByLifter.get(lifterId) ?? [];
-  const entries = entryIds.map((id) => data.entries[id]!);
-  const sortedDesc = entries
-    .slice()
-    .sort((a, b) => data.meets[b.meetId]!.date.localeCompare(data.meets[a.meetId]!.date));
+function profileSummary(lifter: LifterRow, entries: EntryWithMeetRow[], units: Units) {
   return {
     username: lifter.username,
     name: lifter.name,
     total_entries: entries.length,
-    first_meet:
-      entries.length > 0 ? data.meets[sortedDesc[sortedDesc.length - 1]!.meetId]!.date : null,
-    last_meet: entries.length > 0 ? data.meets[sortedDesc[0]!.meetId]!.date : null,
+    first_meet: entries.length > 0 ? entries[entries.length - 1]!.meet_date : null,
+    last_meet: entries.length > 0 ? entries[0]!.meet_date : null,
     personal_best: bestPerMetric(entries, units),
   };
 }
@@ -267,44 +391,43 @@ function numericDelta(a: number | null, b: number | null): number | null {
   return Math.round((a - b) * 100) / 100;
 }
 
-function formatCompetitionRow(data: AppData, entry: Entry, units: Units, includeAttempts: boolean) {
-  const meet = data.meets[entry.meetId]!;
+function formatCompetitionRow(entry: EntryWithMeetRow, units: Units, includeAttempts: boolean) {
   const base: Record<string, unknown> = {
-    date: meet.date,
-    meet_name: meet.meetName,
-    meet_path: meet.path,
-    federation: meet.federation,
+    date: entry.meet_date,
+    meet_name: entry.meet_name,
+    meet_path: entry.meet_path,
+    federation: entry.federation,
     event: entry.event,
     equipment: entry.equipment,
-    weight_class_kg: entry.weightClassKg,
-    bodyweight: inUnits(entry.bodyweightKg, units),
-    squat: inUnits(entry.best3SquatKg, units),
-    bench: inUnits(entry.best3BenchKg, units),
-    deadlift: inUnits(entry.best3DeadliftKg, units),
-    total: inUnits(entry.totalKg, units),
+    weight_class_kg: entry.weight_class_kg,
+    bodyweight: inUnits(entry.bodyweight_kg, units),
+    squat: inUnits(entry.best3_squat_kg, units),
+    bench: inUnits(entry.best3_bench_kg, units),
+    deadlift: inUnits(entry.best3_deadlift_kg, units),
+    total: inUnits(entry.total_kg, units),
     dots: entry.dots,
-    place: entry.placeRank ?? entry.placeStatus,
+    place: entry.place_rank ?? entry.place_status,
     units,
   };
   if (includeAttempts) {
     base.attempts = {
       squat: [
-        inUnits(entry.squat1Kg, units),
-        inUnits(entry.squat2Kg, units),
-        inUnits(entry.squat3Kg, units),
-        inUnits(entry.squat4Kg, units),
+        inUnits(entry.squat1_kg, units),
+        inUnits(entry.squat2_kg, units),
+        inUnits(entry.squat3_kg, units),
+        inUnits(entry.squat4_kg, units),
       ],
       bench: [
-        inUnits(entry.bench1Kg, units),
-        inUnits(entry.bench2Kg, units),
-        inUnits(entry.bench3Kg, units),
-        inUnits(entry.bench4Kg, units),
+        inUnits(entry.bench1_kg, units),
+        inUnits(entry.bench2_kg, units),
+        inUnits(entry.bench3_kg, units),
+        inUnits(entry.bench4_kg, units),
       ],
       deadlift: [
-        inUnits(entry.deadlift1Kg, units),
-        inUnits(entry.deadlift2Kg, units),
-        inUnits(entry.deadlift3Kg, units),
-        inUnits(entry.deadlift4Kg, units),
+        inUnits(entry.deadlift1_kg, units),
+        inUnits(entry.deadlift2_kg, units),
+        inUnits(entry.deadlift3_kg, units),
+        inUnits(entry.deadlift4_kg, units),
       ],
     };
   }

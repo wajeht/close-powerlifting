@@ -88,12 +88,12 @@ export function createDataStore(logger: LoggerType): DataStoreType {
   }
 
   function set(next: DatabaseState): void {
-    void STATE?.db.destroy();
+    void STATE?.db.destroy().catch(() => undefined);
     STATE = next;
   }
 
   function reset(): void {
-    void STATE?.db.destroy();
+    void STATE?.db.destroy().catch(() => undefined);
     STATE = null;
   }
 

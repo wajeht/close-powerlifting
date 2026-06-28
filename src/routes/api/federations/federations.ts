@@ -30,9 +30,9 @@ export function createFederationsRouter(context: AppContext) {
       tags: ["Federations"],
       summary: "Get all federations with optional pagination",
     }),
-    (c) => {
+    async (c) => {
       const query = c.req.valid("query");
-      const { data, pagination } = service.getFederations(query);
+      const { data, pagination } = await service.getFederations(query);
       return c.json(
         {
           status: "success" as const,
@@ -62,9 +62,9 @@ export function createFederationsRouter(context: AppContext) {
       tags: ["Federations"],
       summary: "Get a federation's meet count by year",
     }),
-    (c) => {
+    async (c) => {
       const { federation } = c.req.valid("param");
-      const stats = service.getFederationStats(federation);
+      const stats = await service.getFederationStats(federation);
       if (stats == null)
         throw new HTTPException(404, { message: `Federation "${federation}" not found` });
       return c.json(
@@ -99,10 +99,10 @@ export function createFederationsRouter(context: AppContext) {
       tags: ["Federations"],
       summary: "Get meets for a specific federation",
     }),
-    (c) => {
+    async (c) => {
       const { federation } = c.req.valid("param");
       const query = c.req.valid("query");
-      const detail = service.getFederation(federation, query);
+      const detail = await service.getFederation(federation, query);
       if (detail == null)
         throw new HTTPException(404, { message: `Federation "${federation}" not found` });
       return c.json(

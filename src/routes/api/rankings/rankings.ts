@@ -49,9 +49,9 @@ export function createRankingsRouter(context: AppContext) {
       tags: ["Rankings"],
       summary: "Get all rankings with optional pagination",
     }),
-    (c) => {
+    async (c) => {
       const query = c.req.valid("query");
-      const { data, pagination } = service.getRankings(query);
+      const { data, pagination } = await service.getRankings(query);
       return c.json(
         {
           status: "success" as const,
@@ -93,10 +93,10 @@ export function createRankingsRouter(context: AppContext) {
   ];
 
   for (const route of filterRoutes) {
-    app.openapi(route, (c) => {
+    app.openapi(route, async (c) => {
       const params = c.req.valid("param") as z.infer<typeof getFilteredRankingsParamValidation>;
       const query = c.req.valid("query");
-      const { data, pagination } = service.getFilteredRankings(params, query);
+      const { data, pagination } = await service.getFilteredRankings(params, query);
       return c.json(
         {
           status: "success" as const,
@@ -124,13 +124,14 @@ export function createRankingsRouter(context: AppContext) {
       tags: ["Rankings"],
       summary: "Get a single ranking by position",
     }),
-    (c) => {
+    async (c) => {
       const { rank: rawRank } = c.req.valid("param");
       const rank = parseInt(rawRank, 10);
-      const data = service.getRank(rank);
+      const data = await service.getRank(rank);
       if (data == null) {
+        const maxRank = await service.getMaxRank();
         throw new HTTPException(404, {
-          message: `Rank ${rawRank} is out of range (max=${service.getMaxRank()})`,
+          message: `Rank ${rawRank} is out of range (max=${maxRank})`,
         });
       }
       return c.json(

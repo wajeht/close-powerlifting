@@ -1,6 +1,6 @@
 import { createLogger, type LoggerType } from "./utils/logger";
 import { createHelper, type HelpersType } from "./utils/helpers";
-import { createDataStore, type DataStoreType } from "./data/store";
+import { createDataStore, type DataStoreType } from "./data/database";
 
 export type { LoggerType, HelpersType, DataStoreType };
 
