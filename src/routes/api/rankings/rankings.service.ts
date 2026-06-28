@@ -1,8 +1,16 @@
 import type { Knex } from "knex";
 
 import type { DataStoreType } from "../../../data/database";
-import type { Entry, RankMetric } from "../../../data/types";
-import { fieldForRankMetric } from "../../../data/leaderboard-definitions";
+import type { Entry, RankMetric, Sex } from "../../../data/types";
+import {
+  RANKING_EQUIPMENT_DEFINITIONS,
+  RANKING_EVENT_DEFINITIONS,
+  RANKING_SEX_DEFINITIONS,
+  fieldForRankMetric,
+  type RankingEquipmentDefinition,
+  type RankingEventDefinition,
+  type RankingSexDefinition,
+} from "../../../data/leaderboard-definitions";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
 import type {
@@ -12,28 +20,7 @@ import type {
 } from "./rankings.schema";
 
 const { defaultPerPage } = configuration.pagination;
-
-const EQUIPMENT_VALUES: Record<string, string[]> = {
-  raw: ["Raw"],
-  wraps: ["Wraps"],
-  "raw-wraps": ["Raw", "Wraps"],
-  "single-ply": ["Single-ply"],
-  "multi-ply": ["Multi-ply"],
-  unlimited: ["Unlimited"],
-};
-
-const SEX_VALUES: Record<string, "M" | "F"> = {
-  men: "M",
-  women: "F",
-};
-
-const EVENT_VALUES: Record<string, Entry["event"][]> = {
-  "full-power": ["SBD"],
-  "push-pull": ["BD", "SB"],
-  squat: ["S", "SBD", "SB", "SD"],
-  bench: ["B", "SBD", "SB", "BD"],
-  deadlift: ["D", "SBD", "SD", "BD"],
-};
+const PRECOMPUTED_RANKING_METRIC: RankMetric = "dots";
 
 const SORT_TO_METRIC: Record<string, RankMetric> = {
   "by-dots": "dots",
@@ -50,11 +37,13 @@ const SORT_TO_METRIC: Record<string, RankMetric> = {
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 
 interface RankingFilter {
-  equipmentValues: string[] | null;
-  sex: "M" | "F" | null;
+  equipmentKey: string | null;
+  equipmentValues: ReadonlyArray<Entry["equipment"]> | null;
+  sexKey: RankingSexDefinition["key"] | null;
+  sex: Sex | null;
   weightClassKg: number | null;
   yearPrefix: string | null;
-  eventValues: Entry["event"][] | null;
+  eventValues: ReadonlyArray<Entry["event"]> | null;
   ageClass: string | null;
   federation: string | null;
 }
@@ -126,12 +115,17 @@ export function createRankingsService(store: DataStoreType) {
     const { db } = store.get();
     const units: Units = query.units ?? "lbs";
     const metric: RankMetric = params.sort != null ? SORT_TO_METRIC[params.sort]! : "dots";
+    const equipment = findRankingEquipment(params.equipment);
+    const sex = findRankingSex(params.sex);
+    const event = findRankingEvent(params.event);
     const filter: RankingFilter = {
-      equipmentValues: params.equipment != null ? EQUIPMENT_VALUES[params.equipment]! : null,
-      sex: params.sex != null ? SEX_VALUES[params.sex]! : null,
+      equipmentKey: equipment?.key ?? null,
+      equipmentValues: equipment?.equipment ?? null,
+      sexKey: sex?.key ?? null,
+      sex: sex?.sex ?? null,
       weightClassKg: parseWeightClass(params.weight_class),
       yearPrefix: params.year != null ? `${params.year}-` : null,
-      eventValues: params.event != null ? EVENT_VALUES[params.event]! : null,
+      eventValues: event?.events ?? null,
       ageClass: query.age_class ?? null,
       federation: query.federation == null ? null : toSlug(query.federation),
     };
@@ -168,7 +162,9 @@ export function createRankingsService(store: DataStoreType) {
 
 function emptyFilter(overrides: Partial<RankingFilter>): RankingFilter {
   return {
+    equipmentKey: null,
     equipmentValues: null,
+    sexKey: null,
     sex: null,
     weightClassKg: null,
     yearPrefix: null,
@@ -234,6 +230,16 @@ async function filteredRankingWithPagination(
   currentPage: number,
   perPage: number,
 ): Promise<{ data: unknown[]; pagination: Pagination }> {
+  if (canUsePrecomputedFilter(metric, filter)) {
+    const total = await countPrecomputedFilteredRanking(db, metric, filter);
+    const pagination = buildPagination(total, currentPage, perPage);
+    const rows = await selectPrecomputedFilteredRanking(db, metric, filter, pagination);
+    return {
+      data: rows.map((row) => buildRankingRow(row, units)),
+      pagination,
+    };
+  }
+
   const total = await countFilteredRanking(db, metric, filter);
   const pagination = buildPagination(total, currentPage, perPage);
   const rows = await selectFilteredRanking(db, metric, filter, pagination);
@@ -241,6 +247,76 @@ async function filteredRankingWithPagination(
     data: rows.map((row) => buildRankingRow(row, units)),
     pagination,
   };
+}
+
+function canUsePrecomputedFilter(metric: RankMetric, filter: RankingFilter): boolean {
+  return (
+    metric === PRECOMPUTED_RANKING_METRIC &&
+    filter.equipmentKey != null &&
+    filter.weightClassKg == null &&
+    filter.yearPrefix == null &&
+    filter.eventValues == null &&
+    filter.ageClass == null &&
+    filter.federation == null
+  );
+}
+
+async function countPrecomputedFilteredRanking(
+  db: Knex,
+  metric: RankMetric,
+  filter: RankingFilter,
+): Promise<number> {
+  if (filter.equipmentKey == null) return 0;
+  const row = await db<CountRow>("ranking_filter_bests")
+    .where("metric", metric)
+    .where("equipment_key", filter.equipmentKey)
+    .where("sex_key", filter.sexKey ?? "all")
+    .count({ count: "*" })
+    .first();
+  return Number(row?.count ?? 0);
+}
+
+async function selectPrecomputedFilteredRanking(
+  db: Knex,
+  metric: RankMetric,
+  filter: RankingFilter,
+  pagination: Pagination,
+): Promise<RankingRow[]> {
+  if (filter.equipmentKey == null) return [];
+  return db("ranking_filter_bests as rb")
+    .join("entries as e", "e.id", "rb.entry_id")
+    .join("lifters as l", "l.id", "e.lifter_id")
+    .join("meets as m", "m.id", "e.meet_id")
+    .where("rb.metric", metric)
+    .where("rb.equipment_key", filter.equipmentKey)
+    .where("rb.sex_key", filter.sexKey ?? "all")
+    .orderBy("rb.rank", "asc")
+    .limit(pagination.per_page)
+    .offset(pagination.from > 0 ? pagination.from - 1 : 0)
+    .select({
+      rank: "rb.rank",
+      username: "l.username",
+      name: "l.name",
+      sex: "e.sex",
+      age: "e.age",
+      bodyweight_kg: "e.bodyweight_kg",
+      weight_class_kg: "e.weight_class_kg",
+      equipment: "e.equipment",
+      event: "e.event",
+      best3_squat_kg: "e.best3_squat_kg",
+      best3_bench_kg: "e.best3_bench_kg",
+      best3_deadlift_kg: "e.best3_deadlift_kg",
+      total_kg: "e.total_kg",
+      dots: "e.dots",
+      wilks: "e.wilks",
+      glossbrenner: "e.glossbrenner",
+      goodlift: "e.goodlift",
+      federation: "m.federation",
+      meet_path: "m.path",
+      meet_name: "m.meet_name",
+      meet_date: "m.date",
+      lifter_country: "e.lifter_country",
+    });
 }
 
 async function countFilteredRanking(
@@ -372,6 +448,30 @@ function parseWeightClass(raw: string | undefined): number | null {
 
 function toSlug(value: string): string {
   return value.toLowerCase().replace(REGEX_SLUG_STRIP, "");
+}
+
+function findRankingEquipment(value: string | undefined): RankingEquipmentDefinition | null {
+  if (value == null) return null;
+  for (const definition of RANKING_EQUIPMENT_DEFINITIONS) {
+    if (definition.key === value) return definition;
+  }
+  return null;
+}
+
+function findRankingSex(value: string | undefined): RankingSexDefinition | null {
+  if (value == null) return null;
+  for (const definition of RANKING_SEX_DEFINITIONS) {
+    if (definition.key === value) return definition;
+  }
+  return null;
+}
+
+function findRankingEvent(value: string | undefined): RankingEventDefinition | null {
+  if (value == null) return null;
+  for (const definition of RANKING_EVENT_DEFINITIONS) {
+    if (definition.key === value) return definition;
+  }
+  return null;
 }
 
 function buildRankingRow(row: RankingRow, units: Units) {

@@ -5,6 +5,21 @@ export interface RankingMetricDefinition {
   field: string;
 }
 
+export interface RankingEquipmentDefinition {
+  key: string;
+  equipment: ReadonlyArray<Equipment>;
+}
+
+export interface RankingSexDefinition {
+  key: "men" | "women";
+  sex: Sex;
+}
+
+export interface RankingEventDefinition {
+  key: string;
+  events: ReadonlyArray<Entry["event"]>;
+}
+
 export const RANKING_METRIC_DEFINITIONS: ReadonlyArray<RankingMetricDefinition> = [
   { metric: "dots", field: "dots" },
   { metric: "wilks", field: "wilks" },
@@ -14,6 +29,28 @@ export const RANKING_METRIC_DEFINITIONS: ReadonlyArray<RankingMetricDefinition> 
   { metric: "squat", field: "best3_squat_kg" },
   { metric: "bench", field: "best3_bench_kg" },
   { metric: "deadlift", field: "best3_deadlift_kg" },
+];
+
+export const RANKING_EQUIPMENT_DEFINITIONS: ReadonlyArray<RankingEquipmentDefinition> = [
+  { key: "raw", equipment: ["Raw"] },
+  { key: "wraps", equipment: ["Wraps"] },
+  { key: "raw-wraps", equipment: ["Raw", "Wraps"] },
+  { key: "single-ply", equipment: ["Single-ply"] },
+  { key: "multi-ply", equipment: ["Multi-ply"] },
+  { key: "unlimited", equipment: ["Unlimited"] },
+];
+
+export const RANKING_SEX_DEFINITIONS: ReadonlyArray<RankingSexDefinition> = [
+  { key: "men", sex: "M" },
+  { key: "women", sex: "F" },
+];
+
+export const RANKING_EVENT_DEFINITIONS: ReadonlyArray<RankingEventDefinition> = [
+  { key: "full-power", events: ["SBD"] },
+  { key: "push-pull", events: ["BD", "SB"] },
+  { key: "squat", events: ["S", "SBD", "SB", "SD"] },
+  { key: "bench", events: ["B", "SBD", "SB", "BD"] },
+  { key: "deadlift", events: ["D", "SBD", "SD", "BD"] },
 ];
 
 export interface RecordCategoryDefinition {

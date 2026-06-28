@@ -46,6 +46,17 @@ describe("records service", () => {
         .find((r) => r.weight_class_kg === 60);
       expect(ruth).not.toBeUndefined();
     });
+
+    it("serves age-class records from precomputed rows", async () => {
+      const result = await service().groupRecords({
+        equipmentGroup: "raw",
+        ageClass: "40-44",
+      });
+      expect(result.filters.age_class).toBe("40-44");
+      const totalCat = result.categories.find((c) => c.key === "total");
+      const records = totalCat?.sections.flatMap((s) => s.records) ?? [];
+      expect(records.some((record) => record.username === "ruthrabbitt")).toBe(true);
+    });
   });
 
   describe("resolveSexOrWeightClass", () => {

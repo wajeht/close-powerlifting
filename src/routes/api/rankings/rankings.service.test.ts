@@ -28,6 +28,14 @@ describe("rankings service", () => {
   });
 
   describe("getFilteredRankings", () => {
+    it("uses broad equipment filters without extra constraints", async () => {
+      const { data } = await service().getFilteredRankings({ equipment: "raw" }, { units: "kg" });
+      const usernames = data.map((r) => (r as { username: string }).username);
+      expect(usernames).toContain("edcoan");
+      expect(usernames).toContain("kristyhawkins");
+      expect(usernames).not.toContain("johnsmith1");
+    });
+
     it("filters by equipment + sex", async () => {
       const { data } = await service().getFilteredRankings(
         { equipment: "raw", sex: "men" },

@@ -1,12 +1,7 @@
 import type { Knex } from "knex";
 
 import type { DataStoreType } from "../../../data/database";
-import {
-  EQUIPMENT_GROUP_DEFINITIONS,
-  RECORD_CATEGORY_DEFINITIONS,
-  RECORD_SEXES,
-  equipmentGroupSqlCondition,
-} from "../../../data/leaderboard-definitions";
+import { RECORD_CATEGORY_DEFINITIONS } from "../../../data/leaderboard-definitions";
 import type { EquipmentGroup, RecordCategory, Sex } from "../../../data/types";
 
 export const EQUIPMENT_GROUP_BY_QUERY: Record<string, EquipmentGroup> = {
@@ -53,10 +48,7 @@ interface RecordRow {
 export function createRecordsService(store: DataStoreType) {
   async function groupRecords(filter: RecordsFilter) {
     const { db } = store.get();
-    const rows =
-      filter.ageClass == null
-        ? await getPrecomputedRecords(db, filter)
-        : await computeAgeFilteredRecords(db, filter);
+    const rows = await getPrecomputedRecords(db, filter);
 
     const byCategoryAndGroup = new Map<string, RecordRow[]>();
     for (const row of rows) {
@@ -129,80 +121,10 @@ async function getPrecomputedRecords(db: Knex, filter: RecordsFilter): Promise<R
   if (filter.equipmentGroup != null) query.where("r.equipment_group", filter.equipmentGroup);
   if (filter.sex != null) query.where("r.sex", filter.sex);
   if (filter.weightClassKg != null) query.where("r.weight_class_kg", filter.weightClassKg);
+  if (filter.ageClass == null) query.whereNull("r.age_class");
+  else query.where("r.age_class", filter.ageClass);
 
   return query.orderBy(["r.category", "r.sex", "r.equipment_group", "r.weight_class_kg", "r.rank"]);
-}
-
-async function computeAgeFilteredRecords(db: Knex, filter: RecordsFilter): Promise<RecordRow[]> {
-  const sexes: ReadonlyArray<Sex> = filter.sex != null ? [filter.sex] : RECORD_SEXES;
-  const equipmentGroups =
-    filter.equipmentGroup != null
-      ? EQUIPMENT_GROUP_DEFINITIONS.filter((group) => group.name === filter.equipmentGroup)
-      : EQUIPMENT_GROUP_DEFINITIONS;
-
-  const rows: RecordRow[] = [];
-  for (const category of RECORD_CATEGORY_DEFINITIONS) {
-    for (const equipmentGroup of equipmentGroups) {
-      for (const sex of sexes) {
-        const eventPlaceholders = category.events.map(() => "?").join(", ");
-        const bindings: Knex.RawBinding[] = [filter.ageClass ?? "", sex, ...category.events];
-        const equipmentCondition = equipmentGroupSqlCondition(equipmentGroup, "e");
-        const where = [
-          "e.age_class = ?",
-          "e.sex = ?",
-          `e.event IN (${eventPlaceholders})`,
-          "e.weight_class_kg IS NOT NULL",
-          `e.${category.field} IS NOT NULL`,
-          equipmentCondition,
-        ];
-        if (filter.weightClassKg != null) {
-          where.push("e.weight_class_kg = ?");
-          bindings.push(filter.weightClassKg);
-        }
-        bindings.push(category.key, sex, equipmentGroup.name);
-
-        const result = await db.raw<RecordRow[]>(
-          `
-            WITH candidates AS (
-              SELECT
-                e.id AS entry_id,
-                e.weight_class_kg,
-                e.${category.field} AS lift_value,
-                ROW_NUMBER() OVER (
-                  PARTITION BY e.weight_class_kg
-                  ORDER BY e.${category.field} DESC, e.id ASC
-                ) AS rank
-              FROM entries e
-              WHERE ${where.join(" AND ")}
-            )
-            SELECT
-              ? AS category,
-              ? AS sex,
-              ? AS equipment_group,
-              c.weight_class_kg,
-              c.rank,
-              c.entry_id,
-              c.lift_value,
-              l.username,
-              l.name,
-              m.federation,
-              m.path AS meet_path,
-              m.meet_name,
-              m.date
-            FROM candidates c
-            JOIN entries e ON e.id = c.entry_id
-            JOIN lifters l ON l.id = e.lifter_id
-            JOIN meets m ON m.id = e.meet_id
-            WHERE c.rank <= 3
-          `,
-          bindings,
-        );
-        rows.push(...result);
-      }
-    }
-  }
-
-  return rows;
 }
 
 function formatRecord(row: RecordRow) {

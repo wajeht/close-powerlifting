@@ -7,6 +7,7 @@ import Database from "better-sqlite3";
 import type { AppContext } from "../context";
 import { createContext, resetContext } from "../context";
 import { createDatabaseClient, type SnapshotMetadata } from "../data/database";
+import { DATABASE_SCHEMA_VERSION } from "../data/database-files";
 import { countRows, createDerivedTables } from "../data/materialized-tables";
 import { nameToSlug } from "../data/csv-normalization";
 import type { Entry, Lifter, Meet } from "../data/types";
@@ -81,6 +82,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 400,
       totalKg: 1080,
       placeRank: 1,
+      age: 32,
+      ageClass: "24-34",
       dots: 700.0,
       wilks: 680.0,
     }),
@@ -97,6 +100,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 395,
       totalKg: 1055,
       placeRank: 2,
+      age: 33,
+      ageClass: "24-34",
       dots: 685.0,
       wilks: 670.0,
     }),
@@ -113,6 +118,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 360,
       totalKg: 970,
       placeRank: 1,
+      age: 42,
+      ageClass: "40-44",
       dots: 640.0,
       wilks: 625.0,
     }),
@@ -129,6 +136,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 380,
       totalKg: 965,
       placeRank: 1,
+      age: 31,
+      ageClass: "24-34",
       dots: 632.5,
       wilks: 615.0,
     }),
@@ -145,6 +154,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 245,
       totalKg: 607.5,
       placeRank: 1,
+      age: 38,
+      ageClass: "35-39",
       dots: 612.3,
       wilks: 600.0,
     }),
@@ -162,6 +173,8 @@ function makeFixtureData(): FixtureData {
       best3DeadliftKg: 220,
       totalKg: 530,
       placeRank: 1,
+      age: 44,
+      ageClass: "40-44",
       dots: 590.0,
       wilks: 575.0,
     }),
@@ -284,7 +297,7 @@ function insertFixtureData(db: Database.Database, data: FixtureData): SnapshotMe
     createDerivedTables(db);
 
     metadata = {
-      schemaVersion: 1,
+      schemaVersion: DATABASE_SCHEMA_VERSION,
       sourceLastModified: data.sourceLastModified,
       builtAt: data.builtAt,
       lifters: data.lifters.length,
