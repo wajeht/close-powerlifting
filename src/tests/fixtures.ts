@@ -7,28 +7,19 @@ import Database from "better-sqlite3";
 import type { AppContext } from "../context";
 import { createContext, resetContext } from "../context";
 import { createDatabaseClient, type SnapshotMetadata } from "../data/database";
-import {
-  buildBestEntryByLifter,
-  buildEntriesByLifter,
-  buildEntriesByMeet,
-  buildFederations,
-  buildRankByMetric,
-  buildRecords,
-} from "../data/store";
-import type { AppData, Entry, Lifter, Meet } from "../data/types";
+import { countRows, createDerivedTables } from "../data/materialized-tables";
+import { nameToSlug } from "../data/store";
+import type { Entry, Lifter, Meet } from "../data/types";
 
-const METRIC_FIELD = {
-  dots: "dots",
-  wilks: "wilks",
-  glossbrenner: "glossbrenner",
-  goodlift: "goodlift",
-  total: "totalKg",
-  squat: "best3SquatKg",
-  bench: "best3BenchKg",
-  deadlift: "best3DeadliftKg",
-} as const;
+interface FixtureData {
+  lifters: Lifter[];
+  meets: Meet[];
+  entries: Entry[];
+  sourceLastModified: string | null;
+  builtAt: string;
+}
 
-export function makeFixtureAppData(): AppData {
+function makeFixtureData(): FixtureData {
   const lifters: Lifter[] = [
     { username: "edcoan", name: "Ed Coan" },
     { username: "johnsmith1", name: "John Smith #1" },
@@ -176,69 +167,41 @@ export function makeFixtureAppData(): AppData {
     }),
   ];
 
-  const lifterByUsername = new Map<string, number>();
-  for (let i = 0; i < lifters.length; i++) lifterByUsername.set(lifters[i]!.username, i);
-  const meetByPath = new Map<string, number>();
-  for (let i = 0; i < meets.length; i++) meetByPath.set(meets[i]!.path, i);
-
-  const entriesByLifter = buildEntriesByLifter(entries);
-  const entriesByMeet = buildEntriesByMeet(entries);
-  const bestEntryByLifter = buildBestEntryByLifter(entries, lifters.length, entriesByLifter);
-  const rankByMetric = buildRankByMetric(entries, lifters.length, bestEntryByLifter);
-  const records = buildRecords(entries);
-  const { federations, meetsByFederation } = buildFederations(meets);
-
   return {
     lifters,
     meets,
     entries,
-    lifterByUsername,
-    meetByPath,
-    entriesByLifter,
-    entriesByMeet,
-    bestEntryByLifter,
-    rankByMetric,
-    records,
-    federations,
-    meetsByFederation,
     sourceLastModified: "Mon, 01 Jan 2024 00:00:00 GMT",
-    ingestedAt: "2024-01-01T00:00:00.000Z",
-    rowCount: entries.length,
+    builtAt: "2024-01-01T00:00:00.000Z",
   };
 }
 
 export function createTestContext(): AppContext {
   resetContext();
   const context = createContext();
-  const data = makeFixtureAppData();
-  const databaseFile = writeFixtureDatabase(data);
+  const data = makeFixtureData();
+  const { databaseFile, metadata } = writeFixtureDatabase(data);
   context.store.set({
     db: createDatabaseClient(databaseFile, false),
-    metadata: {
-      schemaVersion: 1,
-      sourceLastModified: data.sourceLastModified,
-      builtAt: data.ingestedAt,
-      lifters: data.lifters.length,
-      meets: data.meets.length,
-      entries: data.entries.length,
-      federations: data.federations.length,
-      records: data.records.length,
-    },
+    metadata,
   });
   return context;
 }
 
-function writeFixtureDatabase(data: AppData): string {
+function writeFixtureDatabase(data: FixtureData): {
+  databaseFile: string;
+  metadata: SnapshotMetadata;
+} {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "close-powerlifting-test-"));
   const file = path.join(dir, "fixture.sqlite");
   const db = new Database(file);
   try {
     createFixtureSchema(db);
-    insertFixtureData(db, data);
+    const metadata = insertFixtureData(db, data);
+    return { databaseFile: file, metadata };
   } finally {
     db.close();
   }
-  return file;
 }
 
 function createFixtureSchema(db: Database.Database): void {
@@ -308,59 +271,35 @@ function createFixtureSchema(db: Database.Database): void {
       glossbrenner REAL,
       goodlift REAL
     );
-
-    CREATE TABLE federations (
-      slug TEXT PRIMARY KEY,
-      code TEXT NOT NULL,
-      parent_slug TEXT,
-      meet_count INTEGER NOT NULL
-    );
-
-    CREATE TABLE lifter_bests (
-      metric TEXT NOT NULL,
-      lifter_id INTEGER NOT NULL,
-      entry_id INTEGER NOT NULL,
-      value REAL NOT NULL,
-      rank INTEGER NOT NULL,
-      PRIMARY KEY (metric, lifter_id)
-    );
-
-    CREATE TABLE records (
-      category TEXT NOT NULL,
-      sex TEXT NOT NULL,
-      equipment_group TEXT NOT NULL,
-      weight_class_kg REAL NOT NULL,
-      rank INTEGER NOT NULL,
-      entry_id INTEGER NOT NULL,
-      lift_value REAL NOT NULL
-    );
   `);
 }
 
-function insertFixtureData(db: Database.Database, data: AppData): void {
+function insertFixtureData(db: Database.Database, data: FixtureData): SnapshotMetadata {
+  let metadata: SnapshotMetadata | null = null;
   db.exec("BEGIN");
   try {
-    insertMetadata(db, {
-      schemaVersion: 1,
-      sourceLastModified: data.sourceLastModified,
-      builtAt: data.ingestedAt,
-      lifters: data.lifters.length,
-      meets: data.meets.length,
-      entries: data.entries.length,
-      federations: data.federations.length,
-      records: data.records.length,
-    });
     insertLifters(db, data.lifters);
     insertMeets(db, data.meets);
     insertEntries(db, data.entries);
-    insertFederations(db, data);
-    insertLifterBests(db, data);
-    insertRecords(db, data);
+    createDerivedTables(db);
+
+    metadata = {
+      schemaVersion: 1,
+      sourceLastModified: data.sourceLastModified,
+      builtAt: data.builtAt,
+      lifters: data.lifters.length,
+      meets: data.meets.length,
+      entries: data.entries.length,
+      federations: countRows(db, "federations"),
+      records: countRows(db, "records"),
+    };
+    insertMetadata(db, metadata);
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
   }
+  return metadata;
 }
 
 function insertMetadata(db: Database.Database, metadata: SnapshotMetadata): void {
@@ -397,9 +336,9 @@ function insertMeets(db: Database.Database, meets: Meet[]): void {
       i,
       meet.path,
       meet.federation,
-      meet.federation.toLowerCase().replace(/[^a-z0-9]/g, ""),
+      nameToSlug(meet.federation),
       meet.parentFederation,
-      meet.parentFederation?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? null,
+      meet.parentFederation == null ? null : nameToSlug(meet.parentFederation) || null,
       meet.date,
       meet.meetName,
       meet.meetCountry,
@@ -471,52 +410,6 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
       entry.wilks,
       entry.glossbrenner,
       entry.goodlift,
-    );
-  }
-}
-
-function insertFederations(db: Database.Database, data: AppData): void {
-  const insert = db.prepare(
-    "INSERT INTO federations (slug, code, parent_slug, meet_count) VALUES (?, ?, ?, ?)",
-  );
-  for (const federation of data.federations) {
-    insert.run(federation.slug, federation.code, federation.parentSlug, federation.meetCount);
-  }
-}
-
-function insertLifterBests(db: Database.Database, data: AppData): void {
-  const insert = db.prepare(
-    "INSERT INTO lifter_bests (metric, lifter_id, entry_id, value, rank) VALUES (?, ?, ?, ?, ?)",
-  );
-  for (const metric of Object.keys(METRIC_FIELD) as Array<keyof typeof METRIC_FIELD>) {
-    const ranked = data.rankByMetric[metric];
-    const best = data.bestEntryByLifter[metric];
-    const field = METRIC_FIELD[metric];
-    for (let rank = 0; rank < ranked.length; rank++) {
-      const lifterId = ranked[rank]!;
-      const entryId = best[lifterId]!;
-      const entry = data.entries[entryId]!;
-      insert.run(metric, lifterId, entryId, entry[field], rank + 1);
-    }
-  }
-}
-
-function insertRecords(db: Database.Database, data: AppData): void {
-  const insert = db.prepare(`
-    INSERT INTO records (
-      category, sex, equipment_group, weight_class_kg, rank, entry_id, lift_value
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `);
-  for (const record of data.records) {
-    insert.run(
-      record.category,
-      record.sex,
-      record.equipmentGroup,
-      record.weightClassKg,
-      record.rank,
-      record.entryId,
-      record.liftValue,
     );
   }
 }
