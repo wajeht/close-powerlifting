@@ -3,7 +3,10 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
 import { createMemoryCache } from "../../utils/cache";
-import { getRouteStatuses } from "../api/health-check/route-status.service";
+import {
+  getCachedRouteStatuses,
+  refreshRouteStatusesInBackground,
+} from "../api/health-check/route-status.service";
 import { createMiddleware } from "../middleware";
 import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";
@@ -54,8 +57,10 @@ export function createGeneralRouter(context: AppContext) {
 
   app.get("/status", middleware.noCacheMiddleware, async (c) => {
     const state = context.store.tryGet();
-    const routeGroups =
-      state == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
+    if (state != null) {
+      refreshRouteStatusesInBackground(`http://127.0.0.1:${configuration.app.port}`);
+    }
+    const routeGroups = state == null ? [] : getCachedRouteStatuses();
     const allGood =
       routeGroups.length > 0 ? routeGroups.every((g) => g.routes.every((r) => r.status)) : null;
     return c.render(
