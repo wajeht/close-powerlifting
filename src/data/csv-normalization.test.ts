@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { REQUIRED_COLUMNS, buildColumnIndex, nameToSlug, normalizeRow, usernameFor } from "./store";
+import {
+  REQUIRED_COLUMNS,
+  buildColumnIndex,
+  nameToSlug,
+  normalizeRow,
+  usernameFor,
+} from "./csv-normalization";
 
 // ---------- Normalization (CSV row → typed values) ----------
 

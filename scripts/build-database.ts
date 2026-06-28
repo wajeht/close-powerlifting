@@ -18,7 +18,7 @@ import {
   normalizeRow,
   type ColumnIndex,
   type NormalizedRow,
-} from "../src/data/store";
+} from "../src/data/csv-normalization";
 import type { Entry } from "../src/data/types";
 
 const DOWNLOAD_URL = "https://openpowerlifting.gitlab.io/opl-csv/files/openpowerlifting-latest.zip";

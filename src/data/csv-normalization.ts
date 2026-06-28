@@ -1,6 +1,6 @@
-// CSV normalization and derived-index helpers shared by the SQLite database
-// builder and small fixture tests. Runtime data access lives in
-// src/data/database.ts and uses the prebuilt SQLite snapshot directly.
+// CSV normalization shared by the SQLite database builder and fixture tests.
+// Runtime data access lives in src/data/database.ts and uses the prebuilt
+// SQLite snapshot directly.
 
 import type { Entry, Equipment, Event as PowerliftingEvent, Meet, PlaceStatus, Sex } from "./types";
 

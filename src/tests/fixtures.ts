@@ -8,7 +8,7 @@ import type { AppContext } from "../context";
 import { createContext, resetContext } from "../context";
 import { createDatabaseClient, type SnapshotMetadata } from "../data/database";
 import { countRows, createDerivedTables } from "../data/materialized-tables";
-import { nameToSlug } from "../data/store";
+import { nameToSlug } from "../data/csv-normalization";
 import type { Entry, Lifter, Meet } from "../data/types";
 
 interface FixtureData {

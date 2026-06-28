@@ -2,22 +2,12 @@ import type { Knex } from "knex";
 
 import type { DataStoreType } from "../../../data/database";
 import type { Entry, RankMetric } from "../../../data/types";
+import { RANKING_METRIC_DEFINITIONS } from "../../../data/leaderboard-definitions";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
 import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.schema";
 
 const { defaultPerPage } = configuration.pagination;
-
-const RANK_METRICS: RankMetric[] = [
-  "dots",
-  "wilks",
-  "glossbrenner",
-  "goodlift",
-  "total",
-  "squat",
-  "bench",
-  "deadlift",
-];
 
 interface LifterRow {
   id: number;
@@ -227,7 +217,7 @@ export function createUsersService(store: DataStoreType) {
       countRows.map((row) => [row.metric as RankMetric, Number(row.count)]),
     );
     const ranks: Record<string, { rank: number; out_of: number } | null> = {};
-    for (const metric of RANK_METRICS) {
+    for (const { metric } of RANKING_METRIC_DEFINITIONS) {
       const rank = rankByMetric.get(metric);
       const outOf = outOfByMetric.get(metric);
       ranks[metric] = rank == null || outOf == null ? null : { rank, out_of: outOf };

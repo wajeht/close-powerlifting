@@ -2,6 +2,7 @@ import type { Knex } from "knex";
 
 import type { DataStoreType } from "../../../data/database";
 import type { Entry, RankMetric } from "../../../data/types";
+import { fieldForRankMetric } from "../../../data/leaderboard-definitions";
 import { type Pagination, type Units, buildPagination, inUnits } from "../../../utils/helpers";
 import { configuration } from "../../../configuration";
 import type {
@@ -44,17 +45,6 @@ const SORT_TO_METRIC: Record<string, RankMetric> = {
   "by-squat": "squat",
   "by-bench": "bench",
   "by-deadlift": "deadlift",
-};
-
-const METRIC_FIELD: Record<RankMetric, string> = {
-  dots: "dots",
-  wilks: "wilks",
-  glossbrenner: "glossbrenner",
-  goodlift: "goodlift",
-  total: "total_kg",
-  squat: "best3_squat_kg",
-  bench: "best3_bench_kg",
-  deadlift: "best3_deadlift_kg",
 };
 
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
@@ -290,7 +280,7 @@ function filteredRankingSql(
   filter: RankingFilter,
   selectClause: string,
 ): { sql: string; bindings: Knex.RawBinding[] } {
-  const field = METRIC_FIELD[metric];
+  const field = fieldForRankMetric(metric);
   const where = [`e.${field} IS NOT NULL`];
   const bindings: Knex.RawBinding[] = [];
 

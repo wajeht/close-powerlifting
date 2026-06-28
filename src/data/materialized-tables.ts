@@ -1,49 +1,18 @@
 import type { Database as DatabaseType } from "better-sqlite3";
 
-import type { Entry, EquipmentGroup, RankMetric, RecordCategory } from "./types";
+import {
+  EQUIPMENT_GROUP_DEFINITIONS,
+  RANKING_METRIC_DEFINITIONS,
+  RECORD_CATEGORY_DEFINITIONS,
+  RECORD_SEXES,
+  equipmentGroupSqlCondition,
+} from "./leaderboard-definitions";
 
 type CountableTable = "federations" | "records";
 
 interface CountRow {
   count: number;
 }
-
-const RANK_METRICS: ReadonlyArray<{ metric: RankMetric; field: string }> = [
-  { metric: "dots", field: "dots" },
-  { metric: "wilks", field: "wilks" },
-  { metric: "glossbrenner", field: "glossbrenner" },
-  { metric: "goodlift", field: "goodlift" },
-  { metric: "total", field: "total_kg" },
-  { metric: "squat", field: "best3_squat_kg" },
-  { metric: "bench", field: "best3_bench_kg" },
-  { metric: "deadlift", field: "best3_deadlift_kg" },
-];
-
-const RECORD_CATEGORIES: ReadonlyArray<{
-  key: RecordCategory;
-  field: string;
-  events: ReadonlyArray<Entry["event"]>;
-}> = [
-  { key: "squat_full_power", field: "best3_squat_kg", events: ["SBD"] },
-  { key: "squat_all_events", field: "best3_squat_kg", events: ["SBD", "S", "SB", "SD"] },
-  { key: "bench_full_power", field: "best3_bench_kg", events: ["SBD"] },
-  { key: "bench_all_events", field: "best3_bench_kg", events: ["SBD", "B", "SB", "BD"] },
-  { key: "deadlift_full_power", field: "best3_deadlift_kg", events: ["SBD"] },
-  { key: "deadlift_all_events", field: "best3_deadlift_kg", events: ["SBD", "D", "SD", "BD"] },
-  { key: "total", field: "total_kg", events: ["SBD"] },
-];
-
-const EQUIPMENT_GROUPS: ReadonlyArray<{
-  name: EquipmentGroup;
-  condition: string;
-}> = [
-  { name: "raw", condition: "equipment = 'Raw'" },
-  { name: "wraps", condition: "equipment = 'Wraps'" },
-  { name: "single", condition: "equipment = 'Single-ply'" },
-  { name: "multi", condition: "equipment = 'Multi-ply'" },
-  { name: "unlimited", condition: "equipment = 'Unlimited'" },
-  { name: "all-tested", condition: "tested = 1" },
-];
 
 export function createDerivedTables(db: DatabaseType): void {
   createFederationsTable(db);
@@ -80,7 +49,7 @@ function createLifterBestsTable(db: DatabaseType): void {
     );
   `);
 
-  for (const { metric, field } of RANK_METRICS) {
+  for (const { metric, field } of RANKING_METRIC_DEFINITIONS) {
     db.prepare(`
       INSERT INTO lifter_bests (metric, lifter_id, entry_id, value, rank)
       WITH best AS (
@@ -127,10 +96,11 @@ function createRecordsTable(db: DatabaseType): void {
     );
   `);
 
-  for (const category of RECORD_CATEGORIES) {
-    for (const equipmentGroup of EQUIPMENT_GROUPS) {
-      for (const sex of ["M", "F"]) {
+  for (const category of RECORD_CATEGORY_DEFINITIONS) {
+    for (const equipmentGroup of EQUIPMENT_GROUP_DEFINITIONS) {
+      for (const sex of RECORD_SEXES) {
         const eventPlaceholders = category.events.map(() => "?").join(", ");
+        const equipmentCondition = equipmentGroupSqlCondition(equipmentGroup, null);
         db.prepare(`
           INSERT INTO records (
             category, sex, equipment_group, weight_class_kg, rank, entry_id, lift_value
@@ -149,7 +119,7 @@ function createRecordsTable(db: DatabaseType): void {
               AND event IN (${eventPlaceholders})
               AND weight_class_kg IS NOT NULL
               AND ${category.field} IS NOT NULL
-              AND ${equipmentGroup.condition}
+              AND ${equipmentCondition}
           )
           SELECT ?, ?, ?, weight_class_kg, rank, entry_id, lift_value
           FROM candidates
