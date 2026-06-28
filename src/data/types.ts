@@ -1,7 +1,5 @@
-// In-memory data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
-// gitlab.com/openpowerlifting/opl-data — crates/db/src/data.rs. The
-// canonical id of each entity is its index in the corresponding array
-// on `AppData`.
+// Data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
+// gitlab.com/openpowerlifting/opl-data — crates/db/src/data.rs.
 
 export type Sex = "M" | "F" | "Mx";
 
@@ -39,7 +37,7 @@ export interface Meet {
 }
 
 export interface Entry {
-  // FKs into AppData.lifters / AppData.meets.
+  // FKs into the lifters / meets tables or fixture arrays.
   lifterId: number;
   meetId: number;
 
@@ -93,7 +91,7 @@ export interface Entry {
 }
 
 // One row per (category, sex, equipmentGroup, weightClass, rank). Precomputed
-// at load time; ~17k rows total across all combinations.
+// in the SQLite snapshot; ~17k rows total across all combinations.
 export type RecordCategory =
   | "squat_full_power"
   | "squat_all_events"
@@ -111,12 +109,11 @@ export interface WeightClassRecord {
   equipmentGroup: EquipmentGroup;
   weightClassKg: number;
   rank: number; // 1..3
-  entryId: number; // index into AppData.entries
+  entryId: number; // references entries.id or fixture entries[]
   liftValue: number;
 }
 
-// /api/federations row shape. Materialised at load so the endpoint is a
-// straight array read instead of an aggregation over meets.
+// /api/federations row shape. Materialized into the SQLite snapshot.
 export interface FederationSummary {
   slug: string; // lowercased + alphanumeric-only ("wrpfuk")
   code: string; // original casing ("WRPF-UK")
@@ -124,8 +121,7 @@ export interface FederationSummary {
   meetCount: number;
 }
 
-// Ranking metric keys. Each maps to a column on Entry; precomputed indexes
-// in AppData.bestEntryByLifter and AppData.rankByMetric mirror these keys.
+// Ranking metric keys. Each maps to an Entry field and a SQLite ranking column.
 export type RankMetric =
   | "dots"
   | "wilks"
