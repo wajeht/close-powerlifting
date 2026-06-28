@@ -2,10 +2,10 @@ FROM node:26.4.0-slim@sha256:a1d9d671994fc2d26e297ac56b4b1522a8bc7fa71c43b14cd1b
 
 WORKDIR /usr/src/app
 
-# curl is needed for the snapshot download below; build tools are only for
+# ca-certificates are needed for Node fetch TLS; build tools are only for
 # native Node modules in this build stage.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates python3 make g++ && \
+    apt-get install -y --no-install-recommends ca-certificates python3 make g++ && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -24,18 +24,16 @@ COPY src ./src
 COPY public ./public
 COPY scripts ./scripts
 
-# Pre-built runtime snapshot lives in the `snapshot-latest` GitHub Release
-# (published weekly by .github/workflows/update-data.yml). Fetched here at
-# build time so the image is fully self-contained at runtime. The cache
-# buster ARG forces a fresh layer when the release moves — pass it via
-# --build-arg SNAPSHOT_CACHE_BUST=$(date +%s) for an unconditional refresh.
+# Pre-built runtime snapshot lives in the configured GitHub Release. If the
+# release asset is missing during a schema rollout, snapshot:download rebuilds
+# it locally from OPL's CSV so the image still ships self-contained.
 ARG SNAPSHOT_REPO=wajeht/close-powerlifting
 ARG SNAPSHOT_TAG=snapshot-latest
 ARG SNAPSHOT_CACHE_BUST=0
 RUN mkdir -p src/data/snapshot && \
     BASE="https://github.com/${SNAPSHOT_REPO}/releases/download/${SNAPSHOT_TAG}" && \
     echo "Fetching snapshot from $BASE (cache-bust=$SNAPSHOT_CACHE_BUST)" && \
-    curl -fsSL --retry 3 -o src/data/snapshot/close-powerlifting.sqlite "$BASE/close-powerlifting.sqlite" && \
+    SNAPSHOT_REPO="${SNAPSHOT_REPO}" SNAPSHOT_TAG="${SNAPSHOT_TAG}" npm run snapshot:download && \
     ls -lh src/data/snapshot/
 
 # Compile TS + minify CSS. The runtime reads exclusively from dist/ and
