@@ -39,9 +39,9 @@ export interface DataStoreType {
   reset: () => void;
 }
 
-let STATE: DatabaseState | null = null;
-
 export function createDataStore(logger: LoggerType): DataStoreType {
+  let state: DatabaseState | null = null;
+
   async function load(): Promise<LoadResult> {
     const startedAt = Date.now();
     if (!fs.existsSync(DATABASE_FILE)) {
@@ -60,7 +60,7 @@ export function createDataStore(logger: LoggerType): DataStoreType {
         );
       }
 
-      STATE = { db, metadata };
+      state = { db, metadata };
       const durationMs = Date.now() - startedAt;
       logger.info(
         `database ready: ${metadata.lifters} lifters, ${metadata.meets} meets, ${metadata.entries} entries in ${durationMs}ms (source last-modified=${metadata.sourceLastModified ?? "unknown"}, built ${metadata.builtAt})`,
@@ -77,24 +77,24 @@ export function createDataStore(logger: LoggerType): DataStoreType {
   }
 
   function get(): DatabaseState {
-    if (STATE == null) {
+    if (state == null) {
       throw new Error("SQLite snapshot not ready - boot has not opened the database");
     }
-    return STATE;
+    return state;
   }
 
   function tryGet(): DatabaseState | null {
-    return STATE;
+    return state;
   }
 
   function set(next: DatabaseState): void {
-    void STATE?.db.destroy().catch(() => undefined);
-    STATE = next;
+    void state?.db.destroy().catch(() => undefined);
+    state = next;
   }
 
   function reset(): void {
-    void STATE?.db.destroy().catch(() => undefined);
-    STATE = null;
+    void state?.db.destroy().catch(() => undefined);
+    state = null;
   }
 
   return { load, get, tryGet, set, reset };

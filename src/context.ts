@@ -10,28 +10,22 @@ export interface AppContext {
   store: DataStoreType;
 }
 
-let _context: AppContext | null = null;
+let appContext: AppContext | null = null;
 
 export function createContext(): AppContext {
-  if (_context) {
-    return _context;
+  if (appContext != null) {
+    return appContext;
   }
 
   const logger = createLogger();
   const helpers = createHelper();
   const store = createDataStore(logger);
 
-  _context = { logger, helpers, store };
-  return _context;
-}
-
-export function getContext(): AppContext {
-  if (!_context) {
-    return createContext();
-  }
-  return _context;
+  appContext = { logger, helpers, store };
+  return appContext;
 }
 
 export function resetContext(): void {
-  _context = null;
+  appContext?.store.reset();
+  appContext = null;
 }
