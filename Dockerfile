@@ -2,20 +2,19 @@ FROM node:26.4.0-slim@sha256:a1d9d671994fc2d26e297ac56b4b1522a8bc7fa71c43b14cd1b
 
 WORKDIR /usr/src/app
 
-# curl is needed for the snapshot download below; ca-certificates so the
-# TLS handshake against github.com succeeds on a slim base image.
+# curl is needed for the snapshot download below; build tools are only for
+# native Node modules in this build stage.
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get install -y --no-install-recommends curl ca-certificates python3 make g++ && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy package files first for better layer caching.
 COPY package*.json .npmrc ./
 
-# Install all deps (dev included for build tools); rebuild the only native
-# module we still use (sharp, for OG image generation).
+# Install all deps (dev included for build tools); rebuild native modules.
 RUN npm ci --no-audit --no-fund && \
-    npm rebuild sharp --ignore-scripts=false
+    npm rebuild sharp better-sqlite3 --ignore-scripts=false
 
 # TS config (changes less frequently than source).
 COPY tsconfig*.json ./
@@ -36,17 +35,7 @@ ARG SNAPSHOT_CACHE_BUST=0
 RUN mkdir -p src/data/snapshot && \
     BASE="https://github.com/${SNAPSHOT_REPO}/releases/download/${SNAPSHOT_TAG}" && \
     echo "Fetching snapshot from $BASE (cache-bust=$SNAPSHOT_CACHE_BUST)" && \
-    curl -fsSL --retry 3 -o src/data/snapshot/lifters.json  "$BASE/lifters.json"  && \
-    curl -fsSL --retry 3 -o src/data/snapshot/meets.json    "$BASE/meets.json"    && \
-    curl -fsSL --retry 3 -o src/data/snapshot/entries.json  "$BASE/entries.json"  && \
-    if curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.json "$BASE/runtime-indexes.json" && \
-       curl -fsSL --retry 3 -o src/data/snapshot/runtime-indexes.bin  "$BASE/runtime-indexes.bin"; then \
-      echo "Fetched runtime indexes"; \
-    else \
-      rm -f src/data/snapshot/runtime-indexes.json src/data/snapshot/runtime-indexes.bin; \
-      echo "Runtime indexes not available; app will rebuild indexes at startup"; \
-    fi && \
-    curl -fsSL --retry 3 -o src/data/snapshot/meta.json     "$BASE/meta.json"     && \
+    curl -fsSL --retry 3 -o src/data/snapshot/close-powerlifting.sqlite "$BASE/close-powerlifting.sqlite" && \
     ls -lh src/data/snapshot/
 
 # Compile TS + minify CSS. The runtime reads exclusively from dist/ and
@@ -54,7 +43,9 @@ RUN mkdir -p src/data/snapshot && \
 # down to dist/), so the only post-build cleanup needed is dropping the
 # sourcemaps we don't ship.
 RUN npm run build:prod && \
-    find dist -name "*.map" -delete
+    find dist -name "*.map" -delete && \
+    npm prune --omit=dev --no-audit --no-fund && \
+    npm cache clean --force
 
 FROM node:26.4.0-slim@sha256:a1d9d671994fc2d26e297ac56b4b1522a8bc7fa71c43b14cd1b1fe6c5116f7dc
 
@@ -66,8 +57,7 @@ RUN apt-get update && \
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json .npmrc ./
-RUN npm ci --only=production --no-audit --no-fund && \
-    npm cache clean --force
+COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/public ./public
@@ -85,4 +75,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 ENV APP_ENV=production
 
-CMD ["node", "--no-warnings", "--max-old-space-size=12288", "dist/src/server.js"]
+CMD ["node", "--no-warnings", "dist/src/server.js"]

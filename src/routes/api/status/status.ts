@@ -29,12 +29,12 @@ export function createStatusRouter(context: AppContext) {
           description: "Snapshot metadata + counts",
           ...jsonContent(successResponse(StatusData)),
         },
-        503: { description: "Snapshot still loading", ...errorContent },
+        503: { description: "SQLite snapshot is not open yet", ...errorContent },
       },
       tags: ["Status"],
       summary: "Get data source status and statistics",
       description:
-        "Returns counts of every entity in the loaded snapshot plus the upstream `Last-Modified` header from the OpenPowerlifting bulk CSV that produced it.",
+        "Returns counts of every entity in the SQLite snapshot plus the upstream `Last-Modified` header from the OpenPowerlifting bulk CSV that produced it.",
     }),
     (c) => {
       const data = service.getStatus();

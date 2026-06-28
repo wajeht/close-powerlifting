@@ -28,13 +28,13 @@ Install dependencies:
 npm install
 ```
 
-Fetch the latest pre-built snapshot from the GitHub Release (~30 s, ~770 MB):
+Fetch the latest pre-built SQLite snapshot from the GitHub Release:
 
 ```bash
 npm run snapshot:download
 ```
 
-This drops `lifters.json`, `meets.json`, `entries.json`, and `meta.json` into `src/data/snapshot/`. The server reads these at boot — without them, `npm run dev` will refuse to start.
+This drops `close-powerlifting.sqlite` into `src/data/snapshot/`. The server opens this database at boot — without it, `npm run dev` will refuse to start.
 
 ## Environment Variables
 
@@ -44,7 +44,7 @@ This drops `lifters.json`, `meets.json`, `entries.json`, and `meta.json` into `s
 | `APP_ENV`    | Environment: `development`, `production`, `testing` | Yes      |
 | `APP_DOMAIN` | Public domain URL                                   | Yes      |
 
-That's the whole list. There is no database, no auth, no email service — every endpoint serves anonymous reads from an in-memory mirror of the OpenPowerlifting dataset.
+That's the whole list. There is no auth, no email service, and no runtime ingest — every endpoint serves anonymous reads from the prebuilt SQLite snapshot.
 
 ## Development
 
@@ -68,17 +68,17 @@ docker compose -f docker-compose.dev.yml up
 
 Access the app at <http://localhost:80>.
 
-The HTTP server starts immediately but `GET /healthz` returns 503 for the first ~20 s while the snapshot streams off disk and the in-memory indexes are built. Once `data store ready` shows up in the logs, every endpoint responds in single-digit milliseconds.
+The HTTP server starts immediately but `GET /healthz` returns 503 until the SQLite snapshot is open. This should be fast because the CSV parsing and index building happen before release, not during app startup.
 
 ## Snapshot
 
-The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a GitHub Release (`snapshot-latest`). The Dockerfile downloads the release assets at image-build time, so production containers ship with the data baked in.
+The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a GitHub Release (`snapshot-latest`). The Dockerfile downloads the SQLite asset at image-build time, so production containers ship with the data baked in.
 
-| Task                          | Command                     | Notes                                                                            |
-| ----------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
-| Pull the published snapshot   | `npm run snapshot:download` | ~30 s. Use this for local dev. `make snapshot-download` works too (same script). |
-| Rebuild locally from upstream | `make snapshot-build`       | ~6 min. Downloads the latest OPL bulk CSV, normalises, writes the JSON files.    |
-| Publish a fresh release       | `make snapshot-publish`     | Builds + uploads to GitHub Releases via the `gh` CLI. Requires `gh auth login`.  |
+| Task                          | Command                     | Notes                                                                           |
+| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
+| Pull the published snapshot   | `npm run snapshot:download` | Use this for local dev. `make snapshot-download` works too (same script).       |
+| Rebuild locally from upstream | `make snapshot-build`       | Downloads the latest OPL bulk CSV, normalises, writes the SQLite database.      |
+| Publish a fresh release       | `make snapshot-publish`     | Builds + uploads to GitHub Releases via the `gh` CLI. Requires `gh auth login`. |
 
 ## Testing
 
@@ -106,7 +106,7 @@ Coverage:
 npm run test:coverage
 ```
 
-Tests use a small fixture `AppData` (5 lifters, 3 meets, 2 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
+Tests use a tiny SQLite fixture (5 lifters, 3 meets, 2 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
 
 ## Code Quality
 
@@ -137,5 +137,5 @@ npm run start
 
 - **Port 80 permission denied**: change `APP_PORT` in `.env` to a higher port (e.g. 3000), or run with `sudo`.
 - **Node version mismatch**: `fnm use 26` or `nvm use 26`.
-- **Boot fails with "data snapshot not found"**: run `npm run snapshot:download` (or `make snapshot-build` to rebuild from the upstream CSV).
-- **`/healthz` returns 503**: snapshot is still loading. Wait ~20 s; check the logs for `data store ready`.
+- **Boot fails with "SQLite snapshot not found"**: run `npm run snapshot:download` (or `make snapshot-build` to rebuild from the upstream CSV).
+- **`/healthz` returns 503**: the SQLite snapshot is not open yet. Check the logs for `database ready`.

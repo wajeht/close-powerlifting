@@ -1,11 +1,5 @@
-// Downloads the prebuilt snapshot from the `snapshot-latest` GitHub
-// Release into src/data/snapshot/. The files match the layout produced
-// by scripts/build-snapshot.ts and consumed by src/data/store.ts at boot.
-//
-// Streams each response body directly to disk via pipeline +
-// Readable.fromWeb so the ~700 MB entries.json never lands in memory.
-//
-// Run via `npm run snapshot:download` or `npx tsx scripts/download-snapshot.ts`.
+// Downloads the prebuilt SQLite snapshot from the `snapshot-latest`
+// GitHub Release into src/data/snapshot/.
 
 import fs from "node:fs";
 import path from "node:path";
@@ -16,39 +10,20 @@ import { createLogger } from "../src/utils/logger";
 
 const REPO = "wajeht/close-powerlifting";
 const TAG = "snapshot-latest";
+const FILE_NAME = "close-powerlifting.sqlite";
 const BASE_URL = `https://github.com/${REPO}/releases/download/${TAG}`;
 const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
-
-const REQUIRED_FILES = ["lifters.json", "meets.json", "entries.json", "meta.json"] as const;
-const RUNTIME_INDEX_FILES = ["runtime-indexes.json", "runtime-indexes.bin"] as const;
 
 const logger = createLogger();
 
 async function main(): Promise<void> {
   await fs.promises.mkdir(SNAPSHOT_DIR, { recursive: true });
 
+  const dest = path.join(SNAPSHOT_DIR, FILE_NAME);
   logger.info(`download-snapshot: source ${BASE_URL}`);
-  for (const name of REQUIRED_FILES) {
-    const dest = path.join(SNAPSHOT_DIR, name);
-    logger.info(`download-snapshot: fetching ${name}`);
-    await downloadTo(`${BASE_URL}/${name}`, dest);
-    logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-  }
-  try {
-    for (const name of RUNTIME_INDEX_FILES) {
-      const dest = path.join(SNAPSHOT_DIR, name);
-      logger.info(`download-snapshot: fetching ${name}`);
-      await downloadTo(`${BASE_URL}/${name}`, dest);
-      logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-    }
-  } catch (error) {
-    for (const name of RUNTIME_INDEX_FILES) {
-      await fs.promises.rm(path.join(SNAPSHOT_DIR, name), { force: true });
-    }
-    logger.warn("download-snapshot: runtime indexes unavailable; startup will rebuild them", error);
-  }
-
-  logger.info(`download-snapshot: done`);
+  logger.info(`download-snapshot: fetching ${FILE_NAME}`);
+  await downloadTo(`${BASE_URL}/${FILE_NAME}`, dest);
+  logger.info(`download-snapshot: wrote ${FILE_NAME} (${humanSize(dest)})`);
 }
 
 async function downloadTo(url: string, dest: string): Promise<void> {

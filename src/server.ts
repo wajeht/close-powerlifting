@@ -92,13 +92,13 @@ async function main(): Promise<void> {
     .load()
     .then((result) => {
       context.logger.info(
-        `store: initial load complete in ${result.durationMs}ms ` +
+        `database: initial open complete in ${result.durationMs}ms ` +
           `(rows=${result.rowCount}, last-modified=${result.sourceLastModified ?? "unknown"})`,
       );
       warmRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
     })
     .catch((error: Error) => {
-      context.logger.error("store: initial load failed", error);
+      context.logger.error("database: initial open failed", error);
       process.exit(1);
     });
 }

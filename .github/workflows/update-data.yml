@@ -1,9 +1,9 @@
-name: Update OPL Snapshot
+name: Update OPL Database
 
-# Re-parses OpenPowerlifting's nightly bulk CSV into our runtime snapshot
-# and publishes it as assets on the `snapshot-latest` GitHub Release.
+# Re-parses OpenPowerlifting's nightly bulk CSV into our runtime SQLite
+# database and publishes it as an asset on the `snapshot-latest` GitHub Release.
 # The Dockerfile fetches these assets at image-build time, so the
-# snapshot lives entirely outside the git history — no LFS, no quota
+# database lives entirely outside the git history — no LFS, no quota
 # pressure, no 700 MB blobs in the repo.
 
 on:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   publish-snapshot:
-    name: Rebuild + publish OPL snapshot to GitHub Releases
+    name: Rebuild + publish OPL SQLite database to GitHub Releases
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -31,10 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Build snapshot
-        run: npx tsx scripts/build-snapshot.ts
+      - name: Build database
+        run: npm run database:build
 
-      - name: Show snapshot size
+      - name: Show database size
         run: ls -lh src/data/snapshot/
 
       - name: Publish snapshot-latest release
@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -euo pipefail
-          BUILT=$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)")
+          BUILT=$(node -e "const Database=require('better-sqlite3'); const db=new Database('src/data/snapshot/close-powerlifting.sqlite',{readonly:true}); console.log(db.prepare(\"SELECT value FROM metadata WHERE key = 'built_at'\").get().value); db.close();")
 
           # Replace the release atomically: delete the previous one (if
           # any) along with its tag, then recreate. Asset URLs stay stable
@@ -51,11 +51,6 @@ jobs:
           gh release delete snapshot-latest --yes --cleanup-tag 2>/dev/null || true
 
           gh release create snapshot-latest \
-            --title "OPL snapshot ($BUILT)" \
-            --notes "Automated rebuild from the OpenPowerlifting bulk CSV. See meta.json for counts." \
-            src/data/snapshot/lifters.json \
-            src/data/snapshot/meets.json \
-            src/data/snapshot/entries.json \
-            src/data/snapshot/runtime-indexes.json \
-            src/data/snapshot/runtime-indexes.bin \
-            src/data/snapshot/meta.json
+            --title "OPL SQLite snapshot ($BUILT)" \
+            --notes "Automated rebuild from the OpenPowerlifting bulk CSV. See the metadata table for counts." \
+            src/data/snapshot/close-powerlifting.sqlite

@@ -22,15 +22,15 @@ export function createHealthCheckRouter(context: AppContext) {
       path: "/api/health-check",
       responses: {
         200: {
-          description: "API is healthy and the data store is ready",
+          description: "API is healthy and the SQLite snapshot is open",
           ...jsonContent(successResponse(HealthCheckData)),
         },
-        503: { description: "Snapshot still loading", ...errorContent },
+        503: { description: "SQLite snapshot is not open yet", ...errorContent },
       },
       tags: ["Health Check"],
       summary: "Check API health status",
       description:
-        "Readiness probe. Returns 200 once the snapshot is ready, 503 while startup is still preparing data. Anonymous and unmetered — safe to call from load balancers and uptime monitors.",
+        "Readiness probe. Returns 200 once the SQLite snapshot is open, 503 while startup is still preparing data. Anonymous and unmetered — safe to call from load balancers and uptime monitors.",
     }),
     (c) => {
       if (!service.isReady()) {

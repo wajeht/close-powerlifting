@@ -17,7 +17,7 @@ An intuitive REST API for the OpenPowerlifting dataset.
 | `GET /api/records`             | Top-3 records by equipment, weight class, sex (optional `?age_class=`)   |
 | `GET /api/users`               | Athlete search, profile, personal-bests, progression, rank, compare      |
 | `GET /api/status`              | Snapshot freshness + dataset counts                                      |
-| `GET /api/health-check`        | Liveness probe (returns 200 once the in-memory store is ready)           |
+| `GET /api/health-check`        | Liveness probe (returns 200 once the SQLite snapshot is open)            |
 | `GET /docs/api`                | Interactive Swagger UI                                                   |
 | `GET /docs/api.json`           | Auto-generated OpenAPI 3.1 spec                                          |
 
