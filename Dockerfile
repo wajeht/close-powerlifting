@@ -60,9 +60,8 @@ COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/public ./public
 
-# Snapshot was downloaded into the build stage above; the loader reads it
-# from dist/src/data/snapshot via __dirname-relative resolution at runtime.
-COPY --chown=node:node --from=build /usr/src/app/src/data/snapshot ./dist/src/data/snapshot
+# Snapshot was downloaded or built above; copy only the runtime SQLite file.
+COPY --chown=node:node --from=build /usr/src/app/src/data/snapshot/close-powerlifting.sqlite ./dist/src/data/snapshot/
 
 USER node
 

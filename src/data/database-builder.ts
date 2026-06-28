@@ -36,51 +36,71 @@ interface ParseResult {
   skipped: number;
 }
 
+interface DownloadResult {
+  readonly zipPath: string;
+  readonly tempDir: string;
+  readonly sourceLastModified: string | null;
+}
+
 export async function buildDatabase(logger: LoggerType): Promise<void> {
   await fs.promises.mkdir(SNAPSHOT_DIR, { recursive: true });
 
   logger.info(`build-database: downloading ${DOWNLOAD_URL}`);
-  const { zipPath, sourceLastModified } = await downloadFresh();
+  const { zipPath, tempDir, sourceLastModified } = await downloadFresh();
   const tmpDatabase = path.join(SNAPSHOT_DIR, `.tmp-${Date.now()}-${DATABASE_FILE_NAME}`);
+  let shouldRemoveTmpDatabase = true;
 
   if (fs.existsSync(tmpDatabase)) fs.unlinkSync(tmpDatabase);
 
-  const db = new Database(tmpDatabase);
   try {
-    configureBuildPragmas(db);
-    createSchema(db);
+    const db = new Database(tmpDatabase);
+    try {
+      configureBuildPragmas(db);
+      createSchema(db);
 
-    logger.info("build-database: parsing CSV into SQLite");
-    const result = await parseIntoDatabase(zipPath, db);
-    logger.info(
-      `build-database: loaded ${result.lifters} lifters, ${result.meets} meets, ${result.entries} entries (${result.skipped} skipped)`,
-    );
+      logger.info("build-database: parsing CSV into SQLite");
+      const result = await parseIntoDatabase(zipPath, db);
+      logger.info(
+        `build-database: loaded ${result.lifters} lifters, ${result.meets} meets, ${result.entries} entries (${result.skipped} skipped)`,
+      );
 
-    logger.info("build-database: creating indexes and materialized tables");
-    createIndexes(db);
-    createDerivedTables(db);
-    writeMetadata(db, sourceLastModified, result);
-    finalizeDatabase(db);
+      logger.info("build-database: creating indexes and materialized tables");
+      createIndexes(db);
+      createDerivedTables(db);
+      writeMetadata(db, sourceLastModified, result);
+      finalizeDatabase(db);
+    } finally {
+      db.close();
+    }
+
+    fs.renameSync(tmpDatabase, DATABASE_FILE);
+    shouldRemoveTmpDatabase = false;
+    logger.info(`build-database: wrote ${DATABASE_FILE} (${humanSize(DATABASE_FILE)})`);
   } finally {
-    db.close();
+    await fs.promises.rm(tempDir, { force: true, recursive: true });
+    if (shouldRemoveTmpDatabase) {
+      await fs.promises.rm(tmpDatabase, { force: true });
+    }
   }
-
-  fs.renameSync(tmpDatabase, DATABASE_FILE);
-  logger.info(`build-database: wrote ${DATABASE_FILE} (${humanSize(DATABASE_FILE)})`);
 }
 
-async function downloadFresh(): Promise<{ zipPath: string; sourceLastModified: string | null }> {
+async function downloadFresh(): Promise<DownloadResult> {
   const tempDir = await fs.promises.mkdtemp(path.join(SNAPSHOT_DIR, ".tmp-"));
   const zipPath = path.join(tempDir, "opl.zip");
 
-  const response = await fetch(DOWNLOAD_URL);
-  if (!response.ok || response.body == null) {
-    throw new Error(`Failed to download OPL CSV: HTTP ${response.status}`);
-  }
-  const sourceLastModified = response.headers.get("last-modified");
-  await pipeline(Readable.fromWeb(response.body as never), fs.createWriteStream(zipPath));
+  try {
+    const response = await fetch(DOWNLOAD_URL);
+    if (!response.ok || response.body == null) {
+      throw new Error(`Failed to download OPL CSV: HTTP ${response.status}`);
+    }
+    const sourceLastModified = response.headers.get("last-modified");
+    await pipeline(Readable.fromWeb(response.body as never), fs.createWriteStream(zipPath));
 
-  return { zipPath, sourceLastModified };
+    return { zipPath, tempDir, sourceLastModified };
+  } catch (error) {
+    await fs.promises.rm(tempDir, { force: true, recursive: true });
+    throw error;
+  }
 }
 
 function configureBuildPragmas(db: DatabaseType): void {
