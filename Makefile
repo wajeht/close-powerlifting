@@ -104,12 +104,13 @@ snapshot-publish:
 	}
 	@$(MAKE) snapshot-build
 	@BUILT=$$(node -e "const Database=require('better-sqlite3'); const db=new Database('src/data/snapshot/close-powerlifting.sqlite',{readonly:true}); console.log(db.prepare(\"SELECT value FROM metadata WHERE key = 'built_at'\").get().value); db.close();"); \
+	gzip -kf src/data/snapshot/close-powerlifting.sqlite; \
 	echo "Publishing snapshot-latest release..."; \
 	gh release delete $(SNAPSHOT_TAG) --yes --cleanup-tag 2>/dev/null || true; \
 	gh release create $(SNAPSHOT_TAG) \
 		--title "OPL SQLite snapshot ($$BUILT)" \
 		--notes "Manual publish via Makefile. See the metadata table for counts." \
-		src/data/snapshot/close-powerlifting.sqlite
+		src/data/snapshot/close-powerlifting.sqlite.gz
 
 # === Deployment ===
 
