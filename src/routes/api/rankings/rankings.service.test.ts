@@ -46,6 +46,24 @@ describe("rankings service", () => {
       expect(usernames).not.toContain("johnsmith1");
     });
 
+    it("filters precomputed rankings by weight class", async () => {
+      const { data } = await service().getFilteredRankings(
+        { equipment: "raw", sex: "men", weight_class: "100" },
+        { units: "kg" },
+      );
+      const usernames = data.map((r) => (r as { username: string }).username);
+      expect(usernames).toEqual(["edcoan"]);
+    });
+
+    it("filters precomputed rankings by age class", async () => {
+      const { data } = await service().getFilteredRankings(
+        { equipment: "raw", sex: "men" },
+        { age_class: "24-34", units: "kg" },
+      );
+      const usernames = data.map((r) => (r as { username: string }).username);
+      expect(usernames).toEqual(["edcoan", "marisrazmanis"]);
+    });
+
     it("supports custom sort metric on the deepest filter", async () => {
       const { data } = await service().getFilteredRankings(
         {

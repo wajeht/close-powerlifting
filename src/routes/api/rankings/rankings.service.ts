@@ -253,11 +253,10 @@ function canUsePrecomputedFilter(metric: RankMetric, filter: RankingFilter): boo
   return (
     metric === PRECOMPUTED_RANKING_METRIC &&
     filter.equipmentKey != null &&
-    filter.weightClassKg == null &&
     filter.yearPrefix == null &&
     filter.eventValues == null &&
-    filter.ageClass == null &&
-    filter.federation == null
+    filter.federation == null &&
+    !(filter.weightClassKg != null && filter.ageClass != null)
   );
 }
 
@@ -271,6 +270,7 @@ async function countPrecomputedFilteredRanking(
     .where("metric", metric)
     .where("equipment_key", filter.equipmentKey)
     .where("sex_key", filter.sexKey ?? "all")
+    .modify((query) => applyPrecomputedDimensionFilter(query, filter))
     .count({ count: "*" })
     .first();
   return Number(row?.count ?? 0);
@@ -290,6 +290,7 @@ async function selectPrecomputedFilteredRanking(
     .where("rb.metric", metric)
     .where("rb.equipment_key", filter.equipmentKey)
     .where("rb.sex_key", filter.sexKey ?? "all")
+    .modify((query) => applyPrecomputedDimensionFilter(query, filter, "rb"))
     .orderBy("rb.rank", "asc")
     .limit(pagination.per_page)
     .offset(pagination.from > 0 ? pagination.from - 1 : 0)
@@ -317,6 +318,25 @@ async function selectPrecomputedFilteredRanking(
       meet_date: "m.date",
       lifter_country: "e.lifter_country",
     });
+}
+
+function applyPrecomputedDimensionFilter(
+  query: Knex.QueryBuilder,
+  filter: RankingFilter,
+  alias?: string,
+): void {
+  const prefix = alias == null ? "" : `${alias}.`;
+  if (filter.weightClassKg == null) {
+    query.whereNull(`${prefix}weight_class_kg`);
+  } else {
+    query.where(`${prefix}weight_class_kg`, filter.weightClassKg);
+  }
+
+  if (filter.ageClass == null) {
+    query.whereNull(`${prefix}age_class`);
+  } else {
+    query.where(`${prefix}age_class`, filter.ageClass);
+  }
 }
 
 async function countFilteredRanking(
