@@ -60,12 +60,23 @@ describe("route status service", () => {
     expect(urls).not.toContain("/api/rankings/filter/raw/men");
     expect(urls).not.toContain("/api/records?age_class=40-44");
   });
+
+  it("caps cached response bodies", async () => {
+    stubFetch(undefined, "x".repeat(10_000));
+
+    refreshRouteStatusesInBackground("http://127.0.0.1");
+    const groups = await waitForRouteGroups();
+    const body = groups[0]?.routes[0]?.body;
+
+    expect(body).toContain("[truncated]");
+    expect(body?.length).toBeLessThan(2_100);
+  });
 });
 
-function stubFetch(onRequest?: () => void): void {
+function stubFetch(onRequest?: () => void, body?: string): void {
   globalThis.fetch = async (input) => {
     onRequest?.();
-    return new Response(JSON.stringify({ ok: true, path: fetchInputUrl(input) }), {
+    return new Response(body ?? JSON.stringify({ ok: true, path: fetchInputUrl(input) }), {
       headers: {
         "content-type": "application/json",
         date: new Date().toUTCString(),
