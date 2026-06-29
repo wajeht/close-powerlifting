@@ -39,9 +39,9 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "List lifters (paginated, optional case-insensitive ?search=)",
     }),
-    (c) => {
+    async (c) => {
       const query = c.req.valid("query");
-      const { data, pagination } = service.listLifters(query);
+      const { data, pagination } = await service.listLifters(query);
       return c.json(
         {
           status: "success" as const,
@@ -72,9 +72,9 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "Compare two athletes side-by-side",
     }),
-    (c) => {
+    async (c) => {
       const query = c.req.valid("query");
-      const result = service.compare(query);
+      const result = await service.compare(query);
       if (!result.found) {
         const missing = result.missing === "a" ? query.a : query.b;
         throw new HTTPException(404, { message: `Lifter "${missing}" not found` });
@@ -109,10 +109,10 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "Get an athlete's competition progression over time",
     }),
-    (c) => {
+    async (c) => {
       const { username } = c.req.valid("param");
       const { units = "lbs" } = c.req.valid("query");
-      const data = service.getProgression(username, units as Units);
+      const data = await service.getProgression(username, units as Units);
       if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
       return c.json(
         {
@@ -141,10 +141,10 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "Get an athlete's personal bests grouped by equipment",
     }),
-    (c) => {
+    async (c) => {
       const { username } = c.req.valid("param");
       const { units = "lbs" } = c.req.valid("query");
-      const data = service.getPersonalBests(username, units as Units);
+      const data = await service.getPersonalBests(username, units as Units);
       if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
       return c.json(
         {
@@ -170,9 +170,9 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "Get an athlete's global ranking",
     }),
-    (c) => {
+    async (c) => {
       const { username } = c.req.valid("param");
-      const data = service.getRank(username);
+      const data = await service.getRank(username);
       if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
       return c.json(
         {
@@ -205,10 +205,10 @@ export function createUsersRouter(context: AppContext) {
       tags: ["Users"],
       summary: "Get athlete profile by username",
     }),
-    (c) => {
+    async (c) => {
       const { username } = c.req.valid("param");
       const query = c.req.valid("query");
-      const data = service.getUser(username, query);
+      const data = await service.getUser(username, query);
       if (data == null) throw new HTTPException(404, { message: `Lifter "${username}" not found` });
       return c.json(
         {

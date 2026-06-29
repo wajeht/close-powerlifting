@@ -3,7 +3,10 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { configuration } from "../../configuration";
 import type { AppContext } from "../../context";
 import { createMemoryCache } from "../../utils/cache";
-import { getRouteStatuses } from "../api/health-check/route-status.service";
+import {
+  getCachedRouteStatuses,
+  refreshRouteStatusesInBackground,
+} from "../api/health-check/route-status.service";
 import { createMiddleware } from "../middleware";
 import { AboutPage } from "./AboutPage";
 import { HomePage } from "./HomePage";
@@ -14,8 +17,8 @@ import { TermsPage } from "./TermsPage";
 const ONE_DAY_SECONDS = 86400;
 const HOME_RANKINGS_CACHE_KEY = "home-rankings";
 
-type AppData = NonNullable<ReturnType<AppContext["store"]["tryGet"]>>;
-type HomeRankings = ReturnType<typeof buildHomeRankings>;
+type StoreState = NonNullable<ReturnType<AppContext["store"]["tryGet"]>>;
+type HomeRankings = Awaited<ReturnType<typeof buildHomeRankings>>;
 
 export function createGeneralRouter(context: AppContext) {
   const middleware = createMiddleware(context.helpers, context.logger);
@@ -24,15 +27,15 @@ export function createGeneralRouter(context: AppContext) {
     ttlMs: Number.POSITIVE_INFINITY,
   });
 
-  function getHomeRankings(data: AppData): HomeRankings {
+  async function getHomeRankings(state: StoreState): Promise<HomeRankings> {
     const cached = homeRankingsCache.get(HOME_RANKINGS_CACHE_KEY);
     if (cached !== undefined) return cached;
-    return homeRankingsCache.set(HOME_RANKINGS_CACHE_KEY, buildHomeRankings(data));
+    return homeRankingsCache.set(HOME_RANKINGS_CACHE_KEY, await buildHomeRankings(state));
   }
 
-  app.get("/", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), (c) => {
-    const data = context.store.tryGet();
-    const rankings = data == null ? null : getHomeRankings(data);
+  app.get("/", middleware.cacheControlMiddleware(ONE_DAY_SECONDS), async (c) => {
+    const state = context.store.tryGet();
+    const rankings = state == null ? null : await getHomeRankings(state);
     return c.render(<HomePage rankings={rankings} />);
   });
 
@@ -53,17 +56,19 @@ export function createGeneralRouter(context: AppContext) {
   );
 
   app.get("/status", middleware.noCacheMiddleware, async (c) => {
-    const data = context.store.tryGet();
-    const routeGroups =
-      data == null ? [] : await getRouteStatuses(`http://127.0.0.1:${configuration.app.port}`);
+    const state = context.store.tryGet();
+    if (state != null) {
+      refreshRouteStatusesInBackground(`http://127.0.0.1:${configuration.app.port}`);
+    }
+    const routeGroups = state == null ? [] : getCachedRouteStatuses();
     const allGood =
       routeGroups.length > 0 ? routeGroups.every((g) => g.routes.every((r) => r.status)) : null;
     return c.render(
       <StatusPage
-        ready={data != null}
-        rowCount={data?.rowCount ?? 0}
-        sourceLastModified={data?.sourceLastModified ?? null}
-        ingestedAt={data?.ingestedAt ?? null}
+        ready={state != null}
+        rowCount={state?.metadata.entries ?? 0}
+        sourceLastModified={state?.metadata.sourceLastModified ?? null}
+        ingestedAt={state?.metadata.builtAt ?? null}
         routeGroups={routeGroups}
         allGood={allGood}
       />,
@@ -90,21 +95,40 @@ export function createGeneralRouter(context: AppContext) {
   return app;
 }
 
-function buildHomeRankings(data: AppData) {
-  const top = data.rankByMetric.dots.subarray(0, 9);
-  return Array.from(top, (lifterId, idx) => {
-    const entryId = data.bestEntryByLifter.dots[lifterId];
-    if (entryId == null || entryId < 0) return null;
-    const lifter = data.lifters[lifterId];
-    const entry = data.entries[entryId];
-    if (lifter == null || entry == null) return null;
+async function buildHomeRankings(state: StoreState) {
+  const rows = await state
+    .db("lifter_bests as lb")
+    .join("entries as e", "e.id", "lb.entry_id")
+    .join("lifters as l", "l.id", "lb.lifter_id")
+    .where("lb.metric", "dots")
+    .orderBy("lb.rank", "asc")
+    .limit(9)
+    .select<
+      {
+        rank: number;
+        name: string;
+        username: string;
+        dots: number | null;
+        total_kg: number | null;
+        equipment: string;
+      }[]
+    >({
+      rank: "lb.rank",
+      name: "l.name",
+      username: "l.username",
+      dots: "e.dots",
+      total_kg: "e.total_kg",
+      equipment: "e.equipment",
+    });
+
+  return rows.map((row) => {
     return {
-      rank: idx + 1,
-      name: lifter.name,
-      username: lifter.username,
-      dots: entry.dots ?? 0,
-      total: entry.totalKg ?? 0,
-      equipment: entry.equipment,
+      rank: row.rank,
+      name: row.name,
+      username: row.username,
+      dots: row.dots ?? 0,
+      total: row.total_kg ?? 0,
+      equipment: row.equipment,
     };
-  }).filter((x) => x != null);
+  });
 }

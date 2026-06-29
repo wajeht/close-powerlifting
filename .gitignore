@@ -19,5 +19,7 @@ opencode*
 tmp/
 src/data/snapshot/*.json
 src/data/snapshot/*.bin
+src/data/snapshot/*.sqlite
+src/data/snapshot/*.sqlite-*
 src/data/snapshot/.tmp-*
 src/data/snapshot/.DS_Store

@@ -1,54 +1,48 @@
-// Downloads the prebuilt snapshot from the `snapshot-latest` GitHub
-// Release into src/data/snapshot/. The files match the layout produced
-// by scripts/build-snapshot.ts and consumed by src/data/store.ts at boot.
-//
-// Streams each response body directly to disk via pipeline +
-// Readable.fromWeb so the ~700 MB entries.json never lands in memory.
-//
-// Run via `npm run snapshot:download` or `npx tsx scripts/download-snapshot.ts`.
+// Downloads the prebuilt SQLite snapshot from the configured GitHub Release.
+// If the asset is missing or stale during a schema rollout, it falls back to
+// rebuilding the database locally from the upstream OPL CSV.
 
+import Database from "better-sqlite3";
 import fs from "node:fs";
-import path from "node:path";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
+import { buildDatabase } from "../src/data/database-builder";
+import {
+  DATABASE_FILE,
+  DATABASE_FILE_NAME,
+  DATABASE_SCHEMA_VERSION,
+  SNAPSHOT_DIR,
+} from "../src/data/database-files";
 import { createLogger } from "../src/utils/logger";
 
-const REPO = "wajeht/close-powerlifting";
-const TAG = "snapshot-latest";
+const REPO = process.env.SNAPSHOT_REPO ?? "wajeht/close-powerlifting";
+const TAG = process.env.SNAPSHOT_TAG ?? "snapshot-latest";
 const BASE_URL = `https://github.com/${REPO}/releases/download/${TAG}`;
-const SNAPSHOT_DIR = path.join(process.cwd(), "src", "data", "snapshot");
-
-const REQUIRED_FILES = ["lifters.json", "meets.json", "entries.json", "meta.json"] as const;
-const RUNTIME_INDEX_FILES = ["runtime-indexes.json", "runtime-indexes.bin"] as const;
 
 const logger = createLogger();
+
+interface SchemaVersionRow {
+  value: string;
+}
 
 async function main(): Promise<void> {
   await fs.promises.mkdir(SNAPSHOT_DIR, { recursive: true });
 
   logger.info(`download-snapshot: source ${BASE_URL}`);
-  for (const name of REQUIRED_FILES) {
-    const dest = path.join(SNAPSHOT_DIR, name);
-    logger.info(`download-snapshot: fetching ${name}`);
-    await downloadTo(`${BASE_URL}/${name}`, dest);
-    logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-  }
+  logger.info(`download-snapshot: fetching ${DATABASE_FILE_NAME}`);
   try {
-    for (const name of RUNTIME_INDEX_FILES) {
-      const dest = path.join(SNAPSHOT_DIR, name);
-      logger.info(`download-snapshot: fetching ${name}`);
-      await downloadTo(`${BASE_URL}/${name}`, dest);
-      logger.info(`download-snapshot:   wrote ${name} (${humanSize(dest)})`);
-    }
+    await downloadTo(`${BASE_URL}/${DATABASE_FILE_NAME}`, DATABASE_FILE);
+    assertSupportedSchema(DATABASE_FILE);
+    logger.info(`download-snapshot: wrote ${DATABASE_FILE_NAME} (${humanSize(DATABASE_FILE)})`);
   } catch (error) {
-    for (const name of RUNTIME_INDEX_FILES) {
-      await fs.promises.rm(path.join(SNAPSHOT_DIR, name), { force: true });
-    }
-    logger.warn("download-snapshot: runtime indexes unavailable; startup will rebuild them", error);
+    await fs.promises.rm(DATABASE_FILE, { force: true });
+    logger.warn(
+      "download-snapshot: published SQLite snapshot unavailable or incompatible; building locally",
+      error,
+    );
+    await buildDatabase(logger);
   }
-
-  logger.info(`download-snapshot: done`);
 }
 
 async function downloadTo(url: string, dest: string): Promise<void> {
@@ -57,6 +51,23 @@ async function downloadTo(url: string, dest: string): Promise<void> {
     throw new Error(`Failed to download ${url}: HTTP ${response.status}`);
   }
   await pipeline(Readable.fromWeb(response.body as never), fs.createWriteStream(dest));
+}
+
+function assertSupportedSchema(file: string): void {
+  const db = new Database(file, { readonly: true });
+  try {
+    const row = db
+      .prepare<[string], SchemaVersionRow>("SELECT value FROM metadata WHERE key = ?")
+      .get("schema_version");
+    const schemaVersion = Number(row?.value);
+    if (schemaVersion !== DATABASE_SCHEMA_VERSION) {
+      throw new Error(
+        `SQLite snapshot schema ${schemaVersion} is not supported; expected ${DATABASE_SCHEMA_VERSION}`,
+      );
+    }
+  } finally {
+    db.close();
+  }
 }
 
 function humanSize(file: string): string {

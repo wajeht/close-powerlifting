@@ -1,5 +1,3 @@
-import { createMemoryCache } from "../../../utils/cache";
-
 export interface RouteStatus {
   status: boolean;
   method: string;
@@ -19,26 +17,31 @@ interface RouteDefinition {
   path: string;
 }
 
-// Per-route timeout for the probes. 10 s is long enough that a cold V8
-// optimisation pass on a complex filter route won't false-positive as
-// "Unavailable", short enough that a hung route can't stall the page.
+interface RouteStatusCacheEntry {
+  routeGroups: RouteGroup[];
+  expiresAt: number;
+}
+
+// Per-route timeout for background probes. Keep this bounded, but /status
+// never awaits these probes on the browser request path.
 const FETCH_TIMEOUT_MS = 10_000;
 
-// Cache TTL for the route status payload. The /status HTML page renders this
-// cached snapshot, including response bodies, instead of probing on every hit.
+// Cache TTL for the route status payload. The /status HTML page only renders
+// the last cached snapshot and refreshes it in the background.
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-const ROUTE_STATUS_CACHE_KEY = "route-statuses";
 
 // Ordered list of every API endpoint we surface on /status. Grouped so the
 // HTML page can render sticky headers per tag. Variations of the same
-// route are included to exercise different query/path branches.
+// route are included to exercise different query/path branches. Keep probes
+// representative and cheap; exhaustive branch coverage belongs in tests, not
+// in a page render health sweep.
 const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Rankings", path: "/api/rankings" },
   { group: "Rankings", path: "/api/rankings/1" },
   { group: "Rankings", path: "/api/rankings?current_page=1&per_page=100" },
   { group: "Rankings", path: "/api/rankings?units=kg" },
-  { group: "Rankings", path: "/api/rankings/filter/raw" },
-  { group: "Rankings", path: "/api/rankings/filter/raw/men" },
+  { group: "Rankings", path: "/api/rankings/filter/raw?federation=ipf&per_page=10" },
+  { group: "Rankings", path: "/api/rankings/filter/raw/men?federation=ipf&per_page=10" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024" },
   { group: "Rankings", path: "/api/rankings/filter/raw/men/100/2024/full-power" },
@@ -65,7 +68,7 @@ const ROUTE_DEFINITIONS: RouteDefinition[] = [
   { group: "Records", path: "/api/records/raw/men" },
   { group: "Records", path: "/api/records/raw/100" },
   { group: "Records", path: "/api/records/raw/ipf-classes/men" },
-  { group: "Records", path: "/api/records?age_class=40-44" },
+  { group: "Records", path: "/api/records/raw/ipf-classes/men?age_class=40-44" },
 
   { group: "Users", path: "/api/users" },
   { group: "Users", path: "/api/users?search=haack" },
@@ -89,7 +92,8 @@ const GROUP_ORDER: ReadonlyArray<string> = [
   "Public",
 ];
 
-const routeStatusCache = createMemoryCache<RouteGroup[]>({ ttlMs: CACHE_TTL_MS });
+let routeStatusCache: RouteStatusCacheEntry | null = null;
+let routeStatusRefresh: Promise<void> | null = null;
 
 async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
   const startedAt = Date.now();
@@ -148,21 +152,39 @@ async function refreshRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
   return groups;
 }
 
-// Returns the cached route status payload, falling back to a fresh probe
-// if the cache is missing or stale. Coalesces concurrent callers onto the
-// same in-flight refresh so the /status page never kicks off more than one
-// probe sweep at a time.
-export async function getRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
-  return routeStatusCache.getOrSet(ROUTE_STATUS_CACHE_KEY, () => refreshRouteStatuses(baseUrl));
+function isRouteStatusCacheFresh(): boolean {
+  return routeStatusCache != null && routeStatusCache.expiresAt > Date.now();
+}
+
+// Returns the last route status payload synchronously. This is intentionally a
+// stale-while-refresh read so /status cannot block on slow endpoint probes.
+export function getCachedRouteStatuses(): RouteGroup[] {
+  return routeStatusCache?.routeGroups ?? [];
+}
+
+export function refreshRouteStatusesInBackground(baseUrl: string): void {
+  if (isRouteStatusCacheFresh() || routeStatusRefresh != null) return;
+
+  routeStatusRefresh = refreshRouteStatuses(baseUrl)
+    .then((routeGroups) => {
+      routeStatusCache = {
+        routeGroups,
+        expiresAt: Date.now() + CACHE_TTL_MS,
+      };
+    })
+    .catch(() => {
+      // Swallow - the next refresh attempt will retry.
+    })
+    .finally(() => {
+      routeStatusRefresh = null;
+    });
 }
 
 // Fire-and-forget warm hook invoked from server.ts once the data store is
 // ready. Logs failures but never throws; a status page that's missing
 // route data is degraded, not broken.
 export function warmRouteStatuses(baseUrl: string): void {
-  getRouteStatuses(baseUrl).catch(() => {
-    // Swallow - the next /status hit will retry.
-  });
+  refreshRouteStatusesInBackground(baseUrl);
 }
 
 // Sync readout of the cached health summary. Used by the nav dot so that
@@ -170,7 +192,12 @@ export function warmRouteStatuses(baseUrl: string): void {
 // triggering a probe sweep on the request path. Returns null until the
 // first probe completes.
 export function getCachedRouteHealth(): boolean | null {
-  const groups = routeStatusCache.peek(ROUTE_STATUS_CACHE_KEY);
+  const groups = routeStatusCache?.routeGroups;
   if (groups == null) return null;
   return groups.every((g) => g.routes.every((r) => r.status));
+}
+
+export function resetRouteStatusesForTesting(): void {
+  routeStatusCache = null;
+  routeStatusRefresh = null;
 }

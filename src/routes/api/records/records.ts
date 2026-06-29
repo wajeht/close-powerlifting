@@ -28,9 +28,9 @@ export function createRecordsRouter(context: AppContext) {
       tags: ["Records"],
       summary: "Get all powerlifting records",
     }),
-    (c) => {
+    async (c) => {
       const { age_class } = c.req.valid("query");
-      const data = service.groupRecords({ ageClass: age_class ?? null });
+      const data = await service.groupRecords({ ageClass: age_class ?? null });
       return c.json(
         {
           status: "success" as const,
@@ -59,10 +59,10 @@ export function createRecordsRouter(context: AppContext) {
       tags: ["Records"],
       summary: "Get records filtered by equipment, weight-class system, and sex",
     }),
-    (c) => {
+    async (c) => {
       const { equipment, sex } = c.req.valid("param");
       const { age_class } = c.req.valid("query");
-      const data = service.groupRecords({
+      const data = await service.groupRecords({
         equipmentGroup: EQUIPMENT_GROUP_BY_QUERY[equipment],
         sex: SEX_BY_QUERY[sex],
         ageClass: age_class ?? null,
@@ -94,12 +94,12 @@ export function createRecordsRouter(context: AppContext) {
       tags: ["Records"],
       summary: "Get records filtered by equipment and (sex or weight class)",
     }),
-    (c) => {
+    async (c) => {
       const { equipment, sex_or_weight_class } = c.req.valid("param");
       const { age_class } = c.req.valid("query");
       const equipmentGroup = EQUIPMENT_GROUP_BY_QUERY[equipment];
       const resolved = service.resolveSexOrWeightClass(sex_or_weight_class);
-      const data = service.groupRecords({
+      const data = await service.groupRecords({
         equipmentGroup,
         sex: resolved?.kind === "sex" ? resolved.value : undefined,
         weightClassKg: resolved?.kind === "weightClass" ? resolved.value : undefined,
@@ -132,10 +132,10 @@ export function createRecordsRouter(context: AppContext) {
       tags: ["Records"],
       summary: "Get records filtered by equipment type",
     }),
-    (c) => {
+    async (c) => {
       const { equipment } = c.req.valid("param");
       const { age_class } = c.req.valid("query");
-      const data = service.groupRecords({
+      const data = await service.groupRecords({
         equipmentGroup: EQUIPMENT_GROUP_BY_QUERY[equipment],
         ageClass: age_class ?? null,
       });

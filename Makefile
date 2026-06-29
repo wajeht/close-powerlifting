@@ -31,7 +31,7 @@ help:
 	@echo ""
 	@echo "Snapshot (data lives in the snapshot-latest GitHub Release, not git):"
 	@echo "  snapshot-download  Fetch the latest snapshot assets from the release"
-	@echo "  snapshot-build     Rebuild the JSON snapshot locally from OPL's CSV"
+	@echo "  snapshot-build     Rebuild the SQLite snapshot locally from OPL's CSV"
 	@echo "  snapshot-publish   Build + upload as snapshot-latest release assets (gh CLI)"
 	@echo ""
 	@echo "Deployment:"
@@ -88,7 +88,7 @@ check:
 # === Snapshot ===
 
 snapshot-build:
-	@npx tsx scripts/build-snapshot.ts
+	@npm run database:build
 
 snapshot-download:
 	@npm run snapshot:download
@@ -103,16 +103,13 @@ snapshot-publish:
 		exit 1; \
 	}
 	@$(MAKE) snapshot-build
-	@BUILT=$$(node -e "console.log(JSON.parse(require('fs').readFileSync('src/data/snapshot/meta.json','utf8')).builtAt)"); \
+	@BUILT=$$(node -e "const Database=require('better-sqlite3'); const db=new Database('src/data/snapshot/close-powerlifting.sqlite',{readonly:true}); console.log(db.prepare(\"SELECT value FROM metadata WHERE key = 'built_at'\").get().value); db.close();"); \
 	echo "Publishing snapshot-latest release..."; \
 	gh release delete $(SNAPSHOT_TAG) --yes --cleanup-tag 2>/dev/null || true; \
 	gh release create $(SNAPSHOT_TAG) \
-		--title "OPL snapshot ($$BUILT)" \
-		--notes "Manual publish via Makefile. See meta.json for counts." \
-		src/data/snapshot/lifters.json \
-		src/data/snapshot/meets.json \
-		src/data/snapshot/entries.json \
-		src/data/snapshot/meta.json
+		--title "OPL SQLite snapshot ($$BUILT)" \
+		--notes "Manual publish via Makefile. See the metadata table for counts." \
+		src/data/snapshot/close-powerlifting.sqlite
 
 # === Deployment ===
 

@@ -1,7 +1,5 @@
-// In-memory data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
-// gitlab.com/openpowerlifting/opl-data — crates/db/src/data.rs. The
-// canonical id of each entity is its index in the corresponding array
-// on `AppData`.
+// Data-model shapes. Mirrors OPL's Lifter/Meet/Entry from
+// gitlab.com/openpowerlifting/opl-data — crates/db/src/data.rs.
 
 export type Sex = "M" | "F" | "Mx";
 
@@ -39,7 +37,7 @@ export interface Meet {
 }
 
 export interface Entry {
-  // FKs into AppData.lifters / AppData.meets.
+  // FKs into the lifters / meets tables or fixture arrays.
   lifterId: number;
   meetId: number;
 
@@ -92,8 +90,6 @@ export interface Entry {
   goodlift: number | null;
 }
 
-// One row per (category, sex, equipmentGroup, weightClass, rank). Precomputed
-// at load time; ~17k rows total across all combinations.
 export type RecordCategory =
   | "squat_full_power"
   | "squat_all_events"
@@ -105,27 +101,7 @@ export type RecordCategory =
 
 export type EquipmentGroup = "raw" | "wraps" | "single" | "multi" | "unlimited" | "all-tested";
 
-export interface WeightClassRecord {
-  category: RecordCategory;
-  sex: Sex;
-  equipmentGroup: EquipmentGroup;
-  weightClassKg: number;
-  rank: number; // 1..3
-  entryId: number; // index into AppData.entries
-  liftValue: number;
-}
-
-// /api/federations row shape. Materialised at load so the endpoint is a
-// straight array read instead of an aggregation over meets.
-export interface FederationSummary {
-  slug: string; // lowercased + alphanumeric-only ("wrpfuk")
-  code: string; // original casing ("WRPF-UK")
-  parentSlug: string | null;
-  meetCount: number;
-}
-
-// Ranking metric keys. Each maps to a column on Entry; precomputed indexes
-// in AppData.bestEntryByLifter and AppData.rankByMetric mirror these keys.
+// Ranking metric keys. Each maps to an Entry field and a SQLite ranking column.
 export type RankMetric =
   | "dots"
   | "wilks"
@@ -135,36 +111,3 @@ export type RankMetric =
   | "squat"
   | "bench"
   | "deadlift";
-
-export type MetricInt32Arrays = Record<RankMetric, Int32Array>;
-export type MetricUint32Arrays = Record<RankMetric, Uint32Array>;
-
-export interface AppData {
-  // Entity arrays — index in the array IS the canonical id.
-  lifters: Lifter[];
-  meets: Meet[];
-  entries: Entry[];
-
-  // Lookup maps.
-  lifterByUsername: Map<string, number>;
-  meetByPath: Map<string, number>;
-  entriesByLifter: Map<number, number[]>; // lifterId → [entryId, ...]
-  entriesByMeet: Map<number, number[]>; // meetId → [entryId, ...]
-
-  // Per-lifter best entry per ranking metric. -1 = no eligible entry.
-  bestEntryByLifter: MetricInt32Arrays;
-  // Lifter ids sorted DESC by their best on that metric. Top-N = .subarray(0, N).
-  rankByMetric: MetricUint32Arrays;
-
-  // Records leaderboard (top-3 per category/sex/equipment_group/weight_class).
-  records: WeightClassRecord[];
-
-  // Federations index for /api/federations.
-  federations: FederationSummary[];
-  meetsByFederation: Map<string, number[]>; // slug → [meetId, ...]
-
-  // Metadata about this snapshot.
-  sourceLastModified: string | null;
-  ingestedAt: string; // ISO 8601
-  rowCount: number;
-}

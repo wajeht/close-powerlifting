@@ -1,32 +1,8 @@
-import type { DataStoreType } from "../../../data/store";
-import type {
-  AppData,
-  Entry,
-  EquipmentGroup,
-  RecordCategory,
-  Sex,
-  WeightClassRecord,
-} from "../../../data/types";
+import type { Knex } from "knex";
 
-const CATEGORY_TITLES: Record<RecordCategory, string> = {
-  squat_full_power: "Squat (Full Power)",
-  squat_all_events: "Squat (All Events)",
-  bench_full_power: "Bench (Full Power)",
-  bench_all_events: "Bench (All Events)",
-  deadlift_full_power: "Deadlift (Full Power)",
-  deadlift_all_events: "Deadlift (All Events)",
-  total: "Total",
-};
-
-const CATEGORY_ORDER: RecordCategory[] = [
-  "squat_full_power",
-  "squat_all_events",
-  "bench_full_power",
-  "bench_all_events",
-  "deadlift_full_power",
-  "deadlift_all_events",
-  "total",
-];
+import type { DataStoreType } from "../../../data/database";
+import { RECORD_CATEGORY_DEFINITIONS } from "../../../data/leaderboard-definitions";
+import type { EquipmentGroup, RecordCategory, Sex } from "../../../data/types";
 
 export const EQUIPMENT_GROUP_BY_QUERY: Record<string, EquipmentGroup> = {
   raw: "raw",
@@ -53,20 +29,33 @@ export interface RecordsFilter {
   ageClass: string | null;
 }
 
-export function createRecordsService(store: DataStoreType) {
-  function groupRecords(filter: RecordsFilter) {
-    const data = store.get();
-    const recs =
-      filter.ageClass == null
-        ? data.records.filter((rec) => matchesFilter(rec, filter))
-        : computeAgeFilteredRecords(data, filter);
+interface RecordRow {
+  category: RecordCategory;
+  sex: Sex;
+  equipment_group: EquipmentGroup;
+  weight_class_kg: number;
+  rank: number;
+  entry_id: number;
+  lift_value: number;
+  username: string;
+  name: string;
+  federation: string;
+  meet_path: string;
+  meet_name: string;
+  date: string;
+}
 
-    const byCategoryAndGroup = new Map<string, WeightClassRecord[]>();
-    for (const rec of recs) {
-      const key = `${rec.category}::${rec.sex}::${rec.equipmentGroup}`;
+export function createRecordsService(store: DataStoreType) {
+  async function groupRecords(filter: RecordsFilter) {
+    const { db } = store.get();
+    const rows = await getPrecomputedRecords(db, filter);
+
+    const byCategoryAndGroup = new Map<string, RecordRow[]>();
+    for (const row of rows) {
+      const key = `${row.category}::${row.sex}::${row.equipment_group}`;
       const list = byCategoryAndGroup.get(key);
-      if (list == null) byCategoryAndGroup.set(key, [rec]);
-      else list.push(rec);
+      if (list == null) byCategoryAndGroup.set(key, [row]);
+      else list.push(row);
     }
 
     return {
@@ -76,29 +65,26 @@ export function createRecordsService(store: DataStoreType) {
         weight_class_kg: filter.weightClassKg ?? null,
         age_class: filter.ageClass,
       },
-      categories: CATEGORY_ORDER.map((key) => ({
-        key,
-        title: CATEGORY_TITLES[key],
+      categories: RECORD_CATEGORY_DEFINITIONS.map((category) => ({
+        key: category.key,
+        title: category.title,
         sections: Array.from(byCategoryAndGroup.entries())
-          .filter(([k]) => k.startsWith(`${key}::`))
-          .map(([k, rows]) => {
+          .filter(([k]) => k.startsWith(`${category.key}::`))
+          .map(([k, records]) => {
             const [, sex, equipmentGroup] = k.split("::");
             return {
               sex,
               equipment_group: equipmentGroup,
-              records: rows
+              records: records
                 .slice()
-                .sort((a, b) => a.weightClassKg - b.weightClassKg || a.rank - b.rank)
-                .map((rec) => formatRecord(data, rec)),
+                .sort((a, b) => a.weight_class_kg - b.weight_class_kg || a.rank - b.rank)
+                .map(formatRecord),
             };
           }),
       })),
     };
   }
 
-  // Resolves a single ambiguous path segment ("men"/"women" or "75"/"82.5"
-  // etc.) to either a sex filter or a weight class filter. Returns null for
-  // anything that's neither.
   function resolveSexOrWeightClass(
     value: string,
   ): { kind: "sex"; value: Sex } | { kind: "weightClass"; value: number } | null {
@@ -111,122 +97,46 @@ export function createRecordsService(store: DataStoreType) {
   return { groupRecords, resolveSexOrWeightClass };
 }
 
-function matchesFilter(rec: WeightClassRecord, filter: RecordsFilter): boolean {
-  if (filter.equipmentGroup != null && rec.equipmentGroup !== filter.equipmentGroup) return false;
-  if (filter.sex != null && rec.sex !== filter.sex) return false;
-  if (filter.weightClassKg != null && rec.weightClassKg !== filter.weightClassKg) return false;
-  return true;
+async function getPrecomputedRecords(db: Knex, filter: RecordsFilter): Promise<RecordRow[]> {
+  const query = db("records as r")
+    .join("entries as e", "e.id", "r.entry_id")
+    .join("lifters as l", "l.id", "e.lifter_id")
+    .join("meets as m", "m.id", "e.meet_id")
+    .select({
+      category: "r.category",
+      sex: "r.sex",
+      equipment_group: "r.equipment_group",
+      weight_class_kg: "r.weight_class_kg",
+      rank: "r.rank",
+      entry_id: "r.entry_id",
+      lift_value: "r.lift_value",
+      username: "l.username",
+      name: "l.name",
+      federation: "m.federation",
+      meet_path: "m.path",
+      meet_name: "m.meet_name",
+      date: "m.date",
+    });
+
+  if (filter.equipmentGroup != null) query.where("r.equipment_group", filter.equipmentGroup);
+  if (filter.sex != null) query.where("r.sex", filter.sex);
+  if (filter.weightClassKg != null) query.where("r.weight_class_kg", filter.weightClassKg);
+  if (filter.ageClass == null) query.whereNull("r.age_class");
+  else query.where("r.age_class", filter.ageClass);
+
+  return query.orderBy(["r.category", "r.sex", "r.equipment_group", "r.weight_class_kg", "r.rank"]);
 }
 
-// Slow path: filter raw entries by ageClass then recompute top-3 per
-// (category, sex, equipmentGroup, weightClass). Used only when ageClass is
-// in the query — the precomputed table doesn't include that dimension.
-function computeAgeFilteredRecords(data: AppData, filter: RecordsFilter): WeightClassRecord[] {
-  const sexes: Sex[] = filter.sex != null ? [filter.sex] : ["M", "F"];
-  const equipmentGroups: EquipmentGroup[] =
-    filter.equipmentGroup != null
-      ? [filter.equipmentGroup]
-      : ["raw", "wraps", "single", "multi", "unlimited", "all-tested"];
-
-  interface Bucket {
-    category: RecordCategory;
-    sex: Sex;
-    equipmentGroup: EquipmentGroup;
-    weightClassKg: number;
-    rows: { entryId: number; value: number }[];
-  }
-  const buckets = new Map<string, Bucket>();
-
-  const categories: {
-    key: RecordCategory;
-    field: keyof Entry;
-    events: ReadonlyArray<Entry["event"]>;
-  }[] = [
-    { key: "squat_full_power", field: "best3SquatKg", events: ["SBD"] },
-    { key: "squat_all_events", field: "best3SquatKg", events: ["SBD", "S", "SB", "SD"] },
-    { key: "bench_full_power", field: "best3BenchKg", events: ["SBD"] },
-    { key: "bench_all_events", field: "best3BenchKg", events: ["SBD", "B", "SB", "BD"] },
-    { key: "deadlift_full_power", field: "best3DeadliftKg", events: ["SBD"] },
-    { key: "deadlift_all_events", field: "best3DeadliftKg", events: ["SBD", "D", "SD", "BD"] },
-    { key: "total", field: "totalKg", events: ["SBD"] },
-  ];
-
-  for (let entryId = 0; entryId < data.entries.length; entryId++) {
-    const entry = data.entries[entryId]!;
-    if (entry.ageClass !== filter.ageClass) continue;
-    if (!sexes.includes(entry.sex as Sex)) continue;
-    if (filter.weightClassKg != null && entry.weightClassKg !== filter.weightClassKg) continue;
-
-    const wc = entry.weightClassKg;
-    if (wc == null) continue;
-
-    for (const eg of equipmentGroups) {
-      const isAllTested = eg === "all-tested";
-      if (isAllTested ? !entry.tested : entry.equipment !== equipmentGroupToEquipment(eg)) {
-        continue;
-      }
-      for (const cat of categories) {
-        if (!cat.events.includes(entry.event)) continue;
-        const value = entry[cat.field] as number | null;
-        if (value == null) continue;
-        const key = `${cat.key}::${entry.sex}::${eg}::${wc}`;
-        let bucket = buckets.get(key);
-        if (bucket == null) {
-          bucket = {
-            category: cat.key,
-            sex: entry.sex as Sex,
-            equipmentGroup: eg,
-            weightClassKg: wc,
-            rows: [],
-          };
-          buckets.set(key, bucket);
-        }
-        bucket.rows.push({ entryId, value });
-      }
-    }
-  }
-
-  const out: WeightClassRecord[] = [];
-  for (const b of buckets.values()) {
-    b.rows.sort((x, y) => y.value - x.value);
-    const top = b.rows.slice(0, 3);
-    for (let rank = 0; rank < top.length; rank++) {
-      out.push({
-        category: b.category,
-        sex: b.sex,
-        equipmentGroup: b.equipmentGroup,
-        weightClassKg: b.weightClassKg,
-        rank: rank + 1,
-        entryId: top[rank]!.entryId,
-        liftValue: top[rank]!.value,
-      });
-    }
-  }
-  return out;
-}
-
-function equipmentGroupToEquipment(eg: EquipmentGroup): string | null {
-  if (eg === "raw") return "Raw";
-  if (eg === "wraps") return "Wraps";
-  if (eg === "single") return "Single-ply";
-  if (eg === "multi") return "Multi-ply";
-  if (eg === "unlimited") return "Unlimited";
-  return null;
-}
-
-function formatRecord(data: AppData, rec: WeightClassRecord) {
-  const entry = data.entries[rec.entryId]!;
-  const lifter = data.lifters[entry.lifterId]!;
-  const meet = data.meets[entry.meetId]!;
+function formatRecord(row: RecordRow) {
   return {
-    weight_class_kg: rec.weightClassKg,
-    rank: rec.rank,
-    lift_value: rec.liftValue,
-    username: lifter.username,
-    name: lifter.name,
-    federation: meet.federation,
-    meet_path: meet.path,
-    meet_name: meet.meetName,
-    date: meet.date,
+    weight_class_kg: row.weight_class_kg,
+    rank: row.rank,
+    lift_value: row.lift_value,
+    username: row.username,
+    name: row.name,
+    federation: row.federation,
+    meet_path: row.meet_path,
+    meet_name: row.meet_name,
+    date: row.date,
   };
 }

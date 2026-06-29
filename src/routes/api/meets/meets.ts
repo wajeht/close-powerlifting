@@ -31,9 +31,9 @@ export function createMeetsRouter(context: AppContext) {
       tags: ["Meets"],
       summary: "List meets across federations",
     }),
-    (c) => {
+    async (c) => {
       const query = c.req.valid("query");
-      const { data, pagination } = service.listMeets(query);
+      const { data, pagination } = await service.listMeets(query);
       return c.json(
         {
           status: "success" as const,
@@ -63,10 +63,10 @@ export function createMeetsRouter(context: AppContext) {
       tags: ["Meets"],
       summary: "Get meet highlights",
     }),
-    (c) => {
+    async (c) => {
       const params = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = service.getMeetHighlights(params, query);
+      const result = await service.getMeetHighlights(params, query);
       if (result == null) {
         throw new HTTPException(404, {
           message: `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
@@ -100,10 +100,10 @@ export function createMeetsRouter(context: AppContext) {
       tags: ["Meets"],
       summary: "Get meet results",
     }),
-    (c) => {
+    async (c) => {
       const params = c.req.valid("param");
       const query = c.req.valid("query");
-      const result = service.getMeet(params, query);
+      const result = await service.getMeet(params, query);
       if (result == null) {
         throw new HTTPException(404, {
           message: `Meet "${params.federation}/${params.date}/${params.slug}" not found`,
