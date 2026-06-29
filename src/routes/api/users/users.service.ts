@@ -8,6 +8,7 @@ import { configuration } from "../../../configuration";
 import type { GetCompareType, GetUserQueryType, GetUsersType } from "./users.schema";
 
 const { defaultPerPage } = configuration.pagination;
+const MIN_FTS_SEARCH_LENGTH = 3;
 
 interface LifterRow {
   id: number;
@@ -68,6 +69,15 @@ interface RankCountRow {
   count: string | number;
 }
 
+interface LifterSearchCountRow {
+  count: string | number;
+}
+
+interface LifterSearchRow {
+  username: string;
+  name: string;
+}
+
 export function createUsersService(store: DataStoreType) {
   async function listLifters(query: GetUsersType): Promise<{
     data: { username: string; name: string }[];
@@ -75,13 +85,18 @@ export function createUsersService(store: DataStoreType) {
   }> {
     const { db } = store.get();
     const needle = query.search?.trim() ?? "";
+    const currentPage = query.current_page ?? 1;
+    const perPage = query.per_page ?? defaultPerPage;
+
+    if (needle.length >= MIN_FTS_SEARCH_LENGTH) {
+      return searchLifters(db, needle, currentPage, perPage);
+    }
+
     const base = db<LifterRow>("lifters");
     applyLifterSearch(base, needle);
 
     const totalRow = await base.clone().count({ count: "*" }).first();
     const total = Number(totalRow?.count ?? 0);
-    const currentPage = query.current_page ?? 1;
-    const perPage = query.per_page ?? defaultPerPage;
     const pagination = buildPagination(total, currentPage, perPage);
     const rows = await base
       .clone()
@@ -207,10 +222,7 @@ export function createUsersService(store: DataStoreType) {
     const rankRows = await db<RankRow>("lifter_bests")
       .where("lifter_id", lifter.id)
       .select("metric", "rank");
-    const countRows = await db<RankCountRow>("lifter_bests")
-      .select("metric")
-      .count({ count: "*" })
-      .groupBy("metric");
+    const countRows = await db<RankCountRow>("metric_counts").select("metric", "count");
 
     const rankByMetric = new Map(rankRows.map((row) => [row.metric, row.rank]));
     const outOfByMetric = new Map(
@@ -271,6 +283,49 @@ function applyLifterSearch(query: Knex.QueryBuilder<LifterRow>, needle: string):
   query.where(function applySearch() {
     this.where("username", "like", pattern).orWhere("name", "like", pattern);
   });
+}
+
+async function searchLifters(
+  db: Knex,
+  needle: string,
+  currentPage: number,
+  perPage: number,
+): Promise<{
+  data: { username: string; name: string }[];
+  pagination: Pagination;
+}> {
+  const search = ftsPhrase(needle);
+  const countRows = await db.raw<LifterSearchCountRow[]>(
+    `
+      SELECT COUNT(*) AS count
+      FROM lifter_search
+      WHERE lifter_search MATCH ?
+    `,
+    [search],
+  );
+  const total = Number(countRows[0]?.count ?? 0);
+  const pagination = buildPagination(total, currentPage, perPage);
+  const rows = await db.raw<LifterSearchRow[]>(
+    `
+      SELECT l.username, l.name
+      FROM lifter_search
+      JOIN lifters AS l ON l.id = lifter_search.rowid
+      WHERE lifter_search MATCH ?
+      ORDER BY l.name ASC
+      LIMIT ?
+      OFFSET ?
+    `,
+    [search, pagination.per_page, pagination.from > 0 ? pagination.from - 1 : 0],
+  );
+
+  return {
+    data: rows.map((row) => ({ username: row.username, name: row.name })),
+    pagination,
+  };
+}
+
+function ftsPhrase(needle: string): string {
+  return `"${needle.replaceAll('"', '""')}"`;
 }
 
 async function getLifterByUsername(db: Knex, username: string): Promise<LifterRow | null> {
