@@ -23,7 +23,9 @@ interface CountRow {
 
 export function createDerivedTables(db: DatabaseType): void {
   createFederationsTable(db);
+  createLifterSearchTable(db);
   createLifterBestsTable(db);
+  createMetricCountsTable(db);
   createRankingFilterBestsTable(db);
   createRecordsTable(db);
 }
@@ -88,6 +90,33 @@ function createLifterBestsTable(db: DatabaseType): void {
   db.exec(`
     CREATE UNIQUE INDEX idx_lifter_bests_metric_rank ON lifter_bests(metric, rank);
     CREATE INDEX idx_lifter_bests_lifter ON lifter_bests(lifter_id);
+  `);
+}
+
+function createLifterSearchTable(db: DatabaseType): void {
+  db.exec(`
+    CREATE VIRTUAL TABLE lifter_search USING fts5(
+      username,
+      name,
+      content='lifters',
+      content_rowid='id',
+      tokenize='trigram'
+    );
+
+    INSERT INTO lifter_search(rowid, username, name)
+    SELECT id, username, name
+    FROM lifters;
+  `);
+}
+
+function createMetricCountsTable(db: DatabaseType): void {
+  db.exec(`
+    CREATE TABLE metric_counts AS
+    SELECT metric, COUNT(*) AS count
+    FROM lifter_bests
+    GROUP BY metric;
+
+    CREATE UNIQUE INDEX idx_metric_counts_metric ON metric_counts(metric);
   `);
 }
 

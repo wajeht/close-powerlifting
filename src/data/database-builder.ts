@@ -350,9 +350,7 @@ function entryValues(entry: Omit<Entry, "lifterId" | "meetId">, lifterId: number
 
 function createIndexes(db: DatabaseType): void {
   db.exec(`
-    CREATE INDEX idx_lifters_username ON lifters(username);
     CREATE INDEX idx_lifters_name ON lifters(name);
-    CREATE INDEX idx_meets_path ON meets(path);
     CREATE INDEX idx_meets_federation_slug ON meets(federation_slug);
     CREATE INDEX idx_meets_date ON meets(date);
     CREATE INDEX idx_entries_lifter_id ON entries(lifter_id);
