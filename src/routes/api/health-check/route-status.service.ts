@@ -29,6 +29,7 @@ const FETCH_TIMEOUT_MS = 10_000;
 // Cache TTL for the route status payload. The /status HTML page only renders
 // the last cached snapshot and refreshes it in the background.
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const MAX_STATUS_BODY_LENGTH = 2_048;
 
 // Ordered list of every API endpoint we surface on /status. Grouped so the
 // HTML page can render sticky headers per tag. Variations of the same
@@ -124,11 +125,14 @@ async function probeRoute(baseUrl: string, path: string): Promise<RouteStatus> {
 
 function formatBody(body: string): string | null {
   if (body.length === 0) return null;
+  let formatted: string;
   try {
-    return JSON.stringify(JSON.parse(body), null, 2);
+    formatted = JSON.stringify(JSON.parse(body), null, 2);
   } catch {
-    return body;
+    formatted = body;
   }
+  if (formatted.length <= MAX_STATUS_BODY_LENGTH) return formatted;
+  return `${formatted.slice(0, MAX_STATUS_BODY_LENGTH)}\n... [truncated]`;
 }
 
 async function refreshRouteStatuses(baseUrl: string): Promise<RouteGroup[]> {
