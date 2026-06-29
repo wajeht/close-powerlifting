@@ -126,6 +126,8 @@ function createRankingFilterBestsTable(db: DatabaseType): void {
       metric TEXT NOT NULL,
       equipment_key TEXT NOT NULL,
       sex_key TEXT NOT NULL,
+      weight_class_kg REAL,
+      age_class TEXT,
       entry_id INTEGER NOT NULL,
       rank INTEGER NOT NULL
     );
@@ -136,7 +138,7 @@ function createRankingFilterBestsTable(db: DatabaseType): void {
 
   db.exec(`
     CREATE UNIQUE INDEX idx_ranking_filter_bests_lookup
-      ON ranking_filter_bests(metric, equipment_key, sex_key, rank);
+      ON ranking_filter_bests(metric, equipment_key, sex_key, weight_class_kg, age_class, rank);
   `);
 }
 
@@ -156,7 +158,9 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
   }
 
   db.prepare(`
-    INSERT INTO ranking_filter_bests (metric, equipment_key, sex_key, entry_id, rank)
+    INSERT INTO ranking_filter_bests (
+      metric, equipment_key, sex_key, weight_class_kg, age_class, entry_id, rank
+    )
     WITH equipment_entries AS (
       ${equipmentSelects.join("\nUNION ALL\n")}
     ),
@@ -164,6 +168,8 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
       SELECT
         equipment_key,
         'all' AS sex_key,
+        NULL AS weight_class_kg,
+        NULL AS age_class,
         entry_id,
         lifter_id,
         value
@@ -172,21 +178,71 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
       SELECT
         equipment_key,
         CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
+        NULL AS weight_class_kg,
+        NULL AS age_class,
         entry_id,
         lifter_id,
         value
       FROM equipment_entries
       WHERE sex IN ('M', 'F')
+      UNION ALL
+      SELECT
+        equipment_key,
+        'all' AS sex_key,
+        weight_class_kg,
+        NULL AS age_class,
+        entry_id,
+        lifter_id,
+        value
+      FROM equipment_entries
+      WHERE weight_class_kg IS NOT NULL
+      UNION ALL
+      SELECT
+        equipment_key,
+        CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
+        weight_class_kg,
+        NULL AS age_class,
+        entry_id,
+        lifter_id,
+        value
+      FROM equipment_entries
+      WHERE sex IN ('M', 'F')
+        AND weight_class_kg IS NOT NULL
+      UNION ALL
+      SELECT
+        equipment_key,
+        'all' AS sex_key,
+        NULL AS weight_class_kg,
+        age_class,
+        entry_id,
+        lifter_id,
+        value
+      FROM equipment_entries
+      WHERE age_class IS NOT NULL
+      UNION ALL
+      SELECT
+        equipment_key,
+        CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
+        NULL AS weight_class_kg,
+        age_class,
+        entry_id,
+        lifter_id,
+        value
+      FROM equipment_entries
+      WHERE sex IN ('M', 'F')
+        AND age_class IS NOT NULL
     ),
     best AS (
       SELECT
         equipment_key,
         sex_key,
+        weight_class_kg,
+        age_class,
         entry_id,
         lifter_id,
         value,
         ROW_NUMBER() OVER (
-          PARTITION BY equipment_key, sex_key, lifter_id
+          PARTITION BY equipment_key, sex_key, weight_class_kg, age_class, lifter_id
           ORDER BY value DESC, entry_id ASC
         ) AS lifter_rank
       FROM candidates
@@ -195,15 +251,17 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
       SELECT
         equipment_key,
         sex_key,
+        weight_class_kg,
+        age_class,
         entry_id,
         ROW_NUMBER() OVER (
-          PARTITION BY equipment_key, sex_key
+          PARTITION BY equipment_key, sex_key, weight_class_kg, age_class
           ORDER BY value DESC, entry_id ASC
         ) AS rank
       FROM best
       WHERE lifter_rank = 1
     )
-    SELECT ?, equipment_key, sex_key, entry_id, rank
+    SELECT ?, equipment_key, sex_key, weight_class_kg, age_class, entry_id, rank
     FROM ranked
   `).run(...bindings, metric.metric);
 }
@@ -219,6 +277,8 @@ function rankingEquipmentSelect(
       id AS entry_id,
       lifter_id,
       sex,
+      weight_class_kg,
+      age_class,
       ${metric.field} AS value
     FROM entries
     WHERE ${metric.field} IS NOT NULL
