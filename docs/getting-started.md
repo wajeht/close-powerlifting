@@ -34,7 +34,7 @@ Fetch the latest pre-built SQLite snapshot from the GitHub Release:
 npm run snapshot:download
 ```
 
-This drops `close-powerlifting.sqlite` into `src/data/snapshot/`. The server opens this database at boot — without it, `npm run dev` will refuse to start.
+This downloads the compressed release asset and expands `close-powerlifting.sqlite` into `src/data/snapshot/`. The server opens this database at boot — without it, `npm run dev` will refuse to start.
 
 ## Environment Variables
 
@@ -72,7 +72,7 @@ The HTTP server starts immediately but `GET /healthz` returns 503 until the SQLi
 
 ## Snapshot
 
-The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a GitHub Release (`snapshot-latest`). The Dockerfile downloads the SQLite asset at image-build time, so production containers ship with the data baked in.
+The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a compressed GitHub Release asset (`snapshot-latest`). The Dockerfile downloads and expands the SQLite asset at image-build time, so production containers ship with the data baked in.
 
 | Task                          | Command                     | Notes                                                                           |
 | ----------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
