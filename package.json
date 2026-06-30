@@ -48,7 +48,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "4.3.1",
+    "@tailwindcss/cli": "4.3.2",
     "@types/better-sqlite3": "7.6.13",
     "@types/html-minifier-terser": "7.0.2",
     "@types/node": "25.9.4",
@@ -60,7 +60,7 @@
     "html-minifier-terser": "7.2.0",
     "satori": "0.26.0",
     "sharp": "0.35.2",
-    "tailwindcss": "4.3.1",
+    "tailwindcss": "4.3.2",
     "terser": "5.48.0",
     "tsx": "4.22.4",
     "unzipper": "0.12.5",
