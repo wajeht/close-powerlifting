@@ -1,4 +1,4 @@
-FROM node:26.5.0-slim@sha256:ffc78385a788964bb3cbab5e434ff79a10bdc25b8ae6db03fe5fe6cb14053c09 AS build
+FROM node:26.5.0-slim@sha256:384e94c8c33ce0daae4ecbd00fa604ebabaa18f26fc508132f8da45035bf0219 AS build
 
 WORKDIR /usr/src/app
 
@@ -45,7 +45,7 @@ RUN npm run build:prod && \
     npm prune --omit=dev --no-audit --no-fund && \
     npm cache clean --force
 
-FROM node:26.5.0-slim@sha256:ffc78385a788964bb3cbab5e434ff79a10bdc25b8ae6db03fe5fe6cb14053c09
+FROM node:26.5.0-slim@sha256:384e94c8c33ce0daae4ecbd00fa604ebabaa18f26fc508132f8da45035bf0219
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
