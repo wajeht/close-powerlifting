@@ -9,7 +9,8 @@ WORKDIR /usr/src/app
 
 COPY package.json package-lock.json .npmrc ./
 
-RUN npm install && \
+RUN npm install --global "$(node -p "require('./package.json').packageManager")" && \
+    npm install && \
     npm rebuild sharp --ignore-scripts=false
 
 COPY ./ ./
