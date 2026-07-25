@@ -25,12 +25,8 @@ cp .env.example .env
 Install dependencies:
 
 ```bash
-./scripts/use-project-npm.sh
 npm install
 ```
-
-The bootstrap script reads the exact version from `packageManager`; local setup,
-CI, and Docker all use the same source of truth.
 
 Fetch the latest pre-built SQLite snapshot from the GitHub Release:
 

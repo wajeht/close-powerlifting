@@ -8,10 +8,8 @@ RUN apt-get update && \
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json .npmrc ./
-COPY scripts/use-project-npm.sh ./scripts/
 
-RUN ./scripts/use-project-npm.sh && \
-    npm install && \
+RUN npm install && \
     npm rebuild sharp --ignore-scripts=false
 
 COPY ./ ./

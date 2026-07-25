@@ -4,9 +4,15 @@
   "skipInstalls": false,
   "constraints": {
     "node": ">=26.1.0",
-    "npm": ">=12.0.1"
+    "npm": "^11.17.0"
   },
   "packageRules": [
+    {
+      "description": "Use the npm version bundled with the pinned Node.js release",
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["npm"],
+      "enabled": false
+    },
     {
       "description": "Group vitest stack — vite-plus-test peer-pins coverage-v8, so they must bump in lockstep",
       "matchPackageNames": [

@@ -71,9 +71,14 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.24",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.24"
   },
-  "engines": {
-    "node": ">=26.1.0",
-    "npm": ">=12.0.1"
+  "devEngines": {
+    "packageManager": {
+      "name": "npm",
+      "version": "^11.17.0",
+      "onFail": "error"
+    }
   },
-  "packageManager": "npm@12.0.1"
+  "engines": {
+    "node": ">=26.1.0"
+  }
 }

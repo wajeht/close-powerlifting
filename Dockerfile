@@ -11,11 +11,9 @@ RUN apt-get update && \
 
 # Copy package files first for better layer caching.
 COPY package*.json .npmrc ./
-COPY scripts/use-project-npm.sh ./scripts/
 
 # Install all deps (dev included for build tools); rebuild native modules.
-RUN ./scripts/use-project-npm.sh && \
-    npm ci --no-audit --no-fund && \
+RUN npm ci --no-audit --no-fund && \
     npm rebuild sharp better-sqlite3 --ignore-scripts=false
 
 # TS config (changes less frequently than source).
