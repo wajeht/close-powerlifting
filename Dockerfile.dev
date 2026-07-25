@@ -8,8 +8,9 @@ RUN apt-get update && \
 WORKDIR /usr/src/app
 
 COPY package.json package-lock.json .npmrc ./
+COPY scripts/use-project-npm.sh ./scripts/
 
-RUN npm install --global "$(node -p "require('./package.json').packageManager")" && \
+RUN ./scripts/use-project-npm.sh && \
     npm install && \
     npm rebuild sharp --ignore-scripts=false
 
