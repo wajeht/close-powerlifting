@@ -65,6 +65,8 @@ jobs:
   deploy-snapshot:
     name: Build and deploy published snapshot
     needs: publish-snapshot
+    permissions:
+      contents: read
     uses: ./.github/workflows/ci.yml
     with:
       snapshot_refresh: true
