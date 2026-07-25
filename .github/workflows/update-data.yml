@@ -1,10 +1,11 @@
 name: Update OPL Database
 
 # Re-parses OpenPowerlifting's nightly bulk CSV into our runtime SQLite
-# database and publishes it as a compressed asset on the `snapshot-latest` GitHub Release.
-# The Dockerfile fetches these assets at image-build time, so the
-# database lives entirely outside the git history — no LFS, no quota
-# pressure, no 700 MB blobs in the repo.
+# database, publishes it as a compressed asset on the `snapshot-latest`
+# GitHub Release, then triggers CI to rebuild and deploy the application.
+# The Dockerfile fetches the asset at image-build time, so the database lives
+# entirely outside the git history — no LFS, no quota pressure, no 700 MB
+# blobs in the repo.
 
 on:
   schedule:
@@ -60,3 +61,13 @@ jobs:
             --title "OPL SQLite snapshot ($BUILT)" \
             --notes "Automated rebuild from the OpenPowerlifting bulk CSV. See the metadata table for counts." \
             src/data/snapshot/close-powerlifting.sqlite.gz
+
+  deploy-snapshot:
+    name: Build and deploy published snapshot
+    needs: publish-snapshot
+    permissions:
+      contents: read
+    uses: ./.github/workflows/ci.yml
+    with:
+      snapshot_refresh: true
+    secrets: inherit
