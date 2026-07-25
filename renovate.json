@@ -4,12 +4,11 @@
   "skipInstalls": false,
   "constraints": {
     "node": ">=26.1.0",
-    "npm": "11.18.0"
+    "npm": "11.17.0"
   },
   "packageRules": [
     {
       "description": "Use the npm version bundled with the pinned Node.js release",
-      "matchManagers": ["npm"],
       "matchPackageNames": ["npm"],
       "enabled": false
     },
