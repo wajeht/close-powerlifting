@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, labeled]
+  workflow_call:
+    inputs:
+      snapshot_refresh:
+        description: Rebuild and deploy after publishing a new database snapshot
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -68,7 +75,9 @@ jobs:
     needs: [check, test]
     name: Build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >
+      (github.event_name == 'push' || inputs.snapshot_refresh) &&
+      github.ref == 'refs/heads/main'
     outputs:
       tag: ${{ steps.image-name.outputs.TAG }}
 
@@ -88,11 +97,18 @@ jobs:
 
       - name: Generate Image Name
         id: image-name
+        env:
+          SNAPSHOT_REFRESH: ${{ inputs.snapshot_refresh }}
         run: |
-          TAG=$(echo ${{ github.sha }} | cut -c1-7)
-          IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_OUTPUT
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          SHORT_SHA="${GITHUB_SHA::7}"
+          if [[ "$SNAPSHOT_REFRESH" == "true" ]]; then
+            TAG="${SHORT_SHA}-snapshot-${GITHUB_RUN_ID}"
+          else
+            TAG="$SHORT_SHA"
+          fi
+          IMAGE_URL=$(printf '%s' "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_URL=$IMAGE_URL" >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker Image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
@@ -101,9 +117,12 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: ${{ steps.image-name.outputs.IMAGE_URL }}
+          build-args: SNAPSHOT_CACHE_BUST=${{ github.run_id }}
 
   deploy:
-    if: github.event_name == 'push'
+    if: >
+      (github.event_name == 'push' || inputs.snapshot_refresh) &&
+      github.ref == 'refs/heads/main'
     needs: build
     name: Deploy
     uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@970a4d7bd568e096d091fbec3371019c763def1f # v0.0.26
@@ -139,11 +158,13 @@ jobs:
 
       - name: Generate Image Name
         id: image-name
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          TAG=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)
-          IMAGE_URL=$(echo ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_OUTPUT
-          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          TAG="${PR_HEAD_SHA::7}"
+          IMAGE_URL=$(printf '%s' "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$TAG" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE_URL=$IMAGE_URL" >> "$GITHUB_OUTPUT"
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker Image
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0

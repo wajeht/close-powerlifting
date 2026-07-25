@@ -72,7 +72,7 @@ The HTTP server starts immediately but `GET /healthz` returns 503 until the SQLi
 
 ## Snapshot
 
-The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a compressed GitHub Release asset (`snapshot-latest`). The Dockerfile downloads and expands the SQLite asset at image-build time, so production containers ship with the data baked in.
+The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a compressed GitHub Release asset (`snapshot-latest`). After publishing, the workflow calls the reusable CI workflow to build and deploy a new image. The Docker build uses a per-run cache-bust value when downloading and expanding the SQLite asset, so production containers always ship with the newly published data baked in.
 
 | Task                          | Command                     | Notes                                                                           |
 | ----------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
