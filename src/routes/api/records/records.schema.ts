@@ -64,4 +64,56 @@ export const getRecordsByWeightClassSexParamValidation = z.object({
 
 export type GetRecordsQueryType = z.infer<typeof getRecordsQueryValidation>;
 
-export const RecordsData = z.unknown().openapi("RecordsData");
+const equipmentGroupEnum = z.enum(["raw", "wraps", "single", "multi", "unlimited", "all-tested"]);
+const recordCategoryEnum = z.enum([
+  "squat_full_power",
+  "squat_all_events",
+  "bench_full_power",
+  "bench_all_events",
+  "deadlift_full_power",
+  "deadlift_all_events",
+  "total",
+]);
+const recordSexEnum = z.enum(["M", "F"]);
+
+const RecordEntry = z
+  .object({
+    weight_class_kg: z.number(),
+    rank: z.number(),
+    lift_value: z.number(),
+    username: z.string(),
+    name: z.string(),
+    federation: z.string(),
+    meet_path: z.string(),
+    meet_name: z.string(),
+    date: z.string(),
+  })
+  .openapi("RecordEntry");
+
+const RecordSection = z
+  .object({
+    sex: recordSexEnum,
+    equipment_group: equipmentGroupEnum,
+    records: z.array(RecordEntry),
+  })
+  .openapi("RecordSection");
+
+const RecordCategory = z
+  .object({
+    key: recordCategoryEnum,
+    title: z.string(),
+    sections: z.array(RecordSection),
+  })
+  .openapi("RecordCategory");
+
+export const RecordsData = z
+  .object({
+    filters: z.object({
+      equipment_group: equipmentGroupEnum.nullable(),
+      sex: recordSexEnum.nullable(),
+      weight_class_kg: z.number().nullable(),
+      age_class: z.string().nullable(),
+    }),
+    categories: z.array(RecordCategory),
+  })
+  .openapi("RecordsData");

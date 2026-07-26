@@ -1,9 +1,27 @@
 // Shared OpenAPI response shapes used across feature routes.
-// Keep these minimal — endpoint-specific data fields stay loosely typed
-// in the spec; consumers should rely on the published `docs/api.json`
-// for full field-level documentation.
 
 import { z } from "@hono/zod-openapi";
+
+export const UnitsSchema = z.enum(["lbs", "kg"]);
+export const SexSchema = z.enum(["M", "F", "Mx"]);
+export const EventSchema = z.enum(["SBD", "BD", "SD", "SB", "S", "B", "D"]);
+export const EquipmentSchema = z.enum([
+  "Raw",
+  "Wraps",
+  "Single-ply",
+  "Multi-ply",
+  "Unlimited",
+  "Straps",
+]);
+export const PlaceSchema = z
+  .union([z.number(), z.enum(["G", "DQ", "DD", "NS"]), z.null()])
+  .openapi({
+    anyOf: [
+      { type: "number" },
+      { type: "string", enum: ["G", "DQ", "DD", "NS"] },
+      { type: "null" },
+    ],
+  });
 
 export const PaginationSchema = z
   .object({
@@ -43,6 +61,16 @@ export function paginatedResponse<T extends z.ZodType>(dataSchema: T) {
     request_url: z.string(),
     message: z.string(),
     data: z.array(dataSchema),
+    pagination: PaginationSchema,
+  });
+}
+
+export function paginatedDataResponse<T extends z.ZodType>(dataSchema: T) {
+  return z.object({
+    status: z.literal("success"),
+    request_url: z.string(),
+    message: z.string(),
+    data: dataSchema,
     pagination: PaginationSchema,
   });
 }

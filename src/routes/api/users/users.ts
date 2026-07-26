@@ -3,7 +3,7 @@ import { HTTPException } from "hono/http-exception";
 
 import type { AppContext } from "../../../context";
 import type { Units } from "../../../utils/helpers";
-import { errorContent, jsonContent, successResponse } from "../api.schemas";
+import { errorContent, jsonContent, paginatedDataResponse, successResponse } from "../api.schemas";
 import {
   CompareData,
   PersonalBests,
@@ -31,7 +31,7 @@ export function createUsersRouter(context: AppContext) {
       responses: {
         200: {
           description: "Paginated list of lifters (optionally filtered by ?search=)",
-          ...jsonContent(successResponse(UserListData)),
+          ...jsonContent(paginatedDataResponse(UserListData)),
         },
         400: { description: "Validation error", ...errorContent },
         429: { description: "Rate limit exceeded", ...errorContent },

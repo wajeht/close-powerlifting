@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { EquipmentSchema, EventSchema, PlaceSchema, SexSchema, UnitsSchema } from "../api.schemas";
 import {
   currentPageValidation,
   federationSlugValidation,
@@ -43,6 +44,81 @@ export type GetMeetParamType = z.infer<typeof getMeetParamValidation>;
 export type GetMeetQueryType = z.infer<typeof getMeetQueryValidation>;
 export type GetMeetHighlightsQueryType = z.infer<typeof getMeetHighlightsQueryValidation>;
 
-export const MeetSummary = z.unknown().openapi("MeetSummary");
-export const MeetDetail = z.unknown().openapi("MeetDetail");
-export const MeetHighlights = z.unknown().openapi("MeetHighlights");
+const nullableNumber = z.number().nullable();
+
+const MeetLocation = {
+  country: z.string().nullable(),
+  state: z.string().nullable(),
+  town: z.string().nullable(),
+};
+
+export const MeetSummary = z
+  .object({
+    path: z.string(),
+    meet_name: z.string(),
+    federation: z.string(),
+    date: z.string(),
+    ...MeetLocation,
+    sanctioned: z.boolean(),
+  })
+  .openapi("MeetSummary");
+
+const MeetResult = z
+  .object({
+    username: z.string(),
+    name: z.string(),
+    sex: SexSchema.nullable(),
+    age: nullableNumber,
+    event: EventSchema,
+    equipment: EquipmentSchema,
+    weight_class_kg: nullableNumber,
+    bodyweight: nullableNumber,
+    squat: nullableNumber,
+    bench: nullableNumber,
+    deadlift: nullableNumber,
+    total: nullableNumber,
+    dots: nullableNumber,
+    place: PlaceSchema,
+    units: UnitsSchema,
+  })
+  .openapi("MeetResult");
+
+const MeetHighlight = z
+  .object({
+    username: z.string(),
+    name: z.string(),
+    equipment: EquipmentSchema,
+    weight_class_kg: nullableNumber,
+    value: z.number(),
+  })
+  .nullable()
+  .openapi("MeetHighlight");
+
+export const MeetDetail = z
+  .object({
+    path: z.string(),
+    meet_name: z.string(),
+    federation: z.string(),
+    parent_federation: z.string().nullable(),
+    date: z.string(),
+    ...MeetLocation,
+    sanctioned: z.boolean(),
+    results: z.array(MeetResult),
+  })
+  .openapi("MeetDetail");
+
+export const MeetHighlights = z
+  .object({
+    path: z.string(),
+    meet_name: z.string(),
+    federation: z.string(),
+    date: z.string(),
+    highlights: z.object({
+      best_total: MeetHighlight,
+      best_squat: MeetHighlight,
+      best_bench: MeetHighlight,
+      best_deadlift: MeetHighlight,
+      best_dots: MeetHighlight,
+    }),
+  })
+  .openapi("MeetHighlights");

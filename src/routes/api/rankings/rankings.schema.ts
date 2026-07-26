@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
+import { EquipmentSchema, EventSchema, SexSchema, UnitsSchema } from "../api.schemas";
 import {
   currentPageValidation,
   federationSlugValidation,
@@ -75,4 +76,32 @@ export type GetFilteredRankingsQueryType = z.infer<typeof getFilteredRankingsQue
 export type GetFilteredRankingsParamType = z.infer<typeof getFilteredRankingsParamValidation>;
 export type GetRankType = z.infer<typeof getRankValidation>;
 
-export const RankingEntry = z.unknown().openapi("RankingEntry");
+const nullableNumber = z.number().nullable();
+
+export const RankingEntry = z
+  .object({
+    rank: z.number(),
+    username: z.string(),
+    name: z.string(),
+    sex: SexSchema.nullable(),
+    age: nullableNumber,
+    bodyweight: nullableNumber,
+    weight_class_kg: nullableNumber,
+    equipment: EquipmentSchema,
+    event: EventSchema,
+    squat: nullableNumber,
+    bench: nullableNumber,
+    deadlift: nullableNumber,
+    total: nullableNumber,
+    dots: nullableNumber,
+    wilks: nullableNumber,
+    glossbrenner: nullableNumber,
+    goodlift: nullableNumber,
+    federation: z.string(),
+    meet_path: z.string(),
+    meet_name: z.string(),
+    meet_date: z.string(),
+    country: z.string().nullable(),
+    units: UnitsSchema,
+  })
+  .openapi("RankingEntry");

@@ -86,7 +86,7 @@ export function createApp(context: AppContext): HonoApp {
 
   app.route("/", createMainRouter(context));
 
-  app.doc("/docs/api.json", {
+  app.doc31("/docs/api.json", {
     openapi: "3.1.0",
     info: {
       title: "close-powerlifting API",
