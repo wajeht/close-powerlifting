@@ -1,3 +1,4 @@
+import { z } from "@hono/zod-openapi";
 import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../../app";
@@ -20,6 +21,19 @@ let app: ReturnType<typeof createApp>;
 beforeEach(() => {
   app = createApp(createTestContext());
 });
+
+function expectExactSchemaMatch(schema: z.ZodType, payload: unknown) {
+  const result = schema.safeParse(payload);
+  expect(result.success).toBe(true);
+  if (!result.success) return;
+  expect(result.data).toStrictEqual(payload);
+}
+
+function containsLegacyNullable(value: unknown): boolean {
+  if (value == null || typeof value !== "object") return false;
+  if ("nullable" in value) return true;
+  return Object.values(value).some(containsLegacyNullable);
+}
 
 describe("OpenAPI response schemas", () => {
   it("publishes concrete component definitions for every feature response", async () => {
@@ -53,6 +67,7 @@ describe("OpenAPI response schemas", () => {
 
     expect(schemas.UserListData.items.type).toBe("object");
     expect(schemas.CompetitionResult.properties.place.anyOf).toContainEqual({ type: "null" });
+    expect(containsLegacyNullable(spec)).toBe(false);
   });
 
   it("documents pagination on the users list response", async () => {
@@ -97,19 +112,38 @@ describe("OpenAPI response schemas", () => {
       app.request("/api/federations/wrpf"),
     ]);
 
-    expect(RankingEntry.safeParse((await ranking.json()).data).success).toBe(true);
-    expect(RecordsData.safeParse((await records.json()).data).success).toBe(true);
-    expect(UserListData.safeParse((await users.json()).data).success).toBe(true);
-    expect(CompareData.safeParse((await comparison.json()).data).success).toBe(true);
-    expect(Progression.safeParse((await progression.json()).data).success).toBe(true);
-    expect(PersonalBests.safeParse((await personalBests.json()).data).success).toBe(true);
-    expect(UserRank.safeParse((await userRank.json()).data).success).toBe(true);
-    expect(UserProfile.safeParse((await userProfile.json()).data).success).toBe(true);
-    expect(MeetSummary.safeParse((await meets.json()).data[0]).success).toBe(true);
-    expect(MeetHighlights.safeParse((await meetHighlights.json()).data).success).toBe(true);
-    expect(MeetDetail.safeParse((await meetDetail.json()).data).success).toBe(true);
-    expect(FederationRow.safeParse((await federations.json()).data[0]).success).toBe(true);
-    expect(FederationStats.safeParse((await federationStats.json()).data).success).toBe(true);
-    expect(FederationDetail.safeParse((await federationDetail.json()).data).success).toBe(true);
+    for (const response of [
+      ranking,
+      records,
+      users,
+      comparison,
+      progression,
+      personalBests,
+      userRank,
+      userProfile,
+      meets,
+      meetHighlights,
+      meetDetail,
+      federations,
+      federationStats,
+      federationDetail,
+    ]) {
+      expect(response.status).toBe(200);
+    }
+
+    expectExactSchemaMatch(RankingEntry, (await ranking.json()).data);
+    expectExactSchemaMatch(RecordsData, (await records.json()).data);
+    expectExactSchemaMatch(UserListData, (await users.json()).data);
+    expectExactSchemaMatch(CompareData, (await comparison.json()).data);
+    expectExactSchemaMatch(Progression, (await progression.json()).data);
+    expectExactSchemaMatch(PersonalBests, (await personalBests.json()).data);
+    expectExactSchemaMatch(UserRank, (await userRank.json()).data);
+    expectExactSchemaMatch(UserProfile, (await userProfile.json()).data);
+    expectExactSchemaMatch(MeetSummary, (await meets.json()).data[0]);
+    expectExactSchemaMatch(MeetHighlights, (await meetHighlights.json()).data);
+    expectExactSchemaMatch(MeetDetail, (await meetDetail.json()).data);
+    expectExactSchemaMatch(FederationRow, (await federations.json()).data[0]);
+    expectExactSchemaMatch(FederationStats, (await federationStats.json()).data);
+    expectExactSchemaMatch(FederationDetail, (await federationDetail.json()).data);
   });
 });
