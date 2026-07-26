@@ -48,11 +48,11 @@ describe("OpenAPI response schemas", () => {
     for (const name of responseSchemaNames) {
       const schema = schemas[name];
       expect(schema, `${name} should be registered`).toBeDefined();
-      expect(
-        schema.type ?? schema.allOf ?? schema.anyOf ?? schema.oneOf,
-        `${name} should not be an unconstrained schema`,
-      ).toBeDefined();
+      expect(schema.type, `${name} should have a concrete top-level type`).toBeDefined();
     }
+
+    expect(schemas.UserListData.items.type).toBe("object");
+    expect(schemas.CompetitionResult.properties.place.anyOf).toContainEqual({ type: "null" });
   });
 
   it("documents pagination on the users list response", async () => {

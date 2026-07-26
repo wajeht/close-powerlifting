@@ -42,12 +42,10 @@ export type GetCompareType = z.infer<typeof getCompareValidation>;
 
 const nullableNumber = z.number().nullable();
 
-const LifterMatch = z
-  .object({
-    username: z.string(),
-    name: z.string(),
-  })
-  .openapi("LifterMatch");
+const LifterMatchShape = {
+  username: z.string(),
+  name: z.string(),
+};
 
 const PersonalBest = z
   .object({
@@ -61,16 +59,16 @@ const PersonalBest = z
   })
   .openapi("PersonalBest");
 
-const ProfileSummary = z
-  .object({
-    username: z.string(),
-    name: z.string(),
-    total_entries: z.number(),
-    first_meet: z.string().nullable(),
-    last_meet: z.string().nullable(),
-    personal_best: PersonalBest,
-  })
-  .openapi("ProfileSummary");
+const ProfileSummaryShape = {
+  username: z.string(),
+  name: z.string(),
+  total_entries: z.number(),
+  first_meet: z.string().nullable(),
+  last_meet: z.string().nullable(),
+  personal_best: PersonalBest,
+};
+
+const ProfileSummary = z.object(ProfileSummaryShape).openapi("ProfileSummary");
 
 const Attempts = z
   .object({
@@ -163,11 +161,14 @@ const Deltas = z
   })
   .openapi("Deltas");
 
-export const UserListData = z.array(LifterMatch).openapi("UserListData");
+export const UserListData = z.array(z.object(LifterMatchShape)).openapi("UserListData");
 
-export const UserProfile = ProfileSummary.extend({
-  competition_results: z.array(CompetitionResult),
-}).openapi("UserProfile");
+export const UserProfile = z
+  .object({
+    ...ProfileSummaryShape,
+    competition_results: z.array(CompetitionResult),
+  })
+  .openapi("UserProfile");
 
 export const PersonalBests = z
   .object({

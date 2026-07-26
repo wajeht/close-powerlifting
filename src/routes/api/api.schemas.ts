@@ -13,7 +13,15 @@ export const EquipmentSchema = z.enum([
   "Unlimited",
   "Straps",
 ]);
-export const PlaceSchema = z.union([z.number(), z.enum(["G", "DQ", "DD", "NS"])]).nullable();
+export const PlaceSchema = z
+  .union([z.number(), z.enum(["G", "DQ", "DD", "NS"]), z.null()])
+  .openapi({
+    anyOf: [
+      { type: "number" },
+      { type: "string", enum: ["G", "DQ", "DD", "NS"] },
+      { type: "null" },
+    ],
+  });
 
 export const PaginationSchema = z
   .object({

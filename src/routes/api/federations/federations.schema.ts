@@ -24,14 +24,14 @@ export type GetFederationsType = z.infer<typeof getFederationsValidation>;
 export type GetFederationsParamType = z.infer<typeof getFederationsParamValidation>;
 export type GetFederationMeetsQueryType = z.infer<typeof getFederationMeetsQueryValidation>;
 
-export const FederationRow = z
-  .object({
-    slug: z.string(),
-    code: z.string(),
-    parent_slug: z.string().nullable(),
-    meet_count: z.number(),
-  })
-  .openapi("FederationRow");
+const FederationRowShape = {
+  slug: z.string(),
+  code: z.string(),
+  parent_slug: z.string().nullable(),
+  meet_count: z.number(),
+};
+
+export const FederationRow = z.object(FederationRowShape).openapi("FederationRow");
 
 const FederationMeet = z
   .object({
@@ -45,9 +45,12 @@ const FederationMeet = z
   })
   .openapi("FederationMeet");
 
-export const FederationDetail = FederationRow.extend({
-  meets: z.array(FederationMeet),
-}).openapi("FederationDetail");
+export const FederationDetail = z
+  .object({
+    ...FederationRowShape,
+    meets: z.array(FederationMeet),
+  })
+  .openapi("FederationDetail");
 
 export const FederationStats = z
   .object({
