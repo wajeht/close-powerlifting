@@ -67,6 +67,7 @@ jobs:
     needs: publish-snapshot
     permissions:
       contents: read
+      deployments: write
     uses: ./.github/workflows/ci.yml
     with:
       snapshot_refresh: true
