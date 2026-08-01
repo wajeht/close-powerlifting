@@ -34,7 +34,13 @@ export const sortEnum = z.enum([
 ]);
 
 export const ageClassEnum = z.enum([
+  "5-12",
+  "13-15",
+  "16-17",
+  "18-19",
+  "20-23",
   "24-34",
+  "35-39",
   "40-44",
   "45-49",
   "50-54",
@@ -43,6 +49,8 @@ export const ageClassEnum = z.enum([
   "65-69",
   "70-74",
   "75-79",
+  "80-84",
+  "85-89",
 ]);
 
 const baseQuery = z.object({
