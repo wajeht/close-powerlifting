@@ -45,7 +45,7 @@
     "better-sqlite3": "13.0.1",
     "hono": "4.12.32",
     "knex": "3.3.0",
-    "zod": "4.4.3"
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",
