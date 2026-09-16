@@ -39,7 +39,7 @@
     "prepare": "[ -z \"$CI\" ] && vp config || true"
   },
   "dependencies": {
-    "@hono/node-server": "2.0.11",
+    "@hono/node-server": "2.1.1",
     "@hono/swagger-ui": "0.6.1",
     "@hono/zod-openapi": "1.5.1",
     "better-sqlite3": "13.0.1",
