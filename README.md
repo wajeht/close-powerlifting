@@ -122,6 +122,25 @@ Ranking results expose the athlete's `country` and boolean `tested` flag. The
 existing `/api/rankings/filter/...` URLs continue to work and also accept
 `country` and `tested` query filters.
 
+### Browser access
+
+The public API supports browser requests from any origin. Requests are anonymous;
+use the default `fetch` credentials setting or `credentials: "omit"`.
+Cross-origin requests with `credentials: "include"` are not supported.
+
+```js
+const response = await fetch("https://closepowerlifting.com/api/rankings?per_page=10&units=kg", {
+  credentials: "omit",
+});
+const payload = await response.json();
+console.log(payload.data);
+```
+
+CORS preflights allow `GET`, `HEAD`, and `OPTIONS`. Browser JavaScript can read
+`ETag`, `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`, and `X-Request-Id`
+response headers. The existing per-IP rate limit still applies.
+Conditional requests using `If-None-Match` also keep these headers on `304 Not Modified` responses.
+
 ## Docs
 
 - [Development guide](./docs/getting-started.md) — clone, install, snapshot download, dev server
