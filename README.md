@@ -10,7 +10,7 @@ An intuitive REST API for the OpenPowerlifting dataset.
 
 | Endpoint                       | Description                                                              |
 | ------------------------------ | ------------------------------------------------------------------------ |
-| `GET /api/rankings`            | Global powerlifting rankings sorted by DOTS                              |
+| `GET /api/rankings`            | Global rankings with flexible query filters and scoring                  |
 | `GET /api/rankings/filter/...` | Cumulative filters: equipment / sex / weight-class / year / event / sort |
 | `GET /api/federations`         | Federation list + per-federation meet history + per-year stats           |
 | `GET /api/meets`               | Meet index + individual meet results / highlights                        |
@@ -28,13 +28,15 @@ Full request parameters, filters, and response shapes are documented at [closepo
 No keys, no headers, no signup:
 
 ```bash
-curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
+curl 'https://closepowerlifting.com/api/rankings?per_page=1&units=kg'
 ```
+
+Example response; rankings and counts change with snapshot updates:
 
 ```json
 {
   "status": "success",
-  "request_url": "https://closepowerlifting.com/api/rankings?per_page=2&units=kg",
+  "request_url": "https://closepowerlifting.com/api/rankings?per_page=1&units=kg",
   "message": "The resource was returned successfully!",
   "data": [
     {
@@ -42,9 +44,11 @@ curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
       "username": "deanatollefson",
       "name": "Deana Tollefson",
       "sex": "F",
-      "age": null,
+      "age": 37,
       "bodyweight": 83.2,
       "weight_class_kg": 90,
+      "weight_class_over": false,
+      "tested": false,
       "equipment": "Multi-ply",
       "event": "SBD",
       "squat": 365,
@@ -65,13 +69,13 @@ curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
   ],
   "pagination": {
     "current_page": 1,
-    "per_page": 2,
-    "items": 954614,
-    "pages": 477307,
+    "per_page": 1,
+    "items": 968693,
+    "pages": 968693,
     "first_page": 1,
-    "last_page": 477307,
+    "last_page": 968693,
     "from": 1,
-    "to": 2
+    "to": 1
   }
 }
 ```
@@ -80,11 +84,43 @@ Add `?pretty` to any endpoint for indented JSON output, or `?units=lbs` (default
 
 Weight classes keep their numeric `weight_class_kg` boundary and include a
 `weight_class_over` flag: `84` is `{ "weight_class_kg": 84, "weight_class_over": false }`,
-while `84+` has the same boundary with `weight_class_over: true`. Use `84%2B` in a
-ranking or records weight-class path to select the open-ended class.
+while `84+` has the same boundary with `weight_class_over: true`. Encode `+` as
+`%2B` in URLs, for example `/api/rankings?weight_class=84%2B`, or in a ranking or
+records weight-class path to select the open-ended class.
 
 Rankings support DOTS, Wilks, Glossbrenner, Goodlift, total, squat, bench, and
 deadlift sorting. Unsupported sorts such as `by-mcculloch` return HTTP 400.
+
+### Ranking filters
+
+Combine any of these query parameters on `/api/rankings`; omitted filters include
+all matching entries. Each athlete appears once, using their best result **within
+the selected filters**. The default sort is `by-dots`.
+
+```bash
+curl 'https://closepowerlifting.com/api/rankings?equipment=raw&sex=women&tested=true&country=USA&sort=by-total&per_page=10&units=kg'
+```
+
+| Parameter      | Values                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `equipment`    | `raw`, `wraps`, `raw-wraps`, `single-ply`, `multi-ply`, `unlimited`                                        |
+| `sex`          | `men`, `women`                                                                                             |
+| `weight_class` | A class boundary, such as `84`, `82.5`, or `84%2B` for 84+                                                 |
+| `year`         | Four digits, such as `2024`                                                                                |
+| `event`        | `full-power`, `push-pull`, `squat`, `bench`, `deadlift`                                                    |
+| `sort`         | `by-dots`, `by-wilks`, `by-glossbrenner`, `by-goodlift`, `by-total`, `by-squat`, `by-bench`, `by-deadlift` |
+| `age_class`    | An age-class label, such as `24-34` or `40-44`                                                             |
+| `federation`   | A federation slug, such as `ipf`                                                                           |
+| `country`      | Exact athlete country from the dataset, case-insensitive; this is not the meet location                    |
+| `tested`       | `true` or `false`, matching the entry's OPL tested flag                                                    |
+| `current_page` | Page number, starting at `1`                                                                               |
+| `per_page`     | Results per page, default `100`, maximum `500`                                                             |
+| `units`        | `lbs` (default) or `kg` for weight fields; weight-class boundaries always stay in kg                       |
+
+`tested=false` selects entries without the tested flag; omitting it includes both.
+Ranking results expose the athlete's `country` and boolean `tested` flag. The
+existing `/api/rankings/filter/...` URLs continue to work and also accept
+`country` and `tested` query filters.
 
 ## Docs
 
