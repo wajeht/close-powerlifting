@@ -54,36 +54,48 @@ export const ageClassEnum = z.enum([
 ]);
 
 export const getFilteredRankingsParamValidation = z.object({
-  equipment: equipmentEnum.optional(),
-  sex: sexEnum.optional(),
+  equipment: equipmentEnum
+    .describe("Equipment category; raw-wraps combines raw and wraps")
+    .optional(),
+  sex: sexEnum.describe("Athlete sex").optional(),
   weight_class: z
     .string()
     .trim()
     .refine((value) => parseWeightClass(value) != null, {
       message: "Expected a weight class such as 84 or 84+",
     })
+    .describe("Weight class in kg, such as 84 or 84+; encode + as %2B in URLs")
     .optional(),
-  year: yearPathValidation.optional(),
-  event: eventEnum.optional(),
-  sort: sortEnum.optional(),
+  year: yearPathValidation.describe("Competition year, such as 2024").optional(),
+  event: eventEnum.describe("Competition event").optional(),
+  sort: sortEnum.describe("Ranking metric, highest first; defaults to by-dots").optional(),
 });
 
 const baseQuery = z.object({
-  current_page: currentPageValidation.optional(),
-  per_page: perPageValidation.optional(),
-  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
-  federation: federationSlugValidation.optional(),
-  age_class: ageClassEnum.optional(),
+  current_page: currentPageValidation.describe("Page number, starting at 1").optional(),
+  per_page: perPageValidation
+    .describe("Results per page; defaults to 100, capped at 500")
+    .optional(),
+  units: z
+    .enum(["lbs", "kg"])
+    .default("lbs")
+    .describe("Weight units; defaults to lbs. Weight-class boundaries always stay in kg")
+    .optional(),
+  federation: federationSlugValidation.describe("Federation slug, such as ipf").optional(),
+  age_class: ageClassEnum.describe("Age class recorded for the competition entry").optional(),
   tested: z
     .enum(["true", "false"])
     .transform((value) => value === "true")
+    .describe("Entry's OPL tested flag: true or false; omit to include both")
     .optional(),
   country: z
     .string()
     .trim()
     .min(1)
     .max(100)
-    .describe("Athlete country recorded for the competition entry, not the meet location")
+    .describe(
+      "Exact athlete country recorded for the entry, case-insensitive; not the meet location",
+    )
     .optional(),
 });
 

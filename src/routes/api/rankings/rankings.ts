@@ -2,7 +2,13 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { HTTPException } from "hono/http-exception";
 
 import type { AppContext } from "../../../context";
-import { errorContent, jsonContent, paginatedResponse, successResponse } from "../api.schemas";
+import {
+  ValidationErrorResponseSchema,
+  errorContent,
+  jsonContent,
+  paginatedResponse,
+  successResponse,
+} from "../api.schemas";
 import {
   RankingEntry,
   getFilteredRankingsParamValidation,
@@ -26,10 +32,12 @@ const filterRouteShape = (path: string, paramKeys: ReadonlyArray<string>) =>
     },
     responses: {
       200: { description: "Filtered rankings", ...jsonContent(paginatedResponse(RankingEntry)) },
-      400: { description: "Validation error", ...errorContent },
+      400: { description: "Validation error", ...jsonContent(ValidationErrorResponseSchema) },
     },
     tags: ["Rankings"],
     summary: `Filter rankings by ${paramKeys.join(", ")}`,
+    description:
+      "Each athlete appears once, using their best entry within all path and query filters. Country matches the athlete's recorded country, case-insensitively. Omit tested to include both tested and untested entries.",
   });
 
 export function createRankingsRouter(context: AppContext) {
@@ -43,11 +51,13 @@ export function createRankingsRouter(context: AppContext) {
       request: { query: getRankingsValidation },
       responses: {
         200: { description: "Rankings list", ...jsonContent(paginatedResponse(RankingEntry)) },
-        400: { description: "Validation error", ...errorContent },
+        400: { description: "Validation error", ...jsonContent(ValidationErrorResponseSchema) },
         429: { description: "Rate limit exceeded", ...errorContent },
       },
       tags: ["Rankings"],
       summary: "Get rankings with flexible filters, scoring, and pagination",
+      description:
+        "Combine any query filters independently. Each athlete appears once, using their best entry within the selected filters. Results default to descending DOTS. Example: /api/rankings?equipment=raw&sex=women&tested=true&country=USA&sort=by-total&units=kg. Existing /api/rankings/filter/... URLs remain supported.",
     }),
     async (c) => {
       const query = c.req.valid("query");
@@ -117,7 +127,7 @@ export function createRankingsRouter(context: AppContext) {
       request: { params: getRankValidation },
       responses: {
         200: { description: "Single ranking entry", ...jsonContent(successResponse(RankingEntry)) },
-        400: { description: "Validation error", ...errorContent },
+        400: { description: "Validation error", ...jsonContent(ValidationErrorResponseSchema) },
         404: { description: "Rank out of range", ...errorContent },
         429: { description: "Rate limit exceeded", ...errorContent },
       },

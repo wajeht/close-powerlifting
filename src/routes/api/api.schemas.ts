@@ -46,6 +46,16 @@ export const ErrorResponseSchema = z
   })
   .openapi("ErrorResponse");
 
+export const ValidationErrorResponseSchema = z
+  .object({
+    success: z.literal(false),
+    error: z.object({
+      name: z.literal("ZodError"),
+      message: z.string().describe("JSON-encoded validation issues"),
+    }),
+  })
+  .openapi("ValidationErrorResponse");
+
 export function successResponse<T extends z.ZodType>(dataSchema: T) {
   return z.object({
     status: z.literal("success"),
