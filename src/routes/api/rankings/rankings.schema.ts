@@ -53,19 +53,6 @@ export const ageClassEnum = z.enum([
   "85-89",
 ]);
 
-const baseQuery = z.object({
-  current_page: currentPageValidation.optional(),
-  per_page: perPageValidation.optional(),
-  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
-  federation: federationSlugValidation.optional(),
-});
-
-export const getRankingsValidation = baseQuery;
-
-export const getFilteredRankingsQueryValidation = baseQuery.extend({
-  age_class: ageClassEnum.optional(),
-});
-
 export const getFilteredRankingsParamValidation = z.object({
   equipment: equipmentEnum.optional(),
   sex: sexEnum.optional(),
@@ -80,6 +67,29 @@ export const getFilteredRankingsParamValidation = z.object({
   event: eventEnum.optional(),
   sort: sortEnum.optional(),
 });
+
+const baseQuery = z.object({
+  current_page: currentPageValidation.optional(),
+  per_page: perPageValidation.optional(),
+  units: z.enum(["lbs", "kg"]).default("lbs").optional(),
+  federation: federationSlugValidation.optional(),
+  age_class: ageClassEnum.optional(),
+  tested: z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .optional(),
+  country: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .describe("Athlete country recorded for the competition entry, not the meet location")
+    .optional(),
+});
+
+export const getRankingsValidation = baseQuery.extend(getFilteredRankingsParamValidation.shape);
+
+export const getFilteredRankingsQueryValidation = baseQuery;
 
 export const getRankValidation = z.object({
   rank: z.string().regex(/^\d+$/, { message: "Expected a positive integer rank" }),
@@ -104,6 +114,7 @@ export const RankingEntry = z
     weight_class_over: z.boolean().describe("True for an open-ended class such as 84+"),
     equipment: EquipmentSchema,
     event: EventSchema,
+    tested: z.boolean().describe("Whether the competition entry was recorded as drug tested"),
     squat: nullableNumber,
     bench: nullableNumber,
     deadlift: nullableNumber,
@@ -116,7 +127,10 @@ export const RankingEntry = z
     meet_path: z.string(),
     meet_name: z.string(),
     meet_date: z.string(),
-    country: z.string().nullable(),
+    country: z
+      .string()
+      .nullable()
+      .describe("Athlete country recorded for the competition entry, not the meet location"),
     units: UnitsSchema,
   })
   .openapi("RankingEntry");

@@ -23,7 +23,7 @@ import type {
 const { defaultPerPage } = configuration.pagination;
 const PRECOMPUTED_RANKING_METRIC: RankMetric = "dots";
 
-const SORT_TO_METRIC: Record<string, RankMetric> = {
+const SORT_TO_METRIC: Record<NonNullable<GetRankingsType["sort"]>, RankMetric> = {
   "by-dots": "dots",
   "by-wilks": "wilks",
   "by-glossbrenner": "glossbrenner",
@@ -47,6 +47,8 @@ interface RankingFilter {
   eventValues: ReadonlyArray<Entry["event"]> | null;
   ageClass: string | null;
   federation: string | null;
+  tested: boolean | null;
+  country: string | null;
 }
 
 interface RankingRow {
@@ -58,6 +60,7 @@ interface RankingRow {
   bodyweight_kg: number | null;
   weight_class_kg: number | null;
   weight_class_over: number;
+  tested: number;
   equipment: Entry["equipment"];
   event: Entry["event"];
   best3_squat_kg: number | null;
@@ -86,62 +89,29 @@ export function createRankingsService(store: DataStoreType) {
   }> {
     const { db } = store.get();
     const units: Units = query.units ?? "lbs";
-    const federation = query.federation == null ? null : toSlug(query.federation);
+    const filter = buildRankingFilter(query);
+    const metric = SORT_TO_METRIC[query.sort ?? "by-dots"];
     const currentPage = query.current_page ?? 1;
     const perPage = query.per_page ?? defaultPerPage;
 
-    if (federation == null) {
-      const total = await countGlobalRanking(db, "dots");
+    if (canUseGlobalRanking(filter)) {
+      const total = await countGlobalRanking(db, metric);
       const pagination = buildPagination(total, currentPage, perPage);
-      const rows = await selectGlobalRanking(db, "dots", pagination);
+      const rows = await selectGlobalRanking(db, metric, pagination);
       return {
         data: rows.map((row) => buildRankingRow(row, units)),
         pagination,
       };
     }
 
-    return filteredRankingWithPagination(
-      db,
-      "dots",
-      emptyFilter({ federation }),
-      units,
-      currentPage,
-      perPage,
-    );
+    return filteredRankingWithPagination(db, metric, filter, units, currentPage, perPage);
   }
 
   async function getFilteredRankings(
     params: GetFilteredRankingsParamType,
     query: GetFilteredRankingsQueryType,
   ): Promise<{ data: unknown[]; pagination: Pagination }> {
-    const { db } = store.get();
-    const units: Units = query.units ?? "lbs";
-    const metric: RankMetric = params.sort != null ? SORT_TO_METRIC[params.sort]! : "dots";
-    const equipment = findRankingEquipment(params.equipment);
-    const sex = findRankingSex(params.sex);
-    const event = findRankingEvent(params.event);
-    const weightClass = parseWeightClass(params.weight_class);
-    const filter: RankingFilter = {
-      equipmentKey: equipment?.key ?? null,
-      equipmentValues: equipment?.equipment ?? null,
-      sexKey: sex?.key ?? null,
-      sex: sex?.sex ?? null,
-      weightClassKg: weightClass?.kilograms ?? null,
-      weightClassOver: weightClass?.over ?? null,
-      yearPrefix: params.year != null ? `${params.year}-` : null,
-      eventValues: event?.events ?? null,
-      ageClass: query.age_class ?? null,
-      federation: query.federation == null ? null : toSlug(query.federation),
-    };
-
-    return filteredRankingWithPagination(
-      db,
-      metric,
-      filter,
-      units,
-      query.current_page ?? 1,
-      query.per_page ?? defaultPerPage,
-    );
+    return getRankings({ ...query, ...params });
   }
 
   async function getRank(rank: number): Promise<Record<string, unknown> | null> {
@@ -164,20 +134,39 @@ export function createRankingsService(store: DataStoreType) {
   return { getRankings, getFilteredRankings, getRank, getMaxRank };
 }
 
-function emptyFilter(overrides: Partial<RankingFilter>): RankingFilter {
+function buildRankingFilter(query: GetRankingsType): RankingFilter {
+  const equipment = findRankingEquipment(query.equipment);
+  const sex = findRankingSex(query.sex);
+  const event = findRankingEvent(query.event);
+  const weightClass = parseWeightClass(query.weight_class);
   return {
-    equipmentKey: null,
-    equipmentValues: null,
-    sexKey: null,
-    sex: null,
-    weightClassKg: null,
-    weightClassOver: null,
-    yearPrefix: null,
-    eventValues: null,
-    ageClass: null,
-    federation: null,
-    ...overrides,
+    equipmentKey: equipment?.key ?? null,
+    equipmentValues: equipment?.equipment ?? null,
+    sexKey: sex?.key ?? null,
+    sex: sex?.sex ?? null,
+    weightClassKg: weightClass?.kilograms ?? null,
+    weightClassOver: weightClass?.over ?? null,
+    yearPrefix: query.year == null ? null : `${query.year}-`,
+    eventValues: event?.events ?? null,
+    ageClass: query.age_class ?? null,
+    federation: query.federation == null ? null : toSlug(query.federation),
+    tested: query.tested ?? null,
+    country: query.country?.toLowerCase() ?? null,
   };
+}
+
+function canUseGlobalRanking(filter: RankingFilter): boolean {
+  return (
+    filter.equipmentValues == null &&
+    filter.sex == null &&
+    filter.weightClassKg == null &&
+    filter.yearPrefix == null &&
+    filter.eventValues == null &&
+    filter.ageClass == null &&
+    filter.federation == null &&
+    filter.tested == null &&
+    filter.country == null
+  );
 }
 
 async function countGlobalRanking(db: Knex, metric: RankMetric): Promise<number> {
@@ -210,6 +199,7 @@ async function selectGlobalRanking(
       bodyweight_kg: "e.bodyweight_kg",
       weight_class_kg: "e.weight_class_kg",
       weight_class_over: "e.weight_class_over",
+      tested: "e.tested",
       equipment: "e.equipment",
       event: "e.event",
       best3_squat_kg: "e.best3_squat_kg",
@@ -262,6 +252,8 @@ function canUsePrecomputedFilter(metric: RankMetric, filter: RankingFilter): boo
     filter.yearPrefix == null &&
     filter.eventValues == null &&
     filter.federation == null &&
+    filter.tested == null &&
+    filter.country == null &&
     !(filter.weightClassKg != null && filter.ageClass != null)
   );
 }
@@ -309,6 +301,7 @@ async function selectPrecomputedFilteredRanking(
       bodyweight_kg: "e.bodyweight_kg",
       weight_class_kg: "e.weight_class_kg",
       weight_class_over: "e.weight_class_over",
+      tested: "e.tested",
       equipment: "e.equipment",
       event: "e.event",
       best3_squat_kg: "e.best3_squat_kg",
@@ -353,8 +346,11 @@ async function countFilteredRanking(
   metric: RankMetric,
   filter: RankingFilter,
 ): Promise<number> {
-  const { sql, bindings } = filteredRankingSql(metric, filter, "COUNT(*) AS count");
-  const result = await db.raw<CountRow[]>(sql, bindings);
+  const { sql, bindings } = filteredEntriesSql(metric, filter);
+  const result = await db.raw<CountRow[]>(
+    `SELECT COUNT(DISTINCT e.lifter_id) AS count ${sql}`,
+    bindings,
+  );
   return Number(result[0]?.count ?? 0);
 }
 
@@ -364,26 +360,43 @@ async function selectFilteredRanking(
   filter: RankingFilter,
   pagination: Pagination,
 ): Promise<RankingRow[]> {
-  const { sql, bindings } = filteredRankingSql(
-    metric,
-    filter,
-    `
-      rank, username, name, sex, age, bodyweight_kg, weight_class_kg, weight_class_over,
-      equipment, event, best3_squat_kg, best3_bench_kg, best3_deadlift_kg,
-      total_kg, dots, wilks, glossbrenner, goodlift, federation, meet_path,
-      meet_name, meet_date, lifter_country
-    `,
-  );
+  const { sql, bindings } = filteredEntriesSql(metric, filter);
+  const field = fieldForRankMetric(metric);
   return db.raw<RankingRow[]>(
-    `${sql} ORDER BY rank ASC LIMIT ? OFFSET ?`,
+    `
+      WITH candidates AS (
+        SELECT e.id AS entry_id, e.lifter_id, e.${field} AS value,
+          ROW_NUMBER() OVER (
+            PARTITION BY e.lifter_id ORDER BY e.${field} DESC, e.id ASC
+          ) AS lifter_rank
+        ${sql}
+      ),
+      ranked AS (
+        SELECT entry_id,
+          ROW_NUMBER() OVER (ORDER BY value DESC, entry_id ASC) AS rank
+        FROM candidates WHERE lifter_rank = 1
+      ),
+      page AS (
+        SELECT entry_id, rank FROM ranked ORDER BY rank ASC LIMIT ? OFFSET ?
+      )
+      SELECT p.rank, l.username, l.name, e.sex, e.age, e.bodyweight_kg,
+        e.weight_class_kg, e.weight_class_over, e.tested, e.equipment, e.event,
+        e.best3_squat_kg, e.best3_bench_kg, e.best3_deadlift_kg, e.total_kg,
+        e.dots, e.wilks, e.glossbrenner, e.goodlift, e.lifter_country,
+        m.federation, m.path AS meet_path, m.meet_name, m.date AS meet_date
+      FROM page p
+      JOIN entries e ON e.id = p.entry_id
+      JOIN lifters l ON l.id = e.lifter_id
+      JOIN meets m ON m.id = e.meet_id
+      ORDER BY p.rank ASC
+    `,
     bindings.concat([pagination.per_page, pagination.from > 0 ? pagination.from - 1 : 0]),
   );
 }
 
-function filteredRankingSql(
+function filteredEntriesSql(
   metric: RankMetric,
   filter: RankingFilter,
-  selectClause: string,
 ): { sql: string; bindings: Knex.RawBinding[] } {
   const field = fieldForRankMetric(metric);
   const where = [`e.${field} IS NOT NULL`];
@@ -419,57 +432,36 @@ function filteredRankingSql(
     where.push("m.federation_slug = ?");
     bindings.push(filter.federation);
   }
+  if (filter.tested != null) {
+    where.push("e.tested = ?");
+    bindings.push(filter.tested ? 1 : 0);
+  }
+  if (filter.country != null) {
+    where.push("LOWER(e.lifter_country) = ?");
+    bindings.push(filter.country);
+  }
 
   return {
-    sql: `
-      WITH candidates AS (
-        SELECT
-          e.id AS entry_id,
-          e.lifter_id,
-          e.sex,
-          e.age,
-          e.bodyweight_kg,
-          e.weight_class_kg,
-          e.weight_class_over,
-          e.equipment,
-          e.event,
-          e.best3_squat_kg,
-          e.best3_bench_kg,
-          e.best3_deadlift_kg,
-          e.total_kg,
-          e.dots,
-          e.wilks,
-          e.glossbrenner,
-          e.goodlift,
-          e.lifter_country,
-          m.federation,
-          m.path AS meet_path,
-          m.meet_name,
-          m.date AS meet_date,
-          l.username,
-          l.name,
-          e.${field} AS value,
-          ROW_NUMBER() OVER (
-            PARTITION BY e.lifter_id
-            ORDER BY e.${field} DESC, e.id ASC
-          ) AS lifter_rank
-        FROM entries e
-        JOIN meets m ON m.id = e.meet_id
-        JOIN lifters l ON l.id = e.lifter_id
-        WHERE ${where.join(" AND ")}
-      ),
-      ranked AS (
-        SELECT
-          *,
-          ROW_NUMBER() OVER (ORDER BY value DESC, entry_id ASC) AS rank
-        FROM candidates
-        WHERE lifter_rank = 1
-      )
-      SELECT ${selectClause}
-      FROM ranked
-    `,
+    sql: `FROM entries e ${shouldScanEntries(filter) ? "NOT INDEXED" : ""}
+      ${filter.yearPrefix != null || filter.federation != null ? "JOIN meets m ON m.id = e.meet_id" : ""}
+      WHERE ${where.join(" AND ")}`,
     bindings,
   };
+}
+
+function shouldScanEntries(filter: RankingFilter): boolean {
+  // Broad filters otherwise walk the lifter index and fetch millions of rows
+  // out of order. A sequential scan is faster without an indexed constraint.
+  return (
+    (filter.country != null || filter.tested != null) &&
+    filter.equipmentValues == null &&
+    filter.sex == null &&
+    filter.weightClassKg == null &&
+    filter.eventValues == null &&
+    filter.ageClass == null &&
+    filter.yearPrefix == null &&
+    filter.federation == null
+  );
 }
 
 function toSlug(value: string): string {
@@ -510,6 +502,7 @@ function buildRankingRow(row: RankingRow, units: Units) {
     bodyweight: inUnits(row.bodyweight_kg, units),
     weight_class_kg: row.weight_class_kg,
     weight_class_over: row.weight_class_over === 1,
+    tested: row.tested === 1,
     equipment: row.equipment,
     event: row.event,
     squat: inUnits(row.best3_squat_kg, units),

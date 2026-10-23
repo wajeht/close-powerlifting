@@ -47,7 +47,7 @@ export function createRankingsRouter(context: AppContext) {
         429: { description: "Rate limit exceeded", ...errorContent },
       },
       tags: ["Rankings"],
-      summary: "Get all rankings with optional pagination",
+      summary: "Get rankings with flexible filters, scoring, and pagination",
     }),
     async (c) => {
       const query = c.req.valid("query");

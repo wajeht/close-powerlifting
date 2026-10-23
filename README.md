@@ -10,7 +10,7 @@ An intuitive REST API for the OpenPowerlifting dataset.
 
 | Endpoint                       | Description                                                              |
 | ------------------------------ | ------------------------------------------------------------------------ |
-| `GET /api/rankings`            | Global powerlifting rankings sorted by DOTS                              |
+| `GET /api/rankings`            | Global rankings with flexible query filters and scoring                  |
 | `GET /api/rankings/filter/...` | Cumulative filters: equipment / sex / weight-class / year / event / sort |
 | `GET /api/federations`         | Federation list + per-federation meet history + per-year stats           |
 | `GET /api/meets`               | Meet index + individual meet results / highlights                        |
@@ -85,6 +85,34 @@ ranking or records weight-class path to select the open-ended class.
 
 Rankings support DOTS, Wilks, Glossbrenner, Goodlift, total, squat, bench, and
 deadlift sorting. Unsupported sorts such as `by-mcculloch` return HTTP 400.
+
+### Ranking filters
+
+Combine any of these query parameters on `/api/rankings`; omitted filters include
+all matching entries. Each athlete appears once, using their best result **within
+the selected filters**. The default sort is `by-dots`.
+
+```bash
+curl 'https://closepowerlifting.com/api/rankings?equipment=raw&sex=women&tested=true&country=USA&sort=by-total&per_page=10&units=kg'
+```
+
+| Parameter      | Values                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `equipment`    | `raw`, `wraps`, `raw-wraps`, `single-ply`, `multi-ply`, `unlimited`                                        |
+| `sex`          | `men`, `women`                                                                                             |
+| `weight_class` | A class boundary, such as `84`, `82.5`, or `84%2B` for 84+                                                 |
+| `year`         | Four digits, such as `2024`                                                                                |
+| `event`        | `full-power`, `push-pull`, `squat`, `bench`, `deadlift`                                                    |
+| `sort`         | `by-dots`, `by-wilks`, `by-glossbrenner`, `by-goodlift`, `by-total`, `by-squat`, `by-bench`, `by-deadlift` |
+| `age_class`    | An age-class label, such as `24-34` or `40-44`                                                             |
+| `federation`   | A federation slug, such as `ipf`                                                                           |
+| `country`      | Exact athlete country from the dataset, case-insensitive; this is not the meet location                    |
+| `tested`       | `true` or `false`, matching the entry's OPL tested flag                                                    |
+
+`tested=false` selects entries without the tested flag; omitting it includes both.
+Ranking results expose the athlete's `country` and boolean `tested` flag. The
+existing `/api/rankings/filter/...` URLs continue to work and also accept
+`country` and `tested` query filters.
 
 ## Docs
 
