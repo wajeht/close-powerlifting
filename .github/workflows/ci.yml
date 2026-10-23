@@ -75,9 +75,7 @@ jobs:
     needs: [check, test]
     name: Build
     runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'push' || inputs.snapshot_refresh) &&
-      github.ref == 'refs/heads/main'
+    if: github.event_name == 'pull_request' || ((github.event_name == 'push' || inputs.snapshot_refresh) && github.ref == 'refs/heads/main')
     outputs:
       tag: ${{ steps.image-name.outputs.TAG }}
 
@@ -89,6 +87,7 @@ jobs:
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Login to Container Registry
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
@@ -115,9 +114,14 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ${{ steps.image-name.outputs.IMAGE_URL }}
           build-args: SNAPSHOT_CACHE_BUST=${{ github.run_id }}
+      - name: Verify production runtime
+        if: github.event_name == 'pull_request'
+        run: docker run --rm --network none --entrypoint node ${{ steps.image-name.outputs.IMAGE_URL }} --version
+
 
   deploy:
     if: >
