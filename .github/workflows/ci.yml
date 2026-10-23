@@ -36,7 +36,11 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".nvmrc"
-          cache: "npm"
+          package-manager-cache: false
+
+      - name: Install project npm version
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@11.17.0
 
       - name: Install dependencies
         run: npm ci
@@ -57,7 +61,11 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".nvmrc"
-          cache: "npm"
+          package-manager-cache: false
+
+      - name: Install project npm version
+        working-directory: ${{ runner.temp }}
+        run: npm install --global npm@11.17.0
 
       - name: Install dependencies
         run: npm ci
@@ -121,7 +129,6 @@ jobs:
       - name: Verify production runtime
         if: github.event_name == 'pull_request'
         run: docker run --rm --network none --entrypoint node ${{ steps.image-name.outputs.IMAGE_URL }} --version
-
 
   deploy:
     if: >
