@@ -2,7 +2,10 @@
 // Runtime data access lives in src/data/database.ts and uses the prebuilt
 // SQLite snapshot directly.
 
+import { createHash } from "node:crypto";
+
 import type { Entry, Equipment, Event as PowerliftingEvent, Meet, PlaceStatus, Sex } from "./types";
+import { parseWeightClass } from "./weight-class";
 
 // ---------- CSV column schema (consumed by database-builder.ts) ----------
 //
@@ -75,11 +78,11 @@ const REGEX_DIACRITICS = /\p{Mn}/gu;
 const REGEX_SLUG_STRIP = /[^a-z0-9]/g;
 const REGEX_ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const REGEX_PLACE_NUMERIC = /^\d+$/;
+const REGEX_ASCII_LETTER = /[a-z]/;
+const REGEX_UNICODE_LETTER = /\p{L}/u;
 
 // Lifter slug. Mirrors OPL's Username::from_name (crates/opltypes/src/username.rs):
-// strip diacritics, lowercase, alphanumeric-only. For CJK / Cyrillic-only
-// names that have no ASCII transliteration, OPL falls back to a numeric id;
-// we do the same — see `usernameFor` below where the row index is the seed.
+// strip diacritics, lowercase, alphanumeric-only.
 export function nameToSlug(name: string): string {
   return name
     .normalize("NFKD")
@@ -88,12 +91,20 @@ export function nameToSlug(name: string): string {
     .replace(REGEX_SLUG_STRIP, "");
 }
 
-// Generates the username for a CSV name. Falls back to a deterministic
-// "anon<rowIdx>" slug for names that produce an empty slug (CJK-only).
-export function usernameFor(name: string, rowIdx: number): string {
-  const slug = nameToSlug(name);
-  if (slug.length > 0) return slug;
-  return `anon${rowIdx}`;
+export function usernameFor(name: string): string {
+  const normalizedName = name.trim().normalize("NFC");
+  const slug = nameToSlug(normalizedName);
+  if (
+    slug.length > 0 &&
+    (REGEX_ASCII_LETTER.test(slug) || !REGEX_UNICODE_LETTER.test(normalizedName))
+  ) {
+    return slug;
+  }
+
+  // Non-ASCII names may leave only a numeric disambiguation suffix. Hash the
+  // full name so identity survives row reordering and retains those suffixes.
+  const digest = createHash("sha256").update(normalizedName).digest("hex");
+  return `anon-${digest}`;
 }
 
 function trimToNull(value: string | undefined): string | null {
@@ -174,12 +185,8 @@ export interface NormalizedRow {
 
 // Converts one CSV row (array of column strings) into normalized values.
 // Returns null for unusable rows (missing required category fields, bad
-// date). Lifter row index is used as the seed for non-ASCII username fallback.
-export function normalizeRow(
-  row: string[],
-  cols: ColumnIndex,
-  rowIdx: number,
-): NormalizedRow | null {
+// date).
+export function normalizeRow(row: string[], cols: ColumnIndex): NormalizedRow | null {
   const nameRaw = trimToNull(row[cols.Name]);
   if (nameRaw == null) return null;
 
@@ -198,13 +205,14 @@ export function normalizeRow(
   const meetName = trimToNull(row[cols.MeetName]);
   if (meetName == null) return null;
 
-  const lifterUsername = usernameFor(nameRaw, rowIdx);
+  const lifterUsername = usernameFor(nameRaw);
 
   // The CSV doesn't ship a MeetPath column anymore, so we synthesise the
   // canonical URL slug ourselves: lower(federation) / date / slug(meetName).
   const meetPath = `${nameToSlug(federation)}/${date}/${nameToSlug(meetName)}`;
 
   const place = splitPlace(row[cols.Place]);
+  const weightClass = parseWeightClass(row[cols.WeightClassKg]);
 
   const meet: Meet = {
     path: meetPath,
@@ -230,7 +238,8 @@ export function normalizeRow(
     equipment,
     tested: toBoolean(row[cols.Tested]),
     bodyweightKg: toNumber(row[cols.BodyweightKg]),
-    weightClassKg: toNumber(row[cols.WeightClassKg]),
+    weightClassKg: weightClass?.kilograms ?? null,
+    weightClassOver: weightClass?.over ?? false,
     squat1Kg: toNumber(row[cols.Squat1Kg]),
     squat2Kg: toNumber(row[cols.Squat2Kg]),
     squat3Kg: toNumber(row[cols.Squat3Kg]),

@@ -57,6 +57,8 @@ export interface Entry {
   bodyweightKg: number | null;
   // Negative values encode "under N" classes (e.g. -93 = "U93"). Stored verbatim.
   weightClassKg: number | null;
+  // Separates an open-ended class such as 84+ from the capped 84 kg class.
+  weightClassOver: boolean;
 
   // Attempts. Negative = failed attempt; null = no attempt.
   squat1Kg: number | null;

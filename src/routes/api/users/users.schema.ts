@@ -87,6 +87,11 @@ const CompetitionResult = z
     event: EventSchema,
     equipment: EquipmentSchema,
     weight_class_kg: nullableNumber,
+    weight_class_over: z
+      .boolean()
+      .describe(
+        "True for an open-ended class such as 84+ kg; false for capped or unknown classes.",
+      ),
     bodyweight: nullableNumber,
     squat: nullableNumber,
     bench: nullableNumber,
@@ -118,6 +123,11 @@ const ProgressionEntry = z
     event: EventSchema,
     equipment: EquipmentSchema,
     weight_class_kg: nullableNumber,
+    weight_class_over: z
+      .boolean()
+      .describe(
+        "True for an open-ended class such as 84+ kg; false for capped or unknown classes.",
+      ),
     bodyweight: nullableNumber,
     squat: nullableNumber,
     bench: nullableNumber,

@@ -127,6 +127,7 @@ function createRankingFilterBestsTable(db: DatabaseType): void {
       equipment_key TEXT NOT NULL,
       sex_key TEXT NOT NULL,
       weight_class_kg REAL,
+      weight_class_over INTEGER,
       age_class TEXT,
       entry_id INTEGER NOT NULL,
       rank INTEGER NOT NULL
@@ -138,7 +139,7 @@ function createRankingFilterBestsTable(db: DatabaseType): void {
 
   db.exec(`
     CREATE UNIQUE INDEX idx_ranking_filter_bests_lookup
-      ON ranking_filter_bests(metric, equipment_key, sex_key, weight_class_kg, age_class, rank);
+      ON ranking_filter_bests(metric, equipment_key, sex_key, weight_class_kg, weight_class_over, age_class, rank);
   `);
 }
 
@@ -159,7 +160,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
 
   db.prepare(`
     INSERT INTO ranking_filter_bests (
-      metric, equipment_key, sex_key, weight_class_kg, age_class, entry_id, rank
+      metric, equipment_key, sex_key, weight_class_kg, weight_class_over, age_class, entry_id, rank
     )
     WITH equipment_entries AS (
       ${equipmentSelects.join("\nUNION ALL\n")}
@@ -169,6 +170,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         'all' AS sex_key,
         NULL AS weight_class_kg,
+        NULL AS weight_class_over,
         NULL AS age_class,
         entry_id,
         lifter_id,
@@ -179,6 +181,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
         NULL AS weight_class_kg,
+        NULL AS weight_class_over,
         NULL AS age_class,
         entry_id,
         lifter_id,
@@ -190,6 +193,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         'all' AS sex_key,
         weight_class_kg,
+        weight_class_over,
         NULL AS age_class,
         entry_id,
         lifter_id,
@@ -201,6 +205,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
         weight_class_kg,
+        weight_class_over,
         NULL AS age_class,
         entry_id,
         lifter_id,
@@ -213,6 +218,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         'all' AS sex_key,
         NULL AS weight_class_kg,
+        NULL AS weight_class_over,
         age_class,
         entry_id,
         lifter_id,
@@ -224,6 +230,7 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         CASE sex WHEN 'M' THEN 'men' ELSE 'women' END AS sex_key,
         NULL AS weight_class_kg,
+        NULL AS weight_class_over,
         age_class,
         entry_id,
         lifter_id,
@@ -237,12 +244,13 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         sex_key,
         weight_class_kg,
+        weight_class_over,
         age_class,
         entry_id,
         lifter_id,
         value,
         ROW_NUMBER() OVER (
-          PARTITION BY equipment_key, sex_key, weight_class_kg, age_class, lifter_id
+          PARTITION BY equipment_key, sex_key, weight_class_kg, weight_class_over, age_class, lifter_id
           ORDER BY value DESC, entry_id ASC
         ) AS lifter_rank
       FROM candidates
@@ -252,16 +260,17 @@ function insertRankingFilterBests(db: DatabaseType, metric: RankingMetricDefinit
         equipment_key,
         sex_key,
         weight_class_kg,
+        weight_class_over,
         age_class,
         entry_id,
         ROW_NUMBER() OVER (
-          PARTITION BY equipment_key, sex_key, weight_class_kg, age_class
+          PARTITION BY equipment_key, sex_key, weight_class_kg, weight_class_over, age_class
           ORDER BY value DESC, entry_id ASC
         ) AS rank
       FROM best
       WHERE lifter_rank = 1
     )
-    SELECT ?, equipment_key, sex_key, weight_class_kg, age_class, entry_id, rank
+    SELECT ?, equipment_key, sex_key, weight_class_kg, weight_class_over, age_class, entry_id, rank
     FROM ranked
   `).run(...bindings, metric.metric);
 }
@@ -278,6 +287,7 @@ function rankingEquipmentSelect(
       lifter_id,
       sex,
       weight_class_kg,
+      weight_class_over,
       age_class,
       ${metric.field} AS value
     FROM entries
@@ -294,6 +304,7 @@ function createRecordsTable(db: DatabaseType): void {
       equipment_group TEXT NOT NULL,
       age_class TEXT,
       weight_class_kg REAL NOT NULL,
+      weight_class_over INTEGER NOT NULL,
       rank INTEGER NOT NULL,
       entry_id INTEGER NOT NULL,
       lift_value REAL NOT NULL
@@ -309,7 +320,7 @@ function createRecordsTable(db: DatabaseType): void {
   }
 
   db.exec(
-    "CREATE INDEX idx_records_filter ON records(category, sex, equipment_group, age_class, weight_class_kg)",
+    "CREATE INDEX idx_records_filter ON records(category, sex, equipment_group, age_class, weight_class_kg, weight_class_over)",
   );
 }
 
@@ -323,32 +334,34 @@ function insertRecords(
   const equipmentCondition = equipmentGroupSqlCondition(equipmentGroup, null);
   db.prepare(`
     INSERT INTO records (
-      category, sex, equipment_group, age_class, weight_class_kg, rank, entry_id, lift_value
+      category, sex, equipment_group, age_class, weight_class_kg, weight_class_over, rank, entry_id, lift_value
     )
     WITH source AS (
       SELECT
         NULL AS age_class,
         id AS entry_id,
         weight_class_kg,
+        weight_class_over,
         ${category.field} AS lift_value
       FROM entries
       WHERE sex = ?
         AND event IN (${eventPlaceholders})
         AND weight_class_kg IS NOT NULL
-        AND ${category.field} IS NOT NULL
+        AND ${category.field} > 0
         AND ${equipmentCondition}
       UNION ALL
       SELECT
         age_class,
         id AS entry_id,
         weight_class_kg,
+        weight_class_over,
         ${category.field} AS lift_value
       FROM entries
       WHERE sex = ?
         AND event IN (${eventPlaceholders})
         AND age_class IS NOT NULL
         AND weight_class_kg IS NOT NULL
-        AND ${category.field} IS NOT NULL
+        AND ${category.field} > 0
         AND ${equipmentCondition}
     ),
     candidates AS (
@@ -356,14 +369,15 @@ function insertRecords(
         age_class,
         entry_id,
         weight_class_kg,
+        weight_class_over,
         lift_value,
         ROW_NUMBER() OVER (
-          PARTITION BY age_class, weight_class_kg
+          PARTITION BY age_class, weight_class_kg, weight_class_over
           ORDER BY lift_value DESC, entry_id ASC
         ) AS rank
       FROM source
     )
-    SELECT ?, ?, ?, age_class, weight_class_kg, rank, entry_id, lift_value
+    SELECT ?, ?, ?, age_class, weight_class_kg, weight_class_over, rank, entry_id, lift_value
     FROM candidates
     WHERE rank <= 3
   `).run(sex, ...category.events, sex, ...category.events, category.key, sex, equipmentGroup.name);

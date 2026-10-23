@@ -2,6 +2,7 @@ import type { Knex } from "knex";
 
 import type { DataStoreType } from "../../../data/database";
 import type { Entry, RankMetric, Sex } from "../../../data/types";
+import { parseWeightClass } from "../../../data/weight-class";
 import {
   RANKING_EQUIPMENT_DEFINITIONS,
   RANKING_EVENT_DEFINITIONS,
@@ -27,7 +28,6 @@ const SORT_TO_METRIC: Record<string, RankMetric> = {
   "by-wilks": "wilks",
   "by-glossbrenner": "glossbrenner",
   "by-goodlift": "goodlift",
-  "by-mcculloch": "dots",
   "by-total": "total",
   "by-squat": "squat",
   "by-bench": "bench",
@@ -42,6 +42,7 @@ interface RankingFilter {
   sexKey: RankingSexDefinition["key"] | null;
   sex: Sex | null;
   weightClassKg: number | null;
+  weightClassOver: boolean | null;
   yearPrefix: string | null;
   eventValues: ReadonlyArray<Entry["event"]> | null;
   ageClass: string | null;
@@ -56,6 +57,7 @@ interface RankingRow {
   age: number | null;
   bodyweight_kg: number | null;
   weight_class_kg: number | null;
+  weight_class_over: number;
   equipment: Entry["equipment"];
   event: Entry["event"];
   best3_squat_kg: number | null;
@@ -118,12 +120,14 @@ export function createRankingsService(store: DataStoreType) {
     const equipment = findRankingEquipment(params.equipment);
     const sex = findRankingSex(params.sex);
     const event = findRankingEvent(params.event);
+    const weightClass = parseWeightClass(params.weight_class);
     const filter: RankingFilter = {
       equipmentKey: equipment?.key ?? null,
       equipmentValues: equipment?.equipment ?? null,
       sexKey: sex?.key ?? null,
       sex: sex?.sex ?? null,
-      weightClassKg: parseWeightClass(params.weight_class),
+      weightClassKg: weightClass?.kilograms ?? null,
+      weightClassOver: weightClass?.over ?? null,
       yearPrefix: params.year != null ? `${params.year}-` : null,
       eventValues: event?.events ?? null,
       ageClass: query.age_class ?? null,
@@ -167,6 +171,7 @@ function emptyFilter(overrides: Partial<RankingFilter>): RankingFilter {
     sexKey: null,
     sex: null,
     weightClassKg: null,
+    weightClassOver: null,
     yearPrefix: null,
     eventValues: null,
     ageClass: null,
@@ -204,6 +209,7 @@ async function selectGlobalRanking(
       age: "e.age",
       bodyweight_kg: "e.bodyweight_kg",
       weight_class_kg: "e.weight_class_kg",
+      weight_class_over: "e.weight_class_over",
       equipment: "e.equipment",
       event: "e.event",
       best3_squat_kg: "e.best3_squat_kg",
@@ -302,6 +308,7 @@ async function selectPrecomputedFilteredRanking(
       age: "e.age",
       bodyweight_kg: "e.bodyweight_kg",
       weight_class_kg: "e.weight_class_kg",
+      weight_class_over: "e.weight_class_over",
       equipment: "e.equipment",
       event: "e.event",
       best3_squat_kg: "e.best3_squat_kg",
@@ -328,8 +335,10 @@ function applyPrecomputedDimensionFilter(
   const prefix = alias == null ? "" : `${alias}.`;
   if (filter.weightClassKg == null) {
     query.whereNull(`${prefix}weight_class_kg`);
+    query.whereNull(`${prefix}weight_class_over`);
   } else {
     query.where(`${prefix}weight_class_kg`, filter.weightClassKg);
+    query.where(`${prefix}weight_class_over`, filter.weightClassOver ? 1 : 0);
   }
 
   if (filter.ageClass == null) {
@@ -359,7 +368,7 @@ async function selectFilteredRanking(
     metric,
     filter,
     `
-      rank, username, name, sex, age, bodyweight_kg, weight_class_kg,
+      rank, username, name, sex, age, bodyweight_kg, weight_class_kg, weight_class_over,
       equipment, event, best3_squat_kg, best3_bench_kg, best3_deadlift_kg,
       total_kg, dots, wilks, glossbrenner, goodlift, federation, meet_path,
       meet_name, meet_date, lifter_country
@@ -391,6 +400,8 @@ function filteredRankingSql(
   if (filter.weightClassKg != null) {
     where.push("e.weight_class_kg = ?");
     bindings.push(filter.weightClassKg);
+    where.push("e.weight_class_over = ?");
+    bindings.push(filter.weightClassOver ? 1 : 0);
   }
   if (filter.eventValues != null) {
     where.push(`e.event IN (${filter.eventValues.map(() => "?").join(", ")})`);
@@ -419,6 +430,7 @@ function filteredRankingSql(
           e.age,
           e.bodyweight_kg,
           e.weight_class_kg,
+          e.weight_class_over,
           e.equipment,
           e.event,
           e.best3_squat_kg,
@@ -460,12 +472,6 @@ function filteredRankingSql(
   };
 }
 
-function parseWeightClass(raw: string | undefined): number | null {
-  if (raw == null) return null;
-  const n = parseFloat(raw);
-  return Number.isFinite(n) ? n : null;
-}
-
 function toSlug(value: string): string {
   return value.toLowerCase().replace(REGEX_SLUG_STRIP, "");
 }
@@ -503,6 +509,7 @@ function buildRankingRow(row: RankingRow, units: Units) {
     age: row.age,
     bodyweight: inUnits(row.bodyweight_kg, units),
     weight_class_kg: row.weight_class_kg,
+    weight_class_over: row.weight_class_over === 1,
     equipment: row.equipment,
     event: row.event,
     squat: inUnits(row.best3_squat_kg, units),

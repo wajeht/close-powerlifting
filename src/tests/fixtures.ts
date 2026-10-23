@@ -9,7 +9,7 @@ import { createContext, resetContext } from "../context";
 import { createDatabaseClient, type SnapshotMetadata } from "../data/database";
 import { DATABASE_SCHEMA_VERSION } from "../data/database-files";
 import { countRows, createDerivedTables } from "../data/materialized-tables";
-import { nameToSlug } from "../data/csv-normalization";
+import { nameToSlug, usernameFor } from "../data/csv-normalization";
 import type { Entry, Lifter, Meet } from "../data/types";
 
 interface FixtureData {
@@ -27,6 +27,8 @@ function makeFixtureData(): FixtureData {
     { username: "marisrazmanis", name: "Māris Rāzmanis" },
     { username: "kristyhawkins", name: "Kristy Hawkins" },
     { username: "ruthrabbitt", name: "Ruth Rabbitt" },
+    { username: usernameFor("山田太郎"), name: "山田太郎" },
+    { username: "failedlifter", name: "Failed Lifter" },
   ];
 
   const meets: Meet[] = [
@@ -178,6 +180,55 @@ function makeFixtureData(): FixtureData {
       dots: 590.0,
       wilks: 575.0,
     }),
+    makeEntry({
+      lifterId: 5,
+      meetId: 0,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 83,
+      weightClassKg: 84,
+      best3SquatKg: 170,
+      best3BenchKg: 110,
+      best3DeadliftKg: 220,
+      totalKg: 500,
+      dots: 480,
+      wilks: 470,
+      placeRank: 1,
+    }),
+    makeEntry({
+      lifterId: 5,
+      meetId: 1,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 87,
+      weightClassKg: 84,
+      weightClassOver: true,
+      best3SquatKg: 180,
+      best3BenchKg: 115,
+      best3DeadliftKg: 235,
+      totalKg: 530,
+      dots: 490,
+      wilks: 480,
+      placeRank: 1,
+    }),
+    makeEntry({
+      lifterId: 6,
+      meetId: 0,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 69,
+      weightClassKg: 70,
+      squat1Kg: -100,
+      bench1Kg: -60,
+      deadlift1Kg: -120,
+      best3SquatKg: -100,
+      best3BenchKg: -60,
+      best3DeadliftKg: -120,
+      placeStatus: "DQ",
+    }),
   ];
 
   return {
@@ -190,9 +241,28 @@ function makeFixtureData(): FixtureData {
 }
 
 export function createTestContext(): AppContext {
+  return createFixtureContext(makeFixtureData());
+}
+
+export function createWeightClassTestContext(): AppContext {
+  const data = makeFixtureData();
+  const entries: Entry[] = [];
+  for (const entry of data.entries) {
+    entries.push({
+      ...entry,
+      weightClassKg: entry.sex === "M" ? 100 : entry.weightClassKg,
+      weightClassOver:
+        entry.sex === "M"
+          ? (entry.lifterId === 0 && entry.meetId === 1) || entry.lifterId === 2
+          : entry.weightClassOver,
+    });
+  }
+  return createFixtureContext({ ...data, entries });
+}
+
+function createFixtureContext(data: FixtureData): AppContext {
   resetContext();
   const context = createContext();
-  const data = makeFixtureData();
   const { databaseFile, metadata } = writeFixtureDatabase(data);
   context.store.set({
     db: createDatabaseClient(databaseFile, false),
@@ -261,6 +331,7 @@ function createFixtureSchema(db: Database.Database): void {
       tested INTEGER NOT NULL,
       bodyweight_kg REAL,
       weight_class_kg REAL,
+      weight_class_over INTEGER NOT NULL CHECK (weight_class_over IN (0, 1)),
       squat1_kg REAL,
       squat2_kg REAL,
       squat3_kg REAL,
@@ -367,7 +438,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
   const insert = db.prepare(`
     INSERT INTO entries (
       id, lifter_id, meet_id, sex, age, age_class, division, lifter_country, lifter_state,
-      event, equipment, tested, bodyweight_kg, weight_class_kg,
+      event, equipment, tested, bodyweight_kg, weight_class_kg, weight_class_over,
       squat1_kg, squat2_kg, squat3_kg, squat4_kg,
       bench1_kg, bench2_kg, bench3_kg, bench4_kg,
       deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
@@ -376,7 +447,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
     )
     VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -401,6 +472,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
       entry.tested ? 1 : 0,
       entry.bodyweightKg,
       entry.weightClassKg,
+      entry.weightClassOver ? 1 : 0,
       entry.squat1Kg,
       entry.squat2Kg,
       entry.squat3Kg,
@@ -440,6 +512,7 @@ function makeEntry(overrides: Partial<Entry> & { lifterId: number; meetId: numbe
     tested: false,
     bodyweightKg: null,
     weightClassKg: null,
+    weightClassOver: false,
     squat1Kg: null,
     squat2Kg: null,
     squat3Kg: null,

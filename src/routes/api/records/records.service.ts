@@ -3,6 +3,7 @@ import type { Knex } from "knex";
 import type { DataStoreType } from "../../../data/database";
 import { RECORD_CATEGORY_DEFINITIONS } from "../../../data/leaderboard-definitions";
 import type { EquipmentGroup, RecordCategory, Sex } from "../../../data/types";
+import { parseWeightClass } from "../../../data/weight-class";
 
 export const EQUIPMENT_GROUP_BY_QUERY: Record<string, EquipmentGroup> = {
   raw: "raw",
@@ -20,12 +21,11 @@ export const SEX_BY_QUERY: Record<string, Sex> = {
   F: "F",
 };
 
-const REGEX_WEIGHT_CLASS = /^-?\d+(\.\d+)?$/;
-
 export interface RecordsFilter {
   equipmentGroup?: EquipmentGroup;
   sex?: Sex;
   weightClassKg?: number;
+  weightClassOver?: boolean;
   ageClass: string | null;
 }
 
@@ -34,6 +34,7 @@ interface RecordRow {
   sex: Sex;
   equipment_group: EquipmentGroup;
   weight_class_kg: number;
+  weight_class_over: number;
   rank: number;
   entry_id: number;
   lift_value: number;
@@ -63,6 +64,7 @@ export function createRecordsService(store: DataStoreType) {
         equipment_group: filter.equipmentGroup ?? null,
         sex: filter.sex ?? null,
         weight_class_kg: filter.weightClassKg ?? null,
+        weight_class_over: filter.weightClassKg == null ? null : (filter.weightClassOver ?? false),
         age_class: filter.ageClass,
       },
       categories: RECORD_CATEGORY_DEFINITIONS.map((category) => ({
@@ -77,7 +79,12 @@ export function createRecordsService(store: DataStoreType) {
               equipment_group: equipmentGroup,
               records: records
                 .slice()
-                .sort((a, b) => a.weight_class_kg - b.weight_class_kg || a.rank - b.rank)
+                .sort(
+                  (a, b) =>
+                    a.weight_class_kg - b.weight_class_kg ||
+                    a.weight_class_over - b.weight_class_over ||
+                    a.rank - b.rank,
+                )
                 .map(formatRecord),
             };
           }),
@@ -87,10 +94,12 @@ export function createRecordsService(store: DataStoreType) {
 
   function resolveSexOrWeightClass(
     value: string,
-  ): { kind: "sex"; value: Sex } | { kind: "weightClass"; value: number } | null {
+  ): { kind: "sex"; value: Sex } | { kind: "weightClass"; value: number; over: boolean } | null {
     const sex = SEX_BY_QUERY[value];
     if (sex != null) return { kind: "sex", value: sex };
-    if (REGEX_WEIGHT_CLASS.test(value)) return { kind: "weightClass", value: parseFloat(value) };
+    const weightClass = parseWeightClass(value);
+    if (weightClass != null)
+      return { kind: "weightClass", value: weightClass.kilograms, over: weightClass.over };
     return null;
   }
 
@@ -107,6 +116,7 @@ async function getPrecomputedRecords(db: Knex, filter: RecordsFilter): Promise<R
       sex: "r.sex",
       equipment_group: "r.equipment_group",
       weight_class_kg: "r.weight_class_kg",
+      weight_class_over: "r.weight_class_over",
       rank: "r.rank",
       entry_id: "r.entry_id",
       lift_value: "r.lift_value",
@@ -120,16 +130,27 @@ async function getPrecomputedRecords(db: Knex, filter: RecordsFilter): Promise<R
 
   if (filter.equipmentGroup != null) query.where("r.equipment_group", filter.equipmentGroup);
   if (filter.sex != null) query.where("r.sex", filter.sex);
-  if (filter.weightClassKg != null) query.where("r.weight_class_kg", filter.weightClassKg);
+  if (filter.weightClassKg != null) {
+    query.where("r.weight_class_kg", filter.weightClassKg);
+    query.where("r.weight_class_over", filter.weightClassOver ? 1 : 0);
+  }
   if (filter.ageClass == null) query.whereNull("r.age_class");
   else query.where("r.age_class", filter.ageClass);
 
-  return query.orderBy(["r.category", "r.sex", "r.equipment_group", "r.weight_class_kg", "r.rank"]);
+  return query.orderBy([
+    "r.category",
+    "r.sex",
+    "r.equipment_group",
+    "r.weight_class_kg",
+    "r.weight_class_over",
+    "r.rank",
+  ]);
 }
 
 function formatRecord(row: RecordRow) {
   return {
     weight_class_kg: row.weight_class_kg,
+    weight_class_over: row.weight_class_over === 1,
     rank: row.rank,
     lift_value: row.lift_value,
     username: row.username,

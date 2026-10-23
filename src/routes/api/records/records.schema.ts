@@ -79,6 +79,7 @@ const recordSexEnum = z.enum(["M", "F"]);
 const RecordEntry = z
   .object({
     weight_class_kg: z.number(),
+    weight_class_over: z.boolean().describe("True for an open-ended class such as 84+"),
     rank: z.number(),
     lift_value: z.number(),
     username: z.string(),
@@ -112,6 +113,7 @@ export const RecordsData = z
       equipment_group: equipmentGroupEnum.nullable(),
       sex: recordSexEnum.nullable(),
       weight_class_kg: z.number().nullable(),
+      weight_class_over: z.boolean().nullable(),
       age_class: z.string().nullable(),
     }),
     categories: z.array(RecordCategory),

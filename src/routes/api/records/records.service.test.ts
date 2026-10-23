@@ -69,11 +69,20 @@ describe("records service", () => {
       expect(service().resolveSexOrWeightClass("82.5")).toEqual({
         kind: "weightClass",
         value: 82.5,
+        over: false,
       });
     });
 
     it("returns null for anything else", () => {
       expect(service().resolveSexOrWeightClass("ipf-classes")).toBeNull();
+    });
+
+    it("preserves the open-ended weight class boundary", () => {
+      expect(service().resolveSexOrWeightClass("84+")).toEqual({
+        kind: "weightClass",
+        value: 84,
+        over: true,
+      });
     });
   });
 });

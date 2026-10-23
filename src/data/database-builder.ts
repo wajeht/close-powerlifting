@@ -155,6 +155,7 @@ function createSchema(db: DatabaseType): void {
       tested INTEGER NOT NULL,
       bodyweight_kg REAL,
       weight_class_kg REAL,
+      weight_class_over INTEGER NOT NULL CHECK (weight_class_over IN (0, 1)),
       squat1_kg REAL,
       squat2_kg REAL,
       squat3_kg REAL,
@@ -200,7 +201,7 @@ async function parseIntoDatabase(zipPath: string, db: DatabaseType): Promise<Par
   const insertEntry = db.prepare(`
     INSERT INTO entries (
       lifter_id, meet_id, sex, age, age_class, division, lifter_country, lifter_state,
-      event, equipment, tested, bodyweight_kg, weight_class_kg,
+      event, equipment, tested, bodyweight_kg, weight_class_kg, weight_class_over,
       squat1_kg, squat2_kg, squat3_kg, squat4_kg,
       bench1_kg, bench2_kg, bench3_kg, bench4_kg,
       deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
@@ -209,7 +210,7 @@ async function parseIntoDatabase(zipPath: string, db: DatabaseType): Promise<Par
     )
     VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -219,7 +220,6 @@ async function parseIntoDatabase(zipPath: string, db: DatabaseType): Promise<Par
   `);
 
   let columnIndex: ColumnIndex | null = null;
-  let rowIdx = 0;
   let skipped = 0;
   let entries = 0;
 
@@ -235,8 +235,7 @@ async function parseIntoDatabase(zipPath: string, db: DatabaseType): Promise<Par
             continue;
           }
 
-          const normalized = normalizeRow(row, columnIndex, rowIdx);
-          rowIdx++;
+          const normalized = normalizeRow(row, columnIndex);
           if (normalized == null) {
             skipped++;
             continue;
@@ -323,6 +322,7 @@ function entryValues(entry: Omit<Entry, "lifterId" | "meetId">, lifterId: number
     entry.tested ? 1 : 0,
     entry.bodyweightKg,
     entry.weightClassKg,
+    entry.weightClassOver ? 1 : 0,
     entry.squat1Kg,
     entry.squat2Kg,
     entry.squat3Kg,
@@ -355,7 +355,7 @@ function createIndexes(db: DatabaseType): void {
     CREATE INDEX idx_meets_date ON meets(date);
     CREATE INDEX idx_entries_lifter_id ON entries(lifter_id);
     CREATE INDEX idx_entries_meet_id ON entries(meet_id);
-    CREATE INDEX idx_entries_filter ON entries(equipment, sex, weight_class_kg, event, age_class);
+    CREATE INDEX idx_entries_filter ON entries(equipment, sex, weight_class_kg, weight_class_over, event, age_class);
     CREATE INDEX idx_entries_dots ON entries(dots);
     CREATE INDEX idx_entries_total ON entries(total_kg);
   `);

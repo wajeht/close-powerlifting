@@ -1,4 +1,5 @@
 import { z } from "@hono/zod-openapi";
+import { parseWeightClass } from "../../../data/weight-class";
 
 import { EquipmentSchema, EventSchema, SexSchema, UnitsSchema } from "../api.schemas";
 import {
@@ -26,7 +27,6 @@ export const sortEnum = z.enum([
   "by-wilks",
   "by-glossbrenner",
   "by-goodlift",
-  "by-mcculloch",
   "by-total",
   "by-squat",
   "by-bench",
@@ -69,7 +69,13 @@ export const getFilteredRankingsQueryValidation = baseQuery.extend({
 export const getFilteredRankingsParamValidation = z.object({
   equipment: equipmentEnum.optional(),
   sex: sexEnum.optional(),
-  weight_class: z.string().optional(),
+  weight_class: z
+    .string()
+    .trim()
+    .refine((value) => parseWeightClass(value) != null, {
+      message: "Expected a weight class such as 84 or 84+",
+    })
+    .optional(),
   year: yearPathValidation.optional(),
   event: eventEnum.optional(),
   sort: sortEnum.optional(),
@@ -95,6 +101,7 @@ export const RankingEntry = z
     age: nullableNumber,
     bodyweight: nullableNumber,
     weight_class_kg: nullableNumber,
+    weight_class_over: z.boolean().describe("True for an open-ended class such as 84+"),
     equipment: EquipmentSchema,
     event: EventSchema,
     squat: nullableNumber,

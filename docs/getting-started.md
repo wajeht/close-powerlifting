@@ -74,6 +74,14 @@ The HTTP server starts immediately but `GET /healthz` returns 503 until the SQLi
 
 The OPL dataset is rebuilt weekly by `.github/workflows/update-data.yml` and published as a compressed GitHub Release asset (`snapshot-latest`). After publishing, the workflow calls the reusable CI workflow to build and deploy a new image. The Docker build uses a per-run cache-bust value when downloading and expanding the SQLite asset, so production containers always ship with the newly published data baked in.
 
+Schema version 4 requires rebuilding from the upstream CSV. It preserves `84`
+versus `84+` classes, combines repeated non-ASCII athlete names into stable
+profiles, and excludes unsuccessful lifts from records. Old snapshots cannot be
+migrated because they already lost the class boundary distinction. Run
+`npm run database:build`, or `npm run snapshot:download` (which rebuilds locally
+when the release schema is incompatible). Previously generated `anon<row>`
+profile URLs are replaced by stable `anon-<hash>` usernames after rebuilding.
+
 | Task                          | Command                     | Notes                                                                           |
 | ----------------------------- | --------------------------- | ------------------------------------------------------------------------------- |
 | Pull the published snapshot   | `npm run snapshot:download` | Use this for local dev. `make snapshot-download` works too (same script).       |
@@ -106,7 +114,7 @@ Coverage:
 npm run test:coverage
 ```
 
-Tests use a tiny SQLite fixture (5 lifters, 3 meets, 2 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
+Tests use a tiny SQLite fixture (7 lifters, 9 entries, 3 meets, 3 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
 
 ## Code Quality
 
