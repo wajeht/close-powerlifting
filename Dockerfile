@@ -1,5 +1,7 @@
 FROM node:26.12.1-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec AS build
 
+RUN cd /tmp && npm install --global npm@11.17.0
+
 WORKDIR /usr/src/app
 
 # ca-certificates are needed for Node fetch TLS; build tools are only for
