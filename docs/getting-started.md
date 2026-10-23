@@ -114,7 +114,7 @@ Coverage:
 npm run test:coverage
 ```
 
-Tests use a tiny SQLite fixture (5 lifters, 3 meets, 2 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
+Tests use a tiny SQLite fixture (7 lifters, 9 entries, 3 meets, 3 federations) built by `src/tests/fixtures.ts` — no snapshot files needed.
 
 ## Code Quality
 

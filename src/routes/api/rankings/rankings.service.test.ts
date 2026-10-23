@@ -11,7 +11,7 @@ describe("rankings service", () => {
   describe("getRankings", () => {
     it("returns lifters sorted by dots desc with pagination", async () => {
       const { data, pagination } = await service().getRankings({ per_page: 2, units: "kg" });
-      expect(pagination.items).toBe(5);
+      expect(pagination.items).toBe(6);
       expect(data).toHaveLength(2);
       expect((data[0] as { rank: number; username: string }).rank).toBe(1);
       expect((data[0] as { username: string }).username).toBe("edcoan");
@@ -99,7 +99,7 @@ describe("rankings service", () => {
 
   describe("getMaxRank", () => {
     it("matches the size of the dots ranking", async () => {
-      await expect(service().getMaxRank()).resolves.toBe(5);
+      await expect(service().getMaxRank()).resolves.toBe(6);
     });
   });
 });

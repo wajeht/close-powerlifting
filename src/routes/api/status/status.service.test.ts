@@ -13,9 +13,9 @@ describe("status service", () => {
     const service = createStatusService(store);
     const data = service.getStatus();
     expect(data).not.toBeNull();
-    expect(data!.lifters).toBe(5);
+    expect(data!.lifters).toBe(7);
     expect(data!.meets).toBe(3);
-    expect(data!.entries).toBe(6);
+    expect(data!.entries).toBe(9);
     expect(data!.federations).toBe(3);
   });
 

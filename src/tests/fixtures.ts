@@ -9,7 +9,7 @@ import { createContext, resetContext } from "../context";
 import { createDatabaseClient, type SnapshotMetadata } from "../data/database";
 import { DATABASE_SCHEMA_VERSION } from "../data/database-files";
 import { countRows, createDerivedTables } from "../data/materialized-tables";
-import { nameToSlug } from "../data/csv-normalization";
+import { nameToSlug, usernameFor } from "../data/csv-normalization";
 import type { Entry, Lifter, Meet } from "../data/types";
 
 interface FixtureData {
@@ -27,6 +27,8 @@ function makeFixtureData(): FixtureData {
     { username: "marisrazmanis", name: "Māris Rāzmanis" },
     { username: "kristyhawkins", name: "Kristy Hawkins" },
     { username: "ruthrabbitt", name: "Ruth Rabbitt" },
+    { username: usernameFor("山田太郎"), name: "山田太郎" },
+    { username: "failedlifter", name: "Failed Lifter" },
   ];
 
   const meets: Meet[] = [
@@ -178,6 +180,55 @@ function makeFixtureData(): FixtureData {
       dots: 590.0,
       wilks: 575.0,
     }),
+    makeEntry({
+      lifterId: 5,
+      meetId: 0,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 83,
+      weightClassKg: 84,
+      best3SquatKg: 170,
+      best3BenchKg: 110,
+      best3DeadliftKg: 220,
+      totalKg: 500,
+      dots: 480,
+      wilks: 470,
+      placeRank: 1,
+    }),
+    makeEntry({
+      lifterId: 5,
+      meetId: 1,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 87,
+      weightClassKg: 84,
+      weightClassOver: true,
+      best3SquatKg: 180,
+      best3BenchKg: 115,
+      best3DeadliftKg: 235,
+      totalKg: 530,
+      dots: 490,
+      wilks: 480,
+      placeRank: 1,
+    }),
+    makeEntry({
+      lifterId: 6,
+      meetId: 0,
+      sex: "F",
+      age: 30,
+      ageClass: "24-34",
+      bodyweightKg: 69,
+      weightClassKg: 70,
+      squat1Kg: -100,
+      bench1Kg: -60,
+      deadlift1Kg: -120,
+      best3SquatKg: -100,
+      best3BenchKg: -60,
+      best3DeadliftKg: -120,
+      placeStatus: "DQ",
+    }),
   ];
 
   return {
@@ -200,7 +251,10 @@ export function createWeightClassTestContext(): AppContext {
     entries.push({
       ...entry,
       weightClassKg: entry.sex === "M" ? 100 : entry.weightClassKg,
-      weightClassOver: (entry.lifterId === 0 && entry.meetId === 1) || entry.lifterId === 2,
+      weightClassOver:
+        entry.sex === "M"
+          ? (entry.lifterId === 0 && entry.meetId === 1) || entry.lifterId === 2
+          : entry.weightClassOver,
     });
   }
   return createFixtureContext({ ...data, entries });

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vite-plus/test";
 
 import { createApp } from "../../../app";
 import { createTestContext } from "../../../tests/fixtures";
+import { usernameFor } from "../../../data/csv-normalization";
 
 let app: ReturnType<typeof createApp>;
 
@@ -11,6 +12,26 @@ beforeEach(() => {
 });
 
 describe("GET /api/users", () => {
+  it("returns one non-ASCII athlete profile with capped and open-ended class results", async () => {
+    const username = usernameFor("山田太郎");
+    const response = await app.request(`/api/users/${username}?units=kg`);
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data).toMatchObject({
+      username,
+      name: "山田太郎",
+      total_entries: 2,
+      competition_results: [
+        { weight_class_kg: 84, weight_class_over: true, total: 530 },
+        { weight_class_kg: 84, weight_class_over: false, total: 500 },
+      ],
+    });
+    const searchResponse = await app.request(`/api/users?search=${encodeURIComponent("山田太郎")}`);
+    const search = await searchResponse.json();
+    expect(search.pagination.items).toBe(1);
+    expect(search.data).toEqual([{ username, name: "山田太郎" }]);
+  });
+
   it("returns the lifter profile + history", async () => {
     const res = await app.request("/api/users/edcoan?units=kg");
     expect(res.status).toBe(200);
@@ -40,7 +61,7 @@ describe("GET /api/users/:username/rank", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.ranks.dots.rank).toBe(1);
-    expect(body.data.ranks.dots.out_of).toBe(5);
+    expect(body.data.ranks.dots.out_of).toBe(6);
   });
 });
 

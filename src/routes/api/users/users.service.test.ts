@@ -11,8 +11,8 @@ describe("users service", () => {
   describe("listLifters", () => {
     it("returns every lifter paginated when no search term is given", async () => {
       const result = await service().listLifters({});
-      expect(result.pagination.items).toBe(5);
-      expect(result.data).toHaveLength(5);
+      expect(result.pagination.items).toBe(7);
+      expect(result.data).toHaveLength(7);
     });
 
     it("returns search matches with pagination", async () => {

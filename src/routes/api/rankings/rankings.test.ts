@@ -21,7 +21,7 @@ describe("GET /api/rankings", () => {
     expect(body.data[0].rank).toBe(1);
     expect(body.pagination.current_page).toBe(1);
     expect(body.pagination.per_page).toBe(2);
-    expect(body.pagination.items).toBe(5);
+    expect(body.pagination.items).toBe(6);
   });
 
   it("paginates via current_page + per_page", async () => {
