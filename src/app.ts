@@ -3,7 +3,7 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { compress } from "hono/compress";
 import { cors } from "hono/cors";
-import { etag } from "hono/etag";
+import { etag, RETAINED_304_HEADERS } from "hono/etag";
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
@@ -18,6 +18,13 @@ import { createMainRouter } from "./routes/routes";
 export type HonoApp = OpenAPIHono;
 
 const STATIC_CACHE_CONTROL = "public, max-age=2592000, immutable"; // 30 days
+const EXPOSED_RESPONSE_HEADERS = [
+  "ETag",
+  "RateLimit-Limit",
+  "RateLimit-Remaining",
+  "RateLimit-Reset",
+  "X-Request-Id",
+];
 
 export function createApp(context: AppContext): HonoApp {
   const middleware = createMiddleware(context.helpers, context.logger);
@@ -30,14 +37,14 @@ export function createApp(context: AppContext): HonoApp {
   app.use("*", requestId());
   app.use("*", middleware.hostNameMiddleware);
   app.use("*", middleware.requestLoggerMiddleware);
+  // Anonymous public reads must also work from apps hosted on other origins.
   app.use(
     "*",
     cors({
-      credentials: true,
-      origin: (origin) => {
-        if (configuration.app.env !== "production") return origin ?? "*";
-        return origin === configuration.app.domain ? origin : configuration.app.domain;
-      },
+      origin: "*",
+      credentials: false,
+      allowMethods: ["GET", "HEAD", "OPTIONS"],
+      exposeHeaders: EXPOSED_RESPONSE_HEADERS,
     }),
   );
   // Static assets — 30d browser cache. Container images rebuild from scratch
@@ -53,7 +60,18 @@ export function createApp(context: AppContext): HonoApp {
   app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
 
   app.use("*", compress());
-  app.use("*", etag());
+  // Conditional responses still need CORS and the headers browser clients use.
+  app.use(
+    "*",
+    etag({
+      retainedHeaders: [
+        ...RETAINED_304_HEADERS,
+        "Access-Control-Allow-Origin",
+        "Access-Control-Expose-Headers",
+        ...EXPOSED_RESPONSE_HEADERS,
+      ],
+    }),
+  );
   app.use("*", prettyJSON());
   app.use(
     "*",
