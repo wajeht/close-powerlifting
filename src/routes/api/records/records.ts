@@ -103,6 +103,7 @@ export function createRecordsRouter(context: AppContext) {
         equipmentGroup,
         sex: resolved?.kind === "sex" ? resolved.value : undefined,
         weightClassKg: resolved?.kind === "weightClass" ? resolved.value : undefined,
+        weightClassOver: resolved?.kind === "weightClass" ? resolved.over : undefined,
         ageClass: age_class ?? null,
       });
       return c.json(

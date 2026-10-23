@@ -50,6 +50,19 @@ describe("GET /api/rankings/filter", () => {
     const body = await res.json();
     expect(body.data[0].username).toBe("edcoan");
   });
+
+  it("rejects the unsupported McCulloch sort", async () => {
+    const res = await app.request("/api/rankings/filter/raw/men/100/2024/full-power/by-mcculloch");
+    expect(res.status).toBe(400);
+  });
+
+  it("does not advertise the unsupported McCulloch sort in OpenAPI", async () => {
+    const res = await app.request("/docs/api.json");
+    expect(res.status).toBe(200);
+    const specification = await res.text();
+    expect(specification).toContain("by-dots");
+    expect(specification).not.toContain("by-mcculloch");
+  });
 });
 
 describe("GET /api/rankings/:rank", () => {

@@ -24,6 +24,18 @@ describe("getRankingsValidation", () => {
 });
 
 describe("getFilteredRankingsParamValidation", () => {
+  it.each(["84", "84+", "82.5+", "-93"])("accepts weight class %s", (weightClass) => {
+    expect(
+      getFilteredRankingsParamValidation.safeParse({ weight_class: weightClass }).success,
+    ).toBe(true);
+  });
+
+  it.each(["84garbage", "84++", "-84+"])("rejects invalid weight class %s", (weightClass) => {
+    expect(
+      getFilteredRankingsParamValidation.safeParse({ weight_class: weightClass }).success,
+    ).toBe(false);
+  });
+
   it("accepts every valid combination", () => {
     const result = getFilteredRankingsParamValidation.safeParse({
       equipment: "raw",
@@ -48,6 +60,12 @@ describe("getFilteredRankingsParamValidation", () => {
 
   it("rejects an unknown event", () => {
     expect(getFilteredRankingsParamValidation.safeParse({ event: "bench-pull" }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects the unsupported McCulloch sort", () => {
+    expect(getFilteredRankingsParamValidation.safeParse({ sort: "by-mcculloch" }).success).toBe(
       false,
     );
   });

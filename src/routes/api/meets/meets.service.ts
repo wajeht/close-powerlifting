@@ -35,6 +35,7 @@ interface MeetEntryRow {
   event: Entry["event"];
   equipment: Entry["equipment"];
   weight_class_kg: number | null;
+  weight_class_over: number;
   bodyweight_kg: number | null;
   best3_squat_kg: number | null;
   best3_bench_kg: number | null;
@@ -169,6 +170,7 @@ async function meetEntries(
       event: "e.event",
       equipment: "e.equipment",
       weight_class_kg: "e.weight_class_kg",
+      weight_class_over: "e.weight_class_over",
       bodyweight_kg: "e.bodyweight_kg",
       best3_squat_kg: "e.best3_squat_kg",
       best3_bench_kg: "e.best3_bench_kg",
@@ -206,6 +208,7 @@ function formatMeetEntry(entry: MeetEntryRow, units: Units) {
     event: entry.event,
     equipment: entry.equipment,
     weight_class_kg: entry.weight_class_kg,
+    weight_class_over: entry.weight_class_over === 1,
     bodyweight: inUnits(entry.bodyweight_kg, units),
     squat: inUnits(entry.best3_squat_kg, units),
     bench: inUnits(entry.best3_bench_kg, units),
@@ -234,6 +237,7 @@ function bestByField(entries: MeetEntryRow[], field: keyof MeetEntryRow, units: 
     name: best.name,
     equipment: best.equipment,
     weight_class_kg: best.weight_class_kg,
+    weight_class_over: best.weight_class_over === 1,
     value: field === "dots" ? bestVal : inUnits(bestVal, units),
   };
 }

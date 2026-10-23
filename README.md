@@ -78,6 +78,14 @@ curl 'https://closepowerlifting.com/api/rankings?per_page=2&units=kg'
 
 Add `?pretty` to any endpoint for indented JSON output, or `?units=lbs` (default) / `?units=kg` to switch unit systems.
 
+Weight classes keep their numeric `weight_class_kg` boundary and include a
+`weight_class_over` flag: `84` is `{ "weight_class_kg": 84, "weight_class_over": false }`,
+while `84+` has the same boundary with `weight_class_over: true`. Use `84%2B` in a
+ranking or records weight-class path to select the open-ended class.
+
+Rankings support DOTS, Wilks, Glossbrenner, Goodlift, total, squat, bench, and
+deadlift sorting. Unsupported sorts such as `by-mcculloch` return HTTP 400.
+
 ## Docs
 
 - [Development guide](./docs/getting-started.md) — clone, install, snapshot download, dev server

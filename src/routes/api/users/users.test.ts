@@ -18,6 +18,7 @@ describe("GET /api/users", () => {
     expect(body.data.username).toBe("edcoan");
     expect(body.data.total_entries).toBe(2);
     expect(body.data.personal_best.squat).toBe(410);
+    expect(body.data.competition_results[0].weight_class_over).toBe(false);
   });
 
   it("404s for an unknown username", async () => {
@@ -62,6 +63,7 @@ describe("GET /api/users/:username/progression", () => {
     expect(body.data.progression).toHaveLength(2);
     expect(body.data.progression[0].date).toBe("2024-05-12");
     expect(body.data.progression[0].running_pb.squat).toBe(410);
+    expect(body.data.progression[0].weight_class_over).toBe(false);
   });
 });
 

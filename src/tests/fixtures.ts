@@ -190,9 +190,25 @@ function makeFixtureData(): FixtureData {
 }
 
 export function createTestContext(): AppContext {
+  return createFixtureContext(makeFixtureData());
+}
+
+export function createWeightClassTestContext(): AppContext {
+  const data = makeFixtureData();
+  const entries: Entry[] = [];
+  for (const entry of data.entries) {
+    entries.push({
+      ...entry,
+      weightClassKg: entry.sex === "M" ? 100 : entry.weightClassKg,
+      weightClassOver: (entry.lifterId === 0 && entry.meetId === 1) || entry.lifterId === 2,
+    });
+  }
+  return createFixtureContext({ ...data, entries });
+}
+
+function createFixtureContext(data: FixtureData): AppContext {
   resetContext();
   const context = createContext();
-  const data = makeFixtureData();
   const { databaseFile, metadata } = writeFixtureDatabase(data);
   context.store.set({
     db: createDatabaseClient(databaseFile, false),
@@ -261,6 +277,7 @@ function createFixtureSchema(db: Database.Database): void {
       tested INTEGER NOT NULL,
       bodyweight_kg REAL,
       weight_class_kg REAL,
+      weight_class_over INTEGER NOT NULL CHECK (weight_class_over IN (0, 1)),
       squat1_kg REAL,
       squat2_kg REAL,
       squat3_kg REAL,
@@ -367,7 +384,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
   const insert = db.prepare(`
     INSERT INTO entries (
       id, lifter_id, meet_id, sex, age, age_class, division, lifter_country, lifter_state,
-      event, equipment, tested, bodyweight_kg, weight_class_kg,
+      event, equipment, tested, bodyweight_kg, weight_class_kg, weight_class_over,
       squat1_kg, squat2_kg, squat3_kg, squat4_kg,
       bench1_kg, bench2_kg, bench3_kg, bench4_kg,
       deadlift1_kg, deadlift2_kg, deadlift3_kg, deadlift4_kg,
@@ -376,7 +393,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
     )
     VALUES (
       ?, ?, ?, ?, ?, ?, ?, ?, ?,
-      ?, ?, ?, ?, ?,
+      ?, ?, ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
       ?, ?, ?, ?,
@@ -401,6 +418,7 @@ function insertEntries(db: Database.Database, entries: Entry[]): void {
       entry.tested ? 1 : 0,
       entry.bodyweightKg,
       entry.weightClassKg,
+      entry.weightClassOver ? 1 : 0,
       entry.squat1Kg,
       entry.squat2Kg,
       entry.squat3Kg,
@@ -440,6 +458,7 @@ function makeEntry(overrides: Partial<Entry> & { lifterId: number; meetId: numbe
     tested: false,
     bodyweightKg: null,
     weightClassKg: null,
+    weightClassOver: false,
     squat1Kg: null,
     squat2Kg: null,
     squat3Kg: null,

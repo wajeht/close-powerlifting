@@ -29,12 +29,36 @@ describe("nameToSlug", () => {
 });
 
 describe("usernameFor", () => {
-  it("returns the slug when it has content", () => {
-    expect(usernameFor("Ed Coan", 0)).toBe("edcoan");
+  it("preserves existing ASCII and Latin-name slugs", () => {
+    expect(usernameFor("Ed Coan")).toBe("edcoan");
+    expect(usernameFor("Māris Rāzmanis")).toBe("marisrazmanis");
+    expect(usernameFor("John Smith #1")).toBe("johnsmith1");
+    expect(usernameFor("John Smith #2")).toBe("johnsmith2");
+    expect(usernameFor("123")).toBe("123");
   });
 
-  it("falls back to a deterministic anon id for CJK-only names", () => {
-    expect(usernameFor("山田太郎", 17)).toBe("anon17");
+  it("creates stable identities from the full non-ASCII name", () => {
+    const username = usernameFor("山田太郎");
+    expect(username).toMatch(/^anon-[a-f0-9]{64}$/);
+    expect(usernameFor("山田太郎")).toBe(username);
+    expect(usernameFor("田中太郎")).not.toBe(username);
+  });
+
+  it("normalizes whitespace and canonically equivalent Unicode names", () => {
+    expect(usernameFor("  ガク  ")).toBe(usernameFor("カ\u3099ク"));
+  });
+
+  it("keeps non-ASCII names and disambiguation suffixes distinct", () => {
+    const usernames = [
+      usernameFor("山田太郎 #1"),
+      usernameFor("山田太郎 #2"),
+      usernameFor("田中太郎 #1"),
+      usernameFor("山田太郎"),
+    ];
+    expect(new Set(usernames).size).toBe(usernames.length);
+    for (const username of usernames) {
+      expect(username).toMatch(/^anon-[a-f0-9]{64}$/);
+    }
   });
 });
 
@@ -88,12 +112,12 @@ describe("normalizeRow", () => {
 
   it("returns null when the date is malformed", () => {
     const row = buildRow({ Date: "not-a-date" });
-    expect(normalizeRow(row, cols, 0)).toBeNull();
+    expect(normalizeRow(row, cols)).toBeNull();
   });
 
   it("returns null when the event is unrecognised", () => {
     const row = buildRow({ Event: "XYZ" });
-    expect(normalizeRow(row, cols, 0)).toBeNull();
+    expect(normalizeRow(row, cols)).toBeNull();
   });
 
   it("synthesises the meet path from federation/date/meetName", () => {
@@ -102,37 +126,62 @@ describe("normalizeRow", () => {
       Date: "2024-05-12",
       MeetName: "British Open #2",
     });
-    const result = normalizeRow(row, cols, 0);
+    const result = normalizeRow(row, cols);
     expect(result).not.toBeNull();
     expect(result!.meetPath).toBe("wrpfuk/2024-05-12/britishopen2");
     expect(result!.meet.path).toBe("wrpfuk/2024-05-12/britishopen2");
   });
 
   it("splits Place into rank vs status", () => {
-    const placed = normalizeRow(buildRow({ Place: "3" }), cols, 0)!;
+    const placed = normalizeRow(buildRow({ Place: "3" }), cols)!;
     expect(placed.entry.placeRank).toBe(3);
     expect(placed.entry.placeStatus).toBeNull();
 
-    const dq = normalizeRow(buildRow({ Place: "DQ" }), cols, 0)!;
+    const dq = normalizeRow(buildRow({ Place: "DQ" }), cols)!;
     expect(dq.entry.placeRank).toBeNull();
     expect(dq.entry.placeStatus).toBe("DQ");
   });
 
   it("coerces Yes/No → boolean for tested + sanctioned", () => {
     const row = buildRow({ Tested: "Yes", Sanctioned: "No" });
-    const result = normalizeRow(row, cols, 0)!;
+    const result = normalizeRow(row, cols)!;
     expect(result.entry.tested).toBe(true);
     expect(result.meet.sanctioned).toBe(false);
   });
 
   it("treats negative WeightClassKg as the under-class encoding", () => {
-    const result = normalizeRow(buildRow({ WeightClassKg: "-93" }), cols, 0)!;
+    const result = normalizeRow(buildRow({ WeightClassKg: "-93" }), cols)!;
     expect(result.entry.weightClassKg).toBe(-93);
   });
 
   it("emits a username via the OPL slug rule", () => {
-    const result = normalizeRow(buildRow({ Name: "John Smith #1" }), cols, 0)!;
+    const result = normalizeRow(buildRow({ Name: "John Smith #1" }), cols)!;
     expect(result.lifterUsername).toBe("johnsmith1");
     expect(result.lifterName).toBe("John Smith #1");
+  });
+
+  it("keeps repeated non-ASCII athlete rows together after reordering", () => {
+    const firstMeet = buildRow({ Name: "山田太郎", Date: "2024-05-12" });
+    const secondMeet = buildRow({ Name: "山田太郎", Date: "2025-05-12" });
+    const otherAthlete = buildRow({ Name: "田中太郎" });
+    const originalRows = [firstMeet, otherAthlete, secondMeet];
+    const reorderedRows = [secondMeet, firstMeet, otherAthlete];
+    const originalUsernames = [];
+    const reorderedUsernames = [];
+    for (const row of originalRows) {
+      originalUsernames.push(normalizeRow(row, cols)?.lifterUsername);
+    }
+    for (const row of reorderedRows) {
+      reorderedUsernames.push(normalizeRow(row, cols)?.lifterUsername);
+    }
+
+    expect(originalUsernames[0]).toBe(usernameFor("山田太郎"));
+    expect(originalUsernames[2]).toBe(originalUsernames[0]);
+    expect(reorderedUsernames).toEqual([
+      originalUsernames[2],
+      originalUsernames[0],
+      originalUsernames[1],
+    ]);
+    expect(originalUsernames[1]).not.toBe(originalUsernames[0]);
   });
 });

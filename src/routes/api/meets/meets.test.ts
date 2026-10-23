@@ -26,6 +26,7 @@ describe("GET /api/meets", () => {
     const body = await res.json();
     expect(body.data.meet_name).toBe("WRPF AMERICAN PRO");
     expect(body.data.results.length).toBeGreaterThan(0);
+    expect(body.data.results[0].weight_class_over).toBe(false);
   });
 
   it("404s for an unknown meet path", async () => {
@@ -38,5 +39,6 @@ describe("GET /api/meets", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data.highlights.best_total.value).toBe(1080);
+    expect(body.data.highlights.best_total.weight_class_over).toBe(false);
   });
 });

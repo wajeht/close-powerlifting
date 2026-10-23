@@ -31,6 +31,7 @@ interface EntryWithMeetRow {
   tested: number;
   bodyweight_kg: number | null;
   weight_class_kg: number | null;
+  weight_class_over: number;
   squat1_kg: number | null;
   squat2_kg: number | null;
   squat3_kg: number | null;
@@ -162,6 +163,7 @@ export function createUsersService(store: DataStoreType) {
         event: entry.event,
         equipment: entry.equipment,
         weight_class_kg: entry.weight_class_kg,
+        weight_class_over: entry.weight_class_over === 1,
         bodyweight: inUnits(entry.bodyweight_kg, units),
         squat: inUnits(entry.best3_squat_kg, units),
         bench: inUnits(entry.best3_bench_kg, units),
@@ -360,6 +362,7 @@ async function lifterEntriesByDate(
       tested: "e.tested",
       bodyweight_kg: "e.bodyweight_kg",
       weight_class_kg: "e.weight_class_kg",
+      weight_class_over: "e.weight_class_over",
       squat1_kg: "e.squat1_kg",
       squat2_kg: "e.squat2_kg",
       squat3_kg: "e.squat3_kg",
@@ -445,6 +448,7 @@ function formatCompetitionRow(entry: EntryWithMeetRow, units: Units, includeAtte
     event: entry.event,
     equipment: entry.equipment,
     weight_class_kg: entry.weight_class_kg,
+    weight_class_over: entry.weight_class_over === 1,
     bodyweight: inUnits(entry.bodyweight_kg, units),
     squat: inUnits(entry.best3_squat_kg, units),
     bench: inUnits(entry.best3_bench_kg, units),
