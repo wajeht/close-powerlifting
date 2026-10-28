@@ -1,4 +1,4 @@
-FROM node:26.12.1-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec AS build
+FROM node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS build
 
 RUN cd /tmp && npm install --global npm@11.17.0
 
@@ -47,7 +47,7 @@ RUN npm run build:prod && \
     npm prune --omit=dev --no-audit --no-fund && \
     npm cache clean --force
 
-FROM node:26.12.1-slim@sha256:36793bcbb160a6a16cede1e62b93f84e26b78a972a8a4c0b879c1c12f22761ec
+FROM node:26.12.1-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
