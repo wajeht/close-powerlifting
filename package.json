@@ -54,7 +54,7 @@
     "@types/node": "25.9.9",
     "@types/unzipper": "0.10.11",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
-    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/coverage-v8": "4.1.12",
     "concurrently": "10.0.6",
     "csv-parse": "7.0.3",
     "html-minifier-terser": "7.2.0",
@@ -64,14 +64,14 @@
     "terser": "5.51.2",
     "tsx": "4.23.15",
     "unzipper": "0.12.5",
-    "vite-plus": "0.1.24",
+    "vite-plus": "0.3.3",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.24"
   },
   "overrides": {
     "satori": {
       "fflate": "0.7.5"
     },
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.24",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
     "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.24"
   },
   "devEngines": {
