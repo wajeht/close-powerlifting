@@ -136,7 +136,7 @@ jobs:
       github.ref == 'refs/heads/main'
     needs: build
     name: Deploy
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@22eff51583297b7492bc6ae4a06be80c301f2180 # v0.0.28
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/deploy.yaml@7fe2da4ade9590a28c71d0aaf628792a06491807 # PR #30 candidate
     with:
       app-path: apps/close-powerlifting
       service-name: close-powerlifting
@@ -197,10 +197,12 @@ jobs:
     needs: temp-build
     permissions:
       deployments: write
-    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@22eff51583297b7492bc6ae4a06be80c301f2180 # v0.0.28
+    uses: wajeht/docker-cd-deploy-workflow/.github/workflows/temp-deploy.yaml@7fe2da4ade9590a28c71d0aaf628792a06491807 # PR #30 candidate
     with:
       app-path: apps/close-powerlifting
       service-name: close-powerlifting
       tag: ${{ needs.temp-build.outputs.tag }}
     secrets:
       GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      DOCKER_CD_URL: ${{ secrets.DOCKER_CD_URL }}
+      DOCKER_CD_API_SECRET: ${{ secrets.DOCKER_CD_API_SECRET }}
