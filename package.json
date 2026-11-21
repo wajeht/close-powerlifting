@@ -61,7 +61,7 @@
     "satori": "0.63.2",
     "sharp": "0.35.5",
     "tailwindcss": "4.3.5",
-    "terser": "5.51.2",
+    "terser": "5.51.4",
     "tsx": "4.23.15",
     "unzipper": "0.12.5",
     "vite-plus": "0.1.24",
